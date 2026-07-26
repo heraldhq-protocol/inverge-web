@@ -12,6 +12,9 @@ export function Nav() {
           <Link href="/ideas" className="text-foreground/70 hover:text-foreground">
             Ideas
           </Link>
+          <Link href="/verify" className="text-foreground/70 hover:text-foreground">
+            Verify
+          </Link>
           <LoginButton />
         </div>
       </nav>
