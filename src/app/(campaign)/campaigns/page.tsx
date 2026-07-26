@@ -1,4 +1,4 @@
-import { VerifyIdentity } from '@/components/kyc/verify-identity';
+import { CampaignVerify } from '@/components/kyc/campaign-verify';
 
 export default function CampaignsPage() {
   return (
@@ -14,10 +14,10 @@ export default function CampaignsPage() {
       <div className="mt-10 text-left">
         <h2 className="text-sm font-semibold text-foreground/70">Before you can launch</h2>
         <p className="mt-1 mb-3 text-sm text-foreground/50">
-          Creators receive funds, so identity verification and AML screening are required
-          before a campaign can be submitted for review.
+          Creators receive funds, so verification and AML screening are required before a
+          campaign can be submitted — verify as an individual or as a business.
         </p>
-        <VerifyIdentity purpose="CAMPAIGN_CREATOR" />
+        <CampaignVerify />
       </div>
     </div>
   );
