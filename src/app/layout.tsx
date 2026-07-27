@@ -1,14 +1,21 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
+import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers/providers';
-import { Nav } from '@/components/nav';
+
+const displayFont = Plus_Jakarta_Sans({
+  subsets: ['latin'],
+  variable: '--font-display',
+  weight: ['500', '600', '700', '800'],
+  display: 'swap',
+});
 
 export const metadata: Metadata = {
-  title: 'Inverge — back African builders, get your money back if they don’t deliver',
+  title: 'Inverge — Back African builders. Get your money back if they don’t deliver.',
   description:
-    'Milestone-escrowed crowdfunding and idea validation on Solana. Backers cannot get rugged.',
+    'Inverge helps early-stage founders validate ideas, raise in milestones, and build with accountability — so you can back with confidence.',
 };
 
 export default function RootLayout({
@@ -17,12 +24,12 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${displayFont.variable} h-full antialiased`}
+      data-scroll-behavior="smooth"
     >
-      <body className="flex min-h-full flex-col">
+      <body className="flex min-h-full flex-col bg-paper text-ink font-sans">
         <Providers>
-          <Nav />
-          <main className="mx-auto w-full max-w-5xl flex-1 px-5 py-8">{children}</main>
+          {children}
         </Providers>
       </body>
     </html>

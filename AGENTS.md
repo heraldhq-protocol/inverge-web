@@ -3,6 +3,15 @@
 
 This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
 
+## Engineering conventions
+
+- `docs/conventions.md` — **read this before writing any UI code.** Stack of record, the Next 16
+  breaking changes that differ from most training data, Server/Client Component rules, project
+  structure and naming, Tailwind v4 token discipline, accessibility floors (WCAG 2.2 AA),
+  the motion contract, performance budgets, and the definition of done.
+- `docs/landing-brief.md` — build spec for the marketing landing page: scope, file allowlist,
+  section requirements, responsive targets, and the static→animation handoff contract.
+
 ## Backend API contracts
 
 Read these before building the corresponding UI — they are the source of truth for the

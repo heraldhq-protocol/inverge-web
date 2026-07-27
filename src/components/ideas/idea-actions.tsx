@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { api, getSessionToken } from '@/lib/api/client';
 
@@ -11,13 +11,11 @@ const field =
 
 export function IdeaActions({ ideaId }: { ideaId: string }) {
   const router = useRouter();
-  const [signedIn, setSignedIn] = useState(false);
+  const [signedIn] = useState(() => Boolean(getSessionToken()));
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [pledge, setPledge] = useState(50);
   const [rating, setRating] = useState(5);
-
-  useEffect(() => setSignedIn(Boolean(getSessionToken())), []);
 
   async function run(key: string, call: () => Promise<{ error?: unknown }>) {
     setBusy(key);
