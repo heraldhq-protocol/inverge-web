@@ -1,7 +1,8 @@
 # Discovery feed — backend API contract (for the web frontend)
 
 The `inverge-api` discovery feed is live on `main`. This is the contract the web app
-builds against. It supersedes the old `GET /ideas` browse as the primary discovery surface
+builds against; the design rationale behind the ranking is in [`feed-design.md`](./feed-design.md).
+It supersedes the old `GET /ideas` browse as the primary discovery surface
 (`/ideas` still exists for simple listing). Follow the existing `src/lib/kyc/` pattern:
 a hand-rolled fetch client + a hook, or regenerate the typed client with `pnpm gen:api`
 (the API exports OpenAPI at `/docs-json`).

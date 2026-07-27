@@ -11,4 +11,6 @@ Read these before building the corresponding UI — they are the source of truth
 - `docs/feed-api.md` — discovery feed (`GET /feed`, `PUT /me/interests`): ranked feed the app
   renders as the primary discovery surface, explainability chips, stateless `excludeIds`
   pagination, personalization capture, and the paid-placement labelling requirement.
+- `docs/feed-design.md` — the feed/ranking design & rationale behind that contract (three-stage
+  architecture, scoring, cold-start/exploration, anti-gaming, paid-placement separation).
 <!-- END:nextjs-agent-rules -->
