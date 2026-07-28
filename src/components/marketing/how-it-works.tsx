@@ -44,7 +44,7 @@ export function HowItWorks() {
               spine running between the icons. At lg it flips to icon-above-copy with the
               connector running along the icon row. Spacing comes from the copy's bottom padding
               rather than a grid gap, so the mobile spine can run unbroken between steps. */}
-          <ol className="grid lg:grid-cols-3 lg:gap-8">
+          <ol className="grid lg:grid-cols-3 lg:gap-8" data-stagger>
             {STEPS.map(({ n, title, body, shell, Icon }, i) => {
               const isLast = i === STEPS.length - 1;
 
@@ -63,6 +63,7 @@ export function HowItWorks() {
                         'grid h-14 w-14 place-items-center rounded-full lg:h-16 lg:w-16 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/step:scale-105',
                         shell
                       )}
+                      data-reveal-scale
                     >
                       <Icon />
                     </div>

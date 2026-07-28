@@ -11,6 +11,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
   the motion contract, performance budgets, and the definition of done.
 - `docs/landing-brief.md` — build spec for the marketing landing page: scope, file allowlist,
   section requirements, responsive targets, and the static→animation handoff contract.
+  **Landing page only** — its file allowlist and its "no live data, no animation" rules do not
+  apply to app screens.
+- `docs/app-mockup-kit.md` — art direction for the logged-in app screens: how product screens
+  differ from the landing page (density, type scale, cards vs tables, states), the locked palette
+  and app shell, form rules, and a per-screen mockup brief. Read before designing or building any
+  screen behind the marketing site.
 
 ## Backend API contracts
 

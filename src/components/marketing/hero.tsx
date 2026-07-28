@@ -22,14 +22,14 @@ export function Hero() {
             </h1>
 
             <p
-              className="text-base sm:text-lg lg:text-xl text-ink-muted leading-relaxed max-w-xl font-normal [--inv-delay:80ms]"
+              className="text-base sm:text-lg lg:text-xl text-ink-muted leading-relaxed max-w-xl font-normal [--inv-delay:120ms]"
               data-enter
             >
               Inverge helps early-stage founders validate ideas, raise in milestones, and build with accountability — so you can back with confidence.
             </p>
 
             {/* CTA Button Pair */}
-            <div className="flex flex-wrap items-center gap-4 pt-1 [--inv-delay:160ms]" data-enter>
+            <div className="flex flex-wrap items-center gap-4 pt-1 [--inv-delay:220ms]" data-enter>
               <Button variant="primary" size="lg" href="/ideas" className="group shadow-md">
                 <span>Explore ideas</span>
                 <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">
@@ -43,7 +43,7 @@ export function Hero() {
             </div>
 
             {/* Social Proof Row */}
-            <div className="flex items-center gap-3 pt-2 [--inv-delay:240ms]" data-enter>
+            <div className="flex items-center gap-3 pt-2 [--inv-delay:320ms]" data-enter>
               {/* Overlapping Avatar Stack (aria-hidden decorative images) */}
               <div
                 className="group/avatars flex -space-x-2.5 hover:-space-x-1 transition-[margin] duration-300 shrink-0"
@@ -70,9 +70,8 @@ export function Hero() {
           </div>
 
           {/* Right Column: Lagos Street Image + Overlapping Recently Funded Card */}
-          {/* Also unanimated — it holds the priority image, the other LCP candidate. */}
-          <div className="lg:col-span-5 relative mt-4 lg:mt-0">
-            <div className="relative mx-auto max-w-lg lg:max-w-none">
+          <div className="lg:col-span-5 relative mt-4 lg:mt-0 [--inv-delay:200ms]" data-enter-left>
+            <div className="relative mx-auto max-w-lg lg:max-w-none" data-parallax-subtle>
               {/* drop-shadow on the wrapper rather than box-shadow on the image, because the
                   mask below feathers the left edge and a box-shadow is always drawn around the
                   full rectangle — it would trace a hard edge through the part that is meant to
@@ -105,7 +104,7 @@ export function Hero() {
               </div>
 
               {/* Overlapping RECENTLY FUNDED stack */}
-              <div className="mt-4 lg:mt-0 lg:absolute lg:-bottom-8 lg:-left-12 lg:right-4 z-20 [--inv-delay:200ms]" data-enter>
+              <div className="mt-4 lg:mt-0 lg:absolute lg:-bottom-8 lg:-left-12 lg:right-4 z-20 [--inv-delay:400ms]" data-enter>
                 <RecentlyFunded />
               </div>
             </div>

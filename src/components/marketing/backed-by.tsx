@@ -24,7 +24,7 @@ export function BackedBy() {
       data-reveal
     >
       <Container>
-        <p className="mb-7 text-center text-xs font-bold uppercase tracking-widest text-ink-muted">
+        <p className="mb-7 text-center text-xs font-bold uppercase tracking-widest text-ink-muted" data-reveal>
           Backed by
         </p>
 

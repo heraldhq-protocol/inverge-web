@@ -9,7 +9,7 @@ export function StatStrip() {
     <Section tone="forest" id="stats">
       <Container className="space-y-10">
         {/* Header Status Indicator */}
-        <div>
+        <div data-reveal>
           <Eyebrow tone="forest" statusDot>
             LIVE ON INVERGE
           </Eyebrow>
@@ -22,9 +22,12 @@ export function StatStrip() {
             other two are 3–5, so equal thirds starved the one that needed room while stranding
             the short ones in dead space. Hairline dividers make the strip read as one
             instrument panel instead of three floating islands. */}
+        {/* Revealed as one block, not staggered: `Stat` renders no reveal attribute of its own,
+            so a stagger here would have nothing to step. The strip reads as a single instrument
+            panel anyway — three figures arriving one after another would fight that. */}
         <div
           className="grid grid-cols-1 gap-10 lg:grid-cols-[1fr_1.6fr_1fr] lg:gap-0 lg:divide-x lg:divide-white/10 items-start"
-          data-reveal
+          data-reveal-scale
         >
           <Stat
             label="Ideas published"
