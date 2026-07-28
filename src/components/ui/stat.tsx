@@ -45,7 +45,7 @@ export function Stat({
       </div>
 
       {delta && (
-        <div className="inline-flex items-center self-start gap-1.5 rounded-full border border-accent-500/30 bg-accent-900/60 px-3 py-1 text-sm font-semibold text-accent-100">
+        <div className="inline-flex items-center self-start gap-1.5 rounded-full border border-accent-500/30 bg-accent-900/60 px-3 py-1 text-sm font-semibold text-accent-100 transition-transform duration-200 hover:scale-[1.03] hover:border-accent-500/50">
           <span aria-hidden="true">↗</span>
           <span>{delta}</span>
         </div>

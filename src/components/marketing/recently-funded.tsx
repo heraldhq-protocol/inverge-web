@@ -73,13 +73,14 @@ export function RecentlyFunded() {
               key={project.name}
               aria-hidden={!isFront}
               className={cn(
-                '[grid-area:1/1] rounded-2xl border border-border/80 bg-surface p-5 sm:p-6',
-                // Explicit property list rather than transition-all: only these three change,
+                '[grid-area:1/1] border border-border/80 bg-surface p-5 sm:p-6',
+                // Explicit property list rather than transition-all: only these change,
                 // and transitioning layout properties here would fight the grid stacking.
-                'origin-bottom transition-[transform,opacity,box-shadow] duration-500 ease-out',
+                'origin-bottom transition-[transform,opacity,box-shadow,border-color] duration-500 ease-out',
                 // origin-bottom keeps the bottom edge anchored, so the peek below each card is
                 // exactly its translate distance instead of translate minus the scale shrink.
-                depth === 0 && 'z-30 translate-y-0 scale-100 opacity-100 shadow-xl',
+                depth === 0 &&
+                'z-30 translate-y-0 scale-100 opacity-100 shadow-xl border-accent-500/20 hover:border-accent-500/40 hover:shadow-accent-500/5',
                 depth === 1 && 'z-20 translate-y-4 scale-[0.97] opacity-75 shadow-lg',
                 depth >= 2 && 'z-10 translate-y-8 scale-[0.94] opacity-45 shadow-md',
                 // Hover already pauses rotation; the lift makes that state legible.
@@ -100,7 +101,14 @@ export function RecentlyFunded() {
                   <div className="text-base font-bold text-ink sm:text-lg">
                     <Amount value={project.amount} currency="NGN" />
                   </div>
-                  <span className="mt-0.5 block text-xs font-medium text-accent-700">
+                  <span className="mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium text-accent-700">
+                    <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">
+                      <span
+                        className="absolute inline-flex h-full w-full rounded-full bg-accent-500 opacity-75"
+                        data-live-ring="true"
+                      />
+                      <span className="relative inline-flex h-2 w-2 rounded-full bg-accent-500" />
+                    </span>
                     {project.milestone}
                   </span>
                 </div>
@@ -118,9 +126,17 @@ export function RecentlyFunded() {
                     On first paint the front card renders at its final width with nothing to
                     transition from — the fill only ever plays on a switch, never on load. */}
                 <div
-                  className="h-full rounded-full bg-accent-500 transition-[width] delay-150 duration-700 ease-out"
+                  className="relative h-full overflow-hidden rounded-full bg-accent-500 transition-[width] delay-150 duration-700 ease-out"
                   style={{ width: isFront ? `${project.progress}%` : '0%' }}
-                />
+                >
+                  {isFront && (
+                    <span
+                      aria-hidden="true"
+                      className="absolute inset-0 bg-gradient-to-r from-transparent via-white/35 to-transparent"
+                      data-shimmer="true"
+                    />
+                  )}
+                </div>
               </div>
             </div>
           );

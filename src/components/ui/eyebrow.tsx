@@ -26,11 +26,16 @@ export function Eyebrow({
       {...props}
     >
       {statusDot && (
-        <span
-          className="h-2 w-2 rounded-full bg-accent-500 shrink-0"
-          aria-hidden="true"
-          data-live="true"
-        />
+        <span className="relative flex h-2 w-2 shrink-0 items-center justify-center" aria-hidden="true">
+          <span
+            className="absolute inline-flex h-full w-full rounded-full bg-accent-500 opacity-75"
+            data-live-ring="true"
+          />
+          <span
+            className="relative h-2 w-2 rounded-full bg-accent-500"
+            data-live="true"
+          />
+        </span>
       )}
       <span>{children}</span>
     </div>

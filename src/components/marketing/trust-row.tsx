@@ -30,7 +30,7 @@ export function TrustRow() {
               </blockquote>
 
               <figcaption className="flex items-center gap-4 pt-2">
-                <div className="h-12 w-12 rounded-full bg-accent-900 text-white font-bold flex items-center justify-center text-sm shrink-0 border-2 border-surface">
+                <div className="h-12 w-12 rounded-full bg-accent-900 text-white font-bold flex items-center justify-center text-sm shrink-0 border-2 border-surface shadow-sm">
                   TA
                 </div>
                 <div>
@@ -51,7 +51,7 @@ export function TrustRow() {
 
           {/* CampusKonekt Team Photo Column */}
           <div className="lg:col-span-5 relative">
-            <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-black/5 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3]">
+            <div className="relative rounded-3xl overflow-hidden shadow-lift-lg border border-black/5 aspect-[4/3] sm:aspect-[16/11] lg:aspect-[4/3]">
               <Image
                 src="/images/team-campuskonekt.png"
                 alt="CampusKonekt founder team smiling together outdoors in dark green branded shirts holding smartphones"

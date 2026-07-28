@@ -21,6 +21,7 @@ export function BackedBy() {
       id="backed-by"
       aria-label="Organisations backing Inverge"
       className="border-y border-border bg-paper py-10"
+      data-reveal
     >
       <Container>
         <p className="mb-7 text-center text-xs font-bold uppercase tracking-widest text-ink-muted">

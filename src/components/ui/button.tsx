@@ -18,14 +18,16 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseStyles =
-    'inline-flex items-center justify-center font-medium rounded-full transition-[color,background-color,border-color,box-shadow,transform] duration-200 ease-out motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 select-none min-h-[44px] shrink-0';
+    'inline-flex items-center justify-center font-medium rounded-full transition-all duration-200 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 select-none min-h-[44px] shrink-0';
 
   const variants = {
     primary:
-      'bg-accent-500 hover:bg-accent-700 text-white shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 motion-reduce:hover:translate-y-0',
-    secondary: 'bg-accent-100 hover:bg-accent-500 hover:text-white text-accent-700',
-    outline: 'border border-border/80 hover:border-ink/40 text-ink bg-surface/60 hover:bg-surface active:bg-paper',
-    ghost: 'text-ink hover:bg-ink/5',
+      'bg-accent-500 hover:bg-accent-700 text-white shadow-sm hover:shadow-md hover:shadow-accent-500/20 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100',
+    secondary:
+      'bg-accent-100 hover:bg-accent-500 hover:text-white text-accent-700 active:scale-[0.98] motion-reduce:active:scale-100',
+    outline:
+      'border border-border/80 hover:border-accent-500/40 text-ink bg-surface/60 hover:bg-surface hover:shadow-sm hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98] motion-reduce:hover:translate-y-0 motion-reduce:active:scale-100',
+    ghost: 'text-ink hover:bg-ink/5 active:scale-[0.98] motion-reduce:active:scale-100',
   };
 
   const sizes = {

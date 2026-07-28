@@ -53,14 +53,14 @@ export function HowItWorks() {
                   key={n}
                   data-reveal
                   data-step={n}
-                  className="relative flex gap-5 lg:flex-col lg:gap-0"
+                  className="group/step relative flex gap-5 lg:flex-col lg:gap-0"
                 >
                   {/* Stretches to the full row height below lg, which is what lets the spine
                       reach the next step's icon. */}
                   <div className="relative shrink-0">
                     <div
                       className={cn(
-                        'grid h-14 w-14 place-items-center rounded-full lg:h-16 lg:w-16',
+                        'grid h-14 w-14 place-items-center rounded-full lg:h-16 lg:w-16 transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/step:scale-105',
                         shell
                       )}
                     >
