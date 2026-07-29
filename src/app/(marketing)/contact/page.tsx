@@ -1,15 +1,16 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { ContactForm } from '@/components/marketing/contact-form';
 import { Container } from '@/components/ui/container';
 
-export const metadata: Metadata = {
-  title: 'Contact — Inverge',
+export const metadata = pageMetadata({
+  title: 'Contact',
   description:
     'Get in touch with the Inverge team: questions about backing, building, press, or partnerships.',
-};
+  path: '/contact',
+});
 
 type Channel = {
   label: string;

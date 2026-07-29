@@ -1,15 +1,16 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { Container } from '@/components/ui/container';
 import { POSTS, type Post } from '@/lib/content/posts';
 
-export const metadata: Metadata = {
-  title: 'Blog — Inverge',
+export const metadata = pageMetadata({
+  title: 'Blog',
   description:
     'Product thinking, builder stories, and insights on backing early-stage builders across Africa.',
-};
+  path: '/blog',
+});
 
 function CategoryTag({ children }: { children: React.ReactNode }) {
   return (

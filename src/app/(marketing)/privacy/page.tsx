@@ -1,14 +1,15 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { LegalDoc, type LegalSection } from '@/components/marketing/legal-doc';
 
-export const metadata: Metadata = {
-  title: 'Privacy Policy — Inverge',
+export const metadata = pageMetadata({
+  title: 'Privacy Policy',
   description:
     'How Inverge collects, uses, and protects your personal information, and the rights you have over it.',
-};
+  path: '/privacy',
+});
 
 const UPDATED = '29 July 2026';
 

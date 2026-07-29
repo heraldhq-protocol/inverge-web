@@ -1,16 +1,17 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { CtaBand } from '@/components/marketing/cta-band';
 import { Container } from '@/components/ui/container';
 import { Eyebrow } from '@/components/ui/eyebrow';
 
-export const metadata: Metadata = {
-  title: 'Help Centre — Inverge',
+export const metadata = pageMetadata({
+  title: 'Help Centre',
   description:
     'Answers about backing, building, milestones, refunds, and verification on Inverge.',
-};
+  path: '/help',
+});
 
 type Topic = { title: string; body: string; href: string };
 type Faq = { q: string; a: React.ReactNode };

@@ -1,15 +1,16 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import { PageHeader } from '@/components/marketing/page-header';
 import { CtaBand } from '@/components/marketing/cta-band';
 import { Container } from '@/components/ui/container';
 import { Eyebrow } from '@/components/ui/eyebrow';
 
-export const metadata: Metadata = {
-  title: 'Careers — Inverge',
+export const metadata = pageMetadata({
+  title: 'Careers',
   description:
     'Join a small, remote team building the platform African builders trust. See open roles at Inverge.',
-};
+  path: '/careers',
+});
 
 type Role = {
   title: string;

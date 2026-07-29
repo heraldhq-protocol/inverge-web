@@ -1,14 +1,15 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { LegalDoc, type LegalSection } from '@/components/marketing/legal-doc';
 
-export const metadata: Metadata = {
-  title: 'Terms of Service — Inverge',
+export const metadata = pageMetadata({
+  title: 'Terms of Service',
   description:
     'The terms that govern your use of Inverge: how backing, milestone funding, refunds, and builder obligations work.',
-};
+  path: '/terms',
+});
 
 const UPDATED = '29 July 2026';
 

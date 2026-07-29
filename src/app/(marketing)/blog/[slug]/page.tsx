@@ -7,6 +7,7 @@ import { Eyebrow } from '@/components/ui/eyebrow';
 import { Prose } from '@/components/marketing/prose';
 import { CtaBand } from '@/components/marketing/cta-band';
 import { POSTS, getPost } from '@/lib/content/posts';
+import { pageMetadata } from '@/lib/metadata';
 
 // Next 16: params is a Promise (conventions §2.1).
 type Params = { params: Promise<{ slug: string }> };
@@ -18,11 +19,13 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: Params): Promise<Metadata> {
   const { slug } = await params;
   const post = getPost(slug);
-  if (!post) return { title: 'Post not found — Inverge' };
-  return {
-    title: `${post.title} — Inverge Blog`,
+  if (!post) return { title: 'Post not found' };
+  return pageMetadata({
+    title: post.title,
     description: post.excerpt,
-  };
+    path: `/blog/${post.slug}`,
+    article: { publishedTime: post.date, authors: [post.author], section: post.category },
+  });
 }
 
 export default async function BlogPostPage({ params }: Params) {

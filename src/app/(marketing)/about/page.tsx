@@ -1,16 +1,17 @@
 import React from 'react';
-import type { Metadata } from 'next';
+import { pageMetadata } from '@/lib/metadata';
 import { PageHeader } from '@/components/marketing/page-header';
 import { CtaBand } from '@/components/marketing/cta-band';
 import { Container } from '@/components/ui/container';
 import { Eyebrow } from '@/components/ui/eyebrow';
 import { Stat } from '@/components/ui/stat';
 
-export const metadata: Metadata = {
-  title: 'About — Inverge',
+export const metadata = pageMetadata({
+  title: 'About',
   description:
     'Inverge exists to back African builders with accountability: funds released against verified milestones, not promises.',
-};
+  path: '/about',
+});
 
 type Value = {
   title: string;
