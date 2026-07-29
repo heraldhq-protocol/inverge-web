@@ -138,7 +138,7 @@ export function Footer() {
             <ul className="space-y-2 text-sm">
               <li>
                 <Link href="/help" className="text-white/80 hover:text-white transition-colors">
-                  Help center
+                  Help centre
                 </Link>
               </li>
               <li>
