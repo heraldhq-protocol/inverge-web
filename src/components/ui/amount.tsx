@@ -1,23 +1,37 @@
-// Money renders with tabular figures so columns align (plan §12).
+import { cn } from '@/lib/utils';
+
+// Money renders with tabular figures so columns align.
 export function Amount({
   value,
-  currency = 'USD',
-  className = '',
+  currency = 'NGN',
+  className,
 }: {
   value: number | string;
   currency?: string;
   className?: string;
 }) {
-  const n = typeof value === 'string' ? Number(value) : value;
-  const formatted = new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency,
-    maximumFractionDigits: 0,
-  }).format(Number.isFinite(n) ? n : 0);
-  return <span className={`font-mono tabular-nums ${className}`}>{formatted}</span>;
+  const n = typeof value === 'string' ? Number(value.replace(/[^0-9.-]+/g, '')) : value;
+  const num = Number.isFinite(n) ? n : 0;
+
+  let formatted = '';
+  if (currency === 'NGN') {
+    formatted = `₦${num.toLocaleString('en-US', { maximumFractionDigits: 0 })}`;
+  } else {
+    formatted = new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: 0,
+    }).format(num);
+  }
+
+  // Tabular only — mono is reserved for receipts and technical data (conventions §5.1), so
+  // callers rendering an actual receipt opt in with `font-mono` rather than inheriting it here.
+  return <span className={cn('tabular-nums', className)}>{formatted}</span>;
 }
 
 // Plain counts (supporters, feedback) — tabular, no currency symbol.
-export function Count({ value, className = '' }: { value: number; className?: string }) {
-  return <span className={`tabular-nums ${className}`}>{value}</span>;
+export function Count({ value, className }: { value: number | string; className?: string }) {
+  const n = typeof value === 'string' ? Number(value.replace(/[^0-9.-]+/g, '')) : value;
+  const num = Number.isFinite(n) ? n : 0;
+  return <span className={cn('tabular-nums', className)}>{num.toLocaleString('en-US')}</span>;
 }
