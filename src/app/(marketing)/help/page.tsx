@@ -4,7 +4,6 @@ import Link from 'next/link';
 import { PageHeader } from '@/components/marketing/page-header';
 import { CtaBand } from '@/components/marketing/cta-band';
 import { Container } from '@/components/ui/container';
-import { Eyebrow } from '@/components/ui/eyebrow';
 
 export const metadata = pageMetadata({
   title: 'Help Centre',
@@ -14,7 +13,7 @@ export const metadata = pageMetadata({
 });
 
 type Topic = { title: string; body: string; href: string };
-type Faq = { q: string; a: React.ReactNode };
+type Faq = { q: string; a: React.ReactNode; defaultOpen?: boolean };
 
 const TOPICS: Topic[] = [
   {
@@ -42,6 +41,7 @@ const TOPICS: Topic[] = [
 const FAQS: Faq[] = [
   {
     q: 'What is Inverge?',
+    defaultOpen: true,
     a: (
       <p>
         Inverge is a platform for validating ideas and backing early-stage builders across Africa.
@@ -123,42 +123,46 @@ export default function HelpPage() {
   return (
     <>
       <PageHeader
-        eyebrow="Help Centre"
+        eyebrow="HELP CENTRE"
         title="How can we help?"
         lede="Answers to the questions we hear most, about backing, building, milestones, and getting your money back if a builder doesn’t deliver."
       />
 
       {/* Topic cards */}
-      <Container className="pb-14 md:pb-20">
+      <Container className="pb-16 md:pb-24">
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4" data-reveal>
           {TOPICS.map((t) => (
             <li key={t.title}>
               <Link
                 href={t.href}
-                className="group flex h-full flex-col gap-2 rounded-2xl border border-border bg-surface p-6 transition-shadow hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+                className="group flex h-full flex-col justify-between rounded-xl border border-border bg-surface p-6 sm:p-6 transition-colors duration-200 hover:border-accent-500/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
               >
-                <h2 className="font-display text-lg font-semibold text-ink group-hover:text-accent-700">
-                  {t.title}
-                </h2>
-                <p className="text-sm leading-relaxed text-ink-muted">{t.body}</p>
-                <span className="mt-auto pt-2 text-sm font-semibold text-accent-700">
-                  Read guide{' '}
-                  <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">
+                <div>
+                  <h2 className="font-display text-base sm:text-lg font-semibold text-ink group-hover:text-accent-700 transition-colors">
+                    {t.title}
+                  </h2>
+                  <p className="mt-2 text-sm leading-relaxed text-ink-muted">{t.body}</p>
+                </div>
+                <div className="mt-6 pt-2 text-sm font-semibold text-accent-700 flex items-center gap-1.5">
+                  <span>Read guide</span>
+                  <span aria-hidden="true" className="transition-transform duration-200 group-hover:translate-x-1">
                     →
                   </span>
-                </span>
+                </div>
               </Link>
             </li>
           ))}
         </ul>
       </Container>
 
-      {/* FAQ — native <details> so it is accessible and needs zero client JS */}
-      <section className="bg-surface py-16 md:py-24" data-reveal>
+      {/* FAQ Accordion Section */}
+      <section className="bg-paper py-16 md:py-24 border-t border-border/50" data-reveal>
         <Container className="max-w-3xl">
-          <div className="mb-10">
-            <Eyebrow>Frequently asked</Eyebrow>
-            <h2 className="mt-4 font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
+          <div className="mb-10 text-center flex flex-col items-center">
+            <span className="text-[12px] font-semibold tracking-[0.15em] uppercase text-accent-700 mb-2">
+              FREQUENTLY ASKED
+            </span>
+            <h2 className="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">
               Common questions
             </h2>
           </div>
@@ -166,17 +170,20 @@ export default function HelpPage() {
           <ul className="flex flex-col gap-3">
             {FAQS.map((faq) => (
               <li key={faq.q}>
-                <details className="group rounded-2xl border border-border bg-paper open:shadow-lift">
-                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 rounded-2xl p-5 font-display text-base font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 [&::-webkit-details-marker]:hidden">
-                    {faq.q}
+                <details
+                  open={faq.defaultOpen}
+                  className="group rounded-xl border border-border/70 bg-[#f7f6f2] open:bg-surface open:border-border transition-colors duration-200 overflow-hidden"
+                >
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-5 sm:px-6 sm:py-4.5 font-display text-[15px] sm:text-base font-semibold text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 rounded-xl [&::-webkit-details-marker]:hidden">
+                    <span>{faq.q}</span>
                     <span
                       aria-hidden="true"
-                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full border border-border text-ink-muted transition-transform duration-200 group-open:rotate-45"
+                      className="grid h-6 w-6 shrink-0 place-items-center rounded-full bg-black/5 text-ink-muted transition-transform duration-200 group-open:rotate-45 text-sm font-medium"
                     >
                       +
                     </span>
                   </summary>
-                  <div className="px-5 pb-5 text-[15px] leading-relaxed text-ink-muted [&_a]:font-medium [&_a]:text-accent-700 [&_a]:underline [&_a]:underline-offset-2">
+                  <div className="px-5 pb-5 sm:px-6 sm:pb-5 pt-1 text-[14px] sm:text-[15px] leading-relaxed text-ink-muted/90 border-t border-border/30 mt-1 [&_a]:font-medium [&_a]:text-accent-700 [&_a]:underline [&_a]:underline-offset-2">
                     {faq.a}
                   </div>
                 </details>
@@ -186,6 +193,7 @@ export default function HelpPage() {
         </Container>
       </section>
 
+      {/* CTA Band */}
       <CtaBand
         title="Still need a hand?"
         body="Can’t find your answer? Our team is small, close to the product, and quick to reply."

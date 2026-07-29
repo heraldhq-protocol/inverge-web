@@ -417,6 +417,80 @@ attached.
 
 ---
 
+### J. Auth — `/signin`, and the account-creation flow
+
+**Format:** Short, all three. **Layout:** Two-panel split for J1/J2 (forest brand panel left ~45%,
+auth column right ~55%, form in a centred ~400px column); single centred ~640px column for J3.
+
+**[must] These are the only screens with no app shell.** No sidebar, no top bar, no search, no bell,
+no avatar — the user isn't signed in yet. This is the one licensed deviation from §5, and the reason
+the auth briefs run in their own thread rather than inheriting screen A: attaching screen A is
+precisely what makes a model paint a sidebar onto a sign-in page.
+
+Density also relaxes here, and that is correct. An auth screen is one decision, not a working
+surface. The small type scale from §3.1 holds (heading 28px, body 14–15px), but the centred column
+breathes. It is neither a dense product screen nor a landing page.
+
+**Sign-in is Privy-only, and Privy has no separate sign-up.** Entering an email for the first time
+*is* creating the account, so a "sign up screen" and a "sign in screen" cannot be two mechanisms —
+only two framings of one. That is why J2 is drawn in its **email-code state** rather than at rest: an
+at-rest sign-up screen is J1 with two words changed, and generating it teaches nothing. The three
+login paths are exactly the ones the app is configured for — email code, Google, X
+([`providers.tsx`](../src/components/providers/providers.tsx) `loginMethods`).
+
+**[must] What must never appear on an auth screen.** Every item here is something this screen type
+reaches for by reflex, which is why each needs naming rather than implying:
+
+- **No password.** No password field, no "Confirm password", no strength meter, no "Forgot password".
+  The product has no passwords, so an inch of password UI is a lie about how it works.
+- **No wallet.** No "Connect wallet", no wallet list, no Phantom/MetaMask/Solflare marks, no QR code,
+  no "I already have a wallet", no seed phrase, no chain or network name. The embedded wallet is
+  created silently on login and the user never learns it exists (§2).
+- **No auth-vendor branding** or "protected by" badge. The vendor underneath is invisible exactly as
+  the chain is. *(This is a product decision with a billing consequence — see the engineering note.)*
+- **No padlock, shield, key, fingerprint, or checkmark-in-a-circle**, at any size (§4, icons).
+- **No illustration, 3D graphic, person-at-a-laptop stock photo, or mascot.**
+
+**J1 — Sign in.** Left panel: leaf mark + wordmark, then "Back money that has to deliver." (~24px)
+and "Every milestone is approved by backers before it pays out.", then a quiet tabular proof row —
+"₦48,200,000 released across 61 milestones", "₦3,100,000 refunded automatically". Right column:
+heading "Sign in to Inverge", sub-line "We'll email you a 6-digit code. There's no password to
+remember.", one field labelled "Email address" showing "amara.okonkwo@gmail.com", filled
+"Email me a code", an "or" divider, then outlined "Continue with Google" and "Continue with X",
+then "New to Inverge? Create an account", then "By continuing you agree to our Terms and Privacy
+Policy."
+
+**J2 — Create your account, email-code step.** Left panel identical to J1. Right column: "Step 2 of
+2", heading "Check your email", "We sent a 6-digit code to amara.okonkwo@gmail.com — Change email".
+**The six-box code input is the signature element** — four boxes filled "4 8 2 9" in the monospace
+face (a one-time code is technical data, so mono is licensed here), the fifth focused with a solid
+green 2px border and a caret, the sixth at rest. Focus is marked by border weight as well as colour.
+Then filled "Continue", a disabled muted "Resend code in 0:24", "The code expires in 10 minutes.",
+and "Wrong email? Start over". Worth also generating the wrong-code variant — all six filled, the
+§6 error pattern (tinted wash **plus** message) reading "That code doesn't match. Codes expire after
+10 minutes — resend to get a new one." — because that is the state that generates support tickets.
+
+**J3 — First-run interests.** Single centred column; only the small leaf mark and wordmark at top
+left. Heading "What do you want to see first?", sub-line "Pick anything that interests you. This
+only shapes your feed — you can still see every idea on Inverge." Category chips matching the feed
+contract's enum exactly — "Software", "Agriculture", "Film", "Arts", "Other" — with "Agriculture"
+and "Software" selected; region chips "Lagos", "Ibadan", "Abuja", "Kano", "Accra", "Anywhere in West
+Africa" with "Lagos" selected. Selected chips get a pale green fill, a solid green border, **and** a
+small check glyph — shape as well as colour. Actions "Show me ideas" (filled) and "Skip for now"
+(plain text link, visibly clickable — this step is optional and must look it), then "You can change
+this any time in Settings." No progress bar, no confetti, no "Welcome aboard!", no emoji.
+
+**Engineering note — two things these mockups commit us to.** First, they depict *first-party* auth
+UI, not the vendor's drop-in modal. That means the email-code and OAuth flows run through the SDK's
+headless hooks, and per [`conventions.md`](./conventions.md) §6.4 those imports stay inside
+`lib/auth/use-auth.ts` — the auth *screens* import `useAuth`, never `@privy-io/react-auth`. Second,
+removing the vendor badge is a paid-plan feature on most auth vendors; if the plan doesn't cover it,
+the badge is a real constraint and the mockup is aspirational on that one detail. Worth confirming
+before these ship. The feed personalization J3 writes to is `PUT /me/interests`
+([`feed-api.md`](./feed-api.md)).
+
+---
+
 ## Output
 
 One image. High-fidelity and production-quality, like a real screen from a real product with real
@@ -431,7 +505,9 @@ users' data in it — the opposite of a wireframe or a slide.
 2. Paste §1–§8 (the kit), then exactly one screen brief. Set the aspect ratio to widescreen 16:9
    before generating for Short briefs.
 3. **Generate screen A first and lock it.** It establishes the shell, the card, and the density that
-   every other screen inherits. Do not move on until it is right.
+   every other screen inherits. Do not move on until it is right. **Exception: the auth briefs (§J)
+   run in their own thread and never take screen A as a reference** — they have no app shell, and
+   attaching screen A is how a sidebar ends up on a sign-in page.
 4. From screen B onward, **attach the approved screen A image** as the style reference, with the
    borrow-scope line in §8 filled in: "borrow the app shell, table and card density, and type scale
    exactly; ignore its content."

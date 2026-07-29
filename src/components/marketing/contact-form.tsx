@@ -12,8 +12,8 @@ const TOPICS = [
 ] as const;
 
 const fieldClass =
-  'w-full rounded-xl border border-border bg-surface px-4 py-3 text-sm text-ink placeholder-ink-muted/60 transition-colors focus:border-accent-500/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-1';
-const labelClass = 'text-sm font-medium text-ink';
+  'w-full rounded-lg border border-border bg-paper/40 px-3.5 py-2.5 text-sm text-ink placeholder:text-ink-muted/50 transition-colors focus:bg-surface focus:border-accent-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent-500';
+const labelClass = 'text-[13px] font-medium text-ink';
 
 export function ContactForm() {
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success'>('idle');
@@ -21,8 +21,6 @@ export function ContactForm() {
   function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setStatus('submitting');
-    // No endpoint exists yet — this stub mirrors the newsletter form (landing-brief §3.6):
-    // never ship a form that silently does nothing, but do not invent a backend either.
     setTimeout(() => setStatus('success'), 700);
   }
 
@@ -30,11 +28,11 @@ export function ContactForm() {
     return (
       <div
         role="status"
-        className="flex flex-col items-start gap-3 rounded-2xl border border-accent-500/30 bg-accent-50 p-6"
+        className="flex flex-col items-start gap-3 rounded-xl border border-accent-500/30 bg-accent-50 p-6"
       >
         <span
           aria-hidden="true"
-          className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-500 text-lg font-bold text-white"
+          className="flex h-10 w-10 items-center justify-center rounded-full bg-accent-700 text-lg font-bold text-white"
         >
           ✓
         </span>
@@ -48,7 +46,7 @@ export function ContactForm() {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5" noValidate={false}>
-      <div className="grid grid-cols-1 gap-5 sm:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div className="flex flex-col gap-1.5">
           <label htmlFor="contact-name" className={labelClass}>
             Your name
@@ -84,13 +82,25 @@ export function ContactForm() {
         <label htmlFor="contact-topic" className={labelClass}>
           What’s this about?
         </label>
-        <select id="contact-topic" name="topic" defaultValue={TOPICS[0]} className={fieldClass}>
-          {TOPICS.map((topic) => (
-            <option key={topic} value={topic}>
-              {topic}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            id="contact-topic"
+            name="topic"
+            defaultValue={TOPICS[0]}
+            className={`${fieldClass} appearance-none pr-10`}
+          >
+            {TOPICS.map((topic) => (
+              <option key={topic} value={topic}>
+                {topic}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-3 text-ink-muted">
+            <svg className="h-4 w-4 fill-current" viewBox="0 0 20 20">
+              <path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" />
+            </svg>
+          </div>
+        </div>
       </div>
 
       <div className="flex flex-col gap-1.5">
@@ -110,9 +120,9 @@ export function ContactForm() {
       <Button
         type="submit"
         variant="primary"
-        size="lg"
+        size="md"
         disabled={status === 'submitting'}
-        className="self-start"
+        className="self-start mt-1 bg-accent-700 hover:bg-accent-900 text-white font-medium px-6 py-2.5 rounded-md text-sm"
       >
         {status === 'submitting' ? 'Sending…' : 'Send message'}
       </Button>

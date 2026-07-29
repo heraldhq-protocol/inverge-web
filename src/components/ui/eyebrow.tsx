@@ -4,7 +4,7 @@ import { cn } from '@/lib/utils';
 export interface EyebrowProps extends React.HTMLAttributes<HTMLDivElement> {
   children: React.ReactNode;
   statusDot?: boolean;
-  tone?: 'default' | 'forest';
+  tone?: 'default' | 'forest' | 'accent';
 }
 
 export function Eyebrow({
@@ -17,10 +17,8 @@ export function Eyebrow({
   return (
     <div
       className={cn(
-        'inline-flex items-center gap-2 text-xs font-bold tracking-widest uppercase',
-        // accent-500 on forest lands near 4:1 — under AA for text this small. The pale end of
-        // the ramp reads as green and clears 4.5:1 against the band.
-        tone === 'forest' ? 'text-accent-100' : 'text-ink-muted',
+        'inline-flex items-center gap-2 text-[12px] font-semibold tracking-[0.15em] uppercase',
+        tone === 'forest' ? 'text-accent-100' : tone === 'accent' ? 'text-accent-700' : 'text-ink-muted',
         className
       )}
       {...props}

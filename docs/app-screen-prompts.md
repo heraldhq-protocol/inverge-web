@@ -13,6 +13,8 @@ mockup. Each block below is one message. The art direction and reasoning behind 
 1. **Message 0 first**, once, in the landing-page chat. It reuses that thread's palette memory while
    resetting the composition — the landing page is a marketing page and these are not.
 2. **Then one screen prompt per message**, in the order given. Screen 1 first, always.
+   The three auth screens (A1–A3) live at the bottom and run in a **separate fresh thread** — they
+   are the only screens with no app shell, so they don't belong in the inheritance chain.
 3. **Set aspect ratio to widescreen 16:9** before generating, except where a prompt says "tall".
 4. **Lock screen 1 before moving on.** It sets the shell, card, and type scale everything else
    inherits. Regenerate it until it's right.
@@ -493,6 +495,210 @@ with two buttons beneath it: "Start an idea" (filled green) and "Clear filters"
 No illustration. No mascot. No "Oops". No emoji. No sad face. No magnifying-glass
 graphic. Plain type, generous space, and the action attached. It should read as calm
 direction, not as an apology.
+
+Output one image, 16:9, high-fidelity, production-quality.
+```
+
+---
+---
+
+# AUTH SCREENS — A1, A2, A3
+
+*Numbered separately from 1–9 on purpose: **these are the only screens with no app shell**, so they
+sit outside the "lock screen 1, inherit its shell" chain. Send Message 0 first, then these in a
+**fresh thread**, A1 → A2 → A3. Do **not** attach screen 1 — attaching it is what makes the model
+draw a sidebar onto a sign-in page.*
+
+**Sign-in is Privy-only, and Privy has no separate sign-up.** Entering an email for the first time
+*is* creating the account. So A1 and A2 are the same mechanism with different framing copy, and A2 is
+drawn in its email-code state rather than at rest — an at-rest sign-up screen would be A1 with two
+words changed. A3 is what actually distinguishes a new account: the first-run interest pick.
+
+**One extra drift to watch for on these three:**
+
+| What you see | Say exactly this |
+|---|---|
+| A sidebar or top bar appeared | "Remove the sidebar and top bar. This screen has no app shell — the user isn't signed in yet." |
+| A password field appeared | "Remove the password field, the 'Confirm password' field, and 'Forgot password'. There is no password in this product." |
+| A padlock, shield, or key graphic | "Remove it. No padlock, shield, key, or checkmark-circle — per the icon rule." |
+
+---
+
+# SCREEN A1 — Sign in
+
+16:9 landscape. **No app shell.** Fresh thread, after Message 0.
+
+```
+SCREEN A1: Sign in. Format: one screen, 16:9, a 1440px desktop viewport. Layout: a
+two-panel split — a forest-green brand panel on the left (~45%), the auth column on
+the right (~55%) with the form in a single centred column about 400px wide.
+
+THIS SCREEN HAS NO APP SHELL. No left sidebar, no 64px top bar, no search field, no
+bell, no avatar. The user is not signed in yet, so none of that chrome exists. This is
+the one deviation from the locked shell, and it is deliberate.
+
+Density also relaxes here: an auth screen is one decision, not a working surface. Keep
+the small type scale — heading 28px, body 14-15px, labels 13px — but let the centred
+column breathe. It is neither a dense product screen nor a landing page.
+
+LEFT PANEL — forest green ground, quiet, carrying information rather than decoration.
+The leaf mark and "inverge" wordmark at the top. Then one line, set large but not
+landing-page large (~24px):
+  "Back money that has to deliver."
+and beneath it, in a muted tint of the panel:
+  "Every milestone is approved by backers before it pays out."
+Then a small, quiet proof row in tabular numerals, hairline-separated:
+  "₦48,200,000 released across 61 milestones"
+  "₦3,100,000 refunded automatically"
+No photograph, no illustration, no pattern, no gradient mesh, no glow.
+
+RIGHT PANEL — warm cream, the auth column centred:
+  Heading (28px):  "Sign in to Inverge"
+  Sub-line:        "We'll email you a 6-digit code. There's no password to remember."
+
+  A single field, label ABOVE it and always visible:
+    Label:  "Email address"
+    Field showing a real typed value: "amara.okonkwo@gmail.com"
+
+  Full-width filled green button:  "Email me a code"
+
+  A hairline divider with the word "or" centred in it.
+
+  Two full-width OUTLINED buttons, stacked, each with a small 18px brand glyph at the
+  left of its label:
+    "Continue with Google"
+    "Continue with X"
+
+  Beneath, a small centred line with the second half as a green link:
+    "New to Inverge? Create an account"
+
+  At the very bottom, one small muted legal line, "Terms" and "Privacy Policy" as links:
+    "By continuing you agree to our Terms and Privacy Policy."
+
+WHAT MUST NOT APPEAR ON THIS SCREEN — this is the exact screen where each of these gets
+reached for by reflex:
+  - NO password field, no "Confirm password", no password strength meter, no "Forgot
+    password" link. This product has no passwords at all.
+  - NO wallet anything. No "Connect wallet" button, no wallet list, no Phantom /
+    MetaMask / Solflare logos, no QR code, no "I already have a wallet", no seed
+    phrase, no chain or network name.
+  - NO third-party auth-vendor branding or "protected by" badge. Inverge is the
+    product; the vendor underneath is invisible, exactly like the chain is.
+  - NO padlock, shield, key, fingerprint, or checkmark-in-a-circle icon, at any size.
+  - NO illustration, no 3D graphic, no person-at-a-laptop stock photo, no mascot.
+
+Output one image, 16:9, high-fidelity, production-quality — a real sign-in screen from
+a product that already has users, not a template.
+```
+
+---
+
+# SCREEN A2 — Create your account (email code step)
+
+16:9 landscape. **No app shell.** Attach the approved A1.
+
+```
+SCREEN A2: Create your account, shown in its email-code step. Format: one screen, 16:9.
+Same two-panel split as the attached A1.
+
+Match the attached A1 exactly for the left brand panel, the column width, the type
+scale, and the button style. The left panel is IDENTICAL — do not change its copy or
+its numbers. Only the right column changes. Still NO app shell.
+
+Sign-up and sign-in are the same mechanism in this product — entering an email for the
+first time creates the account — so this screen is the second step of that one flow,
+not a different form. There is no password field here either, and no "Confirm email".
+
+RIGHT COLUMN, centred, ~400px:
+  A small muted step line above the heading:  "Step 2 of 2"
+
+  Heading (28px):  "Check your email"
+  Sub-line, with the last two words as a green link:
+    "We sent a 6-digit code to amara.okonkwo@gmail.com — Change email"
+
+  THE CODE INPUT IS THE SIGNATURE ELEMENT OF THIS SCREEN; draw it with real care.
+  Six separate single-character boxes in a row, evenly spaced, each about 48px wide and
+  56px tall with a 1px warm hairline border. The first four hold the digits "4", "8",
+  "2", "9" — set in the monospace face, since a one-time code is technical data. The
+  fifth box is focused: a solid green 2px border and a visible text caret. The sixth is
+  empty and at rest. The focused box must be distinguishable by border weight as well
+  as colour, never colour alone.
+
+  Full-width filled green button:  "Continue"
+
+  Beneath it, two small muted lines:
+    "Resend code in 0:24"
+    "The code expires in 10 minutes."
+  The resend line is plainly disabled — muted, not a live link — and the countdown is
+  calm and factual. Not red, not a large timer, not an alarm.
+
+  At the bottom, a small line with the last three words as a link:
+    "Wrong email? Start over"
+
+Everything banned on A1 is banned here too: no password, no wallet, no seed phrase, no
+auth-vendor badge, no padlock or shield, no illustration.
+
+Output one image, 16:9, high-fidelity, production-quality.
+```
+
+**Optional variant** — worth generating once, since it is the state that actually gets support
+tickets. Send as a follow-up in the same thread:
+
+```
+Same screen, one change only: the code is wrong. All six boxes are filled with
+"4 8 2 9 1 7". Apply the error pattern from the form rules — a soft red-tinted
+background wash across the code boxes PLUS this message directly beneath them:
+  "That code doesn't match. Codes expire after 10 minutes — resend to get a new one."
+The "Resend code" line below is now a live green link, not a countdown. Error is shown
+by tint AND message, never by a red border alone. Nothing else on the screen changes.
+```
+
+---
+
+# SCREEN A3 — First-run interests
+
+16:9 landscape. **No app shell yet.** Attach the approved A1.
+
+```
+SCREEN A3: First-run interests, the last step of creating an account. Format: one
+screen, 16:9. Layout: a single centred column about 640px wide on warm cream — NOT the
+two-panel split, and still NO sidebar and NO top bar. Only the leaf mark and "inverge"
+wordmark sit at the top left of the page, small.
+
+Match the attached A1 for type scale, button style, and chip and border treatment.
+Ignore its layout.
+
+Job: a brand-new backer tells us what to put in their feed. This step is genuinely
+optional and the screen must look like it — skipping is a plain, visible choice, never
+a greyed-out afterthought and never a dismissal X in a corner.
+
+  Heading (28px):  "What do you want to see first?"
+  Sub-line:        "Pick anything that interests you. This only shapes your feed — you
+                    can still see every idea on Inverge."
+
+  FIRST GROUP, with the small label "Categories" above it:
+  Five selectable chips in a wrapping row, exactly these labels:
+    "Software"   "Agriculture"   "Film"   "Arts"   "Other"
+  "Agriculture" and "Software" are SELECTED: pale green fill, a solid green 1.5px
+  border, and a small 14px check glyph before the label. The unselected chips are white
+  with a warm hairline border and no glyph. Selection is marked by shape and border as
+  well as colour — never colour alone.
+
+  SECOND GROUP, with the small label "Regions" above it:
+  Six chips in the same style, exactly these labels:
+    "Lagos"   "Ibadan"   "Abuja"   "Kano"   "Accra"   "Anywhere in West Africa"
+  "Lagos" is selected, in the same selected treatment.
+
+  ACTIONS, left-aligned at the bottom of the column:
+    "Show me ideas"   (filled green)
+    "Skip for now"    (plain text link, clearly clickable, not a disabled-looking ghost
+                       button)
+
+  One small muted line beneath the actions:
+    "You can change this any time in Settings."
+
+No progress bar, no confetti, no "Welcome aboard!", no emoji, no illustration, no
+mascot, no wallet mention, no padlock or shield. Calm and ordinary.
 
 Output one image, 16:9, high-fidelity, production-quality.
 ```
