@@ -188,7 +188,9 @@ Ordered by how much UI each unblocks. Every one is additive.
 |---|---|---|---|
 | 1 | **Public creator identity**: `displayName`, `avatarUrl`, `bio`, `links` on a public creator projection, embedded in feed items, idea detail, and comment authors | Cards, creator panel, comment thread, campaign header. The single most blocking gap | — |
 | 2 | **Comment author projection** on `GET /ideas/:id/comments` (`author: { id, displayName, avatarUrl, isCreator }`) | The thread cannot render at all without it | FR-701 |
-| 3 | `coverImageUrl` on `Idea` (+ upload path, separable) | Image-led cards; typographic covers are the fallback, not the plan | — |
+| 3 | **Media** on `Idea`: `coverImageUrl` first (+ upload path, separable), optional short `videoUrl` second | Image-led cards; typographic covers are the fallback, not the plan. Video rationale and its caveats in [`pitch-narrative-playbook.md`](./pitch-narrative-playbook.md) §6 | — |
+| 3b | Optional idea-level `risks` field, prompted and scored as coaching | Kickstarter mandates a risks section on every project; our ideas have none. Feeds the quality coach and, later, backer context in objection voting | FR-271a |
+| 3c | Optional one-line `summary` on `Idea` | OpenGraph text, campaign header, share copy. Low priority: `problem` stays the card line | — |
 | 4 | Owner filter on `GET /ideas` (`mine=true` or `creatorId=`) plus `DRAFT` visibility to the owner | Creator dashboard | — |
 | 5 | Public gate progress on `GET /ideas/:id` (the have/need/met breakdown `insights` already computes) | Public gate breakdown without exposing the creator-only insights payload | FR-203/204 |
 | 6 | `GET /campaigns` and `GET /campaigns/:id` per §2 | Every campaign screen; removes the fixtures | FR-301–305 |

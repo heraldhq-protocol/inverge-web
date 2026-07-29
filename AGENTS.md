@@ -25,6 +25,11 @@ This version has breaking changes — APIs, conventions, and file structure may 
   above is drawn from: homepage module inventory, the card anatomy, the project-page bands, tab by
   tab, the closed badge vocabulary, and the vocabulary translation table (what we may never call
   money). Explains *why* the brief looks the way it does, and what we deliberately refuse.
+- `docs/pitch-narrative-playbook.md` — the creator-side companion to that teardown: the narrative
+  order a pitch follows, the copy and rhythm rules, where each one is enforced in our code, and the
+  four places we deliberately invert the reference (disclosure first, hyperbole as a compliance
+  boundary, momentum as a ranked signal rather than theatre, no stretch goals). Read before touching
+  the story renderer, `/ideas/new`, or any coaching copy.
 
 ## Backend API contracts
 

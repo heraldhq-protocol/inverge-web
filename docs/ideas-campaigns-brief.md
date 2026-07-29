@@ -6,7 +6,8 @@
 >
 > Read first: [`conventions.md`](./conventions.md) (the rulebook), [`app-mockup-kit.md`](./app-mockup-kit.md)
 > §3–§6 (art direction, shell, content rules), [`reference-teardown-kickstarter.md`](./reference-teardown-kickstarter.md)
-> (where these layouts come from), [`feed-api.md`](./feed-api.md) (the feed contract),
+> (where these layouts come from), [`pitch-narrative-playbook.md`](./pitch-narrative-playbook.md)
+> (what goes inside a pitch, and in what order), [`feed-api.md`](./feed-api.md) (the feed contract),
 > [`campaign-data-contract.md`](./campaign-data-contract.md) (the provisional campaign contract).
 >
 > Branch: `feat/ideas-campaigns-ui`.
@@ -169,8 +170,8 @@ one per file, `ui/` never imports `lib/api`.
 | Component | Job |
 |---|---|
 | `IdeaHeader` | Title, creator, published date, cover, attribute row. Title stays left-aligned. |
-| `IdeaStoryToc` | Generated from the structured pitch sections, sticky at `lg`. |
-| `IdeaStory` | The pitch: problem, target user, current alternative and its shortfall, solution, ask breakdown, roadmap steps. |
+| `IdeaStoryToc` | Generated from the structured pitch sections, sticky at `lg`. Generated, not author-supplied, so every idea gets the same readable skeleton ([playbook §2](./pitch-narrative-playbook.md)). |
+| `IdeaStory` | The pitch, in the playbook's order: problem, target user, current alternative and its shortfall, solution, ask breakdown, roadmap steps, risks once the field exists. Measure capped at ~68 characters; headings are typeset by us, never creator formatting. |
 | `IdeaActionPanel` | Sticky rail in the reference's number order (teardown §4): meter, figures, actions, fine print. Bottom bar on mobile. |
 | `GateBreakdown` | The four FR-204 criteria with have/need/met, from the same maths as `insights`. Accordion. |
 | `SupportButton` | `POST/DELETE /ideas/:id/support`. Optimistic, idempotent. |
@@ -253,7 +254,21 @@ Three sentences, on idea detail and campaign detail, non-dismissable:
 - Refund line: `Your refund: $45 returned on 4 March.`
 - Funding disabled: `Funding opens when this campaign is approved. Follow the idea to hear first.`
 
-### 5.5 Verification
+### 5.5 Publishing an idea, coaching copy
+
+Per [`pitch-narrative-playbook.md`](./pitch-narrative-playbook.md) §4 and §5.2. Field help is
+coaching, never scolding, and the claims line is compliance, not tone.
+
+- Preview heading: `This is what backers will see`
+- Problem field help: `Who has this problem, and how often? One sentence is enough.`
+- Current alternative help: `What do they do today, and where does it fall short?`
+- Ask breakdown help: `What does the money buy? A rough split is fine.`
+- Roadmap help: `At least two dated steps. What will exist, and by when?`
+- Risks help (once the field exists): `What is most likely to go wrong, and what would you do about it?`
+- Claims guidance, shown once near the top: `Describe what you will build and who needs it. Do not promise anyone a financial return.`
+- Quality coaching result: `Here is what would make this stronger.` Never `Your idea was rejected.`
+
+### 5.6 Verification
 
 One line, on the campaign submission screen only: `Creators receive money, so we verify who you are
 first. This is required before you can launch a campaign, never to publish an idea.` Nothing about
@@ -362,6 +377,8 @@ Recorded rather than guessed. Each one has a default so the build is not blocked
 |---|---|---|
 | 1 | Display identity: add `displayName`/`avatarUrl`/`bio` to the API, or ship without? | Components take an optional `creator` prop and degrade to initials. API ask filed. |
 | 2 | Cover images: upload now or typographic covers only? | Deterministic typographic cover; `coverImageUrl?` accepted from day one. |
+| 2b | Video, given the reported conversion gap ([playbook §6](./pitch-narrative-playbook.md))? | Not at launch. Filed behind the cover-image ask; opt-in load, never autoplay. |
+| 2c | A one-line `summary`/hook field, or keep `problem` on cards? | `problem` stays on cards; `summary` filed as low priority for OG text and campaign headers. |
 | 3 | Does the meter show the binding constraint or an average of the four gate criteria? | Binding constraint, with all four broken out in `GateBreakdown`. An average would hide the blocker. |
 | 4 | Public community/aggregate views: new endpoint, or creator-only? | Creator dashboard only. |
 | 5 | Search in the top bar: build against nothing, or omit? | Omit until an endpoint exists. A dead box is worse than no box. |

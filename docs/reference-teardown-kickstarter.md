@@ -2,9 +2,10 @@
 
 > Structural analysis of the reference we are borrowing from for the idea feed, idea detail, and
 > campaign surfaces. **We are borrowing information architecture, not aesthetics.** Kickstarter has
-> sixteen years of iteration on "how do you lay out a page that asks a stranger for money," and that
-> layout knowledge is worth taking. Its visual language, badge inflation, and money vocabulary are
-> not, and several of its patterns are things Inverge is contractually unable to copy.
+> spent seventeen years iterating on a problem we also have: how to lay out a page that asks a
+> stranger to send money for something that does not exist yet, made by someone they have never
+> heard of. That layout knowledge is worth taking. Its visual language, badge inflation, and money
+> vocabulary are not, and several of its patterns are things Inverge is contractually unable to copy.
 >
 > Companions: [`conventions.md`](./conventions.md) is the rulebook, [`app-mockup-kit.md`](./app-mockup-kit.md)
 > is the art direction for logged-in screens, [`ideas-campaigns-brief.md`](./ideas-campaigns-brief.md)
@@ -504,7 +505,12 @@ Ranked by value-per-hour, and this is the order [`ideas-campaigns-brief.md`](./i
 ## 11. Sources
 
 - Screenshots as described under **Capture provenance**, July 2026: Kickstarter homepage and the
-  Gravel "Summit PLUS" project across all seven tabs.
+  Gravel "Summit PLUS" project across all seven tabs. Everything in §2–§7 is read off those images;
+  no claim here comes from a Kickstarter publication.
+- [`pitch-narrative-playbook.md`](./pitch-narrative-playbook.md) — the **second reference set**
+  (Kickstarter Creator Handbook, Stonemaier Games campaign anatomy, practitioner playbooks, supplied
+  July 2026). That document covers the creator-side narrative order and content rules, which this one
+  does not: the split is platform layout here, page content there.
 - Inverge PRD/SRS v1.2 §5.1–5.6, §8.1, FR-201–206a, FR-301–311, FR-401–406, FR-501–509, FR-601–608,
   FR-801–803 (`Inverge/docs/Inverge_PRD_SRS_v1.2.md`).
 - [`feed-api.md`](./feed-api.md), [`feed-design.md`](./feed-design.md) — feed contract and rationale.
