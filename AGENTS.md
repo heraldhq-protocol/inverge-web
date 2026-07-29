@@ -17,6 +17,14 @@ This version has breaking changes — APIs, conventions, and file structure may 
   differ from the landing page (density, type scale, cards vs tables, states), the locked palette
   and app shell, form rules, and a per-screen mockup brief. Read before designing or building any
   screen behind the marketing site.
+- `docs/ideas-campaigns-brief.md` — **build spec for the idea feed, idea detail, and campaign
+  screens.** Scope and file allowlist, the locked app shell, route map, component inventory, the
+  copy deck (strings are final), state matrix, the hard rules specific to these screens, staged
+  build order, and definition of done. Read before touching anything under `(app)`.
+- `docs/reference-teardown-kickstarter.md` — structural teardown of the Kickstarter reference the
+  above is drawn from: homepage module inventory, the card anatomy, the project-page bands, tab by
+  tab, the closed badge vocabulary, and the vocabulary translation table (what we may never call
+  money). Explains *why* the brief looks the way it does, and what we deliberately refuse.
 
 ## Backend API contracts
 
@@ -28,4 +36,8 @@ Read these before building the corresponding UI — they are the source of truth
   pagination, personalization capture, and the paid-placement labelling requirement.
 - `docs/feed-design.md` — the feed/ranking design & rationale behind that contract (three-stage
   architecture, scoring, cold-start/exploration, anti-gaming, paid-placement separation).
+- `docs/campaign-data-contract.md` — **provisional** contract for campaign screens. Campaigns are
+  schema-only and inert in `inverge-api`: only `POST /ideas/:id/convert` is live. Lists what exists,
+  the read shapes the UI is built against, derived milestone state, the additive asks filed against
+  the API, and the single fixture swap point. No component may invent a campaign endpoint.
 <!-- END:nextjs-agent-rules -->
