@@ -8,6 +8,8 @@ export type Guide = {
   summary: string;
   audience: string;
   readingTime: string;
+  /** Line icon drawing the guide's mechanic — never a trust badge (landing-brief §3.3). */
+  icon: React.ReactNode;
   intro: React.ReactNode;
   steps: GuideStep[];
 };
@@ -23,6 +25,17 @@ export const GUIDES: Guide[] = [
     summary: 'From a rough idea to a validated page ready to raise, step by step.',
     audience: 'For builders',
     readingTime: '6 min',
+    // A lightbulb — the idea being put out into the world.
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M9.5 18h5M10.5 21h3" />
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          d="M12 3a6 6 0 0 0-3.6 10.8c.5.4.85 1 .95 1.7l.15 1h5l.15-1c.1-.7.45-1.3.95-1.7A6 6 0 0 0 12 3Z"
+        />
+      </svg>
+    ),
     intro: (
       <p>
         Publishing on Inverge starts before you raise a single naira. You put your idea in front of
@@ -85,6 +98,14 @@ export const GUIDES: Guide[] = [
     summary: 'What backing means, how your money is protected, and how to back well.',
     audience: 'For backers',
     readingTime: '4 min',
+    // A stack of coins — money committed to a builder.
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <ellipse cx="12" cy="6" rx="7" ry="3" />
+        <path strokeLinecap="round" d="M5 6v6c0 1.66 3.13 3 7 3s7-1.34 7-3V6" />
+        <path strokeLinecap="round" d="M5 12v6c0 1.66 3.13 3 7 3s7-1.34 7-3v-6" />
+      </svg>
+    ),
     intro: (
       <p>
         Backing on Inverge is designed to be safer than most crowdfunding, but a careful backer
@@ -136,6 +157,13 @@ export const GUIDES: Guide[] = [
     summary: 'The mechanism at the heart of Inverge: how money is held, released, and returned.',
     audience: 'For everyone',
     readingTime: '5 min',
+    // A flag — the milestone reached before funds release.
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <path strokeLinecap="round" d="M6 21V4" />
+        <path strokeLinecap="round" strokeLinejoin="round" d="M6 5h11l-2.4 3.5L17 12H6" />
+      </svg>
+    ),
     intro: (
       <p>
         Milestones are the whole idea. Understanding them explains why Inverge can promise
@@ -188,6 +216,15 @@ export const GUIDES: Guide[] = [
     summary: 'Why verification exists and what to expect when you raise funds.',
     audience: 'For builders',
     readingTime: '3 min',
+    // An ID card — the identity check behind raising funds.
+    icon: (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.75} aria-hidden="true">
+        <rect x="3" y="5" width="18" height="14" rx="2" />
+        <circle cx="8.5" cy="11" r="1.8" />
+        <path strokeLinecap="round" d="M5.5 16c.5-1.3 1.6-2 3-2s2.5.7 3 2" />
+        <path strokeLinecap="round" d="M14.5 10h4M14.5 13.5h3" />
+      </svg>
+    ),
     intro: (
       <p>
         Before a campaign can collect money, builders verify their identity, and where relevant
