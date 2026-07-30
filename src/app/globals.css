@@ -16,6 +16,14 @@
   --color-ink-muted: oklch(0.48 0.01 95);     /* Subtitle and label grey */
   --color-border: oklch(0.91 0.01 95);        /* Subtle warm card border */
 
+  /* The one licensed second hue: a desaturated warm red, for failed and refunded states only.
+     "Failed" carrying the same green as "approved" is a comprehension failure, not a style
+     choice (app-mockup-kit §4). Kept muted — this is not an alert dashboard. -700 is the
+     text-safe step; body-size text on the -50 wash must use it, not the base.  */
+  --color-danger: oklch(0.55 0.13 32);
+  --color-danger-50: oklch(0.96 0.02 40);
+  --color-danger-700: oklch(0.44 0.13 32);
+
   /* Elevation — warm-tinted rather than neutral black. A pure-black shadow over a cream
      surface leaves a grey cast; matching the shadow's hue to the paper keeps it clean. */
   --shadow-lift: 0 18px 40px -12px oklch(0.2 0.02 95 / 0.2), 0 6px 14px -8px oklch(0.2 0.02 95 / 0.12);
