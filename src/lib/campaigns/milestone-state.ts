@@ -8,7 +8,7 @@ import type { Milestone, MilestoneState } from './types';
  * Pure and I/O-free, so the tracker, the header summary and the receipts list cannot disagree about
  * which stage a campaign is on.
  */
-export function milestoneState(m: Milestone, now: Date = new Date()): MilestoneState {
+export function milestoneState(m: Milestone): MilestoneState {
   if (m.cancelled) return 'CANCELLED';
   if (!m.claim) return 'UPCOMING';
 

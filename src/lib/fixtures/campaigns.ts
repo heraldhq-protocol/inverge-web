@@ -147,8 +147,7 @@ function clinicQueue(): CampaignDetail {
     deliverable: string,
     pct: string,
     evidence: string,
-    daysAgo: number,
-    n: number
+    daysAgo: number
   ): Milestone => ({
     id: `ms_cq_${i + 1}`,
     index: i,
@@ -195,10 +194,10 @@ function clinicQueue(): CampaignDetail {
     workingCapitalPct: '22.00',
     launchedAt: iso(-240),
     milestones: [
-      done(0, 'SMS booking live', 'Patients can book a slot by SMS.', '25.00', 'Gateway logs', -150, 0),
-      done(1, 'Front desk list in daily use', 'Staff work from the generated list for 20 working days.', '25.00', 'Signed staff log', -110, 1),
-      done(2, 'Two satellite centres added', 'Both centres booking through the same list.', '25.00', 'Administrator confirmation', -70, 2),
-      done(3, '3,000 appointments booked', '3,000 booked appointments across all sites.', '25.00', 'Published query and export', -30, 3),
+      done(0, 'SMS booking live', 'Patients can book a slot by SMS.', '25.00', 'Gateway logs', -150),
+      done(1, 'Front desk list in daily use', 'Staff work from the generated list for 20 working days.', '25.00', 'Signed staff log', -110),
+      done(2, 'Two satellite centres added', 'Both centres booking through the same list.', '25.00', 'Administrator confirmation', -70),
+      done(3, '3,000 appointments booked', '3,000 booked appointments across all sites.', '25.00', 'Published query and export', -30),
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '12450.00', -158, 10),
