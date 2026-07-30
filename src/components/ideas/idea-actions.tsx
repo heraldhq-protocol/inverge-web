@@ -1,113 +1,113 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { api, getSessionToken } from '@/lib/api/client';
+import { useId, useState } from 'react';
+import { Button } from '@/components/ui/button';
+import { Amount } from '@/components/ui/amount';
 
-const btn =
-  'rounded-full bg-foreground px-4 py-1.5 text-sm font-medium text-background transition hover:opacity-90 disabled:opacity-40';
-const field =
-  'rounded-lg border border-foreground/15 bg-transparent px-3 py-1.5 text-sm';
-
+/**
+ * The two signals a reader can leave on an idea: support, and a non-binding pre-pledge (FR-202).
+ *
+ * Client island inside a Server Component page — only these controls need state, so only these ship to
+ * the browser (conventions §3.1).
+ *
+ * Writes are not connected: this build runs on fixtures. The live calls are
+ * `POST/DELETE /ideas/:id/support` and `POST/DELETE /ideas/:id/pre-pledge`, both already shipped on the
+ * API, so wiring is one call per action in this file.
+ *
+ * The line under the pre-pledge control is mandatory and never softened: a pre-pledge must not be able
+ * to read as a payment (brief §5.1).
+ */
 export function IdeaActions({ ideaId }: { ideaId: string }) {
-  const router = useRouter();
-  const [signedIn] = useState(() => Boolean(getSessionToken()));
-  const [busy, setBusy] = useState<string | null>(null);
-  const [msg, setMsg] = useState<string | null>(null);
-  const [pledge, setPledge] = useState(50);
-  const [rating, setRating] = useState(5);
+  const amountId = useId();
+  const [supporting, setSupporting] = useState(false);
+  const [pledged, setPledged] = useState<number | null>(null);
+  const [amount, setAmount] = useState('50');
+  const [showPledge, setShowPledge] = useState(false);
 
-  async function run(key: string, call: () => Promise<{ error?: unknown }>) {
-    setBusy(key);
-    setMsg(null);
-    const { error } = await call();
-    setBusy(null);
-    if (error) return setMsg('Something went wrong — are you still signed in?');
-    setMsg('Saved.');
-    router.refresh(); // re-render the server component with fresh metrics
-  }
-
-  if (!signedIn) {
-    return (
-      <div className="rounded-xl border border-foreground/10 p-4 text-sm text-foreground/60">
-        Sign in to support, pre-pledge, or leave feedback.
-      </div>
-    );
-  }
+  const parsed = Number(amount);
+  const validAmount = Number.isFinite(parsed) && parsed >= 1;
 
   return (
-    <div className="space-y-3 rounded-xl border border-foreground/10 p-4">
-      <div className="flex flex-wrap items-center gap-3">
-        <button
-          disabled={Boolean(busy)}
-          onClick={() =>
-            run('support', () =>
-              api.POST('/ideas/{id}/support', { params: { path: { id: ideaId } } }),
-            )
-          }
-          className={btn}
-        >
-          Support
-        </button>
+    <div className="space-y-3">
+      <Button
+        variant={supporting ? 'secondary' : 'primary'}
+        size="lg"
+        className="w-full"
+        aria-pressed={supporting}
+        onClick={() => setSupporting((v) => !v)}
+      >
+        {supporting ? 'You support this idea' : 'Support this idea'}
+      </Button>
 
-        <div className="flex items-center gap-2">
-          <input
-            type="number"
-            min={1}
-            value={pledge}
-            onChange={(e) => setPledge(Number(e.target.value))}
-            className={`${field} w-24`}
-            aria-label="Pre-pledge amount"
-          />
+      {pledged === null ? (
+        <>
+          {!showPledge ? (
+            <Button variant="outline" size="md" className="w-full" onClick={() => setShowPledge(true)}>
+              Pre-pledge
+            </Button>
+          ) : (
+            <div className="rounded-lg border border-border bg-paper p-3">
+              <label htmlFor={amountId} className="block text-xs font-medium text-ink">
+                How much would you put in?
+              </label>
+              <div className="mt-1.5 flex gap-2">
+                <div className="relative flex-1">
+                  <span
+                    aria-hidden="true"
+                    className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-ink-muted"
+                  >
+                    $
+                  </span>
+                  <input
+                    id={amountId}
+                    type="number"
+                    inputMode="decimal"
+                    min={1}
+                    step={1}
+                    value={amount}
+                    onChange={(e) => setAmount(e.target.value)}
+                    className="min-h-11 w-full rounded-lg border border-border bg-surface pl-7 pr-3 text-sm tabular-nums text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                  />
+                </div>
+                <Button
+                  variant="primary"
+                  size="md"
+                  disabled={!validAmount}
+                  onClick={() => validAmount && setPledged(parsed)}
+                >
+                  Confirm
+                </Button>
+              </div>
+            </div>
+          )}
+          <p className="text-xs leading-relaxed text-ink-muted">
+            No money moves yet. This tells the creator you&apos;re in.
+          </p>
+        </>
+      ) : (
+        <div className="rounded-lg border border-accent-500/30 bg-accent-50 p-3">
+          <p className="text-sm text-ink">
+            You pre-pledged <Amount value={pledged} currency="USD" className="font-semibold" />.
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
+            Still no money moved. You can change or withdraw this while the idea is being validated.
+          </p>
           <button
-            disabled={Boolean(busy)}
-            onClick={() =>
-              run('pledge', () =>
-                api.POST('/ideas/{id}/pre-pledge', {
-                  params: { path: { id: ideaId } },
-                  body: { amount: pledge },
-                }),
-              )
-            }
-            className={btn}
+            type="button"
+            onClick={() => {
+              setPledged(null);
+              setShowPledge(false);
+            }}
+            className="mt-2 min-h-11 rounded text-sm font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           >
-            Pre-pledge
+            Withdraw my pre-pledge
           </button>
         </div>
+      )}
 
-        <div className="flex items-center gap-2">
-          <select
-            value={rating}
-            onChange={(e) => setRating(Number(e.target.value))}
-            className={field}
-            aria-label="Feedback rating"
-          >
-            {[1, 2, 3, 4, 5].map((r) => (
-              <option key={r} value={r}>
-                {r}★
-              </option>
-            ))}
-          </select>
-          <button
-            disabled={Boolean(busy)}
-            onClick={() =>
-              run('feedback', () =>
-                api.POST('/ideas/{id}/feedback', {
-                  params: { path: { id: ideaId } },
-                  body: { rating },
-                }),
-              )
-            }
-            className={btn}
-          >
-            Leave feedback
-          </button>
-        </div>
-      </div>
-      {msg && <p className="text-sm text-foreground/60">{msg}</p>}
-      <p className="text-xs text-foreground/40">
-        Pre-pledges move no funds — they signal intent (FR-202).
-      </p>
+      <Button variant="outline" size="md" className="w-full" href={`/ideas/${ideaId}?tab=feedback`}>
+        Answer the creator&apos;s questions
+      </Button>
     </div>
   );
 }
