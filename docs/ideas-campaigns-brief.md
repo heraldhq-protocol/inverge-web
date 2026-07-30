@@ -18,30 +18,54 @@
 
 ### 1.1 What exists today
 
-The Phase-0 scaffold is four thin pages wired to the API with none of the design system applied:
+Stages 1–6 and 8–9 of §8 are built and on `feat/ideas-campaigns-ui`. Everything renders from
+**fixtures behind one swap flag per domain** — see §1.4.
 
-| Route | File | State |
-|---|---|---|
-| `/ideas` | `src/app/(validate)/ideas/page.tsx` | `GET /ideas` list, `divide-y` rows, `foreground/*` tokens that are not in the theme, no cards, no meter | 
-| `/ideas/[id]` | `src/app/(validate)/ideas/[id]/page.tsx` | detail with three metric boxes and three prose blocks; no survey, no comments, no creator, no gate breakdown |
-| `/ideas/new` | `src/app/(validate)/ideas/new/page.tsx` | create form; predates the FR-270 structured pitch fields |
-| `/campaigns` | `src/app/(campaign)/campaigns/page.tsx` | placeholder plus the KYC/KYB verify cards |
-| `/review` | `src/app/(admin)/review/page.tsx` | placeholder |
-| `/verify`, `/kyc/callback` | `(validate)/verify`, `app/kyc/callback` | working, leave alone |
+| Route | State |
+|---|---|
+| `/feed` | Built. Hero module, 3-up grid, category lanes, closing-soon lane, loading and empty states |
+| `/ideas` | Redirects to `/feed` |
+| `/ideas/[id]` | Built. Header, generated TOC + story, sticky action rail, gate breakdown, trust strip, survey results, thread, creator panel, similar rail |
+| `/ideas/new` | Built. Structured pitch, blur validation, live preview |
+| `/campaigns` | Built. List with the verification entry point |
+| `/campaigns/[id]` | Built. Header, milestone tracker, objection window, receipts, refund state |
+| `/review` | Untouched placeholder (admin queue is out of scope) |
+| `/verify`, `/kyc/callback` | Untouched, working |
+| `/dashboard`, `/ideas/[id]/insights` | Not built (stage 7) |
 
-Four facts to internalise before touching any of it:
+Four findings from the original scaffold, recorded because they justify decisions above and are the
+kind of thing that silently comes back:
 
-1. **There is no app shell.** `(validate)`, `(campaign)` and `(admin)` have no `layout.tsx`, so they
-   render bare inside the root layout: no nav, no sidebar, no account menu.
-   `src/components/nav.tsx` is orphaned — nothing imports it; the marketing site uses
-   `components/marketing/nav.tsx`.
-2. **The scaffold pages use tokens that do not exist.** `text-foreground/60`, `bg-background`. The
-   theme defines `ink`, `ink-muted`, `paper`, `surface`, `border`, `accent-*`, `forest`. Those
-   classes have been silently doing nothing.
-3. **`/ideas` reads the wrong endpoint.** `GET /ideas` is the simple list; `GET /feed` is the ranked
+1. **There was no app shell at all.** `(validate)`, `(campaign)` and `(admin)` had no `layout.tsx`,
+   so every app screen rendered bare inside the root layout. Now one `(app)` group with the shell in
+   §2. `src/components/nav.tsx` was orphaned and is deleted.
+2. **The scaffold styled with tokens that do not exist** — `text-foreground/60`, `bg-background`.
+   The theme defines `ink`, `ink-muted`, `paper`, `surface`, `border`, `accent-*`, `forest`. Those
+   classes were silently doing nothing. `tx-link.tsx` was the last holdout and is fixed.
+3. **`/ideas` read the wrong endpoint.** `GET /ideas` is the simple list; `GET /feed` is the ranked
    discovery surface and supersedes it ([`feed-api.md`](./feed-api.md)).
-4. **Money is rendered in the wrong currency.** `<Amount>` defaults to NGN; `askAmount` and
-   `weightedPrePledgeTotal` are USD. See §7.4.
+4. **Money rendered in the wrong currency.** `<Amount>` defaults to NGN while `askAmount` and
+   `weightedPrePledgeTotal` are USD, so the scaffold showed dollar figures with a naira symbol.
+   Every new call site passes `currency` explicitly. See §7.4.
+
+### 1.4 Fixtures, and how the live swap works
+
+Nothing on these screens calls the API. Each domain has one data module holding a `USE_FIXTURES`
+flag, and no component imports fixtures or builds a request:
+
+| Module | Swap to | Blocked by |
+|---|---|---|
+| `lib/feed/feed-api.ts` | `GET /feed`, `PUT /me/interests` | Nothing — but cards need creator identity to look right (backlog item 1) |
+| `lib/ideas/ideas-api.ts` | `GET /ideas/:id`, `/survey`, `/comments` | Backlog items 1 and 2; the thread cannot render an author at all |
+| `lib/campaigns/campaigns-api.ts` | `GET /campaigns`, `/campaigns/:id` | Backlog item 6 — no campaign endpoints exist |
+
+Fixtures live in `lib/fixtures/` as **functions, not constants**, because every date is relative to
+now: a stale "4 days left" in a review is worse than no countdown. Three campaigns cover active
+mid-flight with a live objection window, completed, and failed with a refund, so all six milestone
+states are reviewable.
+
+Writes are not wired anywhere. Support, pre-pledge, likes and publish hold local state so the
+interaction is reviewable; each is one call in one file when the swap happens.
 
 ### 1.2 Files this feature may create or modify
 
@@ -328,22 +352,22 @@ Additions to conventions §1 and §13, specific to these screens. A PR that brea
 One stage per PR, each independently reviewable, each leaving `main` shippable. Checkpoint commit
 per meaningful unit within a stage.
 
-| Stage | Contents | Done when |
+| Stage | Contents | Status |
 |---|---|---|
-| 0 | This documentation set | Merged, AGENTS.md points at it |
-| 1 | App shell: `(app)` group, sidebar, top bar, account menu, route moves, token cleanup, orphaned `components/nav.tsx` removed | Every existing app route renders inside the shell at 320px and 1440px |
-| 2 | `ui/` primitives (§4.1) | Each renders in isolation, keyboard-reachable, contrast checked |
-| 3 | `IdeaCard` at three densities, `IdeaCover`, `ValidationMeter`, `ReasonChip`, `PromotedCard` | A card grid renders from fixtures at every density with no layout shift |
-| 4 | Feed: `lib/feed`, `/feed` page, `FeedHero`, `FeedGrid`, filters, "Show me more", loading/empty/error | Live against a running API, anonymous and signed-in, promoted slot visibly distinct |
-| 5 | Idea detail: header, generated TOC, story, action panel, gate breakdown, trust strip, similar rail | Reads a real idea end to end; support and pre-pledge work; panel obeys the number order |
-| 6 | Survey + comments tabs, `/ideas/new` rebuilt on the structured pitch | Publish, answer a survey, post and like a comment, all live |
-| 7 | Creator dashboard + `/ideas/[id]/insights` | Creator sees their own ideas, gate progress, and support geography |
-| 8 | Campaign detail against the provisional contract: header, `MilestoneTracker`, `ObjectionWindow`, `ReceiptTimeline`, risks | All four milestone states legible at once; fixtures only; one swap point |
-| 9 | Refund state | Reads matter-of-fact, muted warm red, receipt present |
-| 10 | Lanes and editorial modules, if still worth it | — |
+| 0 | This documentation set | **Done** |
+| 1 | App shell: `(app)` group, sidebar, top bar, account menu, route moves, token cleanup, orphaned `components/nav.tsx` removed | **Done** |
+| 2 | `ui/` primitives (§4.1) | **Done** — Card, Meter/CoverMeter, Pill, Tabs, Disclosure, Timeline, Skeleton, EmptyState, Avatar, Field |
+| 3 | `IdeaCard` at three densities, `IdeaCover`, `ValidationMeter`, `ReasonChip`, promoted treatment | **Done** |
+| 4 | Feed: `lib/feed`, `/feed` page, `FeedHero`, `FeedGrid`, filters, loading/empty | **Done** on fixtures. "Show me more" via `excludeIds` still to add; the fixture pool is one page |
+| 5 | Idea detail: header, generated TOC, story, action panel, gate breakdown, trust strip, similar rail | **Done** on fixtures. Support and pre-pledge hold local state |
+| 6 | Survey + comments tabs, `/ideas/new` rebuilt on the structured pitch | **Rendering done**, writes not wired. Blocked for real data by backlog items 1 and 2 |
+| 7 | Creator dashboard + `/ideas/[id]/insights` | **Not started.** Needs an owner filter on `GET /ideas` (backlog item 4) |
+| 8 | Campaign detail: header, `MilestoneTracker`, `ObjectionWindow`, `ReceiptTimeline`, risks | **Done** on fixtures |
+| 9 | Refund state | **Done** |
+| 10 | Lanes and editorial modules | Lanes done (`FeedLane`, closing-soon, similar-ideas). Editorial modules not started |
 
-Stages 1–2 block everything. Stage 4 blocks 5. Stage 8 does not block anything and can run in
-parallel once 2 lands.
+Remaining, in order: wire "Show me more"; build stage 7 once the owner filter lands; swap the three
+fixture flags as the backlog items land, starting with identity.
 
 ---
 
