@@ -24,25 +24,34 @@ export function CampaignCard({ campaign }: { campaign: CampaignListItem }) {
   const { released, total, underReview, failed } = campaign.milestoneSummary;
 
   return (
-    <Card className="flex h-full flex-col p-5 transition-shadow hover:shadow-lift motion-reduce:transition-none">
-      <div className="flex items-center gap-2">
+    <Card className="flex h-full flex-col p-4 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:transition-none motion-reduce:hover:translate-y-0">
+      {/* Same type hierarchy as IdeaCard: only the title and the money figure carry weight, and
+          everything else is 10–11px supporting detail. The two cards share a grid, so a mismatched
+          scale between them would read as two different products. */}
+      <div className="flex items-center gap-1.5">
         <Avatar name={campaign.creator.displayName} src={campaign.creator.avatarUrl} size={20} />
-        <span className="truncate text-xs text-ink-muted">{campaign.creator.displayName}</span>
-        {campaign.region && <span className="shrink-0 text-xs text-ink-muted">· {campaign.region}</span>}
+        <span className="truncate text-[11px] leading-none text-ink-muted">
+          {campaign.creator.displayName}
+        </span>
+        {campaign.region && (
+          <span className="shrink-0 text-[11px] leading-none text-ink-muted">· {campaign.region}</span>
+        )}
       </div>
 
-      <h3 className="mt-2 font-display text-lg font-bold leading-snug tracking-tight text-ink">
+      <h3 className="mt-2 font-display text-[15px] font-bold leading-[1.25] tracking-tight text-ink">
         <Link
           href={`/campaigns/${campaign.slug}`}
-          className="rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 hover:underline"
+          className="line-clamp-2 rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 hover:underline"
         >
           {campaign.title}
         </Link>
       </h3>
 
-      <p className="mt-1.5 line-clamp-2 text-sm leading-relaxed text-ink-muted">{campaign.summary}</p>
+      <p className="mt-1.5 line-clamp-2 text-[13px] leading-relaxed text-ink-muted">
+        {campaign.summary}
+      </p>
 
-      <div className="mt-4">
+      <div className="mt-3.5 border-t border-border pt-2.5">
         <Meter
           ratio={target > 0 ? raised / target : 0}
           cap={false}
@@ -51,18 +60,18 @@ export function CampaignCard({ campaign }: { campaign: CampaignListItem }) {
           srLabel="of the funding goal"
           label={
             <>
-              <span className="text-sm font-semibold text-ink">
+              <span className="text-sm font-semibold text-ink tabular-nums">
                 <Amount value={raised} currency="USD" />
               </span>
-              <span className="text-xs text-ink-muted">
-                of <Amount value={target} currency="USD" />
+              <span className="text-[10px] text-ink-muted">
+                of <Amount value={target} currency="USD" /> goal
               </span>
             </>
           }
         />
       </div>
 
-      <p className="mt-2.5 text-xs text-ink-muted">
+      <p className="mt-2 text-[11px] leading-tight text-ink-muted">
         <Count value={campaign.backerCount} /> {pluralise(campaign.backerCount, 'backer')}
         {campaign.status === 'ACTIVE' && (
           <>
@@ -76,19 +85,21 @@ export function CampaignCard({ campaign }: { campaign: CampaignListItem }) {
         </span>
       </p>
 
-      <div className="mt-auto flex flex-wrap items-center gap-1.5 pt-4">
+      <div className="mt-auto flex flex-wrap items-center gap-1 pt-3">
         {campaign.status === 'FAILED' || failed > 0 ? (
-          <Pill tone="danger">Stage not delivered</Pill>
+          <Pill tone="danger" size="xs">
+            Stage not delivered
+          </Pill>
         ) : campaign.status === 'COMPLETED' ? (
-          <Pill tone="accent" marker={<span aria-hidden="true">✓</span>}>
+          <Pill tone="accent" size="xs" marker={<span aria-hidden="true">✓</span>}>
             All stages delivered
           </Pill>
         ) : underReview > 0 ? (
-          <Pill tone="accent" marker={<span aria-hidden="true">◔</span>}>
+          <Pill tone="accent" size="xs" marker={<span aria-hidden="true">◔</span>}>
             A stage is under review
           </Pill>
         ) : (
-          <Pill>Raising now</Pill>
+          <Pill size="xs">Raising now</Pill>
         )}
       </div>
     </Card>

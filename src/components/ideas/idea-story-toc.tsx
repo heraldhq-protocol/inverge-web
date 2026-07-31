@@ -8,8 +8,21 @@ import type { StorySection } from './idea-story';
  * below that the action panel takes the sticky slot, and two competing sticky columns on a phone is
  * how a screen ends up with no room for content.
  */
+/**
+ * Below this, a contents list is longer than the thing it indexes.
+ *
+ * Exported because the page has to know **before** it lays out: the TOC returning `null` inside a
+ * two-column grid does not collapse the column, it promotes the story into the 11rem one and squeezes
+ * the pitch into a 176px ribbon. The column and the component have to agree.
+ */
+export const TOC_MIN_SECTIONS = 3;
+
+export function hasToc(sections: StorySection[]): boolean {
+  return sections.length >= TOC_MIN_SECTIONS;
+}
+
 export function IdeaStoryToc({ sections }: { sections: StorySection[] }) {
-  if (sections.length < 3) return null;
+  if (!hasToc(sections)) return null;
 
   return (
     <nav aria-label="In this pitch" className="hidden lg:sticky lg:top-24 lg:block">

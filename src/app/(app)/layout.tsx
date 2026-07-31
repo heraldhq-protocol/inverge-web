@@ -1,25 +1,28 @@
 import React from 'react';
-import { AppSidebar } from '@/components/app/app-sidebar';
 import { AppTopbar } from '@/components/app/app-topbar';
 
 /**
- * The app shell, identical on every logged-in screen (app-mockup-kit §5). Sidebar on the forest
- * ground at `lg` and up, off-canvas below it; content on paper, max 1200px.
+ * The app shell: a top bar and a content column, nothing else.
  *
- * The auth routes deliberately have no shell and keep their own layout — the user is not signed in
- * yet, so a sidebar there would be a lie about the state they are in.
+ * The sidebar was removed deliberately. Phase 0 ships idea validation only — campaigns are not live and
+ * verification is a later piece of work — so a rail would have carried three links to surfaces a reader
+ * cannot act on. Content gets the full width instead, which matters most on the feed.
+ *
+ * Auth routes keep their own layout and no chrome at all: the user is not signed in yet, so app chrome
+ * there would be a lie about the state they are in.
  */
 export default function AppLayout({ children }: { children: React.ReactNode }) {
   return (
-    <div className="min-h-dvh bg-paper text-ink selection:bg-accent-500 selection:text-white">
-      <AppSidebar />
-
-      <div className="lg:pl-60">
-        <AppTopbar />
-        <main className="mx-auto w-full max-w-[1200px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
-          {children}
-        </main>
-      </div>
+    // `min-w-0 w-full` is load-bearing, not decoration. The root layout makes <body> a flex column, and a
+    // flex item's default `min-width: auto` refuses to shrink below its content — so a wide descendant
+    // (a card lane, a chip row) widened the whole document even though every one of those components
+    // clipped correctly on its own. That is why the horizontal scrollbar appeared at page level while
+    // each section looked fine in isolation.
+    <div className="min-h-dvh w-full min-w-0 bg-paper text-ink selection:bg-accent-500 selection:text-white">
+      <AppTopbar />
+      <main className="mx-auto w-full min-w-0 max-w-[1280px] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {children}
+      </main>
     </div>
   );
 }

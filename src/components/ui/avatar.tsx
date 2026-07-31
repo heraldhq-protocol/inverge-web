@@ -2,7 +2,12 @@ import Image from 'next/image';
 import { cn } from '@/lib/utils';
 import { initials } from '@/lib/format';
 
-const SIZES = { 20: 'h-5 w-5 text-[9px]', 32: 'h-8 w-8 text-xs', 40: 'h-10 w-10 text-sm' } as const;
+const SIZES = {
+  20: 'h-5 w-5 text-[9px]',
+  32: 'h-8 w-8 text-xs',
+  40: 'h-10 w-10 text-sm',
+  44: 'h-11 w-11 text-sm',
+} as const;
 
 export type AvatarSize = keyof typeof SIZES;
 

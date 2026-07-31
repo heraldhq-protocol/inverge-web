@@ -43,6 +43,7 @@ export type PublicCreator = {
   displayName: string;
   avatarUrl?: string | null;
   identityVerified: boolean;
+  verificationTier?: 'TIER_1_ID' | 'TIER_2_CAC' | 'TIER_3_TRACK_RECORD';
 };
 
 export type FeedItem = {
@@ -75,6 +76,13 @@ export type FeedItem = {
   /** Creator's declared pre-pledge minimum, and when validation opened. Drive the meter + window. */
   creatorPrePledgeTarget?: string | null;
   validatingSince?: string | null;
+  /** Display topics (categories.ts). Web-side taxonomy until the API's category enum widens. */
+  topics?: string[];
+  /**
+   * Cover image. No such field exists on an idea yet (API gap backlog item 3) — cards fall back to the
+   * deterministic colour band. Accepted here from day one so the swap is a data change, not a UI change.
+   */
+  coverImageUrl?: string | null;
 };
 
 export type FeedQuery = {
@@ -83,9 +91,19 @@ export type FeedQuery = {
   /** Stateless pagination: accumulate what you have shown. There is no offset — scores shift. */
   excludeIds?: string[];
   category?: IdeaCategory;
+  /** Free text. No upstream search endpoint exists; applied on top of the ranked pool. */
+  q?: string;
+  /** Display topic slug (categories.ts). Narrows within its API category. */
+  topic?: string;
+  /** Named lane slug (categories.ts). A filter with a headline, never a paid re-sort. */
+  collection?: string;
 };
 
 export type FeedResponse = {
   anonymous: boolean;
   items: FeedItem[];
+  /** Whether another page exists for the same query. Drives "Show me more". */
+  hasMore?: boolean;
+  /** Matches for the current query, before paging. Powers the result count. */
+  total?: number;
 };

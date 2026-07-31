@@ -1,10 +1,8 @@
 import type { Metadata } from 'next';
-import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
-import { CategoryFilter } from '@/components/ideas/category-filter';
-import { FeedGrid, FeedHero, FeedLane, SectionHeading } from '@/components/ideas/feed-sections';
+import { FeaturedCarousel } from '@/components/ideas/featured-carousel';
+import { FeedBrowser } from '@/components/ideas/feed-browser';
+import { FeedLane, SectionHeading } from '@/components/ideas/feed-sections';
 import { getFeed } from '@/lib/feed/feed-api';
-import { CATEGORIES, type IdeaCategory } from '@/lib/feed/types';
 
 export const metadata: Metadata = {
   title: 'Discover ideas',
@@ -12,97 +10,53 @@ export const metadata: Metadata = {
     'Ideas from builders in Nigeria and West Africa, ranked by real support rather than by who paid.',
 };
 
-const CATEGORY_VALUES = CATEGORIES.map((c) => c.value);
-
-function asCategory(value: string | string[] | undefined): IdeaCategory | undefined {
-  const first = Array.isArray(value) ? value[0] : value;
-  return first && (CATEGORY_VALUES as string[]).includes(first) ? (first as IdeaCategory) : undefined;
-}
-
 /**
- * Discovery. Server Component: the whole page is a read, and the only interactive parts are links.
+ * Discovery.
  *
- * `searchParams` is a Promise in Next 16 (conventions §2.1). The category lane lives in the URL so it
- * is shareable and server-rendered; `excludeIds` deliberately does not, because it is a session
- * artefact rather than something worth sharing.
+ * Order: featured carousel, then the browse grid, then the curated lanes.
+ *
+ * The carousel replaced a two-column hero that never balanced — a tall 2×2 stack set the height and left
+ * a void under the featured card. Browsing comes second because a reader who knows what they want should
+ * not have to scroll past curation to reach the search field, and the lanes sit last because they are
+ * the "I have finished looking, show me something else" surface.
+ *
+ * The carousel and the lanes are server-rendered from the ranked feed. Only the browse grid is a client
+ * island, since search, topics and paging are interactions (conventions §3.1).
  */
-export default async function FeedPage({
-  searchParams,
-}: {
-  searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
-}) {
-  const params = await searchParams;
-  const category = asCategory(params.category);
-
-  const { items } = await getFeed({ category, take: 25 });
-
-  if (items.length === 0) {
-    const label = category ? CATEGORIES.find((c) => c.value === category)?.label.toLowerCase() : null;
-    return (
-      <div className="space-y-6">
-        <FeedHeader />
-        <CategoryFilter active={category} resultCount={0} />
-        <EmptyState
-          title={label ? `No ${label} ideas yet. Yours would be the first.` : 'Nothing here yet. Be the first to publish an idea.'}
-          body="Publishing an idea is free, and nothing is charged while it is being validated."
-          actions={
-            <>
-              <Button variant="primary" size="md" href="/ideas/new">
-                Start an idea
-              </Button>
-              {category && (
-                <Button variant="outline" size="md" href="/feed">
-                  Clear filters
-                </Button>
-              )}
-            </>
-          }
-        />
-      </div>
-    );
-  }
-
-  // Items arrive in final ranked order and are rendered top to bottom — nothing here re-sorts
-  // (feed-api.md). The hero takes the first five, the grid takes the rest.
-  const heroItems = items.slice(0, 5);
-  const gridItems = items.slice(5);
-  const nearlyClosing = items
-    .filter((i) => i.status === 'VALIDATING' && !i.promoted)
-    .slice(-3)
-    .reverse();
+export default async function FeedPage() {
+  const [firstPage, featured, closing, ready] = await Promise.all([
+    getFeed({ take: 12 }),
+    getFeed({ take: 6 }),
+    getFeed({ collection: 'closing-soon', take: 8 }),
+    getFeed({ collection: 'threshold-met', take: 8 }),
+  ]);
 
   return (
-    <div className="space-y-10">
-      <FeedHeader />
-      <CategoryFilter active={category} resultCount={items.length} />
+    <div className="space-y-10 sm:space-y-12">
+      <header className="max-w-2xl">
+        <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+          Ideas being validated
+        </h1>
+        <p className="mt-2 text-[13px] leading-relaxed text-ink-muted sm:text-sm">
+          Support what you would use, tell the creator what is missing, and say what you would put in
+          before anyone asks for money. Nothing is charged at this stage.
+        </p>
+      </header>
 
-      <FeedHero items={heroItems} />
+      <FeaturedCarousel items={featured.items} />
 
-      {gridItems.length > 0 && (
-        <section>
-          <SectionHeading>More ideas being validated</SectionHeading>
-          <FeedGrid items={gridItems} />
-        </section>
+      <div>
+        <SectionHeading>Browse every idea</SectionHeading>
+        <FeedBrowser initialPage={firstPage} />
+      </div>
+
+      {closing.items.length > 0 && (
+        <FeedLane title="Closing soon" items={closing.items} moreHref="/feed" />
       )}
 
-      {/* The reference's "Home Stretch" lane, in our terms: validation windows closing soonest. */}
-      {!category && nearlyClosing.length > 0 && (
-        <FeedLane title="Closing soon" items={nearlyClosing} moreHref="/feed" />
+      {ready.items.length > 0 && (
+        <FeedLane title="Ready to raise" items={ready.items} moreHref="/feed" />
       )}
     </div>
-  );
-}
-
-function FeedHeader() {
-  return (
-    <header className="max-w-2xl">
-      <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-        Ideas being validated
-      </h1>
-      <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-        Support what you would use, tell the creator what is missing, and say what you would put in
-        before anyone asks for money. Nothing is charged at this stage.
-      </p>
-    </header>
   );
 }

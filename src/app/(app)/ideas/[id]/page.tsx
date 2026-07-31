@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
+import { cn } from '@/lib/utils';
 import { Tabs } from '@/components/ui/tabs';
 import { CommentThread } from '@/components/ideas/comment-thread';
 import { CreatorPanel } from '@/components/ideas/creator-panel';
@@ -7,8 +8,8 @@ import { FeedLane } from '@/components/ideas/feed-sections';
 import { IdeaActionPanel } from '@/components/ideas/idea-action-panel';
 import { IdeaHeader } from '@/components/ideas/idea-header';
 import { IdeaStory, storySections } from '@/components/ideas/idea-story';
-import { IdeaStoryToc } from '@/components/ideas/idea-story-toc';
-import { SurveyResults } from '@/components/ideas/survey-results';
+import { IdeaStoryToc, hasToc } from '@/components/ideas/idea-story-toc';
+import { SurveyForm } from '@/components/ideas/survey-form';
 import { TrustStrip } from '@/components/ideas/trust-strip';
 import { getComments, getIdea, getSurvey } from '@/lib/ideas/ideas-api';
 import { getFeed } from '@/lib/feed/feed-api';
@@ -62,7 +63,7 @@ export default async function IdeaDetailPage({
   const href = (t: Tab) => (t === 'pitch' ? `/ideas/${idea.slug}` : `/ideas/${idea.slug}?tab=${t}`);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 overflow-hidden">
       <div className="grid gap-8 lg:grid-cols-[1fr_22rem] lg:items-start">
         <div className="min-w-0 space-y-8">
           <IdeaHeader idea={idea} />
@@ -94,14 +95,19 @@ export default async function IdeaDetailPage({
           />
 
           {tab === 'pitch' && (
-            <div className="grid gap-8 lg:grid-cols-[11rem_1fr]">
+            // The contents column is only reserved when there is a contents list to put in it. A null
+            // TOC does not collapse a fixed grid column — it hands the column to the story and squeezes
+            // the pitch into a 176px ribbon.
+            <div className={cn('grid min-w-0 gap-8', hasToc(sections) && 'lg:grid-cols-[11rem_minmax(0,1fr)]')}>
               <IdeaStoryToc sections={sections} />
-              <IdeaStory idea={idea} />
+              <div className="min-w-0">
+                <IdeaStory idea={idea} />
+              </div>
             </div>
           )}
 
           {tab === 'feedback' && (
-            <SurveyResults questions={survey.questions} aggregates={survey.aggregates} />
+            <SurveyForm questions={survey.questions} aggregates={survey.aggregates} />
           )}
 
           {tab === 'discussion' && <CommentThread comments={comments} />}
@@ -118,7 +124,7 @@ export default async function IdeaDetailPage({
         <FeedLane
           title="Similar ideas being validated"
           items={similar.items}
-          moreHref={`/feed?category=${idea.category}`}
+          moreHref="/feed"
         />
       )}
     </div>

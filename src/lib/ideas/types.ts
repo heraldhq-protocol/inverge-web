@@ -1,4 +1,5 @@
 import type { FeedItem, PublicCreator } from '@/lib/feed/types';
+import type { TiptapDoc } from './rich-content';
 
 /** A dated roadmap step (FR-270 structured pitch: at least two). */
 export type RoadmapStep = { date: string; description: string };
@@ -12,6 +13,12 @@ export type AskLine = { label: string; amount: number };
  */
 export type IdeaDetail = Omit<FeedItem, 'reason' | 'promoted' | 'exploration' | 'boostTier'> & {
   roadmap: string;
+  /**
+   * The pitch body as a Tiptap document, when the creator wrote one. Plain `solution` stays the
+   * fallback and the source for cards and meta descriptions, so nothing breaks for an idea written
+   * before the editor existed.
+   */
+  solutionDoc?: TiptapDoc | null;
   targetUser: string | null;
   currentAlternative: string | null;
   askBreakdown: AskLine[] | null;
@@ -27,6 +34,38 @@ export type IdeaDetail = Omit<FeedItem, 'reason' | 'promoted' | 'exploration' | 
     ideasPublished: number;
     memberSince: string;
   };
+};
+
+/**
+ * A creator update. There is no update model on an idea in the API yet (it exists as an ask for
+ * campaigns, backlog item 8), so this is fixture-shaped for now.
+ *
+ * `supportersOnly` gates the body, never the fact that a post exists: showing who posted and when,
+ * and hiding only the content, is the honest form of a gate (teardown §5.5).
+ */
+export type IdeaUpdate = {
+  id: string;
+  index: number;
+  title: string;
+  body: string;
+  publishedAt: string;
+  supportersOnly: boolean;
+  commentCount: number;
+  likeCount: number;
+};
+
+/**
+ * Where support is coming from.
+ *
+ * Aggregate only, and deliberately coarse. A public version of this needs its own endpoint and its own
+ * privacy pass: minimum bucket sizes, so a city with two supporters cannot identify them, and nothing
+ * that reverses into an individual's pre-pledge amount (API gap backlog item 11). Until then this is
+ * the creator's own view of their own idea.
+ */
+export type SupportPlace = {
+  place: string;
+  country: string;
+  supporters: number;
 };
 
 export type SurveyQuestionType =

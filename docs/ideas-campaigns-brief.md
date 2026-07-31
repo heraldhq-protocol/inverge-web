@@ -101,6 +101,15 @@ weight), admin curation queue beyond its existing placeholder, public aggregate/
 
 ## 2. The app shell
 
+**Decision, revised 2026-07-31: there is no sidebar.** Phase 0 ships idea validation only. Campaigns
+are not live and verification only matters on the path to receiving money, so a persistent rail would
+have carried three links to surfaces a reader cannot use — which makes the product look bigger than it
+is and takes width from the one surface that exists. The shell is a 56/64px top bar (logo, Discover,
+"Start an idea", account menu) over a 1280px content column. The mockup kit's §5 sidebar is superseded
+for Phase 0 and returns when there is more than one destination worth having.
+
+### 2a. Superseded: the original sidebar decision
+
 **Decision: left sidebar plus top bar, exactly as [`app-mockup-kit.md`](./app-mockup-kit.md) §5.**
 Locked once here, identical on every logged-in screen, and it is the first thing built because
 everything else inherits its content width.
@@ -248,6 +257,24 @@ vocabulary (app kit §6). No em dashes in rendered copy.
 - Promoted: `Promoted` · on hover/title: `A creator paid for this placement. It does not affect the validation numbers.`
 - Featured: `Featured`
 - Verified: `Verified creator`
+
+### 5.1a Card type hierarchy
+
+A card is scanned, not read. Only two things carry weight: the **title**, and the **two figures a
+reader compares across cards** (progress, and estimated interest or raised). Everything else is
+supporting detail at 10–11px. When every line sits at 12–14px the card has no hierarchy and nine of
+them read as a wall.
+
+| Element | Size |
+|---|---|
+| Title | 15px grid, 17px featured, bold, display face, 2-line clamp |
+| The two figures | 14px semibold, tabular |
+| Problem or summary line | 13px, featured density only |
+| Creator, supporters, days left | 11px |
+| Pills, badges, figure labels | 10px |
+
+`Pill` and `ReasonChip` take `size="xs"` for the card scale. `IdeaCard` and `CampaignCard` share this
+scale exactly: they appear in the same grid, so a mismatch reads as two different products.
 
 ### 5.2 Empty, loading, error
 

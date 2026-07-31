@@ -41,7 +41,7 @@ export function AccountMenu() {
 
   if (!isPrivyConfigured) {
     return (
-      <Button variant="outline" size="sm" href="/signin">
+      <Button variant="ghost" size="sm" href="/signin">
         Sign in
       </Button>
     );
@@ -54,7 +54,7 @@ export function AccountMenu() {
 
   if (!authenticated) {
     return (
-      <Button variant="outline" size="sm" onClick={() => login()}>
+      <Button variant="ghost" size="sm" onClick={() => login()}>
         Sign in
       </Button>
     );

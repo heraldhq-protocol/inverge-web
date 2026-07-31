@@ -22,7 +22,7 @@ export function Tabs({ items, className }: { items: TabItem[]; className?: strin
   return (
     <nav
       aria-label="Sections"
-      className={cn('-mx-4 overflow-x-auto border-b border-border px-4 sm:mx-0 sm:px-0', className)}
+      className={cn('w-full min-w-0 overflow-x-auto border-b border-border', className)}
     >
       <ul className="flex min-w-max items-center gap-1">
         {items.map((item) => (

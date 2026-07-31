@@ -1,6 +1,7 @@
 import { Amount } from '@/components/ui/amount';
 import { formatDate } from '@/lib/format';
 import type { IdeaDetail } from '@/lib/ideas/types';
+import { RichContent, plainTextToDoc } from '@/lib/ideas/rich-content';
 
 /**
  * The pitch, in the narrative order the reference's best-performing pages follow (playbook §2):
@@ -51,7 +52,9 @@ export function IdeaStory({ idea }: { idea: IdeaDetail }) {
       )}
 
       <Section id="solution" heading="The solution">
-        <p>{idea.solution}</p>
+        {/* Rendered from the editor's own document tree, server-side: readers never download the editor,
+            and there is no author-controlled HTML string to sanitise (lib/ideas/rich-content.tsx). */}
+        <RichContent doc={idea.solutionDoc ?? plainTextToDoc(idea.solution)} />
       </Section>
 
       {idea.askBreakdown && idea.askBreakdown.length > 0 && (

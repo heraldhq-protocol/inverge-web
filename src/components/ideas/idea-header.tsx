@@ -54,6 +54,7 @@ export function IdeaHeader({ idea }: { idea: IdeaDetail }) {
           id={idea.id}
           title={idea.title}
           category={idea.category}
+          topics={idea.topics}
           src={null}
           size="featured"
         />

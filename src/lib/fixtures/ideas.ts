@@ -1,6 +1,7 @@
 import type { FeedItem } from '@/lib/feed/types';
 import type { IdeaComment, IdeaDetail, SurveyAggregate, SurveyQuestion } from '@/lib/ideas/types';
 import { CREATORS, publicCreator } from './creators';
+import { extraFeedItems } from './extra-ideas';
 
 /**
  * Fixture ideas.
@@ -301,11 +302,14 @@ function seeds(): Seed[] {
 }
 
 export function fixtureFeedItems(): FeedItem[] {
-  return seeds().map(({ creatorKey, ...rest }) => ({
+  const hand = seeds().map(({ creatorKey, ...rest }) => ({
     ...rest,
     objectType: 'idea' as const,
     creator: publicCreator(CREATORS[creatorKey]),
   }));
+  // The hand-written ten carry the detail pages and the interesting states, so they lead. The rest is
+  // volume, which search and paging need in order to be judged at all.
+  return [...hand, ...extraFeedItems()];
 }
 
 const DETAIL_EXTRAS: Record<

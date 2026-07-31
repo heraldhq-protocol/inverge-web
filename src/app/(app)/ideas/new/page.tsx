@@ -3,6 +3,9 @@
 import { useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Field, FieldSet, controlClass, useTouched } from '@/components/ui/field';
+import { ImageField } from '@/components/ui/image-field';
+import { RichTextField } from '@/components/ui/rich-text-field';
+import type { TiptapDoc } from '@/lib/ideas/rich-content';
 import { IdeaCard } from '@/components/ideas/idea-card';
 import { CATEGORIES, type FeedItem, type IdeaCategory } from '@/lib/feed/types';
 
@@ -43,6 +46,9 @@ export default function NewIdeaPage() {
     targetUser: '',
     currentAlternative: '',
     solution: '',
+    solutionDoc: null as TiptapDoc | null,
+    coverImageUrl: null as string | null,
+    coverPreview: null as string | null,
     askAmount: '',
     risks: '',
     steps: [{ ...EMPTY_STEP }, { ...EMPTY_STEP }],
@@ -79,6 +85,7 @@ export default function NewIdeaPage() {
       solution: form.solution,
       category: form.category,
       region: form.region.trim() || null,
+      coverImageUrl: form.coverPreview ?? form.coverImageUrl,
       askAmount: form.askAmount || '0',
       status: 'VALIDATING',
       discoverabilityTier: 'DISCOVERABLE',
@@ -172,6 +179,20 @@ export default function NewIdeaPage() {
                 )}
               </Field>
             </div>
+
+            <Field
+              label="Cover image"
+              help="A photo of the thing, or a screenshot, does better than a logo. Ideas without one get a plain typed cover."
+              optional
+            >
+              {() => (
+                <ImageField
+                  value={form.coverImageUrl}
+                  onChange={(next) => set('coverImageUrl', next)}
+                  onLocalPreview={(objectUrl) => set('coverPreview', objectUrl)}
+                />
+              )}
+            </Field>
           </FieldSet>
 
           <FieldSet
@@ -240,20 +261,21 @@ export default function NewIdeaPage() {
           <FieldSet legend="The plan">
             <Field
               label="Your solution"
-              help="What you would build. Not why it matters."
+              help="What you would build. Not why it matters. Add headings, a link to anything that already exists, and a photo if you have one."
               error={showError('solution')}
               counter={{ value: form.solution.length, target: 300 }}
             >
               {({ id, invalid, describedBy }) => (
-                <textarea
+                <RichTextField
                   id={id}
-                  rows={3}
-                  value={form.solution}
-                  onChange={(e) => set('solution', e.target.value)}
+                  value={form.solutionDoc}
+                  invalid={invalid}
+                  describedBy={describedBy}
+                  placeholder="Describe what you would build…"
                   onBlur={() => touch('solution')}
-                  aria-invalid={invalid}
-                  aria-describedby={describedBy || undefined}
-                  className={controlClass(invalid)}
+                  onChange={(doc, plainText) =>
+                    setForm((f) => ({ ...f, solutionDoc: doc, solution: plainText }))
+                  }
                 />
               )}
             </Field>

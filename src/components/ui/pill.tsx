@@ -13,12 +13,15 @@ export type PillTone = 'neutral' | 'accent' | 'danger' | 'promoted';
  */
 export function Pill({
   tone = 'neutral',
+  size = 'sm',
   marker,
   className,
   children,
   ...props
 }: React.HTMLAttributes<HTMLSpanElement> & {
   tone?: PillTone;
+  /** `xs` is the card scale: metadata, not headline. `sm` is for detail pages. */
+  size?: 'xs' | 'sm';
   /** A leading glyph for tones that need shape as well as colour. */
   marker?: React.ReactNode;
 }) {
@@ -29,10 +32,16 @@ export function Pill({
     promoted: 'bg-surface text-ink border border-accent-500/40',
   };
 
+  const sizes = {
+    xs: 'gap-1 px-2 py-px text-[10px]',
+    sm: 'gap-1 px-2.5 py-0.5 text-xs',
+  };
+
   return (
     <span
       className={cn(
-        'inline-flex shrink-0 items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-semibold',
+        'inline-flex shrink-0 items-center rounded-full font-semibold',
+        sizes[size],
         tones[tone],
         className
       )}

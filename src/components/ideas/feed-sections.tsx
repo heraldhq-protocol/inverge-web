@@ -5,12 +5,14 @@ import { IdeaCard } from './idea-card';
 
 /**
  * The reference's hero module: one large card on the left, a 2×2 grid on the right (teardown §2,
- * module 3). It is the highest-value layout on the homepage and the reason the card has a `featured`
- * density at all.
+ * module 3).
  *
- * No per-module pagination. The reference paginates its "Recommended" rail, but our feed scores shift
- * between requests, so offset paging would be wrong — the main grid pages with `excludeIds` instead
- * (feed-api.md).
+ * Cards stretch to equal height **within a row**, so a row never ends ragged — this matters most for a
+ * promoted card, whose extra header row would otherwise leave its neighbours short.
+ *
+ * The two hero columns are `items-start` at the section level, though: the featured card must not be
+ * stretched to match the height of a 2×2 stack beside it, because that surplus height lands as one large
+ * empty gap inside a single card rather than being shared.
  */
 export function FeedHero({ items }: { items: FeedItem[] }) {
   if (items.length === 0) return null;
@@ -18,7 +20,7 @@ export function FeedHero({ items }: { items: FeedItem[] }) {
   const companions = rest.slice(0, 4);
 
   return (
-    <section className="grid gap-6 lg:grid-cols-2">
+    <section className="grid items-start gap-5 lg:grid-cols-2 lg:gap-6">
       <div>
         <SectionHeading>Featured idea</SectionHeading>
         <IdeaCard item={lead} size="featured" />
@@ -38,10 +40,10 @@ export function FeedHero({ items }: { items: FeedItem[] }) {
   );
 }
 
-/** The main 3-up grid. */
+/** The main grid, used wherever a plain list of cards is wanted. */
 export function FeedGrid({ items }: { items: FeedItem[] }) {
   return (
-    <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
       {items.map((item) => (
         <li key={item.id} className="h-full">
           <IdeaCard item={item} />
@@ -52,9 +54,12 @@ export function FeedGrid({ items }: { items: FeedItem[] }) {
 }
 
 /**
- * A horizontal lane: heading, a "Discover more" link, and cards that clip at the right edge to signal
- * there is more (teardown §2, module 6). Scroll rather than arrows — a native scroller works with a
- * trackpad, a touch screen and the keyboard, which three arrow buttons do not.
+ * A named lane: heading, a "Discover more" link, then the cards.
+ *
+ * **Grid when the lane is short, scroller when it is long.** A fixed-width horizontal scroller holding
+ * two cards leaves most of the row empty and reads as a broken carousel, which is exactly what a lane
+ * backed by a narrow filter produces. Four or fewer items fill the row as a grid; more than that gets the
+ * scroller, where the clipped last card is a real affordance rather than an accident.
  */
 export function FeedLane({
   title,
@@ -66,28 +71,39 @@ export function FeedLane({
   moreHref?: string;
 }) {
   if (items.length === 0) return null;
+  const asGrid = items.length <= 4;
 
   return (
-    <section>
+    <section className="w-full overflow-hidden">
       <div className="mb-3 flex items-baseline justify-between gap-4">
         <SectionHeading className="mb-0">{title}</SectionHeading>
         {moreHref && (
           <Link
             href={moreHref}
-            className="rounded text-sm font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+            className="rounded text-[13px] font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
           >
             Discover more
           </Link>
         )}
       </div>
 
-      <ul className="-mx-4 flex snap-x snap-mandatory gap-4 overflow-x-auto px-4 pb-2 sm:mx-0 sm:px-0">
-        {items.map((item) => (
-          <li key={item.id} className="w-[17rem] shrink-0 snap-start">
-            <IdeaCard item={item} size="lane" />
-          </li>
-        ))}
-      </ul>
+      {asGrid ? (
+        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {items.map((item) => (
+            <li key={item.id} className="h-full">
+              <IdeaCard item={item} size="lane" />
+            </li>
+          ))}
+        </ul>
+      ) : (
+        <ul className="flex w-full min-w-0 snap-x snap-mandatory items-stretch gap-4 overflow-x-auto pb-2">
+          {items.map((item) => (
+            <li key={item.id} className="w-[15rem] shrink-0 snap-start sm:w-[17rem]">
+              <IdeaCard item={item} size="lane" />
+            </li>
+          ))}
+        </ul>
+      )}
     </section>
   );
 }
@@ -100,7 +116,7 @@ export function SectionHeading({
   className?: string;
 }) {
   return (
-    <h2 className={`mb-3 font-display text-lg font-bold tracking-tight text-ink ${className ?? ''}`}>
+    <h2 className={`mb-3 font-display text-base font-bold tracking-tight text-ink sm:text-lg ${className ?? ''}`}>
       {children}
     </h2>
   );
