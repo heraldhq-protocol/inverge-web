@@ -19,6 +19,8 @@ export type IdeaDetail = Omit<FeedItem, 'reason' | 'promoted' | 'exploration' | 
    * before the editor existed.
    */
   solutionDoc?: TiptapDoc | null;
+  /** The longer problem write-up, when the creator added one. `problem` stays the card line. */
+  problemDoc?: TiptapDoc | null;
   targetUser: string | null;
   currentAlternative: string | null;
   askBreakdown: AskLine[] | null;

@@ -47,6 +47,7 @@ export default function NewIdeaPage() {
     currentAlternative: '',
     solution: '',
     solutionDoc: null as TiptapDoc | null,
+    problemDoc: null as TiptapDoc | null,
     coverImageUrl: null as string | null,
     coverPreview: null as string | null,
     askAmount: '',
@@ -146,7 +147,10 @@ export default function NewIdeaPage() {
             </Field>
 
             <div className="grid gap-5 sm:grid-cols-2">
-              <Field label="Category">
+              {/* Both fields in this row carry exactly one line of help. Without that the Category
+                  control sits a line higher than its neighbour, because the help text under "Where you
+                  are building" pushes only that column's input down. */}
+              <Field label="Category" help="Where your idea appears when people browse by topic.">
                 {({ id }) => (
                   <select
                     id={id}
@@ -200,8 +204,8 @@ export default function NewIdeaPage() {
             description="This is the part people judge. Specific beats impressive."
           >
             <Field
-              label="The problem you are solving"
-              help="Who has this problem, and how often? One sentence is enough."
+              label="The problem, in a sentence or two"
+              help="This exact line is what people read on your card in the feed, so lead with who has the problem and how often. There is room for the full story below."
               error={showError('problem')}
               counter={{ value: form.problem.length, target: 200 }}
             >
@@ -215,6 +219,22 @@ export default function NewIdeaPage() {
                   aria-invalid={invalid}
                   aria-describedby={describedBy || undefined}
                   className={controlClass(invalid)}
+                />
+              )}
+            </Field>
+
+            <Field
+              label="The full story"
+              help="Evidence, numbers, what you have seen first hand, photos, links to anything that already exists. This is where a reader decides you actually know this problem."
+              optional
+            >
+              {({ id }) => (
+                <RichTextField
+                  id={id}
+                  value={form.problemDoc}
+                  minHeight="10rem"
+                  placeholder="What have you seen? What did it cost someone?"
+                  onChange={(doc) => set('problemDoc', doc)}
                 />
               )}
             </Field>

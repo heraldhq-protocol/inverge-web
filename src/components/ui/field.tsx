@@ -44,11 +44,18 @@ export function Field({
           {optional && <span className="ml-1.5 text-xs font-normal text-ink-muted">optional</span>}
         </label>
         {counter && (
+          // A soft target, never a limit: going past it is a hint to tighten, not a failure, so it
+          // stays in the ink ramp. Red here would compete with the actual error state below.
           <span
             className={cn(
-              'text-xs tabular-nums',
-              counter.value > counter.target ? 'text-ink-muted' : 'text-ink-muted/70'
+              'shrink-0 text-xs tabular-nums',
+              counter.value > counter.target ? 'font-semibold text-ink' : 'text-ink-muted/70'
             )}
+            title={
+              counter.value > counter.target
+                ? `Aim for about ${counter.target} characters. Longer is allowed, but cards show the first two lines.`
+                : undefined
+            }
           >
             {counter.value}/{counter.target}
           </span>

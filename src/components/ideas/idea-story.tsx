@@ -36,7 +36,10 @@ export function IdeaStory({ idea }: { idea: IdeaDetail }) {
   return (
     <div className="space-y-10">
       <Section id="problem" heading="The problem">
-        <p>{idea.problem}</p>
+        {/* The one-line summary is also the card line, so it leads here rather than being repeated
+            further down. The longer write-up follows it when there is one. */}
+        <p className="text-ink">{idea.problem}</p>
+        {idea.problemDoc && <RichContent doc={idea.problemDoc} className="mt-3" />}
       </Section>
 
       {idea.targetUser && (
