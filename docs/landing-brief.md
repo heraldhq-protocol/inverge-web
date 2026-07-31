@@ -38,6 +38,24 @@ The landing page is presentational. It renders zero live data — the stat strip
 funded" card use hard-coded, believable figures behind typed constants at the top of their files,
 ready to swap for real endpoints later.
 
+**Amended 2026-07-31: one section is now live.** `components/marketing/momentum.tsx` reads the ranked
+feed and shows three ideas with a route into `/feed`. The rule held everywhere else, but it failed on
+this specific section: hard-coded ideas on a page whose whole job is proving that real people back real
+projects collapse the moment a visitor clicks through and cannot find them. Stale proof is worse than
+no proof.
+
+Conditions that come with the exception, and they are not optional:
+
+- **Promoted items are filtered out before the shortlist is taken.** Paid placement is correct inside
+  the ranked feed, clearly labelled. On a marketing page it would read as us vouching for something a
+  creator paid for, in a section headed "being backed now" (FR-206a).
+- **It renders the real `IdeaCard`.** No marketing variant, so the figures, the "Estimated interest"
+  label and the explainability chip are identical to the feed. A friendlier number here would be a
+  different claim about the same idea.
+- **The route revalidates** (`export const revalidate` in `(marketing)/page.tsx`) rather than going
+  dynamic. Before `USE_FIXTURES` flips, `getFeed` needs a revalidating fetch — it currently reads with
+  `cache: 'no-store'`, which would opt the landing page out of static rendering entirely.
+
 ---
 
 ## 2. Build order — one section at a time

@@ -16,6 +16,14 @@
   --color-ink-muted: oklch(0.48 0.01 95);     /* Subtitle and label grey */
   --color-border: oklch(0.91 0.01 95);        /* Subtle warm card border */
 
+  /* The one licensed second hue: a desaturated warm red, for failed and refunded states only.
+     "Failed" carrying the same green as "approved" is a comprehension failure, not a style
+     choice (app-mockup-kit §4). Kept muted — this is not an alert dashboard. -700 is the
+     text-safe step; body-size text on the -50 wash must use it, not the base.  */
+  --color-danger: oklch(0.55 0.13 32);
+  --color-danger-50: oklch(0.96 0.02 40);
+  --color-danger-700: oklch(0.44 0.13 32);
+
   /* Elevation — warm-tinted rather than neutral black. A pure-black shadow over a cream
      surface leaves a grey cast; matching the shadow's hue to the paper keeps it clean. */
   --shadow-lift: 0 18px 40px -12px oklch(0.2 0.02 95 / 0.2), 0 6px 14px -8px oklch(0.2 0.02 95 / 0.12);
@@ -32,6 +40,20 @@ body {
   background-color: var(--color-paper);
   color: var(--color-ink);
   font-family: var(--font-sans);
+}
+
+/* Reflow backstop (WCAG 1.4.10, conventions §8): no horizontal scrolling at any width.
+
+   `clip` rather than `hidden` on purpose — `overflow: hidden` would turn the root into a scroll
+   container and break every `position: sticky` element in the app (the top bar, the action rail, the
+   pitch contents list). `clip` prevents the scroll without creating that container.
+
+   This is a backstop, not a fix. A component that overflows is still a bug: it will be invisibly cut
+   off here instead of pushing the page sideways. The usual cause is a flex or grid child without
+   `min-w-0`, whose `min-width: auto` stops it shrinking below its content. */
+html,
+body {
+  overflow-x: clip;
 }
 
 /* ---------------------------------------------------------------------------

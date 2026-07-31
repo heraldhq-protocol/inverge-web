@@ -15,7 +15,7 @@ export function TxLink({
       href={`https://explorer.solana.com/tx/${signature}${suffix}`}
       target="_blank"
       rel="noreferrer"
-      className="text-sm text-foreground/60 underline underline-offset-2 hover:text-foreground"
+      className="inline-flex min-h-11 items-center rounded text-sm font-medium text-accent-700 underline decoration-accent-700/30 underline-offset-2 transition-colors hover:decoration-accent-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
     >
       {label}
     </a>

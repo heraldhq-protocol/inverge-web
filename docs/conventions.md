@@ -169,11 +169,16 @@ Do not enable it in a landing-page PR.
 - **`<Link transitionTypes={['slide']}>`** — passes types to `React.addTransitionType` during the
   navigation Transition, so different links can drive different View Transition animations.
   App Router only; silently ignored on Pages Router.
-- **`unstable_retry()` in `error.tsx`** — prefer it over `reset()`. `reset()` only clears error state
+- **`unstable_retry` in `error.tsx`** — prefer it over `reset()`. `reset()` only clears error state
   and re-renders children, which does nothing when the error came from data fetching.
-  `unstable_retry()` calls `router.refresh()` + `reset()` inside a transition, so it actually re-fetches.
+  `unstable_retry` calls `router.refresh()` + `reset()` inside a transition, so it actually re-fetches.
+  **It is a prop on the error component, not an import**: `{ error, reset, unstable_retry }`. There is
+  no `unstable_retry` export from `next/navigation` — verified against the installed 16.2.10, where
+  `dist/client/components/builtin/global-error.d.ts` types it beside `error` and `reset`. Type it
+  optional and fall back to `reset`.
 - **`unstable_catchError()`** — component-level error boundaries that understand `redirect()` and
-  `notFound()` and don't swallow them. Client Components only.
+  `notFound()` and don't swallow them. Client Components only. Imported from **`next/error`**; it
+  passes an `ErrorInfo` (which carries `unstable_retry`) as the second argument to your fallback.
 - **Multiple icon formats** — `icon.svg` + `icon.png` with the same basename are both emitted as
   `<link>` tags automatically.
 
