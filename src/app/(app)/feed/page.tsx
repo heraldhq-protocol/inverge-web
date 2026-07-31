@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { FeaturedCarousel } from '@/components/ideas/featured-carousel';
 import { FeedBrowser } from '@/components/ideas/feed-browser';
+import { TopicDirectory } from '@/components/ideas/topic-directory';
 import { FeedLane, SectionHeading } from '@/components/ideas/feed-sections';
 import { getFeed } from '@/lib/feed/feed-api';
 
@@ -57,6 +58,10 @@ export default async function FeedPage() {
       {ready.items.length > 0 && (
         <FeedLane title="Ready to raise" items={ready.items} moreHref="/feed" />
       )}
+
+      {/* Last thing on the page, deliberately: a reader who has scrolled this far without finding
+          something wants another way in, not another row of the same stream. */}
+      <TopicDirectory items={firstPage.items} />
     </div>
   );
 }

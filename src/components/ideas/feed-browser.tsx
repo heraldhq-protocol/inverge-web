@@ -1,11 +1,12 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useId, useMemo, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { cn } from '@/lib/utils';
 import { useFeed } from '@/lib/feed/use-feed';
-import { COLLECTIONS, TOPICS } from '@/lib/feed/categories';
+import { COLLECTIONS, TOPICS, topicFor } from '@/lib/feed/categories';
 import type { FeedResponse } from '@/lib/feed/types';
 import { IdeaCard, IdeaCardSkeleton } from './idea-card';
 
@@ -117,6 +118,17 @@ export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-[13px] text-ink-muted tabular-nums" aria-live="polite">
           {isFetching && !isFetchingNextPage ? 'Searching…' : `${total} ${total === 1 ? 'idea' : 'ideas'}`}
+          {topic && (
+            <>
+              {' · '}
+              <Link
+                href={`/topics/${topic}`}
+                className="rounded font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+              >
+                Open the {topicFor(topic)?.label ?? 'topic'} page
+              </Link>
+            </>
+          )}
         </p>
         {filtered && (
           <Button variant="ghost" size="sm" onClick={clearAll}>

@@ -111,12 +111,17 @@ export function FeedLane({
 export function SectionHeading({
   children,
   className,
+  id,
 }: {
   children: React.ReactNode;
   className?: string;
+  id?: string;
 }) {
   return (
-    <h2 className={`mb-3 font-display text-base font-bold tracking-tight text-ink sm:text-lg ${className ?? ''}`}>
+    <h2
+      id={id}
+      className={`mb-3 font-display text-base font-bold tracking-tight text-ink sm:text-lg ${className ?? ''}`}
+    >
       {children}
     </h2>
   );

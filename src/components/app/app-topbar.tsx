@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Logo } from '@/components/ui/logo';
 import { AccountMenu } from './account-menu';
+import { TopicsMenu } from './topics-menu';
 
 /**
  * The app's only chrome.
@@ -14,7 +15,7 @@ import { AccountMenu } from './account-menu';
  * "Start an idea" is the one action this product wants, so it is the only filled control up here, and
  * sign-in sits beside it as plain text. Two equally heavy pills read as two equally important choices.
  *
- * Server Component; the account menu is the only client island.
+ * Server Component; the account menu and the topics panel are the only client islands.
  */
 export function AppTopbar() {
   return (
@@ -29,6 +30,7 @@ export function AppTopbar() {
           >
             Discover
           </Link>
+          <TopicsMenu />
         </nav>
 
         <div className="ml-auto flex items-center gap-1.5 sm:gap-2">

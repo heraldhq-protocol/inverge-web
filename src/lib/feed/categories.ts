@@ -40,6 +40,15 @@ export const TOPICS: Topic[] = [
   { slug: 'community', label: 'Community', category: 'other', keywords: ['community', 'co-op', 'neighbourhood'] },
 ];
 
+/** Display names for the five API categories, used wherever topics are grouped by their parent. */
+export const CATEGORY_LABEL: Record<IdeaCategory, string> = {
+  software: 'Software',
+  agriculture: 'Agriculture & food',
+  film: 'Film',
+  arts: 'Arts & culture',
+  other: 'Everything else',
+};
+
 export const TOPIC_BY_SLUG = new Map(TOPICS.map((t) => [t.slug, t]));
 
 export function topicFor(slug: string | undefined): Topic | undefined {
