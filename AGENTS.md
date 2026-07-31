@@ -21,6 +21,12 @@ This version has breaking changes — APIs, conventions, and file structure may 
   screens.** Scope and file allowlist, the locked app shell, route map, component inventory, the
   copy deck (strings are final), state matrix, the hard rules specific to these screens, staged
   build order, and definition of done. Read before touching anything under `(app)`.
+- `docs/campaign-brief.md` — **build spec for everything under `/campaigns`**: the catalogue, campaign
+  detail in depth (the six tabs and where each one's data comes from), and the creator flow from a
+  validated idea to a draft campaign. Supersedes `ideas-campaigns-brief.md` for campaign surfaces only.
+  Carries the eight findings that drive it, the ranked recommendations, the copy deck, the hard rules,
+  and the new API asks. Read before touching `components/campaigns/*`, `lib/campaigns/*` or
+  `app/(app)/campaigns/*`.
 - `docs/reference-teardown-kickstarter.md` — structural teardown of the Kickstarter reference the
   above is drawn from: homepage module inventory, the card anatomy, the project-page bands, tab by
   tab, the closed badge vocabulary, and the vocabulary translation table (what we may never call

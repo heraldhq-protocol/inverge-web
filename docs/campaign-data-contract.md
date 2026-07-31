@@ -199,9 +199,18 @@ Ordered by how much UI each unblocks. Every one is additive.
 | 9 | Campaign FAQ model + endpoints | The FAQ tab | — |
 | 10 | Public aggregate support view (geography, first-time vs returning), privacy-reviewed | A public community tab; creator dashboard covers it meanwhile | — |
 | 11 | `objectionThresholdPct` and the objection window length exposed as read-only platform params | Rendering the rule instead of hard-coding 30% and 7 days | FR-603 |
+| 12 | Platform escrow aggregates from the indexer: total held, released, refunded, plus campaign counts by status | The FR-801 figure band at the top of the catalogue. Summed client-side from the campaign list meanwhile, which does not survive pagination | FR-801/803 |
+| 13 | Campaign list filters and sort as query params (`status`, `category`, `region`, `sort`), same idiom as the feed | Server-side catalogue filtering instead of fetching every campaign and filtering in the client module | — |
+| 14 | Creator campaign history on the public creator projection: per-campaign `title`, `slug`, `status`, `milestonesReleased`, `milestoneTotal` | The Creator tab's "other campaigns by this creator" block, with **derived** outcome labels rather than the reference's self-reported "Marked as fulfilled" | — |
+| 15 | `POST /campaigns/:id/submit` plus `GET /campaigns?mine=true` including `DRAFT` and `IN_REVIEW` | Step 4 of the campaign builder, and a creator's view of their own unpublished draft | FR-304/311 |
 
-Nothing in this list is required for stages 1–7 of the brief's build order except items 1 and 2,
+Nothing in items 1–11 is required for stages 1–7 of the sibling brief's build order except items 1 and 2,
 which are required for stages 3 and 6 respectively.
+
+Items 12–15 come from [`campaign-brief.md`](./campaign-brief.md) §11 and are what the campaign surfaces
+ask for beyond items 6 and 7. None blocks a screen: 12 and 14 have a fixture-summed fallback that is
+correct and does not scale, 13 is performance, and 15 is the one that leaves the creator flow stopping
+at a saved draft.
 
 ---
 
