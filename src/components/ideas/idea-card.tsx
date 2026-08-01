@@ -10,7 +10,7 @@ import { VerifiedBadge } from '@/components/ui/verified-badge';
 import { buildGateProgress, validationDaysLeft } from '@/lib/ideas/gate';
 import { formatPercent, pluralise } from '@/lib/format';
 import type { FeedItem } from '@/lib/feed/types';
-import { IdeaCover } from './idea-cover';
+import { Cover } from '@/components/ui/cover';
 import { ReasonChip } from './reason-chip';
 
 export type IdeaCardSize = 'featured' | 'grid' | 'lane';
@@ -50,7 +50,7 @@ export function IdeaCard({ item, size = 'grid' }: { item: FeedItem; size?: IdeaC
       className="group flex h-full flex-col overflow-hidden transition-all duration-200 hover:-translate-y-0.5 hover:shadow-lift motion-reduce:transition-none motion-reduce:hover:translate-y-0"
     >
       <div className="relative">
-        <IdeaCover
+        <Cover
           id={item.id}
           title={item.title}
           category={item.category}

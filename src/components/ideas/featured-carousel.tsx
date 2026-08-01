@@ -13,7 +13,7 @@ import { cn } from '@/lib/utils';
 import { buildGateProgress, validationDaysLeft } from '@/lib/ideas/gate';
 import { formatPercent, pluralise } from '@/lib/format';
 import type { FeedItem } from '@/lib/feed/types';
-import { IdeaCover } from './idea-cover';
+import { Cover } from '@/components/ui/cover';
 import { ReasonChip } from './reason-chip';
 
 /**
@@ -134,7 +134,7 @@ function FeaturedSlide({ item }: { item: FeedItem }) {
         {/* The cover is a side panel here, not a banner: it fills the column's height instead of
             adding to it, so an image-less idea costs no vertical space. */}
         <div className="relative sm:h-full">
-          <IdeaCover
+          <Cover
             id={item.id}
             title={item.title}
             category={item.category}
