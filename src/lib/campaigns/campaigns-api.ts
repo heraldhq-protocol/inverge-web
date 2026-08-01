@@ -43,6 +43,7 @@ const toListItem = (c: CampaignDetail): CampaignListItem => ({
   totalRaised: c.totalRaised,
   backerCount: c.backerCount,
   deadline: c.deadline,
+  workingCapitalPct: c.workingCapitalPct,
   launchedAt: c.launchedAt,
   creator: c.creator,
   milestoneSummary: c.milestoneSummary,

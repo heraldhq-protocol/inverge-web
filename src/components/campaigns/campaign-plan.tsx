@@ -1,5 +1,6 @@
 import { Amount } from '@/components/ui/amount';
 import { Card } from '@/components/ui/card';
+import { workingCapitalAmount } from '@/lib/campaigns/campaign-stats';
 import { parseDecimal } from '@/lib/format';
 import type { CampaignDetail } from '@/lib/campaigns/types';
 
@@ -123,10 +124,17 @@ export function CampaignPlan({ campaign }: { campaign: CampaignDetail }) {
       <Card className="p-5 lg:sticky lg:top-24">
         <h2 className="text-sm font-semibold text-ink">Money released early</h2>
         <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-          {parseDecimal(campaign.workingCapitalPct)}% of the raise is released as soon as funding
-          closes, so the creator can start work rather than fund the first stage themselves. That
-          portion is disclosed here before anyone backs the campaign, and it is not part of what gets
-          returned if a later stage is not delivered.
+          {parseDecimal(campaign.workingCapitalPct)}% of the goal, or{' '}
+          <span className="font-semibold text-ink">
+            <Amount value={workingCapitalAmount(campaign)} currency="USD" />
+          </span>
+          , is released as soon as funding closes, so the creator can start work rather than fund the
+          first stage themselves. That portion is disclosed here before anyone backs the campaign, and
+          it is not part of what gets returned if a later stage is not delivered.
+        </p>
+        <p className="mt-3 text-xs leading-relaxed text-ink-muted">
+          It is a share of the goal rather than of whatever gets raised, so a campaign that overfunds
+          does not release more up front than its plan was ever worth.
         </p>
       </Card>
     </div>

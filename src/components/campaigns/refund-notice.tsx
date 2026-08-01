@@ -2,6 +2,7 @@ import { Amount } from '@/components/ui/amount';
 import { TxLink } from '@/components/ui/tx-link';
 import { formatDate, parseDecimal } from '@/lib/format';
 import { milestoneState } from '@/lib/campaigns/milestone-state';
+import { refundableAmount } from '@/lib/campaigns/campaign-stats';
 import type { CampaignDetail } from '@/lib/campaigns/types';
 
 /**
@@ -18,14 +19,15 @@ export function RefundNotice({ campaign }: { campaign: CampaignDetail }) {
   const failed = campaign.milestones.find((m) => milestoneState(m) === 'NOT_DELIVERED');
   if (!failed) return null;
 
-  const raised = parseDecimal(campaign.totalRaised);
   const remainingPct = campaign.milestones
     .filter((m) => {
       const state = milestoneState(m);
       return state === 'NOT_DELIVERED' || state === 'CANCELLED' || state === 'UPCOMING';
     })
     .reduce((sum, m) => sum + parseDecimal(m.tranchePct), 0);
-  const returned = (remainingPct / 100) * raised;
+  // Every share not yet released, out of the same pot the released ones came from. The upfront is not
+  // refundable and is not in it (campaign-stats.ts).
+  const returned = refundableAmount(campaign, remainingPct);
   const mine = campaign.myContribution?.refund;
 
   return (

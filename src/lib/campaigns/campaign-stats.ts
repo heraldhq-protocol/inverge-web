@@ -126,9 +126,68 @@ export function fundingProgress(campaign: Pick<CampaignListItem, 'totalRaised' |
   };
 }
 
-/** The share of the raise a stage releases, in money rather than a percentage of an unfamiliar total. */
+/**
+ * How the money splits. Two different bases, and the difference is deliberate.
+ *
+ * **Working capital is a share of the target** (FR-503a). The target is the budget the creator
+ * justified line by line and reviewers approved; the raise is whatever the internet decided. This is
+ * the only money that moves before anyone has verified anything, so pegging it to an uncapped raise
+ * is the one place the arithmetic is actually dangerous: a $1,000 target that raises $20,000 would
+ * pay out $4,000 up front, four times the entire plan, against nothing.
+ *
+ * **Stage shares are of everything left after that.** A campaign that overfunds is being asked to do
+ * more than it budgeted for, and the extra has to be available while the work happens rather than
+ * arriving after it is finished. So the tranches scale with the raise and the surplus is spread
+ * across every stage.
+ *
+ * The two together always balance to exactly the amount raised, which is the property that makes the
+ * escrow explainable: working capital plus every tranche equals the raise, with nothing left over
+ * and nothing invented.
+ */
+export function workingCapitalAmount(
+  campaign: Pick<CampaignDetail, 'workingCapitalPct' | 'targetAmount' | 'totalRaised'>
+): number {
+  const pct = parseDecimal(campaign.workingCapitalPct) / 100;
+  const wanted = pct * parseDecimal(campaign.targetAmount);
+  // Guard the pathological case: under-target funding cannot pay out more than exists.
+  return Math.min(wanted, parseDecimal(campaign.totalRaised));
+}
+
+/** Everything the stages divide between them: the raise, less the upfront. */
+export function distributableAmount(
+  campaign: Pick<CampaignDetail, 'workingCapitalPct' | 'targetAmount' | 'totalRaised'>
+): number {
+  return Math.max(0, parseDecimal(campaign.totalRaised) - workingCapitalAmount(campaign));
+}
+
+/** What a stage releases, in money rather than a percentage of an unfamiliar total. */
 export function trancheAmount(campaign: CampaignDetail, milestone: Milestone): number {
-  return (parseDecimal(milestone.tranchePct) / 100) * parseDecimal(campaign.totalRaised);
+  return (parseDecimal(milestone.tranchePct) / 100) * distributableAmount(campaign);
+}
+
+/**
+ * The last stage in the plan.
+ *
+ * It is the delivery stage: the one that confirms the whole thing landed, and therefore the last
+ * money a creator is paid. Nothing is held back for it beyond its own share — it matters because of
+ * *when* it pays, not how much.
+ */
+export function isFinalMilestone(campaign: CampaignDetail, milestone: Milestone): boolean {
+  const last = campaign.milestones[campaign.milestones.length - 1];
+  return Boolean(last) && last.id === milestone.id;
+}
+
+/** Raised above target. Shown as context; it does not change how the stages divide. */
+export function surplusAmount(campaign: Pick<CampaignDetail, 'totalRaised' | 'targetAmount'>): number {
+  return Math.max(0, parseDecimal(campaign.totalRaised) - parseDecimal(campaign.targetAmount));
+}
+
+/**
+ * What goes back to backers when a stage is not delivered (FR-506): every share not yet released, out
+ * of the same pot the released ones came from. The upfront is not refundable and is not in it.
+ */
+export function refundableAmount(campaign: CampaignDetail, unreleasedPct: number): number {
+  return (unreleasedPct / 100) * distributableAmount(campaign);
 }
 
 /**

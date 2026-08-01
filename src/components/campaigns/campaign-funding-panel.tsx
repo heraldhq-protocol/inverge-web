@@ -2,7 +2,11 @@ import { Amount, Count } from '@/components/ui/amount';
 import { Card } from '@/components/ui/card';
 import { Meter } from '@/components/ui/meter';
 import { Pill } from '@/components/ui/pill';
-import { fundingProgress } from '@/lib/campaigns/campaign-stats';
+import {
+  distributableAmount,
+  fundingProgress,
+  workingCapitalAmount,
+} from '@/lib/campaigns/campaign-stats';
 import { daysUntil, formatDate, pluralise } from '@/lib/format';
 import type { CampaignDetail } from '@/lib/campaigns/types';
 
@@ -55,8 +59,8 @@ export function CampaignFundingPanel({ campaign }: { campaign: CampaignDetail })
               <Amount value={funding.surplus} currency="USD" /> past the goal
             </p>
             <p className="mt-0.5 text-[11px] leading-relaxed text-ink-muted">
-              The extra is held in escrow with the rest and released against the same stages. There
-              are no stretch goals.
+              The extra is held with the rest and divided across the same stages, so every stage has
+              more behind it. There are no stretch goals.
             </p>
           </div>
         )}
@@ -97,6 +101,23 @@ export function CampaignFundingPanel({ campaign }: { campaign: CampaignDetail })
         if it reaches its goal by {formatDate(campaign.deadline)}. The money is then released in
         stages, and only after backers have reviewed each one.
       </p>
+
+      {/* The split, stated where the money is. A backer relying on staged release should be able to
+          read what "staged" means without opening a tab. */}
+      <dl className="mt-3 space-y-1 border-t border-border pt-3 text-xs text-ink-muted">
+        <div className="flex items-baseline justify-between gap-3">
+          <dt>Released at funding close</dt>
+          <dd className="font-medium text-ink tabular-nums">
+            <Amount value={workingCapitalAmount(campaign)} currency="USD" />
+          </dd>
+        </div>
+        <div className="flex items-baseline justify-between gap-3">
+          <dt>Divided across the stages</dt>
+          <dd className="font-medium text-ink tabular-nums">
+            <Amount value={distributableAmount(campaign)} currency="USD" />
+          </dd>
+        </div>
+      </dl>
     </Card>
   );
 }

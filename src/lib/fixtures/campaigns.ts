@@ -11,6 +11,15 @@ import { CREATORS, campaignCreator } from './creators';
  *
  * Every date is relative to now, so the objection countdown is never stale in a review or a
  * screenshot, and "closing soon" is genuinely closing soon.
+ *
+ * **The invariant, if you edit any figure here.** Every campaign must satisfy:
+ *
+ *     upfront + every stage tranche === totalRaised, exactly
+ *
+ * where `upfront = workingCapitalPct% of targetAmount` and each tranche is
+ * `tranchePct% of (totalRaised - upfront)` (campaign-stats.ts). Stage percentages sum to 100.
+ * All eight below were checked against that; a hand-edited receipt amount is the easy way to break it,
+ * and the symptom is the detail page and the receipts tab quietly disagreeing about one campaign.
  */
 
 const DAY = 86_400_000;
@@ -102,7 +111,7 @@ function campusKonekt(): CampaignDetail {
       links: [{ label: 'Staging build', url: 'https://staging.campuskonekt.example' }],
       objectionPct: '1.80',
       releasedDaysAgo: -31,
-      amount: '900.00',
+      amount: '1100.00',
       sigN: 2,
     }),
     released({
@@ -116,7 +125,7 @@ function campusKonekt(): CampaignDetail {
         '128 orders completed in three weeks. Two vendors signed the summary; the export is itemised by day.',
       objectionPct: '4.20',
       releasedDaysAgo: -11,
-      amount: '900.00',
+      amount: '1100.00',
       sigN: 3,
     }),
     {
@@ -167,9 +176,9 @@ function campusKonekt(): CampaignDetail {
     type: 'ALL_OR_NOTHING',
     status: 'ACTIVE',
     targetAmount: '5000',
-    totalRaised: '3600',
+    totalRaised: '5400',
     backerCount: 214,
-    deadline: iso(18),
+    deadline: iso(-18),
     launchedAt: iso(-52),
     creator: campaignCreator(CREATORS.tobi),
     milestoneSummary: { total: 4, released: 2, underReview: 1, failed: 0 },
@@ -197,10 +206,10 @@ function campusKonekt(): CampaignDetail {
     workingCapitalPct: '20.00',
     milestones,
     receipts: [
-      receipt('FUNDED', 'Funding closed', '3600.00', -45, 1),
-      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '720.00', -45, 4),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '900.00', -31, 2),
-      receipt('TRANCHE_RELEASED', 'Stage 2 released', '900.00', -11, 3),
+      receipt('FUNDED', 'Funding closed', '5400.00', -45, 1),
+      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1000.00', -45, 4),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '1100.00', -31, 2),
+      receipt('TRANCHE_RELEASED', 'Stage 2 released', '1100.00', -11, 3),
     ],
     myContribution: { total: '120.00' },
   };
@@ -225,7 +234,7 @@ function clinicQueue(): CampaignDetail {
       proof,
       objectionPct: '2.10',
       releasedDaysAgo: daysAgo,
-      amount: '3112.50',
+      amount: '2452.50',
       sigN: 20 + i,
     });
 
@@ -306,11 +315,11 @@ function clinicQueue(): CampaignDetail {
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '12450.00', -158, 10),
-      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '2739.00', -158, 11),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '3112.50', -150, 20),
-      receipt('TRANCHE_RELEASED', 'Stage 2 released', '3112.50', -110, 21),
-      receipt('TRANCHE_RELEASED', 'Stage 3 released', '3112.50', -70, 22),
-      receipt('TRANCHE_RELEASED', 'Stage 4 released', '3112.50', -30, 23),
+      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '2640.00', -158, 11),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '2452.50', -150, 20),
+      receipt('TRANCHE_RELEASED', 'Stage 2 released', '2452.50', -110, 21),
+      receipt('TRANCHE_RELEASED', 'Stage 3 released', '2452.50', -70, 22),
+      receipt('TRANCHE_RELEASED', 'Stage 4 released', '2452.50', -30, 23),
     ],
   };
 }
@@ -368,7 +377,7 @@ function tailorsBank(): CampaignDetail {
         proof: '61 tailors recorded at least 20 jobs in the month.',
         objectionPct: '3.00',
         releasedDaysAgo: -143,
-        amount: '2000.00',
+        amount: '1600.00',
         sigN: 30,
       }),
       released({
@@ -381,7 +390,7 @@ function tailorsBank(): CampaignDetail {
         proof: '44 tailors with unbroken six-month histories.',
         objectionPct: '5.50',
         releasedDaysAgo: -118,
-        amount: '2000.00',
+        amount: '1600.00',
         sigN: 31,
       }),
       {
@@ -422,10 +431,10 @@ function tailorsBank(): CampaignDetail {
     receipts: [
       receipt('FUNDED', 'Funding closed', '8000.00', -190, 33),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1600.00', -190, 34),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '2000.00', -143, 30),
-      receipt('TRANCHE_RELEASED', 'Stage 2 released', '2000.00', -118, 31),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '1600.00', -143, 30),
+      receipt('TRANCHE_RELEASED', 'Stage 2 released', '1600.00', -118, 31),
       receipt('MILESTONE_FAILED', 'Stage 3 not delivered', null, -33, 32),
-      receipt('REFUND_CLAIMED', 'Refunds returned to backers', '2400.00', -30, 35),
+      receipt('REFUND_CLAIMED', 'Refunds returned to backers', '3200.00', -30, 35),
     ],
     myContribution: {
       total: '45.00',
@@ -491,7 +500,7 @@ function coldChainKaduna(): CampaignDetail {
         links: [{ label: 'Logger export', url: 'https://coldchainkaduna.example/logs' }],
         objectionPct: '2.40',
         releasedDaysAgo: -9,
-        amount: '5352.00',
+        amount: '4542.00',
         sigN: 40,
       }),
       upcoming(
@@ -517,8 +526,8 @@ function coldChainKaduna(): CampaignDetail {
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '17840.00', -30, 41),
-      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '3211.20', -30, 42),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '5352.00', -9, 40),
+      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '2700.00', -30, 42),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '4542.00', -9, 40),
     ],
   };
 }
@@ -586,7 +595,7 @@ function folktalesArchive(): CampaignDetail {
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '6720.00', -6, 50),
-      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1008.00', -6, 51),
+      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '975.00', -6, 51),
     ],
   };
 }
@@ -717,7 +726,7 @@ function mushinLedger(): CampaignDetail {
           '34 stalls recorded daily for five weeks. The sync log shows a median of eleven hours offline between syncs, which is the point.',
         objectionPct: '3.90',
         releasedDaysAgo: -60,
-        amount: '1750.00',
+        amount: '1400.00',
         sigN: 60,
       }),
       {
@@ -760,7 +769,7 @@ function mushinLedger(): CampaignDetail {
     receipts: [
       receipt('FUNDED', 'Funding closed', '7000.00', -110, 61),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1400.00', -110, 62),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '1750.00', -60, 60),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '1400.00', -60, 60),
     ],
   };
 }
@@ -778,7 +787,7 @@ function pastPapers(): CampaignDetail {
       proof,
       objectionPct: '1.40',
       releasedDaysAgo: daysAgo,
-      amount: i === 2 ? '1240.00' : '930.00',
+      amount: i === 2 ? '1060.00' : '795.00',
       sigN: 70 + i,
     });
 
@@ -844,10 +853,10 @@ function pastPapers(): CampaignDetail {
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '3100.00', -305, 73),
-      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '465.00', -305, 74),
-      receipt('TRANCHE_RELEASED', 'Stage 1 released', '930.00', -280, 70),
-      receipt('TRANCHE_RELEASED', 'Stage 2 released', '930.00', -230, 71),
-      receipt('TRANCHE_RELEASED', 'Stage 3 released', '1240.00', -180, 72),
+      receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '450.00', -305, 74),
+      receipt('TRANCHE_RELEASED', 'Stage 1 released', '795.00', -280, 70),
+      receipt('TRANCHE_RELEASED', 'Stage 2 released', '795.00', -230, 71),
+      receipt('TRANCHE_RELEASED', 'Stage 3 released', '1060.00', -180, 72),
     ],
   };
 }

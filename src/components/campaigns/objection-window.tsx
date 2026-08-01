@@ -4,6 +4,7 @@ import { Meter } from '@/components/ui/meter';
 import { Pill } from '@/components/ui/pill';
 import { formatDate, parseDecimal, pluralise } from '@/lib/format';
 import { objectionDaysLeft } from '@/lib/campaigns/milestone-state';
+import { trancheAmount } from '@/lib/campaigns/campaign-stats';
 import type { CampaignDetail, Milestone } from '@/lib/campaigns/types';
 
 /**
@@ -32,8 +33,7 @@ export function ObjectionWindow({
   if (!claim) return null;
 
   const daysLeft = objectionDaysLeft(milestone) ?? 0;
-  const raised = parseDecimal(campaign.totalRaised);
-  const amount = (parseDecimal(milestone.tranchePct) / 100) * raised;
+  const amount = trancheAmount(campaign, milestone);
   const weight = parseDecimal(claim.objectionWeightPct);
   const threshold = parseDecimal(claim.objectionThresholdPct);
 

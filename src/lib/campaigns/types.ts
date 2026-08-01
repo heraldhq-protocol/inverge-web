@@ -103,6 +103,12 @@ export type CampaignListItem = {
   totalRaised: string;
   backerCount: number;
   deadline: string;
+  /**
+   * The share of the goal released at funding close (FR-503a). On the list item because every surface
+   * that shows what a stage releases needs it: the stages divide the raise *less* this
+   * (campaign-stats.ts), so a card computing without it would quietly disagree with the detail page.
+   */
+  workingCapitalPct: string;
   /** When the campaign went public. Drives the "Newest" sort and the head of the timeline. */
   launchedAt: string;
   creator: PublicCreator;
@@ -179,7 +185,6 @@ export type CampaignDetail = Omit<CampaignListItem, 'creator'> & {
     roadmap: string;
   };
   risks: string;
-  workingCapitalPct: string;
   milestones: Milestone[];
   receipts: Receipt[];
   /** Present only for a signed-in backer. Absent means "not a backer", not zero. */

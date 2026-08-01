@@ -4,6 +4,7 @@ import { Card } from '@/components/ui/card';
 import { Meter } from '@/components/ui/meter';
 import { Pill } from '@/components/ui/pill';
 import { objectionDaysLeft } from '@/lib/campaigns/milestone-state';
+import { distributableAmount } from '@/lib/campaigns/campaign-stats';
 import { parseDecimal, pluralise } from '@/lib/format';
 import type { CampaignListItem, Milestone } from '@/lib/campaigns/types';
 
@@ -61,7 +62,8 @@ function UnderReviewCard({ campaign, milestone }: UnderReviewItem) {
   if (!claim) return null;
 
   const daysLeft = objectionDaysLeft(milestone) ?? 0;
-  const atStake = (parseDecimal(milestone.tranchePct) / 100) * parseDecimal(campaign.totalRaised);
+  // Stages divide the raise less the upfront, which is a share of the goal (campaign-stats.ts).
+  const atStake = (parseDecimal(milestone.tranchePct) / 100) * distributableAmount(campaign);
   const weight = parseDecimal(claim.objectionWeightPct);
   const threshold = parseDecimal(claim.objectionThresholdPct);
 
