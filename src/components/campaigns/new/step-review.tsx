@@ -4,6 +4,7 @@ import { Amount } from '@/components/ui/amount';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import {
+  distributableAtTarget,
   trancheAmountOf,
   workingCapitalAmount,
   type CampaignDraft,
@@ -64,8 +65,22 @@ export function StepReview({ draft, idea }: { draft: CampaignDraft; idea: Eligib
               )
             }
           />
+          <Row
+            label="Divided across the stages"
+            value={
+              distributableAtTarget(draft) > 0 ? (
+                <Amount value={distributableAtTarget(draft)} currency="USD" />
+              ) : (
+                '—'
+              )
+            }
+          />
           <Row label="Funding type" value="All or nothing" />
         </dl>
+        <p className="mt-3 border-t border-border pt-3 text-xs leading-relaxed text-ink-muted">
+          These are the figures if you raise exactly your goal. Raise more and the upfront stays where
+          it is, while every stage is worth proportionally more.
+        </p>
       </Card>
 
       <Card className="p-5">

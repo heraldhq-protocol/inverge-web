@@ -1,4 +1,5 @@
 import { parseDecimal } from '@/lib/format';
+import { TOPIC_BY_SLUG } from '@/lib/feed/categories';
 import type { IdeaCategory } from '@/lib/feed/types';
 import { PLATFORM, type CampaignType } from './types';
 
@@ -48,7 +49,15 @@ export type CampaignDraft = {
   standalone: boolean;
   title: string;
   summary: string;
-  category: IdeaCategory;
+  /**
+   * The browsing topic, by slug.
+   *
+   * A creator picks from the fifteen topics rather than the API's five categories, because five is
+   * too coarse to describe anything: a third of everything is "Other", which tells a backer nothing
+   * (categories.ts). The API category is derived from the topic, so what eventually goes over the
+   * wire is still one of the five values the enum accepts.
+   */
+  topic: string;
   region: string;
   type: CampaignType;
   tokenType: 'USDC' | 'CNGN';
@@ -77,7 +86,7 @@ export function emptyDraft(): CampaignDraft {
     standalone: false,
     title: '',
     summary: '',
-    category: 'software',
+    topic: '',
     region: '',
     type: 'ALL_OR_NOTHING',
     tokenType: 'USDC',
@@ -92,6 +101,65 @@ export function emptyDraft(): CampaignDraft {
   };
 }
 
+/**
+ * A complete, valid draft, for filling the form in one click while working on the screens.
+ *
+ * Reviewing a four-step form means retyping four steps every time one line of markup changes, which
+ * is how validation states and the review step end up under-tested — nobody gets that far often
+ * enough. The control that calls this is rendered only outside production builds
+ * (`campaign-builder.tsx`), so this never reaches a creator.
+ *
+ * The content is real-shaped for the same reason every fixture is: a form filled with "test test"
+ * cannot be judged for line lengths, wrapping or tone (conventions §1.5). Shares sum to 100, so the
+ * happy path lands on the review step rather than on an error.
+ */
+export function sampleDraft(ideaId: string | null): CampaignDraft {
+  const inThreeMonths = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+
+  return {
+    ideaId,
+    standalone: ideaId === null,
+    title: 'Ariaria Dye House',
+    summary:
+      'Fabric dyers in Aba mix by eye, so no two batches match and export orders fall through.',
+    topic: 'fashion',
+    region: 'Aba',
+    type: 'ALL_OR_NOTHING',
+    tokenType: 'USDC',
+    targetAmount: '9000',
+    deadline: inThreeMonths,
+    workingCapitalPct: '20',
+    videoUrl: 'https://media.ariariadye.example/pitch.mp4',
+    coverImageUrl: '',
+    milestones: [
+      {
+        key: 'sample-1',
+        title: 'Dye house fitted out',
+        deliverable: 'Vats, scales and a water line installed and running in the shared unit.',
+        tranchePct: '30',
+        evidenceType: 'Photos and receipts',
+        evidenceSource: 'Build photos plus supplier receipts',
+      },
+      {
+        key: 'sample-2',
+        title: 'Repeatable colour matching',
+        deliverable: 'Twenty batches dyed to the same reference within an agreed tolerance.',
+        tranchePct: '35',
+        evidenceType: 'Batch record',
+        evidenceSource: 'Measured readings for every batch, published',
+      },
+      {
+        key: 'sample-3',
+        title: 'First export order shipped',
+        deliverable: 'One order shipped and accepted by a buyer outside Nigeria.',
+        tranchePct: '35',
+        evidenceType: 'Shipping documents',
+        evidenceSource: 'Bill of lading plus written buyer acceptance',
+      },
+    ],
+  };
+}
+
 /** Stage shares, and what is left to assign. The number the stages step is really about. */
 export function trancheTotal(milestones: MilestoneDraft[]): number {
   return milestones.reduce((sum, m) => sum + parseDecimal(m.tranchePct), 0);
@@ -101,14 +169,91 @@ export function trancheRemaining(milestones: MilestoneDraft[]): number {
   return Math.round((100 - trancheTotal(milestones)) * 100) / 100;
 }
 
-/** What a stage releases in money. A percentage of an unfamiliar total is not actionable. */
-export function trancheAmountOf(draft: CampaignDraft, milestone: MilestoneDraft): number {
-  return (parseDecimal(milestone.tranchePct) / 100) * parseDecimal(draft.targetAmount);
+/**
+ * Split the whole raise evenly across the stages, in whole percent, summing to **exactly** 100.
+ *
+ * Three stages is 33.33 recurring, and three fields reading "33.33" sum to 99.99, which fails FR-302
+ * for a reason no creator would ever guess from looking at the form. So the split is integers and the
+ * remainder lands on the earliest stages: 34/33/33. Ugly arithmetic beats an unexplainable rejection.
+ */
+export function distributeEvenly(milestones: MilestoneDraft[]): MilestoneDraft[] {
+  const n = milestones.length;
+  if (n === 0) return milestones;
+
+  const base = Math.floor(100 / n);
+  const remainder = 100 - base * n;
+
+  return milestones.map((m, i) => ({
+    ...m,
+    tranchePct: String(base + (i < remainder ? 1 : 0)),
+  }));
 }
 
-/** What is released the moment funding closes, before any stage is verified (FR-503a). */
+/**
+ * Add a stage without breaking the total.
+ *
+ * The new stage takes whatever is unassigned, so a creator who had reached 100 gets a stage at 0 and
+ * an explicit prompt rather than a silently invalid form. Nothing already entered is touched: a
+ * builder that rewrites numbers the creator typed is worse than one that leaves a gap.
+ */
+export function addMilestone(milestones: MilestoneDraft[], key: string): MilestoneDraft[] {
+  const remaining = Math.max(0, trancheRemaining(milestones));
+  return [...milestones, { ...emptyMilestone(key), tranchePct: remaining > 0 ? String(remaining) : '' }];
+}
+
+/**
+ * Remove a stage and hand its share to the one before it, so a form that summed to 100 still does.
+ *
+ * The alternative is dropping to 95% and making the creator hunt for the five percent, which is the
+ * single most likely way to arrive at the review step with an error nobody can see.
+ */
+export function removeMilestone(milestones: MilestoneDraft[], key: string): MilestoneDraft[] {
+  const index = milestones.findIndex((m) => m.key === key);
+  if (index === -1 || milestones.length <= PLATFORM.minMilestones) return milestones;
+
+  const freed = parseDecimal(milestones[index].tranchePct);
+  const rest = milestones.filter((m) => m.key !== key);
+  if (freed <= 0) return rest;
+
+  // Prefer the stage before the one removed; fall back to the new last stage.
+  const target = Math.max(0, Math.min(index - 1, rest.length - 1));
+  return rest.map((m, i) =>
+    i === target ? { ...m, tranchePct: String(parseDecimal(m.tranchePct) + freed) } : m
+  );
+}
+
+/**
+ * What is released the moment funding closes, before any stage is verified (FR-503a).
+ *
+ * A share of the **target**, and this is the field where the base matters most: it is the only money
+ * that moves before anybody has checked anything, so pegging it to an uncapped raise would let a
+ * campaign that overfunded ten times over pay out more up front than its entire plan was worth
+ * (campaign-stats.ts).
+ */
 export function workingCapitalAmount(draft: CampaignDraft): number {
   return (parseDecimal(draft.workingCapitalPct) / 100) * parseDecimal(draft.targetAmount);
+}
+
+/**
+ * What the stages have to divide between them, **if the campaign raises exactly its goal**.
+ *
+ * Live, the stages split the actual raise less the upfront, so a campaign that overfunds gives every
+ * stage more to work with. At draft time there is no raise to divide, so the preview shows the floor
+ * case — the least each stage could be worth — and the form says so rather than implying the figure
+ * is fixed.
+ */
+export function distributableAtTarget(draft: CampaignDraft): number {
+  return Math.max(0, parseDecimal(draft.targetAmount) - workingCapitalAmount(draft));
+}
+
+/** What a stage releases at the goal. A percentage of an unfamiliar total is not actionable. */
+export function trancheAmountOf(draft: CampaignDraft, milestone: MilestoneDraft): number {
+  return (parseDecimal(milestone.tranchePct) / 100) * distributableAtTarget(draft);
+}
+
+/** The API category a chosen topic belongs to. Falls back to the catch-all rather than to nothing. */
+export function categoryOf(draft: CampaignDraft): IdeaCategory {
+  return TOPIC_BY_SLUG.get(draft.topic)?.category ?? 'other';
 }
 
 /** Step one is satisfied by either a validated idea or an explicit decision to go without one. */
@@ -128,6 +273,9 @@ export function validateRaise(draft: CampaignDraft): DraftErrors {
     }
     if (!draft.summary.trim()) {
       errors.summary = 'One sentence on the problem this solves. It is the line under the title.';
+    }
+    if (!draft.topic.trim()) {
+      errors.topic = 'Pick the topic backers will browse this under.';
     }
     if (!draft.region.trim()) {
       errors.region = 'Where is this happening? Backers filter by it.';

@@ -7,6 +7,7 @@ import { Pill } from '@/components/ui/pill';
 import {
   emptyDraft,
   hasErrors,
+  sampleDraft,
   validateOrigin,
   validateRaise,
   validateStages,
@@ -89,7 +90,15 @@ export function CampaignBuilder({ ideas }: { ideas: EligibleIdea[] }) {
 
   return (
     <div className="space-y-6">
-      <StepBar current={step} errors={stepErrors} />
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <StepBar current={step} errors={stepErrors} />
+        <DevFill
+          onFill={() => {
+            setDraft(sampleDraft(ideas.find((i) => i.ready)?.id ?? null));
+            setShowErrors(false);
+          }}
+        />
+      </div>
 
       <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:items-start">
         <div className="min-w-0 space-y-6">
@@ -156,6 +165,27 @@ export function CampaignBuilder({ ideas }: { ideas: EligibleIdea[] }) {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Fills the whole form with a valid sample, so a four-step flow can be reviewed without retyping it
+ * on every change. **Development only** — `NODE_ENV` is inlined at build time, so this and the sample
+ * data it pulls in are dead code the bundler drops from a production build.
+ */
+function DevFill({ onFill }: { onFill: () => void }) {
+  if (process.env.NODE_ENV === 'production') return null;
+
+  return (
+    <button
+      type="button"
+      onClick={onFill}
+      className="inline-flex min-h-8 items-center gap-1.5 rounded-full border border-dashed border-border px-3 text-[13px] font-medium text-ink-muted transition-colors hover:border-accent-500/40 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
+      title="Development only. Fills every step with a valid sample campaign."
+    >
+      <span aria-hidden="true">⚡</span>
+      Fill with sample data
+    </button>
   );
 }
 

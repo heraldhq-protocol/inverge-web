@@ -11,7 +11,7 @@ import {
   type DraftErrors,
 } from '@/lib/campaigns/campaign-draft';
 import { PLATFORM } from '@/lib/campaigns/types';
-import { CATEGORIES, type IdeaCategory } from '@/lib/feed/types';
+import { CATEGORY_LABEL, TOPICS } from '@/lib/feed/categories';
 import { parseDecimal } from '@/lib/format';
 import type { EligibleIdea } from '@/lib/campaigns/my-ideas';
 
@@ -27,6 +27,17 @@ import type { EligibleIdea } from '@/lib/campaigns/my-ideas';
  * eligibility ladder, and a ladder nobody can see is not an incentive: naming what one delivered
  * campaign unlocks is the clearest possible statement of what delivering buys you.
  */
+/**
+ * Topics grouped under their API category, so a fifteen-item list reads as five short ones. Built
+ * once at module scope rather than on every render.
+ */
+const GROUPED_TOPICS = Object.entries(
+  TOPICS.reduce<Record<string, typeof TOPICS>>((acc, topic) => {
+    (acc[topic.category] ??= []).push(topic);
+    return acc;
+  }, {})
+) as [keyof typeof CATEGORY_LABEL, typeof TOPICS][];
+
 export function StepRaise({
   draft,
   idea,
@@ -107,19 +118,32 @@ export function StepRaise({
           </Field>
 
           <div className="grid gap-5 sm:grid-cols-2">
-            <Field label="Category" help="Where backers browsing by interest will find it.">
+            {/* Topics, not the five API categories: five is too coarse to describe anything, and a
+                third of everything landing in "Other" helps nobody browsing. The API category is
+                derived from whatever is picked here (categories.ts). */}
+            <Field
+              label="Topic"
+              help="Where backers browsing by interest will find it."
+              error={errors.topic}
+            >
               {({ id, invalid, describedBy }) => (
                 <select
                   id={id}
-                  value={draft.category}
-                  onChange={(e) => onChange({ category: e.target.value as IdeaCategory })}
+                  value={draft.topic}
+                  onChange={(e) => onChange({ topic: e.target.value })}
                   aria-describedby={describedBy || undefined}
+                  aria-invalid={invalid || undefined}
                   className={controlClass(invalid)}
                 >
-                  {CATEGORIES.map((c) => (
-                    <option key={c.value} value={c.value}>
-                      {c.label}
-                    </option>
+                  <option value="">Choose a topic</option>
+                  {GROUPED_TOPICS.map(([category, topics]) => (
+                    <optgroup key={category} label={CATEGORY_LABEL[category]}>
+                      {topics.map((t) => (
+                        <option key={t.slug} value={t.slug}>
+                          {t.label}
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               )}
