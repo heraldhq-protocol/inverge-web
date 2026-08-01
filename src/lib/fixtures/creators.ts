@@ -1,3 +1,4 @@
+import type { CampaignCreator } from '@/lib/campaigns/types';
 import type { PublicCreator } from '@/lib/feed/types';
 
 /**
@@ -131,5 +132,22 @@ export function publicCreator(c: FixtureCreator): PublicCreator {
     avatarUrl: c.avatarUrl ?? null,
     identityVerified: c.identityVerified,
     verificationTier: c.verificationTier,
+  };
+}
+
+/**
+ * The fuller projection a campaign's creator tab renders — what API ask 14 would return.
+ *
+ * Note what is not here and must never be: `activeStrikes`. A demotion shows up as a lower `tier`
+ * and nothing else (campaign-brief.md §9 rule 6).
+ */
+export function campaignCreator(c: FixtureCreator): CampaignCreator {
+  return {
+    ...publicCreator(c),
+    bio: c.bio,
+    tier: c.tier,
+    completedCampaigns: c.completedCampaigns,
+    ideasPublished: c.ideasPublished,
+    memberSince: c.memberSince,
   };
 }
