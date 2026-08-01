@@ -2,7 +2,7 @@ import { Avatar } from '@/components/ui/avatar';
 import { Pill } from '@/components/ui/pill';
 import { formatDate } from '@/lib/format';
 import type { IdeaDetail } from '@/lib/ideas/types';
-import { IdeaCover } from './idea-cover';
+import { Cover } from '@/components/ui/cover';
 
 /**
  * Idea detail header.
@@ -50,7 +50,7 @@ export function IdeaHeader({ idea }: { idea: IdeaDetail }) {
       </div>
 
       <div className="overflow-hidden rounded-xl">
-        <IdeaCover
+        <Cover
           id={idea.id}
           title={idea.title}
           category={idea.category}

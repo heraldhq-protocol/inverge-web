@@ -2,6 +2,12 @@ import { cn } from '@/lib/utils';
 import { Amount } from '@/components/ui/amount';
 import { Pill } from '@/components/ui/pill';
 import { TxLink } from '@/components/ui/tx-link';
+import {
+  distributableAmount,
+  isFinalMilestone,
+  trancheAmount,
+  workingCapitalAmount,
+} from '@/lib/campaigns/campaign-stats';
 import { parseDecimal, pluralise } from '@/lib/format';
 import { MILESTONE_STATE_LABEL, milestoneState, objectionDaysLeft } from '@/lib/campaigns/milestone-state';
 import type { CampaignDetail, Milestone, MilestoneState } from '@/lib/campaigns/types';
@@ -22,32 +28,42 @@ import type { CampaignDetail, Milestone, MilestoneState } from '@/lib/campaigns/
  * is not a number anyone can act on.
  */
 export function MilestoneTracker({ campaign }: { campaign: CampaignDetail }) {
-  const raised = parseDecimal(campaign.totalRaised);
+  const upfront = workingCapitalAmount(campaign);
+  const distributable = distributableAmount(campaign);
 
   return (
     <section aria-label="Delivery stages">
       <ol className="grid gap-3 lg:grid-cols-4">
         {campaign.milestones.map((m) => (
           <li key={m.id}>
-            <MilestoneCard milestone={m} raised={raised} />
+            <MilestoneCard campaign={campaign} milestone={m} />
           </li>
         ))}
       </ol>
 
       <p className="mt-4 max-w-[68ch] text-xs leading-relaxed text-ink-muted">
-        Each stage releases its share of the money only after backers have had a week to review what was
-        delivered. Money for stages that have not been released is still held, and it is what gets
-        returned if a stage is not delivered.
+        <Amount value={upfront} currency="USD" /> was released when funding closed, as a share of the
+        goal, so work could start. The stages divide the remaining{' '}
+        <Amount value={distributable} currency="USD" /> between them, and each one is released only
+        after backers have had a week to review what was delivered. Money for stages that have not
+        been released is still held, and it is what gets returned if a stage is not delivered.
       </p>
     </section>
   );
 }
 
-function MilestoneCard({ milestone, raised }: { milestone: Milestone; raised: number }) {
+function MilestoneCard({
+  campaign,
+  milestone,
+}: {
+  campaign: CampaignDetail;
+  milestone: Milestone;
+}) {
   const state = milestoneState(milestone);
   const pct = parseDecimal(milestone.tranchePct);
-  const amount = (pct / 100) * raised;
+  const amount = trancheAmount(campaign, milestone);
   const daysLeft = objectionDaysLeft(milestone);
+  const isFinal = isFinalMilestone(campaign, milestone);
 
   const surface: Record<MilestoneState, string> = {
     RELEASED: 'border-accent-500/30 bg-accent-50',
@@ -91,7 +107,7 @@ function MilestoneCard({ milestone, raised }: { milestone: Milestone; raised: nu
       <h3 className="mt-2 text-sm font-semibold leading-snug text-ink">{milestone.title}</h3>
 
       <p className="mt-1 text-xs text-ink-muted tabular-nums">
-        {pct}% of the raise
+        {pct}% of the stages
         {state !== 'CANCELLED' && (
           <>
             {' · '}
@@ -99,6 +115,11 @@ function MilestoneCard({ milestone, raised }: { milestone: Milestone; raised: nu
           </>
         )}
       </p>
+
+      {/* The last stage confirms the whole thing landed, so it is the last money the creator sees. */}
+      {isFinal && state !== 'CANCELLED' && (
+        <p className="mt-1 text-[11px] leading-snug text-ink-muted">Final stage, on delivery</p>
+      )}
 
       <p className="mt-2 text-xs leading-relaxed text-ink-muted">{milestone.deliverable}</p>
 

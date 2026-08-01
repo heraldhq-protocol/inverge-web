@@ -129,13 +129,29 @@ function coverLabel(category: IdeaCategory, topics?: string[]): string {
   return COVER_LABELS[category] ?? humaniseSlug(category);
 }
 
-export function IdeaCover({
+/**
+ * How much vertical room the cover takes.
+ *
+ * `band` is the idea default and is deliberately short: an idea has no image, so a tall block is dead
+ * space that pushes every number down the card (see the note above).
+ *
+ * `thumbnail` is 16:9 and is what a **campaign** card uses. Two reasons it differs. A campaign carries
+ * a pitch video, so 16:9 is the frame its poster is already in — the card thumbnail and the player on
+ * the detail page are then the same crop, not two different ones. And a campaign is asking for money
+ * rather than for an opinion, which earns the image the room a card of ideas cannot justify.
+ *
+ * The fallback keeps the same ratio, so a grid mixing campaigns with and without artwork stays even.
+ */
+export type CoverRatio = 'band' | 'thumbnail';
+
+export function Cover({
   id,
   title,
   category,
   topics,
   src,
   size = 'grid',
+  ratio = 'band',
   className,
 }: {
   id: string;
@@ -144,13 +160,21 @@ export function IdeaCover({
   topics?: string[];
   src?: string | null;
   size?: 'grid' | 'featured' | 'lane';
+  ratio?: CoverRatio;
   className?: string;
 }) {
   const label = coverLabel(category, topics);
+  const thumbnail = ratio === 'thumbnail';
 
   if (src) {
     return (
-      <div className={cn('relative w-full overflow-hidden bg-ink/5', className, 'aspect-[3/2]')}>
+      <div
+        className={cn(
+          'relative w-full overflow-hidden bg-ink/5',
+          thumbnail ? 'aspect-video' : 'aspect-[3/2]',
+          className
+        )}
+      >
         <Image
           src={src}
           alt={`${title} cover`}
@@ -165,7 +189,13 @@ export function IdeaCover({
     );
   }
 
-  const height = size === 'featured' ? 'h-28 sm:h-32' : size === 'lane' ? 'h-16' : 'h-20';
+  const height = thumbnail
+    ? 'aspect-video'
+    : size === 'featured'
+      ? 'h-28 sm:h-32'
+      : size === 'lane'
+        ? 'h-16'
+        : 'h-20';
 
   return (
     <div
@@ -174,7 +204,10 @@ export function IdeaCover({
     >
       {/* A quiet mark so an image-less cover reads as deliberate rather than as a failed load. */}
       <svg
-        className="absolute -right-4 -top-10 h-[220%] w-auto opacity-[0.09]"
+        className={cn(
+          'absolute w-auto opacity-[0.09]',
+          thumbnail ? '-right-8 -top-16 h-[190%]' : '-right-4 -top-10 h-[220%]'
+        )}
         viewBox="0 0 100 100"
         fill="none"
         stroke="currentColor"
@@ -184,7 +217,12 @@ export function IdeaCover({
         <circle cx="50" cy="50" r="30" />
       </svg>
 
-      <div className="relative flex h-full items-center px-3.5">
+      <div
+        className={cn(
+          'relative flex h-full px-3.5',
+          thumbnail ? 'items-end pb-3' : 'items-center'
+        )}
+      >
         <span className="text-[9px] font-semibold uppercase tracking-[0.15em] opacity-75">{label}</span>
       </div>
     </div>

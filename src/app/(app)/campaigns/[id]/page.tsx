@@ -1,18 +1,47 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
-import { Card } from '@/components/ui/card';
+import { Amount } from '@/components/ui/amount';
 import { Tabs } from '@/components/ui/tabs';
+import { CampaignCreatorPanel } from '@/components/campaigns/campaign-creator';
+import { CampaignFaq } from '@/components/campaigns/campaign-faq';
+import { CampaignFundingPanel } from '@/components/campaigns/campaign-funding-panel';
 import { CampaignHeader } from '@/components/campaigns/campaign-header';
+import { CampaignLane } from '@/components/campaigns/campaign-lane';
+import { CampaignMedia } from '@/components/campaigns/campaign-media';
+import { CampaignPlan } from '@/components/campaigns/campaign-plan';
+import { CampaignRewards } from '@/components/campaigns/campaign-rewards';
+import { CampaignTimeline } from '@/components/campaigns/campaign-timeline';
+import { MilestoneDetail } from '@/components/campaigns/milestone-detail';
 import { MilestoneTracker } from '@/components/campaigns/milestone-tracker';
 import { ObjectionWindow } from '@/components/campaigns/objection-window';
 import { ReceiptTimeline } from '@/components/campaigns/receipt-timeline';
 import { RefundNotice } from '@/components/campaigns/refund-notice';
 import { TrustStrip } from '@/components/ideas/trust-strip';
-import { getCampaign } from '@/lib/campaigns/campaigns-api';
-import { milestoneState } from '@/lib/campaigns/milestone-state';
+import {
+  getCampaign,
+  getCreatorCampaigns,
+  listCampaigns,
+} from '@/lib/campaigns/campaigns-api';
+import {
+  failedMilestone,
+  heldTotal,
+  openObjection,
+  refundedTotal,
+  releasedTotal,
+} from '@/lib/campaigns/campaign-stats';
 
-const TABS = ['stages', 'story', 'receipts'] as const;
+const TABS = ['stages', 'plan', 'rewards', 'creator', 'timeline', 'receipts', 'faq'] as const;
 type Tab = (typeof TABS)[number];
+
+const TAB_LABEL: Record<Tab, string> = {
+  stages: 'Delivery stages',
+  plan: 'The plan',
+  rewards: 'Rewards',
+  creator: 'Creator',
+  timeline: 'Timeline',
+  receipts: 'Receipts',
+  faq: 'How this works',
+};
 
 export async function generateMetadata({
   params,
@@ -28,11 +57,19 @@ export async function generateMetadata({
 /**
  * Campaign detail.
  *
- * **Stages is the default tab, not the story.** The reference puts the story first and rewards second,
- * because that is what it sells. Ours sells the delivery mechanic, so the tracker is the first thing on the
- * page after the header (teardown §5.2).
+ * Above the fold is the reference's contract (teardown §4): media left, funding panel right, the
+ * trust strip under both, then tabs for depth. Nothing scrolls before a reader has seen the number,
+ * the deadline and the primary action.
  *
- * Everything here reads from fixtures: the API has no campaign endpoints at all
+ * **Stages is the default tab, not the story.** The reference leads with the story because the story
+ * is what it sells. Ours sells the delivery mechanic, so the tracker is the first thing after the
+ * header.
+ *
+ * Server Component throughout. Tabs are routes via a search param, so a tab is shareable and
+ * server-rendered; the only client island on the page is the video, which exists to keep a byte of
+ * it from loading until someone asks (conventions §3.1).
+ *
+ * Everything reads from fixtures: the API has no campaign endpoints at all
  * (campaign-data-contract.md §1).
  */
 export default async function CampaignDetailPage({
@@ -50,80 +87,110 @@ export default async function CampaignDetailPage({
   const rawTab = Array.isArray(query.tab) ? query.tab[0] : query.tab;
   const tab: Tab = (TABS as readonly string[]).includes(rawTab ?? '') ? (rawTab as Tab) : 'stages';
 
-  const underReview = campaign.milestones.find((m) => milestoneState(m) === 'UNDER_REVIEW');
-  const hasFailure = campaign.milestones.some((m) => milestoneState(m) === 'NOT_DELIVERED');
+  const [creatorCampaigns, similar] = await Promise.all([
+    getCreatorCampaigns(campaign.creator.id, campaign.id),
+    listCampaigns({ category: campaign.category, sort: 'closing-soon' }),
+  ]);
+
+  const underReview = openObjection(campaign);
+  const failed = failedMilestone(campaign);
   const href = (t: Tab) =>
     t === 'stages' ? `/campaigns/${campaign.slug}` : `/campaigns/${campaign.slug}?tab=${t}`;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-8 overflow-hidden">
       <CampaignHeader campaign={campaign} />
 
-      {/* The failure notice outranks everything: a backer arriving at a failed campaign needs the refund
-          answer before anything else on the page. */}
-      {hasFailure && <RefundNotice campaign={campaign} />}
+      {/* Band 2: media left, funding panel right. On a phone the panel comes first — the numbers and
+          the rule that protects a reader belong above a long pitch, not below it. */}
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-start">
+        <div className="min-w-0 space-y-6">
+          <CampaignMedia campaign={campaign} />
 
-      <TrustStrip />
-
-      <Tabs
-        items={[
-          { href: href('stages'), label: 'Delivery stages', count: campaign.milestones.length, active: tab === 'stages' },
-          { href: href('story'), label: 'The plan', active: tab === 'story' },
-          { href: href('receipts'), label: 'Receipts', count: campaign.receipts.length, active: tab === 'receipts' },
-        ]}
-      />
-
-      {tab === 'stages' && (
-        <div className="space-y-8">
-          <MilestoneTracker campaign={campaign} />
-          {underReview && <ObjectionWindow campaign={campaign} milestone={underReview} />}
-        </div>
-      )}
-
-      {tab === 'story' && (
-        <div className="grid gap-8 lg:grid-cols-[1fr_20rem] lg:items-start">
-          <div className="max-w-[68ch] space-y-8">
-            <Prose heading="The problem">{campaign.story.problem}</Prose>
-            <Prose heading="The solution">{campaign.story.solution}</Prose>
-            <Prose heading="How it gets built">{campaign.story.roadmap}</Prose>
-
-            {/* Mandated on every campaign, same as the reference, and for the same reason: a creator who
-                can name how this fails is a creator who has thought about it (playbook §2). */}
-            <Prose heading="Risks and challenges">{campaign.risks}</Prose>
-
-            <Prose heading="What happens if a stage is not delivered">
-              Backers get a week to review what was delivered at each stage. If enough of them object, that
-              stage is not released, the money still held is returned in proportion to what each backer put
-              in, and stages already delivered are not clawed back.
-            </Prose>
+          <div className="lg:hidden">
+            <CampaignFundingPanel campaign={campaign} />
           </div>
 
-          <Card className="p-5">
-            <h2 className="text-sm font-semibold text-ink">Money released early</h2>
-            <p className="mt-2 text-sm leading-relaxed text-ink-muted">
-              {campaign.workingCapitalPct}% of the raise is released as soon as funding closes, so the creator
-              can start work rather than fund the first stage themselves. That portion is disclosed here
-              before anyone backs the campaign, and it is not part of what gets returned if a later stage is
-              not delivered.
-            </p>
-          </Card>
-        </div>
-      )}
+          {/* The failure notice outranks everything below it: a backer arriving at a failed campaign
+              needs the refund answer before anything else on the page. */}
+          {failed && <RefundNotice campaign={campaign} />}
 
-      {tab === 'receipts' && (
-        <div className="max-w-2xl">
-          <ReceiptTimeline receipts={campaign.receipts} />
+          <TrustStrip />
+
+          <Tabs
+            items={TABS.map((t) => ({
+              href: href(t),
+              label: TAB_LABEL[t],
+              count:
+                t === 'stages'
+                  ? campaign.milestones.length
+                  : t === 'rewards'
+                    ? campaign.rewards.length
+                    : t === 'receipts'
+                      ? campaign.receipts.length
+                      : undefined,
+              active: tab === t,
+            }))}
+          />
+
+          {tab === 'stages' && (
+            <div className="space-y-8">
+              <MilestoneTracker campaign={campaign} />
+              {underReview && <ObjectionWindow campaign={campaign} milestone={underReview} />}
+              <MilestoneDetail campaign={campaign} />
+            </div>
+          )}
+
+          {tab === 'plan' && <CampaignPlan campaign={campaign} />}
+
+          {tab === 'rewards' && <CampaignRewards campaign={campaign} />}
+
+          {tab === 'creator' && (
+            <CampaignCreatorPanel
+              creator={campaign.creator}
+              history={creatorCampaigns.history}
+              record={creatorCampaigns.record}
+            />
+          )}
+
+          {tab === 'timeline' && <CampaignTimeline campaign={campaign} />}
+
+          {tab === 'receipts' && (
+            <div className="max-w-2xl space-y-5">
+              <dl className="grid grid-cols-3 gap-4 rounded-xl border border-border bg-surface p-5">
+                <Figure label="Released so far" value={releasedTotal(campaign)} />
+                <Figure label="Still held" value={heldTotal(campaign)} />
+                <Figure label="Returned to backers" value={refundedTotal(campaign)} />
+              </dl>
+              <ReceiptTimeline receipts={campaign.receipts} />
+            </div>
+          )}
+
+          {tab === 'faq' && <CampaignFaq ideaSlug={campaign.ideaSlug} />}
         </div>
-      )}
+
+        <div className="hidden lg:sticky lg:top-24 lg:block">
+          <CampaignFundingPanel campaign={campaign} />
+        </div>
+      </div>
+
+      <CampaignLane
+        title="Other campaigns like this one"
+        items={similar.filter((c) => c.id !== campaign.id).slice(0, 3)}
+        moreHref="/campaigns"
+        moreLabel="All campaigns"
+      />
     </div>
   );
 }
 
-function Prose({ heading, children }: { heading: string; children: React.ReactNode }) {
+function Figure({ label, value }: { label: string; value: number }) {
   return (
-    <section className="scroll-mt-24">
-      <h2 className="font-display text-xl font-bold tracking-tight text-ink">{heading}</h2>
-      <p className="mt-3 text-sm leading-relaxed text-ink-muted">{children}</p>
-    </section>
+    <div className="min-w-0">
+      <dd className="font-display text-lg font-bold tracking-tight text-ink">
+        <Amount value={value} currency="USD" />
+      </dd>
+      <dt className="text-xs text-ink-muted">{label}</dt>
+    </div>
   );
 }
