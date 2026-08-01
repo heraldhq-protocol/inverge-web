@@ -433,42 +433,243 @@ Output one image, 16:9, high-fidelity, production-quality.
 
 # SCREEN 8 — Verification
 
-16:9 landscape.
+16:9 landscape. **Three parts — 8a, 8b, 8c.** Send them in order, in one thread.
+
+> **Rewritten against the shipped KYB integration.** The earlier version of this brief showed a
+> three-step "Who you are → Your business → Review" stepper and an in-app CAC file upload. Neither
+> exists. [`verify-business.tsx`](../src/components/kyc/verify-business.tsx) collects three fields,
+> then `startBusinessSession` returns a `verificationUrl` and the browser **leaves for an outside
+> provider**; documents are handled there and the user returns via `/kyc/callback`. There is no
+> personal KYC step on the business path (KYB + AML only) and no stepper. Anything drawn from the old
+> brief describes a product that doesn't exist.
+>
+> The real work on this screen is the **state matrix**, not the form — hence 8b. States come from
+> `KycStatusValue` / `AmlStatusValue` in [`kyc-api.ts`](../src/lib/kyc/kyc-api.ts).
+
+---
+
+## SCREEN 8a — Verification, at rest
 
 ```
-SCREEN 8 of 9: Business verification. Format: one screen, 16:9. Layout: a single
-centred column, about 640px wide, with a stepper.
+SCREEN 8a of 9: Verification. Format: one screen, 16:9. Layout: a single centred
+column about 640px wide.
 
-Match the attached screen 1 for shell, density, and type scale. Sidebar active item is
-"Settings". Top bar title: "Verification".
+Match the attached screen 1 for app shell, density, and type scale. Sidebar active
+item is "Settings". Top bar title: "Verification".
 
-Job: a creator completes verification before submitting a campaign.
+Job: a creator starts business verification before submitting a campaign.
 
-A three-step stepper across the top:
-  "1. Who you are"    — done
-  "2. Your business"  — current
-  "3. Review"         — upcoming
+IMPORTANT — this screen does NOT collect documents. Verification is completed with an
+outside partner: the user fills three fields here, is handed off, and comes back. So
+there is NO file upload, NO drop zone, NO attached-file row, and NO multi-step
+stepper. Drawing any of those describes a product that doesn't exist.
 
-Above the form, one plain reassuring line: "Creators receive money, so we verify who
-you are first. This is required before you can launch a campaign — never to publish an
-idea."
+At the top, one plain reassuring line, calm and not boxed in an alert:
+"Creators receive money, so we verify the business first. This is required before you
+can launch a campaign — never to publish an idea."
 
-STEP 2 IS OPEN. Fields, labels above each:
-  "Registered business name"
-  "RC number"
-  "Business address"
-  "Upload CAC certificate"  — a file drop zone showing an already-attached file:
-                              "cac-campuskonekt.pdf · 2.1 MB"  with a "Remove" link
+THEN ONE WHITE CARD, hairline border, holding the whole thing:
+  Card title: "Verify your business"
+  Muted line beneath it: "We check the company's registry, its documents, and its
+  directors, and run anti-money-laundering screening. There's no separate personal
+  ID check."
 
-ACTIONS: "Continue" (filled green), "Back" (outlined).
+  Three fields, each with its label ABOVE it and always visible. The two optional ones
+  carry a small muted "Optional" beside the label — never a required asterisk:
+    "Registered legal name"     — filled in: "CampusKonekt Technologies Ltd"
+    "Registration number"  Optional  — filled in: "RC 1847392"
+    "Country"              Optional  — a short field, filled in: "NG"
 
-CRITICAL: this is ordinary business verification. No wallet, no seed phrase, no chain
-or crypto language anywhere. And no shield, padlock, or checkmark-in-a-circle icon —
-this screen is exactly where those get reached for by reflex. Use a plain document or
-form mark, or no icon at all.
+  Filled green button: "Start business verification"
+
+  Directly beneath the button, one small muted line — this is the whole point of the
+  screen, so it must be plainly readable and not an afterthought:
+  "This opens our verification partner in a new step. It takes about 5 minutes, and
+  you'll come straight back here when it's done."
+
+BELOW THE CARD, one small muted line, outside it:
+"We never store your documents — only a verification reference and its status."
+
+THE STATUS IS THE SIGNATURE ELEMENT of this screen, so give the card a quiet status
+row at its top right reading "Not started" — a text label in a neutral pill, marked
+by shape as well as colour.
+
+Render every quoted string exactly as written.
+
+MUST NOT APPEAR: no shield, no padlock, no checkmark-in-a-circle, no fingerprint, no
+ID-card-with-a-tick graphic — this screen is exactly where those get reached for. No
+file upload of any kind. No stepper. No progress bar. No wallet, no seed phrase, no
+chain or network language. No verification-partner logo or branding. No passport or
+selfie illustration.
 
 Output one image, 16:9, high-fidelity, production-quality.
 ```
+
+---
+
+## SCREEN 8b — Verification states
+
+**Tall, not 16:9.** A states sheet, not a screen — this is the one that actually gets built from.
+
+```
+SCREEN 8b of 9: Verification states. This is a STATES SHEET, not a screen — the same
+card in every state it can be in, stacked in one column so the set can be built from
+one image. So: no app shell, no sidebar, no top bar. Plain warm cream background, a
+single centred column about 640px wide, generous space between each card.
+
+Match the attached screen 1 for card style, type scale, border and shadow treatment.
+
+Above each card, a small muted monospace label naming the state — these labels are
+annotations for the developer, set clearly outside the card, never inside it:
+  "CHECKING"  "IN REVIEW"  "VERIFIED"  "DECLINED"  "FLAGGED"
+
+Every card is the same white card with a hairline border and a status pill at its top
+right, so the five read as one component changing state — not five different designs.
+The pill is marked by shape and label as well as colour, never colour alone.
+
+CARD 1 — label "CHECKING". Status pill: "Checking". The card is in its loading state:
+two grey skeleton bars where the title and body would be, at the real heights, and a
+skeleton block where the button goes. No spinner. No text.
+
+CARD 2 — label "IN REVIEW". Status pill: "In review".
+  Title: "Verification in progress"
+  Body: "You started this with our verification partner but didn't finish. Pick up
+  where you left off — it takes about 5 minutes."
+  Filled green button: "Continue business verification"
+  Small muted line beneath: "Started 2 August, 14:20"
+  Calm and factual. No countdown, no timer, no amber warning styling.
+
+CARD 3 — label "VERIFIED". Status pill: "Verified", in the pale green tint.
+  Title: "Business verified"
+  Body: "CampusKonekt Technologies Ltd is verified. You can submit a campaign now."
+  One filled green button: "Submit a campaign"
+  Small muted line: "Verified 2 August 2026"
+  NO large tick graphic, NO green checkmark-in-a-circle, NO confetti. The pill carries
+  the good news; the card stays ordinary.
+
+CARD 4 — label "DECLINED". This is one of the two licensed uses of the muted,
+desaturated warm red on this sheet — keep it quiet.
+  Status pill: "Declined", in that muted red tint.
+  Title: "We couldn't verify this business"
+  Body: "The details you gave didn't match the company register. Check the legal name
+  and registration number against your certificate, then try again."
+  Filled green button: "Try again"
+  Outlined button beside it: "Contact support"
+  Plain and matter-of-fact. Zero apology, no warning triangle, no exclamation mark, no
+  alarm styling.
+
+CARD 5 — label "FLAGGED". Same muted red, same restraint.
+  Status pill: "On hold"
+  Title: "This needs a person to look at it"
+  Body: "Our screening flagged something we can't resolve automatically. Email
+  support@inverge.africa and we'll sort it out — most cases clear within two working
+  days."
+  One outlined button only: "Contact support"
+  There is deliberately NO retry button on this card.
+
+Render every quoted string exactly as written.
+
+MUST NOT APPEAR anywhere on this sheet: no shield, padlock, fingerprint, or
+checkmark-in-a-circle; no warning triangle; no file upload or attached document; no
+stepper or progress bar; no verification-partner logo; no wallet, seed phrase, or
+chain language; no emoji; no illustration.
+
+Output one tall image, high-fidelity, production-quality.
+```
+
+---
+
+## SCREEN 8c — Profile and settings
+
+**Tall, not 16:9.** The surface that owns verification status and links into 8a/8b.
+
+```
+SCREEN 8c of 9: Profile and settings. Format: TALL — a full-page composite, top to
+bottom. Layout: a single centred column about 720px wide.
+
+Match the attached screen 1 for app shell, density, and type scale. Sidebar active
+item is "Settings". Top bar title: "Settings".
+
+Job: the signed-in user manages their profile, how they sign in, and what's in their
+feed.
+
+The page is a single column of labelled SECTIONS separated by full-width hairlines —
+not a grid of cards and not a settings sub-navigation. Each section has a small bold
+heading, a one-line muted description, then its rows. Section headings, in order:
+"Profile", "Signing in", "Verification", "Your feed", "Notifications", "Account".
+
+PROFILE
+  "The name and picture other people see on your ideas and feedback."
+  A 64px avatar of a specific-looking woman, candid not stock, with a small outlined
+  button beside it: "Change photo"
+  Then two fields, labels above, filled in:
+    "Display name" — "Amara Okonkwo"
+    "Where you're based" — "Lagos, Nigeria"
+  A filled green button, left-aligned, not full width: "Save changes"
+
+SIGNING IN
+  "You sign in with a code sent to your email, or with a connected account."
+  A row showing "Email" with the value "amara.okonkwo@gmail.com" and a small outlined
+  button at the right: "Change"
+  Then two connected-account rows, each with a small 18px brand glyph, the name, and a
+  status at the right:
+    "Google" — connected, showing "amara.okonkwo@gmail.com" and a "Disconnect" link
+    "X" — not connected, showing an outlined "Connect" button
+  Beneath the rows, one small muted line:
+  "There's no password on your account, so there's nothing to change or forget."
+
+VERIFICATION
+  "Verified businesses can launch campaigns and receive money."
+  One row: "CampusKonekt Technologies Ltd", with a status pill at the right reading
+  "In review" — the same pill component from the verification states sheet. Beneath it
+  a muted line: "Started 2 August. We'll email you when it's done." and a green text
+  link: "View verification"
+  No shield, no padlock, no tick graphic anywhere in this section.
+
+YOUR FEED
+  "This shapes what you see first. You can still see every idea on Inverge."
+  Two wrapping rows of selectable chips, each with a small label above:
+    "Categories" — "Software"  "Agriculture"  "Film"  "Arts"  "Other"
+      with "Agriculture" and "Software" selected: pale green fill, solid green border,
+      and a small check glyph before the label
+    "Regions" — "Lagos"  "Ibadan"  "Abuja"  "Kano"  "Accra"  "Anywhere in West Africa"
+      with "Lagos" selected, same treatment
+  Selection is marked by border and glyph as well as colour.
+
+NOTIFICATIONS
+  "Email only for now."
+  Three rows, each a label, a muted line of explanation, and a toggle switch at the
+  right. Two are on, one is off:
+    "Milestone updates" — "When a campaign you backed submits proof." — ON
+    "Feedback on your ideas" — "When someone leaves structured feedback." — ON
+    "New ideas in your categories" — "A weekly digest, never more." — OFF
+
+ACCOUNT
+  Two plain rows at the bottom, quiet and unemphasised:
+    "Sign out" — an outlined button
+    "Delete account" — a plain text link in the muted red, with one muted line beside
+    it: "Ideas you've published stay up unless you remove them first."
+
+Render every quoted string exactly as written.
+
+MUST NOT APPEAR — a settings page is where every one of these gets added by reflex:
+no "Change password", no "Forgot password", no password field of any kind; no
+two-factor setup, no authenticator app, no backup codes; no wallet address, no
+"Export wallet", no "Export private key", no seed or recovery phrase, no chain or
+network name, no wallet section at all; no shield, padlock, or key icon; no
+verification-partner or auth-vendor logo; no API keys, no developer settings, no theme
+picker, no language picker.
+
+Output one tall image, high-fidelity, production-quality.
+```
+
+**Two build notes for whoever picks this up:**
+
+1. The chips in "Your feed" write to `PUT /me/interests` ([`feed-api.md`](./feed-api.md)) — the same
+   values as the first-run interests screen (A3), so build the chip group once and reuse it.
+2. The "Change" button on the email row has **no backend today**. Privy supports it, but nothing in
+   [`use-auth.ts`](../src/lib/auth/use-auth.ts) exposes it. Wire it or drop it — don't ship a control
+   that does nothing.
 
 ---
 
