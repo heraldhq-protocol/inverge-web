@@ -40,7 +40,8 @@ Owner-only; 403 if the gate is not met; rejects unless tranche percentages sum t
 `OnChainEventType{FUNDED,TRANCHE_RELEASED,REFUND_CLAIMED,MILESTONE_FAILED}`, `CreatorTier`.
 
 **Does not exist in any form:** campaign read or list endpoints, publish/curation transitions,
-contributions, milestone claims, objection submission, receipts feed, campaign updates, campaign FAQ.
+contributions, milestone claims, objection submission, receipts feed, campaign updates, campaign FAQ,
+campaign media, or any create path for a campaign that does not come from an idea.
 There is no campaign-update or campaign-FAQ model at all, so those two Kickstarter tabs have no
 backing whatsoever (see [`reference-teardown-kickstarter.md`](./reference-teardown-kickstarter.md)
 §5.4, §5.5).
@@ -159,6 +160,32 @@ disabled and a plain reason (brief §5.4).
 
 ---
 
+## 2a. How the money splits
+
+Two bases, and they are not interchangeable. Anything computing a stage amount must use them, or the
+same campaign renders different figures on different tabs.
+
+```
+upfront  = workingCapitalPct%  of  targetAmount          (FR-503a)
+stages   = tranchePct%         of  (totalRaised - upfront)
+
+upfront + every tranche === totalRaised, exactly
+```
+
+**The upfront is pegged to the target** because it is the only money that moves before anyone has
+verified anything, and the target is the budget reviewers approved. Pegging it to the raise means a
+$1,000 target that raises $20,000 pays out $4,000 against nothing — four times the entire plan.
+
+**The stages divide the raise** because a campaign that overfunds is being asked to do more than it
+budgeted for, and the extra has to be available while the work happens rather than arriving after it is
+finished. The surplus is therefore spread across every stage rather than held back for the last one.
+
+Web-side this lives in `src/lib/campaigns/campaign-stats.ts`. If the API derives these figures too, the
+two must agree exactly, so put it in one pure module and consider returning the derived amounts rather
+than having both sides compute them.
+
+---
+
 ## 3. Milestone state is derived, not stored
 
 `Milestone` has no status column; `MilestoneClaim.status` plus timestamps carry it. The UI needs
@@ -203,11 +230,18 @@ Ordered by how much UI each unblocks. Every one is additive.
 | 13 | Campaign list filters and sort as query params (`status`, `category`, `region`, `sort`), same idiom as the feed | Server-side catalogue filtering instead of fetching every campaign and filtering in the client module | — |
 | 14 | Creator campaign history on the public creator projection: per-campaign `title`, `slug`, `status`, `milestonesReleased`, `milestoneTotal` | The Creator tab's "other campaigns by this creator" block, with **derived** outcome labels rather than the reference's self-reported "Marked as fulfilled" | — |
 | 15 | `POST /campaigns/:id/submit` plus `GET /campaigns?mine=true` including `DRAFT` and `IN_REVIEW` | Step 4 of the campaign builder, and a creator's view of their own unpublished draft | FR-304/311 |
+| 16 | **Campaign media**: `videoUrl` (**required to publish**), `videoPosterUrl`, `coverImageUrl`, plus upload paths | The above-the-fold player and every card thumbnail. See the note below — the moderation consequence is real | — |
+| 17 | A create path for a campaign with **no backing idea**, carrying its own `title`, `summary`, `category` and `region` | The standalone path in the builder. `POST /ideas/:id/convert` is the only create path today and it requires an idea | — |
 
 Nothing in items 1–11 is required for stages 1–7 of the sibling brief's build order except items 1 and 2,
 which are required for stages 3 and 6 respectively.
 
-Items 12–15 come from [`campaign-brief.md`](./campaign-brief.md) §11 and are what the campaign surfaces
+**Note on item 16.** Video is a heavier moderation surface than an image, which is already flagged as
+unhandled in item 3: the classifier is text-only. Either constrain to trusted hosts, or hold first
+upload behind review, or accept video moderation as its own piece of work — but do not quietly ship an
+unmoderated public video field on the surface where money changes hands.
+
+Items 12–17 come from [`campaign-brief.md`](./campaign-brief.md) §11 and are what the campaign surfaces
 ask for beyond items 6 and 7. None blocks a screen: 12 and 14 have a fixture-summed fallback that is
 correct and does not scale, 13 is performance, and 15 is the one that leaves the creator flow stopping
 at a saved draft.

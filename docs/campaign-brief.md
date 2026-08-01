@@ -121,8 +121,10 @@ Two things the reference does that we deliberately invert:
    change how the current one reads.
 4. **Build the timeline (F3).** A campaign's spine is dated events, every money-moving one of which
    carries a receipt. It answers "what has actually happened here" in one screen and it is free.
-5. **Build the campaign builder against the live convert endpoint (F6).** Four steps, one pure
-   validation module, real API call. Stops at submit, because curation (FR-304) and the application fee
+5. **Build the campaign builder (F6).** Four steps, one pure validation module, a live preview of the
+   backer-facing result. **UI only — no request is made at any point.** `POST /ideas/:id/convert` is
+   the call it will eventually make, at the end of step three, and it is one line in one file when the
+   time comes. The flow ends at a saved draft, because curation (FR-304) and the application fee
    (FR-311) do not exist.
 6. **Make the funding panel a sticky rail (F5).** One structural change; makes campaign and idea detail
    read as one product.
@@ -146,7 +148,7 @@ comment thread on campaigns, a campaign-level search, and any surface that rende
 | `/campaigns?status=&category=&region=&sort=` | Server | same, filtered in the client module | public |
 | `/campaigns/[id]` | Server + client islands | provisional detail; fixtures | public; `DRAFT`/`IN_REVIEW` owner-only |
 | `/campaigns/[id]?tab=` | Server | same | as above |
-| `/campaigns/new` | Client form | `GET /ideas?mine=true` (ask 4), `POST /ideas/:id/convert` **(live)** | required |
+| `/campaigns/new` | Server shell + client form | fixtures; nothing is written (ask 4 for the real idea list) | required |
 
 All catalogue state lives in search params so a filtered view is linkable and server-rendered. Tabs are
 routes, not widgets — same rule as idea detail.
@@ -178,8 +180,14 @@ guarantee works.
 
 ### 5.2 Detail (`/campaigns/[id]`)
 
-**Above the fold**, in the reference's order (teardown §4 band 2), as a sticky right rail at `lg` and a
-block above the story below it:
+**Above the fold**, in the reference's order (teardown §4 band 2): the pitch video left, the funding
+panel right as a sticky rail at `lg` and a block above the story below it.
+
+The video never autoplays and loads no bytes until the reader presses play — the poster frame is all
+that ships on first paint. These pages are read on mid-range Android over metered data, and a
+preloaded video would be the most expensive thing above the fold.
+
+The funding panel, top to bottom:
 
 meter → raised of goal → backers → days left → primary action (disabled, with a plain reason) →
 share → fine print naming the exact deadline and the all-or-nothing rule.
@@ -230,8 +238,22 @@ separate from services.
 | 3. The stages | 2–6 milestones: title, deliverable, tranche %, evidence definition. Running total with the remainder stated. | FR-301 count; FR-302 sum to exactly 100 |
 | 4. Review | Read-only summary, immutability warning, verification requirement, application fee disclosure, submit | FR-303 immutable once published; FR-103/104 verification; FR-311 fee |
 
-Step 4's submit control is **disabled**, because FR-304 curation and FR-311 the fee do not exist. The
-convert call itself is live and runs at the end of step 3, producing a `DRAFT`.
+Step 4 ends at a saved draft, because FR-304 curation and FR-311 the fee do not exist. **Nothing is
+written**: these screens are UI only, and the convert call goes in at the end of step 3 when the
+contract is wired.
+
+Two rules the builder enforces that are not in the table above:
+
+- **A pitch video is required to publish a campaign.** Publishing an *idea* stays free and
+  frictionless and requires nothing; a campaign asks strangers for money, and a creator who will not
+  spend two minutes explaining the plan in their own voice is asking for a lot on very little. It is
+  the reference's highest-value above-the-fold element and the one thing it does that we had no
+  answer to.
+- **A campaign may be raised without a validated idea.** The default sequence is still idea →
+  validation → campaign and everything is built around it, but some creators arrive with an audience
+  already and refusing them refuses a real case. The option states its cost in place: no supporters
+  carried over, no validation evidence on the page, and the creator writes the title, summary, topic
+  and region themselves. It is never presented as equivalent.
 
 Two things this screen must not do: mention a wallet, a chain or a signature anywhere (conventions §1),
 and mention verification anywhere except step 4 (copy deck §5.6 of the sibling brief — verification lives
@@ -362,8 +384,15 @@ Additions to conventions §1 and the sibling brief §7. A PR that breaks one doe
    Creator commentary may be gated later; the thing backers judge may not.
 3. **Objection data is aggregate.** `objectionWeightPct` against the threshold, never a per-backer
    identity, count of objectors, or reason attributable to a person.
-4. **No percentage theatre.** Over-target renders as the amount over target. No "1,952% funded", no
-   starburst, no "funded in five minutes".
+4. **Percentages are stated, never celebrated.** A card shows its percentage of goal, and over-target
+   shows how far past the goal it went, because both are useful. What does not appear is the
+   reference's spectacle: no "1,952% funded", no starburst, no "funded in five minutes", no
+   overfunding leaderboard.
+4a. **The two escrow bases are not interchangeable.** The upfront is a share of the **target**; the
+   stages divide the **raise less the upfront**. Upfront plus every tranche equals the raise exactly,
+   and any surface computing a stage amount uses `campaign-stats.ts` rather than doing it inline.
+   Getting this wrong is not a rounding bug: pegging the upfront to the raise pays a campaign that
+   overfunded ten times over more before verification than its entire plan was worth.
 5. **Outcome labels are derived, never self-reported.** `All 4 stages delivered` comes from counting
    released stages. There is no field a creator can set to claim it.
 6. **`activeStrikes` never renders.** Anywhere. A demotion is visible as a lower tier and nothing more.
@@ -389,8 +418,8 @@ One stage per commit segment, each independently reviewable.
 | 4 | Detail: sticky funding rail, tab set, per-stage detail with proof, risks extraction |
 | 5 | Creator tab, timeline tab, how-it-works tab |
 | 6 | Owner-only `DRAFT`/`IN_REVIEW` banner |
-| 7 | `lib/campaigns/campaign-draft.ts` + `convert-api.ts` |
-| 8 | `/campaigns/new` builder, four steps, live preview |
+| 7 | `lib/campaigns/campaign-draft.ts` (pure rules, no client) |
+| 8 | `/campaigns/new` builder, four steps, live preview, dev-fill |
 
 ---
 
@@ -406,6 +435,8 @@ Filed against [`campaign-data-contract.md`](./campaign-data-contract.md) §4 and
 | 14 | Creator's campaign history on the public creator projection: per-campaign title, slug, status, stages released of total | The Creator tab's "other campaigns" block | — |
 | 15 | `objectionWindowDays` and `objectionThresholdPct` as read-only platform params (duplicate of gaps item 10, restated because the builder and the FAQ both hard-code them) | Rendering the rule instead of the constant | FR-603 |
 | 16 | Campaign status transitions for the owner: `POST /campaigns/:id/submit`, plus `GET /campaigns?mine=true` including `DRAFT` | Step 4 of the builder, and the creator's view of their own draft | FR-304/311 |
+| 17 | **Campaign media**: `videoUrl` (required on publish), `videoPosterUrl` and `coverImageUrl`, plus upload paths | The above-the-fold player and every card thumbnail. Cards fall back to the deterministic cover meanwhile, which looks deliberate but is not what the reference's visual engine runs on | — |
+| 18 | Campaigns without a backing idea: a create path that does not go through `POST /ideas/:id/convert`, carrying their own title, summary, category and region | The standalone path in the builder. Everything else about such a campaign is identical | — |
 
 Items 12 and 14 are the ones that change what renders. 13 is performance. 15 is correctness of copy.
 16 completes the flow.
@@ -442,3 +473,5 @@ Each has a default so the build is not blocked.
 | 3 | Does the builder let a creator save and resume a draft mid-flow? | No. Convert is one call at the end of step 3; steps 1–3 are client state. Resume needs ask 16. |
 | 4 | Flexible Funding in the builder: hidden, or shown disabled? | Shown disabled with the tier requirement named (F8). An eligibility ladder nobody can see is not an incentive. |
 | 5 | Does a campaign get its own discussion thread? | No. It links to the idea's thread. Splitting the conversation across two objects splits the audience that validated the idea. |
+| 6 | ~~What base do the stage shares use?~~ | **Decided.** Upfront off the target, stages off the raise less the upfront. Two alternatives were considered and rejected: surplus held back for the final stage starves the work of the money raised to do it, and deducting the upfront from stage one goes negative whenever the upfront exceeds that stage's share. |
+| 7 | Should the final stage be structurally different, since it confirms delivery? | It is the last money paid and is labelled as the delivery stage, but it carries no special share. Holding surplus back for it was rejected under question 6. |
