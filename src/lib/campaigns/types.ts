@@ -172,6 +172,39 @@ export type CreatorCampaignSummary = {
 /** What the money is for. From the idea snapshot until campaigns get their own story. */
 export type AskLine = { label: string; amount: string };
 
+/**
+ * A reward tier: what a backer gets for pledging at a given level.
+ *
+ * Optional in FR-301 and optional here — a campaign with no tiers is a normal campaign, not a broken
+ * one, and plenty of the projects this product is for are funding work rather than shipping objects.
+ *
+ * Two things the reference does that we take, and one we do not:
+ *
+ * - **Take the scarcity line.** "44 left of 250" is the honest way to render a cap, and it is a real
+ *   constraint rather than a manufactured one.
+ * - **Take the estimated delivery date**, stated per tier, because it is the promise a backer is
+ *   actually judging and it belongs next to the price.
+ * - **Refuse stretch goals and add-ons.** Stretch goals are excluded permanently; add-ons are an
+ *   upsell mechanic that belongs to a shop, not to a staged-release escrow.
+ *
+ * Delivery here is a promise, not a guarantee, and it is not what releases money: the stages do that,
+ * and a reward tier never gates or accelerates a tranche.
+ */
+export type RewardTier = {
+  id: string;
+  title: string;
+  description: string;
+  /** Minimum pledge for this tier. USD, decimal → string. */
+  amount: string;
+  /** ISO date; rendered as a month, because a day-precise promise a year out is not credible. */
+  estimatedDelivery: string;
+  /** null means unlimited. A cap is a real constraint, never a scarcity device. */
+  limitedQuantity: number | null;
+  claimed: number;
+  items: { label: string; quantity: number }[];
+  shipping: 'WORLDWIDE' | 'REGION_ONLY' | 'NOTHING_TO_SHIP';
+};
+
 export type CampaignDetail = Omit<CampaignListItem, 'creator'> & {
   ideaId: string | null;
   ideaSlug: string | null;
@@ -186,6 +219,8 @@ export type CampaignDetail = Omit<CampaignListItem, 'creator'> & {
   };
   risks: string;
   milestones: Milestone[];
+  /** Optional (FR-301). An empty list is a normal campaign, not a broken one. */
+  rewards: RewardTier[];
   receipts: Receipt[];
   /** Present only for a signed-in backer. Absent means "not a backer", not zero. */
   myContribution?: {

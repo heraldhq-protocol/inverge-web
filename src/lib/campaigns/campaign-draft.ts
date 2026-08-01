@@ -32,6 +32,24 @@ export type MilestoneDraft = {
   evidenceSource: string;
 };
 
+/**
+ * A reward tier as the creator is writing it. Optional (FR-301): a campaign may have none.
+ *
+ * `amount` and `limitedQuantity` stay strings for the same reason `tranchePct` does — a half-typed
+ * "2" should not briefly mean two.
+ */
+export type RewardDraft = {
+  key: string;
+  title: string;
+  description: string;
+  amount: string;
+  estimatedDelivery: string;
+  /** Blank means unlimited. */
+  limitedQuantity: string;
+  items: { label: string; quantity: string }[];
+  shipping: 'WORLDWIDE' | 'REGION_ONLY' | 'NOTHING_TO_SHIP';
+};
+
 export type CampaignDraft = {
   ideaId: string | null;
   /**
@@ -67,9 +85,29 @@ export type CampaignDraft = {
   videoUrl: string;
   coverImageUrl: string;
   milestones: MilestoneDraft[];
+  /**
+   * What backers get for pledging. Optional, and genuinely so: this product funds work as often as it
+   * funds objects, and a campaign to automate vendor payouts has nothing to post to anyone.
+   *
+   * Rewards never touch the escrow. They do not gate a tranche, do not accelerate one, and are not
+   * what a stage is judged on — the evidence definition is. Keeping the two apart is why the stages
+   * step comes first.
+   */
+  rewards: RewardDraft[];
 };
 
 export type DraftErrors = Partial<Record<string, string>>;
+
+export const emptyReward = (key: string): RewardDraft => ({
+  key,
+  title: '',
+  description: '',
+  amount: '',
+  estimatedDelivery: '',
+  limitedQuantity: '',
+  items: [],
+  shipping: 'NOTHING_TO_SHIP',
+});
 
 export const emptyMilestone = (key: string): MilestoneDraft => ({
   key,
@@ -98,6 +136,9 @@ export function emptyDraft(): CampaignDraft {
     // Two is the floor, so the form opens at the floor rather than at zero. A creator adding their
     // first stage to an empty list has to work out what a stage even is; two empty rows show them.
     milestones: [emptyMilestone('m1'), emptyMilestone('m2')],
+    // Rewards open empty, unlike stages: none is a valid and common answer, and pre-filling a row
+    // would imply otherwise.
+    rewards: [],
   };
 }
 
@@ -115,6 +156,7 @@ export function emptyDraft(): CampaignDraft {
  */
 export function sampleDraft(ideaId: string | null): CampaignDraft {
   const inThreeMonths = new Date(Date.now() + 90 * 86_400_000).toISOString().slice(0, 10);
+  const inSixMonths = new Date(Date.now() + 180 * 86_400_000).toISOString().slice(0, 10);
 
   return {
     ideaId,
@@ -155,6 +197,30 @@ export function sampleDraft(ideaId: string | null): CampaignDraft {
         tranchePct: '35',
         evidenceType: 'Shipping documents',
         evidenceSource: 'Bill of lading plus written buyer acceptance',
+      },
+    ],
+    rewards: [
+      {
+        key: 'sample-r1',
+        title: 'Name on the wall',
+        description:
+          'Your name painted on the dye house wall, and the batch record for the first run sent to you.',
+        amount: '25',
+        estimatedDelivery: inSixMonths,
+        limitedQuantity: '',
+        items: [],
+        shipping: 'NOTHING_TO_SHIP',
+      },
+      {
+        key: 'sample-r2',
+        title: 'Two metres of the first run',
+        description:
+          'Two metres of cloth from the first colour-matched batch, cut and posted once the run passes.',
+        amount: '90',
+        estimatedDelivery: inSixMonths,
+        limitedQuantity: '120',
+        items: [{ label: 'Hand-dyed cloth, two metres', quantity: '1' }],
+        shipping: 'WORLDWIDE',
       },
     ],
   };
@@ -318,6 +384,58 @@ export function validateRaise(draft: CampaignDraft): DraftErrors {
   }
 
   return errors;
+}
+
+/**
+ * Reward tiers. Optional as a whole; complete once started.
+ *
+ * A half-written tier is worse than no tier: it goes on the page next to a price, and a backer
+ * choosing between levels is comparing exactly the fields left blank.
+ */
+export function validateRewards(draft: CampaignDraft): DraftErrors {
+  const errors: DraftErrors = {};
+
+  draft.rewards.forEach((r) => {
+    if (!r.title.trim()) errors[`${r.key}.title`] = 'Name this tier.';
+    if (!r.description.trim()) {
+      errors[`${r.key}.description`] = 'Say what a backer at this level actually gets.';
+    }
+
+    const amount = parseDecimal(r.amount);
+    if (!r.amount.trim()) {
+      errors[`${r.key}.amount`] = 'Give the pledge amount for this tier.';
+    } else if (amount <= 0) {
+      errors[`${r.key}.amount`] = 'A tier has to cost something.';
+    }
+
+    if (!r.estimatedDelivery) {
+      errors[`${r.key}.estimatedDelivery`] = 'When do you expect to deliver this?';
+    }
+
+    if (r.limitedQuantity.trim()) {
+      const qty = parseDecimal(r.limitedQuantity);
+      if (qty < 1 || !Number.isInteger(qty)) {
+        errors[`${r.key}.limitedQuantity`] = 'A cap has to be a whole number of at least one.';
+      }
+    }
+
+    r.items.forEach((item, i) => {
+      if (!item.label.trim()) errors[`${r.key}.item.${i}`] = 'Name this item or remove it.';
+    });
+  });
+
+  // Two tiers at the same price is a decision a backer cannot make.
+  const amounts = draft.rewards.map((r) => parseDecimal(r.amount)).filter((n) => n > 0);
+  if (new Set(amounts).size !== amounts.length) {
+    errors.duplicate = 'Two tiers share a pledge amount. Backers need a reason to pick one.';
+  }
+
+  return errors;
+}
+
+/** Tiers cheapest first, which is the order a backer reads them in. */
+export function sortedRewards(rewards: RewardDraft[]): RewardDraft[] {
+  return [...rewards].sort((a, b) => parseDecimal(a.amount) - parseDecimal(b.amount));
 }
 
 export function validateStages(draft: CampaignDraft): DraftErrors {

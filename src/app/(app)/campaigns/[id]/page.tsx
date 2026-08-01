@@ -9,6 +9,7 @@ import { CampaignHeader } from '@/components/campaigns/campaign-header';
 import { CampaignLane } from '@/components/campaigns/campaign-lane';
 import { CampaignMedia } from '@/components/campaigns/campaign-media';
 import { CampaignPlan } from '@/components/campaigns/campaign-plan';
+import { CampaignRewards } from '@/components/campaigns/campaign-rewards';
 import { CampaignTimeline } from '@/components/campaigns/campaign-timeline';
 import { MilestoneDetail } from '@/components/campaigns/milestone-detail';
 import { MilestoneTracker } from '@/components/campaigns/milestone-tracker';
@@ -29,12 +30,13 @@ import {
   releasedTotal,
 } from '@/lib/campaigns/campaign-stats';
 
-const TABS = ['stages', 'plan', 'creator', 'timeline', 'receipts', 'faq'] as const;
+const TABS = ['stages', 'plan', 'rewards', 'creator', 'timeline', 'receipts', 'faq'] as const;
 type Tab = (typeof TABS)[number];
 
 const TAB_LABEL: Record<Tab, string> = {
   stages: 'Delivery stages',
   plan: 'The plan',
+  rewards: 'Rewards',
   creator: 'Creator',
   timeline: 'Timeline',
   receipts: 'Receipts',
@@ -122,9 +124,11 @@ export default async function CampaignDetailPage({
               count:
                 t === 'stages'
                   ? campaign.milestones.length
-                  : t === 'receipts'
-                    ? campaign.receipts.length
-                    : undefined,
+                  : t === 'rewards'
+                    ? campaign.rewards.length
+                    : t === 'receipts'
+                      ? campaign.receipts.length
+                      : undefined,
               active: tab === t,
             }))}
           />
@@ -138,6 +142,8 @@ export default async function CampaignDetailPage({
           )}
 
           {tab === 'plan' && <CampaignPlan campaign={campaign} />}
+
+          {tab === 'rewards' && <CampaignRewards campaign={campaign} />}
 
           {tab === 'creator' && (
             <CampaignCreatorPanel

@@ -232,6 +232,7 @@ Ordered by how much UI each unblocks. Every one is additive.
 | 15 | `POST /campaigns/:id/submit` plus `GET /campaigns?mine=true` including `DRAFT` and `IN_REVIEW` | Step 4 of the campaign builder, and a creator's view of their own unpublished draft | FR-304/311 |
 | 16 | **Campaign media**: `videoUrl` (**required to publish**), `videoPosterUrl`, `coverImageUrl`, plus upload paths | The above-the-fold player and every card thumbnail. See the note below — the moderation consequence is real | — |
 | 17 | A create path for a campaign with **no backing idea**, carrying its own `title`, `summary`, `category` and `region` | The standalone path in the builder. `POST /ideas/:id/convert` is the only create path today and it requires an idea | — |
+| 18 | **Reward tiers** on `Campaign`: `title`, `description`, `amount`, `estimatedDelivery`, `limitedQuantity`, `claimed`, `items[]`, `shipping` | The Rewards tab and step 4 of the builder. Optional per FR-301; `ConvertIdeaDto` accepts no rewards field today | FR-301 |
 
 Nothing in items 1–11 is required for stages 1–7 of the sibling brief's build order except items 1 and 2,
 which are required for stages 3 and 6 respectively.

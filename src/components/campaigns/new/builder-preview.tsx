@@ -4,7 +4,12 @@ import { Amount } from '@/components/ui/amount';
 import { Card } from '@/components/ui/card';
 import { Meter } from '@/components/ui/meter';
 import { Pill } from '@/components/ui/pill';
-import { trancheAmountOf, trancheTotal, type CampaignDraft } from '@/lib/campaigns/campaign-draft';
+import {
+  sortedRewards,
+  trancheAmountOf,
+  trancheTotal,
+  type CampaignDraft,
+} from '@/lib/campaigns/campaign-draft';
 import { daysUntil, parseDecimal, pluralise } from '@/lib/format';
 import type { EligibleIdea } from '@/lib/campaigns/my-ideas';
 
@@ -126,6 +131,30 @@ export function BuilderPreview({
           </p>
         )}
       </div>
+
+      {draft.rewards.length > 0 && (
+        <div className="mt-4 border-t border-border pt-3">
+          <p className="text-xs font-semibold text-ink">Rewards</p>
+          <ul className="mt-2 space-y-1.5">
+            {sortedRewards(draft.rewards).map((r) => (
+              <li key={r.key} className="flex items-baseline justify-between gap-3">
+                <span className="min-w-0 truncate text-[11px] text-ink-muted">
+                  <span className={r.title.trim() ? 'text-ink' : 'italic'}>
+                    {r.title.trim() || 'Not named yet'}
+                  </span>
+                </span>
+                <span className="shrink-0 text-[11px] font-semibold text-ink tabular-nums">
+                  {parseDecimal(r.amount) > 0 ? (
+                    <Amount value={parseDecimal(r.amount)} currency="USD" />
+                  ) : (
+                    '—'
+                  )}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap gap-1.5 border-t border-border pt-3">
         <Pill size="xs">All or nothing</Pill>

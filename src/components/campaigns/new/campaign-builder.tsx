@@ -10,6 +10,7 @@ import {
   sampleDraft,
   validateOrigin,
   validateRaise,
+  validateRewards,
   validateStages,
   type CampaignDraft,
   type DraftErrors,
@@ -19,15 +20,17 @@ import { BuilderPreview } from './builder-preview';
 import { StepIdea } from './step-idea';
 import { StepRaise } from './step-raise';
 import { StepReview } from './step-review';
+import { StepRewards } from './step-rewards';
 import { StepStages } from './step-stages';
 
-const STEPS = ['idea', 'raise', 'stages', 'review'] as const;
+const STEPS = ['idea', 'raise', 'stages', 'rewards', 'review'] as const;
 type Step = (typeof STEPS)[number];
 
 const STEP_LABEL: Record<Step, string> = {
   idea: 'Which idea',
   raise: 'The raise',
   stages: 'The stages',
+  rewards: 'Rewards',
   review: 'Review',
 };
 
@@ -59,11 +62,13 @@ export function CampaignBuilder({ ideas }: { ideas: EligibleIdea[] }) {
   const originErrors = useMemo(() => validateOrigin(draft), [draft]);
   const raiseErrors = useMemo(() => validateRaise(draft), [draft]);
   const stageErrors = useMemo(() => validateStages(draft), [draft]);
+  const rewardErrors = useMemo(() => validateRewards(draft), [draft]);
 
   const stepErrors: Record<Step, DraftErrors> = {
     idea: originErrors,
     raise: raiseErrors,
     stages: stageErrors,
+    rewards: rewardErrors,
     review: {},
   };
 
@@ -127,6 +132,14 @@ export function CampaignBuilder({ ideas }: { ideas: EligibleIdea[] }) {
               draft={draft}
               errors={showErrors ? stageErrors : {}}
               onChange={(milestones) => setDraft((d) => ({ ...d, milestones }))}
+            />
+          )}
+
+          {step === 'rewards' && (
+            <StepRewards
+              draft={draft}
+              errors={showErrors ? rewardErrors : {}}
+              onChange={(rewards) => setDraft((d) => ({ ...d, rewards }))}
             />
           )}
 

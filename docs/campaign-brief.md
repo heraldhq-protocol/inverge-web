@@ -90,7 +90,8 @@ Our translation, with what backs each one. This table is the spine of §5.
 | Reference tab | Inverge tab | Backed by | Verdict |
 |---|---|---|---|
 | Campaign (story + sticky TOC + support rail) | **The plan** | `story` + `risks` on the contract | Build with a generated TOC, same as idea detail. Two sections are platform-mandated, not author choice. |
-| Rewards | **Delivery stages** — and it is the default tab | `milestones` + derived state | Already built. Rewards are out of scope permanently at this stage (FR-301 makes them optional). **This is the tab the product exists for, so it leads.** |
+| Rewards | **Delivery stages** — and it is the default tab | `milestones` + derived state | **This is the tab the product exists for, so it leads.** |
+| (Rewards, as the reference means it) | **Rewards**, fourth | `rewards` on the contract | Built. Optional per FR-301. Takes the scarcity line and the per-tier delivery date; refuses add-ons and stretch goals. Sits behind the stages because the stages are what is being bought. |
 | Creator | **Creator** | `PublicCreator` + `CreatorProfile` track record | Build. Highest-value trust surface in the reference. Invert two of its choices — see §5.3. |
 | FAQ | **How this works** | Nothing. Platform-authored, derived from the SRS | Build as platform copy. Creator-authored FAQ stays API ask 9. |
 | Updates | **Timeline** | `milestones` + `receipts` + `launchedAt` | Build the dated spine now. Creator-authored update posts stay API ask 8. |
@@ -135,8 +136,16 @@ Two things the reference does that we deliberately invert:
 9. **Disclose the Flexible Funding ladder in the builder (F8).** The option renders, disabled, naming the
    tier that unlocks it. An eligibility ladder a creator cannot see is not an incentive.
 
-Not recommended, recorded so it is not re-proposed: a public community tab, reward tiers, a second
-comment thread on campaigns, a campaign-level search, and any surface that renders `activeStrikes`.
+Not recommended, recorded so it is not re-proposed: a public community tab, add-ons, stretch goals, a
+second comment thread on campaigns, a campaign-level search, and any surface that renders
+`activeStrikes`.
+
+**Reward tiers were reversed into scope during the build** (Aug 2026). They are optional in FR-301 and
+the original exclusion was a scoping call, not a prohibition. The boundary that matters is not whether
+they exist but what they may touch: **a reward never releases money, never gates a tranche and never
+accelerates one.** The builder puts them after the stages and says so in place, and the backer-facing
+tab repeats it, because a creator who thinks a reward date is a stage will write dates they cannot
+keep and a backer who thinks so will object to the wrong thing.
 
 ---
 
@@ -236,7 +245,8 @@ separate from services.
 | 1. Which idea | Pick from the creator's ideas that cleared validation. Ideas that have not are listed with what is still missing, not hidden. | FR-204 — the gate. The API rejects with 403 if it is not met, so the UI must not offer it. |
 | 2. The raise | Campaign type, token, target amount, deadline, working capital % | FR-305 all-or-nothing; FR-306 tier gate on Flexible Funding; FR-503a working capital 0–25%, disclosed |
 | 3. The stages | 2–6 milestones: title, deliverable, tranche %, evidence definition. Running total with the remainder stated. | FR-301 count; FR-302 sum to exactly 100 |
-| 4. Review | Read-only summary, immutability warning, verification requirement, application fee disclosure, submit | FR-303 immutable once published; FR-103/104 verification; FR-311 fee |
+| 4. Rewards | Optional tiers: name, pledge amount, what they get, estimated delivery, cap, items, posting | FR-301 rewards optional. Nothing here touches escrow |
+| 5. Review | Read-only summary, immutability warning, verification requirement, application fee disclosure, submit | FR-303 immutable once published; FR-103/104 verification; FR-311 fee |
 
 Step 4 ends at a saved draft, because FR-304 curation and FR-311 the fee do not exist. **Nothing is
 written**: these screens are UI only, and the convert call goes in at the end of step 3 when the

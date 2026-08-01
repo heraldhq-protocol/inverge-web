@@ -4,6 +4,7 @@ import { Amount } from '@/components/ui/amount';
 import { Card } from '@/components/ui/card';
 import { Pill } from '@/components/ui/pill';
 import {
+  sortedRewards,
   distributableAtTarget,
   trancheAmountOf,
   workingCapitalAmount,
@@ -120,6 +121,37 @@ export function StepReview({ draft, idea }: { draft: CampaignDraft; idea: Eligib
         </ol>
       </Card>
 
+      {draft.rewards.length > 0 && (
+        <Card className="p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <h3 className="text-sm font-semibold text-ink">
+              {draft.rewards.length} reward {draft.rewards.length === 1 ? 'tier' : 'tiers'}
+            </h3>
+            <Pill size="xs">Separate from your stages</Pill>
+          </div>
+
+          <ol className="mt-3 space-y-3">
+            {sortedRewards(draft.rewards).map((r) => (
+              <li key={r.key} className="border-t border-border pt-3 first:border-t-0 first:pt-0">
+                <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
+                  <p className="text-sm font-semibold text-ink">{r.title || 'Untitled tier'}</p>
+                  <p className="text-sm font-semibold text-ink tabular-nums">
+                    <Amount value={parseDecimal(r.amount)} currency="USD" />
+                  </p>
+                </div>
+                {r.description && (
+                  <p className="mt-1 text-sm leading-relaxed text-ink-muted">{r.description}</p>
+                )}
+                <p className="mt-1.5 text-xs text-ink-muted">
+                  {r.estimatedDelivery ? `Estimated ${formatMonth(r.estimatedDelivery)}` : 'No date set'}
+                  {r.limitedQuantity.trim() && ` · ${r.limitedQuantity} available`}
+                </p>
+              </li>
+            ))}
+          </ol>
+        </Card>
+      )}
+
       <Card tone="quiet" className="p-5">
         <h3 className="text-sm font-semibold text-ink">Before this can launch</h3>
         <ul className="mt-3 space-y-3 text-sm leading-relaxed text-ink-muted">
@@ -154,6 +186,13 @@ export function StepReview({ draft, idea }: { draft: CampaignDraft; idea: Eligib
       </Card>
     </div>
   );
+}
+
+/** "March 2027" — a day-precise promise a year out is not credible, so tiers state the month. */
+function formatMonth(date: string): string {
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
 }
 
 function Row({ label, value }: { label: string; value: React.ReactNode }) {

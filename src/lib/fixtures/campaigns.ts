@@ -1,4 +1,4 @@
-import type { CampaignDetail, Milestone, Receipt } from '@/lib/campaigns/types';
+import type { CampaignDetail, Milestone, Receipt, RewardTier } from '@/lib/campaigns/types';
 import { CREATORS, campaignCreator } from './creators';
 
 /**
@@ -36,6 +36,31 @@ const receipt = (
   days: number,
   n: number
 ): Receipt => ({ kind, label, amount, txSignature: sig(n), blockTime: iso(days) });
+
+/** A reward tier. Optional on a campaign (FR-301), so most fixtures carry none. */
+const reward = (
+  id: string,
+  title: string,
+  description: string,
+  amount: string,
+  deliveryDays: number,
+  opts: {
+    limit?: number;
+    claimed?: number;
+    items?: { label: string; quantity: number }[];
+    shipping?: RewardTier['shipping'];
+  } = {}
+): RewardTier => ({
+  id,
+  title,
+  description,
+  amount,
+  estimatedDelivery: iso(deliveryDays),
+  limitedQuantity: opts.limit ?? null,
+  claimed: opts.claimed ?? 0,
+  items: opts.items ?? [],
+  shipping: opts.shipping ?? 'NOTHING_TO_SHIP',
+});
 
 /** A released stage: claim approved, window closed, tranche paid. */
 function released(args: {
@@ -205,6 +230,7 @@ function campusKonekt(): CampaignDetail {
       'Vendor churn is the real risk: if the three busiest kitchens leave, the app is empty at lunchtime. Six have written commitments and the pickup lockers are the thing they asked for, so leaving costs them the locker slot. The university could also ask for a concession fee, which is why the raise carries a float rather than spending it on marketing.',
     workingCapitalPct: '20.00',
     milestones,
+    rewards: [],
     receipts: [
       receipt('FUNDED', 'Funding closed', '5400.00', -45, 1),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1000.00', -45, 4),
@@ -313,6 +339,7 @@ function clinicQueue(): CampaignDetail {
         -30
       ),
     ],
+    rewards: [],
     receipts: [
       receipt('FUNDED', 'Funding closed', '12450.00', -158, 10),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '2640.00', -158, 11),
@@ -428,6 +455,7 @@ function tailorsBank(): CampaignDetail {
         cancelled: true,
       },
     ],
+    rewards: [],
     receipts: [
       receipt('FUNDED', 'Funding closed', '8000.00', -190, 33),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1600.00', -190, 34),
@@ -524,6 +552,24 @@ function coldChainKaduna(): CampaignDetail {
         { type: 'Handover record', source: 'Signed service logs from two unsupervised visits' }
       ),
     ],
+    rewards: [
+      reward(
+        'rw_cc_1',
+        'The season’s numbers',
+        'The full spoilage comparison for the first season, raw, before it is written up anywhere.',
+        '30',
+        200,
+        { claimed: 187 }
+      ),
+      reward(
+        'rw_cc_2',
+        'A day in the cold room',
+        'Come and see the install, meet the operators, and take produce home. Kaduna only.',
+        '150',
+        230,
+        { limit: 20, claimed: 20, shipping: 'REGION_ONLY' }
+      ),
+    ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '17840.00', -30, 41),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '2700.00', -30, 42),
@@ -592,6 +638,37 @@ function folktalesArchive(): CampaignDetail {
         type: 'Public URL',
         source: 'The live archive, open to anyone',
       }),
+    ],
+    rewards: [
+      reward(
+        'rw_fa_1',
+        'Your name in the archive',
+        'Listed as a supporter on the archive itself, for as long as it is online.',
+        '15',
+        150,
+        { claimed: 96 }
+      ),
+      reward(
+        'rw_fa_2',
+        'The transcripts, early',
+        'The full transcripts in Yoruba and English, sent to you a month before the archive opens.',
+        '45',
+        140,
+        { claimed: 71 }
+      ),
+      reward(
+        'rw_fa_3',
+        'Pressed set of the recordings',
+        'A pressed set of the eleven storytellers, posted anywhere, plus everything above.',
+        '120',
+        210,
+        {
+          limit: 200,
+          claimed: 154,
+          items: [{ label: 'Pressed recordings, boxed set', quantity: 1 }],
+          shipping: 'WORLDWIDE',
+        }
+      ),
     ],
     receipts: [
       receipt('FUNDED', 'Funding closed', '6720.00', -6, 50),
@@ -662,6 +739,33 @@ function kilishiKitchen(): CampaignDetail {
         'Stock available in Abuja every week for four consecutive weeks.',
         '30.00',
         { type: 'Retailer confirmation', source: 'Written confirmation from two retailers' }
+      ),
+    ],
+    rewards: [
+      reward(
+        'rw_kk_1',
+        'A pack from the first run',
+        'One 200g pack from the first batch out of the new room, posted within Nigeria.',
+        '20',
+        120,
+        {
+          claimed: 31,
+          items: [{ label: 'Kilishi, 200g', quantity: 1 }],
+          shipping: 'REGION_ONLY',
+        }
+      ),
+      reward(
+        'rw_kk_2',
+        'Six months of packs',
+        'A pack a month for six months, sealed and posted, from the run each month.',
+        '95',
+        120,
+        {
+          limit: 150,
+          claimed: 12,
+          items: [{ label: 'Kilishi, 200g', quantity: 6 }],
+          shipping: 'REGION_ONLY',
+        }
       ),
     ],
     receipts: [],
@@ -766,6 +870,7 @@ function mushinLedger(): CampaignDetail {
         source: 'Monthly active count with the query published',
       }),
     ],
+    rewards: [],
     receipts: [
       receipt('FUNDED', 'Funding closed', '7000.00', -110, 61),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '1400.00', -110, 62),
@@ -851,6 +956,7 @@ function pastPapers(): CampaignDetail {
         -180
       ),
     ],
+    rewards: [],
     receipts: [
       receipt('FUNDED', 'Funding closed', '3100.00', -305, 73),
       receipt('WORKING_CAPITAL_RELEASED', 'Working capital released', '450.00', -305, 74),
