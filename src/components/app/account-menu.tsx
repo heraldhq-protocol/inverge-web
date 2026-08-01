@@ -86,6 +86,22 @@ export function AccountMenu() {
           )}
           <Link
             role="menuitem"
+            href="/dashboard"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-3 text-sm text-ink transition-colors hover:bg-accent-50 focus-visible:outline-none focus-visible:bg-accent-50"
+          >
+            My ideas
+          </Link>
+          <Link
+            role="menuitem"
+            href="/settings"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-3 text-sm text-ink transition-colors hover:bg-accent-50 focus-visible:outline-none focus-visible:bg-accent-50"
+          >
+            Settings
+          </Link>
+          <Link
+            role="menuitem"
             href="/verify"
             onClick={() => setOpen(false)}
             className="block px-4 py-3 text-sm text-ink transition-colors hover:bg-accent-50 focus-visible:outline-none focus-visible:bg-accent-50"

@@ -30,6 +30,12 @@ export function AppTopbar() {
           >
             Discover
           </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-lg px-2.5 py-1.5 text-[13px] font-medium text-ink-muted transition-colors hover:bg-ink/5 hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          >
+            My ideas
+          </Link>
           <TopicsMenu />
         </nav>
 

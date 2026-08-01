@@ -7,6 +7,7 @@ const SIZES = {
   32: 'h-8 w-8 text-xs',
   40: 'h-10 w-10 text-sm',
   44: 'h-11 w-11 text-sm',
+  64: 'h-16 w-16 text-xl',
 } as const;
 
 export type AvatarSize = keyof typeof SIZES;
