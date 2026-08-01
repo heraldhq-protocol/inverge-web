@@ -206,7 +206,7 @@ better: every idea gets the same readable skeleton. For idea detail the rail is 
 the TOC and the rail cannot both be sticky at once; at `lg` we run TOC + story + rail, at `md` we
 drop the TOC.
 
-### 5.2 Rewards — the pattern we mostly do not need
+### 5.2 Rewards — the pattern we take, on our own terms
 
 Left rail jump-list of rewards with price and backer count, plus an "All gone" group for sold-out
 tiers. Main column of reward cards, each split: left panel with name, price, "Backers 100",
@@ -214,10 +214,23 @@ tiers. Main column of reward cards, each split: left panel with name, price, "Ba
 with an "Includes" list, per-region shipping lines, and "Optional add-ons" rows carrying a
 thumbnail, price and a quantity stepper.
 
-**Inverge verdict.** Reward tiers are optional in FR-301 and are not launch scope. **The second tab
-on an Inverge campaign is Milestones, and that is the whole point of the product.** Two details are
-worth keeping for later: the scarcity line ("Limited (56 left of 100)") is the honest way to render
-a cap, and the left rail jump-list is a better nav for a list of priced options than a long scroll.
+**Inverge verdict, revised 2026-08-01.** This originally read "not launch scope", on the grounds that
+stages are the product. **The first tab on an Inverge campaign is still Delivery stages, and that is
+still the whole point.** But the reasoning against rewards conflated two things: rewards have no place
+in the *escrow*, and that says nothing about whether they belong in the *pitch*. A backer deciding
+whether to fund something still wants to know what they get, and refusing to answer is not integrity,
+it is just a gap.
+
+So rewards ship, structurally separated from the release path
+([`campaign-data-contract.md`](./campaign-data-contract.md) §2b): **a reward can never gate a tranche,
+accelerate one, or be what a milestone claim is judged against.** Collapse those and the objection
+mechanism ends up adjudicating late t-shirts instead of undelivered work.
+
+Three details from the reference are worth taking and are taken: the scarcity line
+("Limited (56 left of 100)") is the honest way to render a cap, the estimated-delivery date belongs on
+every tier, and the "pledge without a reward" box is the right default for someone backing the idea
+rather than shopping. **Add-ons and stretch goals stay excluded** — the first is a shop's upsell
+mechanic and the second is a promise made against money that has not arrived.
 
 ### 5.3 Creator — the trust surface
 
@@ -376,7 +389,8 @@ card, always, in a fixed position, and it is the honest answer to "why am I seei
 | "Remind me" / bookmark | "Support this idea" is the light action; no bookmark | no bookmark |
 | "Marked as fulfilled" | — | "All 4 milestones delivered" + receipts |
 | "Superbacker" | — | nothing at launch |
-| Stretch goals | — | nothing, ever, at launch scope |
+| Reward tiers | — | reward tiers, kept out of the escrow path entirely (§5.2) |
+| Add-ons, stretch goals | — | nothing, ever |
 
 ### 8.2 The three sentences we may never write
 

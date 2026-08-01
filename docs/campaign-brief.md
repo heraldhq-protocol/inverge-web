@@ -275,31 +275,45 @@ on the path to receiving money and nowhere else).
 
 New, under `components/campaigns/`:
 
+Built, under `components/campaigns/`:
+
 | Component | Job |
 |---|---|
-| `CampaignFilters` | Status segment, category, region, sort. Writes search params. |
-| `EscrowSummary` | The FR-801 figure band. Four `Stat`s and one caption. |
-| `UnderReviewLane` | Open objection windows across all campaigns, with what is at stake. |
-| `CampaignLane` | Horizontal scroller, same idiom as `FeedLane`, for closing-soon and delivered. |
-| `CampaignFundingPanel` | The sticky rail: meter, figures, disabled action, fine print. Extracted from `CampaignHeader`. |
-| `MilestoneDetail` | Per-stage expanded row: deliverable, evidence definition, proof bundle, receipt, objection aggregate. |
-| `MilestoneProof` | The proof bundle itself. Public, never gated. Used by `MilestoneDetail` and `ObjectionWindow`. |
+| `CampaignFilters` | Lifecycle segment, category, region, sort. Links that write search params, never client state. |
+| `EscrowSummary` | The FR-801 band, on the forest ground: four figures plus the allocation bar showing where every pound sits. |
+| `UnderReviewLane` | Open objection windows across all campaigns, with what is at stake on each. |
+| `CampaignLane` | Grid when short, scroller when long. Same rule as `FeedLane`. |
+| `CampaignMedia` | The pitch video: poster frame, click to load, never autoplay. The one client island on detail. |
+| `CampaignFundingPanel` | The sticky rail in the reference's number order. Extracted out of `CampaignHeader`. |
+| `CampaignPlan` | The story in the playbook's order, generated TOC, budget table, the two mandated sections. |
+| `CampaignRewards` | Reward tiers, with the scarcity line and the standing disclaimer that a reward is not a stage. |
+| `CampaignCreator` | The creator trust surface: track record counted, history, tier meaning. |
 | `CampaignTimeline` | The dated spine. Money events carry a receipt; process events do not. |
-| `CampaignFaq` | Eight platform questions, accordion, escape hatch. |
-| `CampaignCreator` | The creator trust surface. |
-| `CampaignStatusBanner` | Owner-only `DRAFT`/`IN_REVIEW` state. |
-| `CampaignRisks` | The two mandated sections, extracted from the page. |
+| `CampaignFaq` | Eight platform questions, accordion, escape hatch to the idea's discussion. |
+| `MilestoneDetail` | Per-stage record: what was agreed, what was submitted, the objection aggregate, the receipt. |
+| `MilestoneProof` | The proof bundle itself. Public in every state, never gated. |
 
-New, under `components/campaigns/new/`: `CampaignBuilder` (client shell + step state), `StepIdea`,
-`StepRaise`, `StepStages`, `StepReview`, `BuilderPreview`.
+Built, under `components/campaigns/new/`: `CampaignBuilder` (client shell and step state), `StepIdea`,
+`StepRaise`, `StepStages`, `StepRewards`, `StepReview`, `BuilderPreview`.
 
-New, under `lib/campaigns/`: `campaign-draft.ts` (pure validation and derivation for the builder),
-`campaign-stats.ts` (pure aggregation for the escrow summary and the outcome labels), `convert-api.ts`
-(the live `POST /ideas/:id/convert` call, the only non-fixture path in the domain).
+Built, under `lib/campaigns/`: `campaign-draft.ts` (pure validation and derivation for the builder),
+`campaign-stats.ts` (pure aggregation, funding progress, outcome labels), `my-ideas.ts` (the creator's
+own ideas, fixtures until ask 4 lands).
 
-Reused as-is: `Card`, `Meter`, `Pill`, `Tabs`, `Timeline`, `Stat`, `Amount`, `Count`, `Avatar`,
-`Accordion`, `EmptyState`, `Skeleton`, `Field`, `TxLink`, `MilestoneTracker`, `ObjectionWindow`,
-`ReceiptTimeline`, `RefundNotice`, `TrustStrip`, `CampaignCard`.
+**No `convert-api.ts`, and deliberately so.** The builder makes no request at any point — these are UI
+screens, and the last step says a draft was saved rather than pretending one exists on a server. When
+the contract lands it is one call in one place: `POST /ideas/:id/convert` at the end of the flow.
+
+Reused as-is: `Card`, `Meter`, `CoverMeter`, `Cover`, `Pill`, `Tabs`, `Timeline`, `Disclosure`,
+`Amount`, `Count`, `Avatar`, `EmptyState`, `Skeleton`, `Field`, `TxLink`, `VerifiedBadge`,
+`MilestoneTracker`, `ObjectionWindow`, `ReceiptTimeline`, `RefundNotice`, `TrustStrip`.
+
+**Not built, and why.** `CampaignStatusBanner` (owner-only `DRAFT`/`IN_REVIEW`) was dropped: with no
+session on the server there is no way to tell an owner from anyone else, so `campaigns-api.ts` filters
+both statuses out of every read and the public route 404s. The draft state renders where it is actually
+reachable — the last step of the builder. It comes back with ask 15. `CampaignRisks` was not worth its
+own file: the two mandated sections are two `<section>`s inside `CampaignPlan`, which is where the TOC
+that indexes them lives.
 
 ---
 
@@ -407,8 +421,9 @@ Additions to conventions §1 and the sibling brief §7. A PR that breaks one doe
    released stages. There is no field a creator can set to claim it.
 6. **`activeStrikes` never renders.** Anywhere. A demotion is visible as a lower tier and nothing more.
 7. **No live ticking countdown.** Days, computed on the server at render time (conventions §9.4).
-8. **No component invents a campaign endpoint.** Reads go through `campaigns-api.ts`; the one live
-   write goes through `convert-api.ts`. Nothing else calls the API in this domain.
+8. **No component invents a campaign endpoint.** Every read goes through `campaigns-api.ts`, which
+   returns fixtures. Nothing in this domain calls the API at all — not even `POST /ideas/:id/convert`,
+   which is live. These are UI screens built against a written contract, so the swap is one file.
 9. **The builder never mentions verification outside step 4**, and never mentions a wallet, chain, gas,
    address or signature at all.
 10. **Every amount through `Amount`, every count through `Count`, every currency explicit.**
@@ -419,17 +434,29 @@ Additions to conventions §1 and the sibling brief §7. A PR that breaks one doe
 
 One stage per commit segment, each independently reviewable.
 
-| Stage | Contents |
-|---|---|
-| 0 | This brief; new API asks filed in both repos |
-| 1 | Fixture expansion to a reviewable catalogue: eight campaigns covering every public status and all six milestone states |
-| 2 | `lib/campaigns/campaign-stats.ts`, filters and sort in `campaigns-api.ts` |
-| 3 | Catalogue: escrow band, under-review lane, filters, grid, lanes, states |
-| 4 | Detail: sticky funding rail, tab set, per-stage detail with proof, risks extraction |
-| 5 | Creator tab, timeline tab, how-it-works tab |
-| 6 | Owner-only `DRAFT`/`IN_REVIEW` banner |
-| 7 | `lib/campaigns/campaign-draft.ts` (pure rules, no client) |
-| 8 | `/campaigns/new` builder, four steps, live preview, dev-fill |
+| Stage | Contents | Status |
+|---|---|---|
+| 0 | This brief; nineteen API asks filed in both repos | **Done** |
+| 1 | Fixture expansion: eight campaigns covering every public status and all six milestone states | **Done** |
+| 2 | `campaign-stats.ts`, filters and sort in `campaigns-api.ts` | **Done** |
+| 3 | Catalogue: escrow band, under-review lane, filters, 16:9 thumbnail cards, lanes, states | **Done** |
+| 4 | Detail: pitch video, sticky funding rail, the tab set, per-stage detail with public proof | **Done** |
+| 5 | Creator tab, timeline tab, rewards tab, how-it-works tab | **Done** |
+| 6 | ~~Owner-only `DRAFT`/`IN_REVIEW` banner~~ | **Dropped**, see §6 |
+| 7 | `campaign-draft.ts` (pure rules, no client) | **Done** |
+| 8 | `/campaigns/new` builder, five steps, live preview, dev-fill | **Done** |
+
+Two deviations from the plan above, both recorded rather than quietly absorbed:
+
+- **Stage 6 was dropped.** There is no session on the server, so an owner cannot be told apart from
+  anyone else and a `DRAFT` banner would either leak or never render. Both statuses are filtered out of
+  every read instead, and draft state renders at the end of the builder where it is actually reachable.
+  It returns with ask 15.
+- **Rewards were added, having been ruled out.** The teardown put reward tiers permanently out of scope
+  (§5.2) on the grounds that stages are the product. That reasoning holds for the *escrow* and does not
+  hold for the *pitch*: a backer still wants to know what they get. They ship as a tab and a builder
+  step, structurally separated from the release path (contract §2b), and stretch goals and add-ons stay
+  excluded.
 
 ---
 

@@ -12,7 +12,8 @@ import type {
 /**
  * Campaign reads. Fixtures only, because the API has no campaign endpoints at all: the models are
  * inert in Prisma and `POST /ideas/:id/convert` is the single live write path
- * (campaign-data-contract.md §1). That one live call lives in `convert-api.ts`, not here.
+ * (campaign-data-contract.md §1). Nothing in this domain calls the API at all — not even that one
+ * live path: the builder is UI, and it makes no request.
  *
  * Flip `USE_FIXTURES` when gap items 6 and 7 land. Filtering and sorting happen here today and move
  * to query params when ask 13 lands; either way no component builds a request or knows a fixture

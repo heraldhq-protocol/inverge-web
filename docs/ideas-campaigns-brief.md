@@ -10,7 +10,12 @@
 > (what goes inside a pitch, and in what order), [`feed-api.md`](./feed-api.md) (the feed contract),
 > [`campaign-data-contract.md`](./campaign-data-contract.md) (the provisional campaign contract).
 >
-> Branch: `feat/ideas-campaigns-ui`.
+> **Superseded for campaigns.** Everything under `/campaigns` — the catalogue, campaign detail and the
+> creator campaign flow — is now specified by [`campaign-brief.md`](./campaign-brief.md), which replaces
+> §1.1's campaign rows, the campaign half of §4.2 and the campaign copy in §5.4. This brief stays
+> authoritative for the feed, idea detail, the idea lifecycle screens and the app shell.
+>
+> Branch: `feat/ideas-campaigns-ui`; campaign surfaces on `feat/campaign-ui-and-flow`.
 
 ---
 
@@ -27,8 +32,9 @@ Stages 1–6 and 8–9 of §8 are built and on `feat/ideas-campaigns-ui`. Everyt
 | `/ideas` | Redirects to `/feed` |
 | `/ideas/[id]` | Built. Header, generated TOC + story, sticky action rail, gate breakdown, trust strip, survey results, thread, creator panel, similar rail |
 | `/ideas/new` | Built. Structured pitch, blur validation, live preview |
-| `/campaigns` | Built. List with the verification entry point |
-| `/campaigns/[id]` | Built. Header, milestone tracker, objection window, receipts, refund state |
+| `/campaigns` | Rebuilt — see [`campaign-brief.md`](./campaign-brief.md). Escrow band, under-review lane, lifecycle filters, thumbnail cards, lanes |
+| `/campaigns/[id]` | Rebuilt — see [`campaign-brief.md`](./campaign-brief.md). Pitch video, sticky funding rail, seven tabs, per-stage proof |
+| `/campaigns/new` | Built — see [`campaign-brief.md`](./campaign-brief.md). Five-step creator flow, live preview. No API call |
 | `/review` | Untouched placeholder (admin queue is out of scope) |
 | `/verify`, `/kyc/callback` | Untouched, working |
 | `/dashboard`, `/ideas/[id]/insights` | Not built (stage 7) |
@@ -92,8 +98,8 @@ Do not touch: `(marketing)/*`, `components/marketing/*`, `(auth)/*`, `components
 
 ### 1.3 Out of scope
 
-Search (no endpoint), notifications UI, reward tiers (FR-301 optional, not launch), stretch goals
-(never), on-ramp checkout (FR-402, Phase 2), objection *submission* (FR-603/604 needs on-chain
+Search (no endpoint), notifications UI, stretch goals
+(never), add-ons (never), on-ramp checkout (FR-402, Phase 2), objection *submission* (FR-603/604 needs on-chain
 weight), admin curation queue beyond its existing placeholder, public aggregate/community views
 (creator-only data today), any wallet or chain surface (permanently).
 
