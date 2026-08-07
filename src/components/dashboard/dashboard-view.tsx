@@ -70,13 +70,33 @@ const DEMO_IDEAS: DashboardIdeaRow[] = [
   },
 ];
 
+import { useQuery } from '@tanstack/react-query';
+import { listMyIdeas } from '@/lib/campaigns/my-ideas';
 import { WalletModal, type WalletTab } from '@/components/wallets/wallet-modal';
 
 export function DashboardView() {
-  const [ideas] = useState<DashboardIdeaRow[]>(DEMO_IDEAS);
+  const { data: liveIdeas } = useQuery({
+    queryKey: ['my-ideas'],
+    queryFn: () => listMyIdeas(),
+    staleTime: 15_000,
+  });
+
   const [openRowId, setOpenRowId] = useState<string | null>(null);
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletTab, setWalletTab] = useState<WalletTab>('overview');
+
+  const ideas: DashboardIdeaRow[] = (liveIdeas && liveIdeas.length > 0)
+    ? liveIdeas.map((i) => ({
+        id: i.id,
+        title: i.title,
+        summary: i.problem,
+        status: i.ready ? ('Threshold met' as const) : ('Validating' as const),
+        tone: i.ready ? ('accent' as const) : ('neutral' as const),
+        supporters: i.supporterCount,
+        prePledgeTotal: Number(i.askAmount),
+        updatedAt: 'Recently',
+      }))
+    : DEMO_IDEAS;
 
   // Compute stat totals
   const totalIdeas = ideas.length;
