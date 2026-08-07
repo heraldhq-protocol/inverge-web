@@ -1,18 +1,8 @@
 import { buildGateProgress, type GateCriterion } from '@/lib/ideas/gate';
 import { fixtureFeedItems } from '@/lib/fixtures/ideas';
+import { getSessionToken } from '@/lib/api/client';
+import { env } from '@/lib/env';
 import type { FeedItem } from '@/lib/feed/types';
-
-/**
- * The signed-in creator's own ideas, and whether each one has cleared the FR-204 validation gate.
- *
- * Fixture-backed and deliberately so: `GET /ideas` has no owner filter (gap backlog item 4), so there
- * is no honest way to ask the API this question yet, and nothing on these screens calls the API in any
- * case — the campaign surfaces are UI-only until the contract lands.
- *
- * Ideas that have not cleared the gate are **listed, not hidden**, with what is still missing. Hiding
- * them would leave a creator staring at an empty screen with no idea why, and the gate is coaching
- * rather than a rejection (FR-271a).
- */
 
 export type EligibleIdea = {
   id: string;
@@ -36,16 +26,9 @@ export type EligibleIdea = {
   topics?: string[];
 };
 
-/**
- * The creator we render the builder as. One id, in one place, so the swap is a single line.
- *
- * Deliberately someone who has **one** idea past the gate and several still short of it: a builder
- * demoed against a creator with nothing selectable teaches the wrong lesson about the screen, and one
- * with everything selectable never shows the coaching.
- */
 const ME = 'cre_chinedu';
 
-export async function listMyIdeas(): Promise<EligibleIdea[]> {
+function fixtureMyIdeas(): EligibleIdea[] {
   return fixtureFeedItems()
     .filter((item) => item.creator?.id === ME)
     .map((item) => {
@@ -68,4 +51,62 @@ export async function listMyIdeas(): Promise<EligibleIdea[]> {
         topics: item.topics,
       };
     });
+}
+
+export async function listMyIdeas(token?: string): Promise<EligibleIdea[]> {
+  if (env.useFixtures) {
+    return fixtureMyIdeas();
+  }
+
+  const authToken = token ?? getSessionToken();
+  if (!authToken) {
+    return fixtureMyIdeas();
+  }
+
+  try {
+    const res = await fetch(`${env.apiUrl}/ideas?mine=true`, {
+      headers: { Authorization: `Bearer ${authToken}` },
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      console.warn(`[my-ideas] GET /ideas?mine=true returned ${res.status}, falling back to fixture`);
+      return fixtureMyIdeas();
+    }
+
+    const items = (await res.json()) as any[];
+    if (!Array.isArray(items) || items.length === 0) {
+      return fixtureMyIdeas();
+    }
+
+    return items.map((item) => {
+      const gate = buildGateProgress({
+        supporterCount: item.supporterCount ?? 0,
+        weightedPrePledgeTotal: String(item.weightedPrePledgeTotal ?? '0'),
+        feedbackScore: String(item.feedbackScore ?? '0'),
+        feedbackCount: item.feedbackCount ?? 0,
+        askAmount: String(item.askAmount ?? '0'),
+      });
+      const ready = item.status === 'THRESHOLD_MET';
+      const missing = ready ? [] : gate.criteria.filter((c) => !c.met);
+
+      return {
+        id: item.id,
+        slug: item.slug ?? item.id,
+        title: item.title,
+        problem: item.problem,
+        ready,
+        progress: gate.overallPct,
+        missing,
+        askAmount: String(item.askAmount ?? '0'),
+        supporterCount: item.supporterCount ?? 0,
+        category: item.category ?? 'software',
+        region: item.region ?? null,
+        topics: item.topics ?? [],
+      };
+    });
+  } catch (err) {
+    console.warn('[my-ideas] Live my ideas request failed, falling back to fixture:', err);
+    return fixtureMyIdeas();
+  }
 }

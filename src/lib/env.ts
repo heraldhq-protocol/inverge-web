@@ -5,6 +5,9 @@ export const env = {
   // Canonical origin for metadataBase / OpenGraph absolute URLs. Override per environment;
   // defaults to production so social cards resolve correctly without extra config.
   siteUrl: process.env.NEXT_PUBLIC_SITE_URL ?? 'https://inverge.africa',
+  // Mode switcher: set NEXT_PUBLIC_USE_FIXTURES=false to use live backend API.
+  // Defaults to true so rich demo data works out-of-the-box when backend is not running.
+  useFixtures: process.env.NEXT_PUBLIC_USE_FIXTURES === 'false' ? false : true,
 };
 
 export const isPrivyConfigured = env.privyAppId.length > 0;

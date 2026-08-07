@@ -1,6 +1,7 @@
 'use client';
 
 import { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Field, FieldSet, controlClass, useTouched } from '@/components/ui/field';
 import { ImageField } from '@/components/ui/image-field';
@@ -8,21 +9,8 @@ import { RichTextField } from '@/components/ui/rich-text-field';
 import type { TiptapDoc } from '@/lib/ideas/rich-content';
 import { IdeaCard } from '@/components/ideas/idea-card';
 import { CATEGORIES, type FeedItem, type IdeaCategory } from '@/lib/feed/types';
-
-/**
- * Publish an idea. Form left, live preview right.
- *
- * The field order **is** the narrative order a good pitch follows, so filling the form in sequence
- * produces a readable pitch without the creator having to know the structure
- * (pitch-narrative-playbook.md §2). Help text is coaching: it says what a good answer contains rather
- * than restating the label.
- *
- * No verification, KYC or wallet language anywhere on this screen. Publishing an idea is free and
- * ungated; verification only gates receiving money (app-mockup-kit §C, brief §5.6).
- *
- * Submission is not wired: this build runs on fixtures. The live path is `POST /ideas` with the
- * structured pitch, then `POST /ideas/:id/publish`.
- */
+import { createIdea, publishIdea } from '@/lib/ideas/ideas-api';
+import { env } from '@/lib/env';
 
 type FormKey =
   | 'title'
@@ -36,8 +24,12 @@ type FormKey =
 const EMPTY_STEP = { date: '', description: '' };
 
 export default function NewIdeaPage() {
+  const router = useRouter();
   const { touched, touch, touchAll } = useTouched<FormKey>();
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+
   const [form, setForm] = useState({
     title: '',
     category: 'software' as IdeaCategory,
@@ -73,6 +65,7 @@ export default function NewIdeaPage() {
     errors.roadmap = 'Two dated steps, at least. What will exist, and by when?';
 
   const showError = (key: FormKey) => (touched[key] || submitted ? errors[key] : undefined);
+  const hasErrors = Object.keys(errors).length > 0;
 
   // The preview is the real card component, not a mock-up of it, so what a creator sees here is exactly
   // what a backer sees in the feed.
@@ -108,13 +101,45 @@ export default function NewIdeaPage() {
     [form]
   );
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setSubmitted(true);
     touchAll(['title', 'problem', 'targetUser', 'currentAlternative', 'solution', 'askAmount', 'roadmap']);
-  }
 
-  const hasErrors = Object.keys(errors).length > 0;
+    if (hasErrors) return;
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      if (!env.useFixtures) {
+        const created = await createIdea({
+          title: form.title.trim(),
+          problem: form.problem.trim(),
+          solution: form.solution.trim(),
+          targetUser: form.targetUser.trim() || undefined,
+          currentAlternative: form.currentAlternative.trim() || undefined,
+          category: form.category,
+          region: form.region.trim() || undefined,
+          coverImageUrl: form.coverPreview ?? form.coverImageUrl ?? undefined,
+          risks: form.risks.trim() || undefined,
+          roadmapSteps: form.steps.filter((s) => s.date && s.description.trim()),
+          askAmount: Number(form.askAmount) || 0,
+        });
+
+        const published = await publishIdea(created.id);
+        router.push(`/ideas/${published.id}`);
+      } else {
+        setTimeout(() => {
+          setIsSubmitting(false);
+          router.push('/ideas/payflex-lagos');
+        }, 800);
+      }
+    } catch (err: any) {
+      setSubmitError(err.message || 'Failed to publish idea. Please check your connection and try again.');
+      setIsSubmitting(false);
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -398,23 +423,23 @@ export default function NewIdeaPage() {
             </Field>
           </FieldSet>
 
+          {submitError && (
+            <p className="rounded-lg border border-danger/40 bg-danger-50 px-4 py-3 text-sm text-danger-700">
+              {submitError}
+            </p>
+          )}
+
           {submitted && hasErrors && (
             <p className="rounded-lg border border-danger/40 bg-danger-50 px-4 py-3 text-sm text-danger-700">
               A few answers still need work. They are marked above.
             </p>
           )}
 
-          {submitted && !hasErrors && (
-            <p className="rounded-lg border border-accent-500/40 bg-accent-50 px-4 py-3 text-sm text-ink">
-              This is ready to publish. Publishing is not connected in this build.
-            </p>
-          )}
-
           <div className="flex flex-wrap gap-3">
-            <Button variant="primary" size="md" type="submit">
-              Publish idea
+            <Button variant="primary" size="md" type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Publishing idea...' : 'Publish idea'}
             </Button>
-            <Button variant="outline" size="md" type="button">
+            <Button variant="outline" size="md" type="button" disabled={isSubmitting}>
               Save draft
             </Button>
           </div>

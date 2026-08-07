@@ -3,18 +3,27 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/lib/auth/use-auth';
+import { useCurrentUser } from '@/lib/auth/use-user';
 import { clearSessionToken } from '@/lib/api/client';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Field } from '@/components/ui/field';
 import { Pill } from '@/components/ui/pill';
+import { WalletModal, type WalletTab } from '@/components/wallets/wallet-modal';
 
 export function SettingsView() {
-  const { user, logout } = useAuth();
+  const { user, logout, exportWallet, connectWallet } = useAuth();
+  const { data: currentUser } = useCurrentUser();
+
+  // Web3 Wallet modal state
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [walletTab, setWalletTab] = useState<WalletTab>('overview');
 
   // Profile form state
   const [displayName, setDisplayName] = useState(
-    user?.email?.address ? user.email.address.split('@')[0] : 'Amara Okonkwo'
+    currentUser?.creatorProfile?.displayName ||
+    currentUser?.creator?.displayName ||
+    (user?.email?.address ? user.email.address.split('@')[0] : 'Amara Okonkwo')
   );
   const [location, setLocation] = useState('Lagos, Nigeria');
   const [avatarSrc, setAvatarSrc] = useState<string | null>(null);
@@ -27,7 +36,7 @@ export function SettingsView() {
   const [showDeleteModal, setShowDeleteModal] = useState(false);
 
   // Email change form state
-  const userEmail = user?.email?.address ?? 'amara.okonkwo@gmail.com';
+  const userEmail = user?.email?.address ?? currentUser?.email ?? 'amara.okonkwo@gmail.com';
   const [newEmail, setNewEmail] = useState('');
   const [emailSuccess, setEmailSuccess] = useState(false);
 
@@ -129,7 +138,7 @@ export function SettingsView() {
               Account Settings
             </h1>
             <p className="mt-1.5 text-sm text-ink-muted">
-              Manage your personal details, connected sign-in methods, feed preferences, and notifications.
+              Manage your personal details, Privy Web3 wallet, feed preferences, and notifications.
             </p>
           </div>
         </div>
@@ -138,6 +147,7 @@ export function SettingsView() {
         <div className="mt-4 flex items-center gap-1.5 overflow-x-auto pb-1 text-xs no-scrollbar">
           {[
             { id: 'profile', label: 'Profile' },
+            { id: 'web3-wallets', label: 'Web3 & Wallets' },
             { id: 'signing-in', label: 'Signing in' },
             { id: 'verification', label: 'Verification' },
             { id: 'your-feed', label: 'Your feed' },
@@ -259,6 +269,108 @@ export function SettingsView() {
               )}
             </div>
           </form>
+        </section>
+
+        <div className="h-px bg-border/80" />
+
+        {/* SECTION: WEB3 & WALLETS */}
+        <section id="web3-wallets" className="scroll-mt-20">
+          <div className="flex items-center justify-between gap-4 mb-1">
+            <h2 className="text-xl font-bold text-ink">Web3 & Stablecoin Wallet</h2>
+            <Pill tone="accent" size="sm">Privy Solana Mainnet</Pill>
+          </div>
+          <p className="text-sm text-ink-muted">
+            Non-custodial Solana wallet for funding campaigns, receiving milestone tranches, and managing USDC / cNGN.
+          </p>
+
+          <div className="mt-6 rounded-2xl border border-border bg-surface p-6 shadow-xs space-y-6">
+            {/* Wallet Address & Status Header */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-4 rounded-xl bg-paper/60 border border-border/60">
+              <div className="space-y-1">
+                <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted block">Embedded Solana Address</span>
+                <span className="text-xs font-mono font-medium text-ink block break-all">
+                  {currentUser?.wallets?.[0]?.address || 'Solana Wallet Linked via Privy'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                {exportWallet && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => exportWallet()}
+                  >
+                    Export Private Key
+                  </Button>
+                )}
+                {connectWallet && (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => connectWallet()}
+                  >
+                    Connect External Wallet
+                  </Button>
+                )}
+              </div>
+            </div>
+
+            {/* Balances & Stablecoin Rail Quick Buttons */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="rounded-xl border border-border bg-paper/40 p-4 space-y-1">
+                <span className="text-xs font-medium text-ink-muted block">USDC Balance</span>
+                <span className="text-xl font-bold text-ink font-mono">$450.00</span>
+                <span className="text-[11px] text-accent-700 block">SPL Token</span>
+              </div>
+
+              <div className="rounded-xl border border-border bg-paper/40 p-4 space-y-1">
+                <span className="text-xs font-medium text-ink-muted block">cNGN Balance</span>
+                <span className="text-xl font-bold text-ink font-mono">$166.67</span>
+                <span className="text-[11px] text-accent-700 block">₦250k Equivalent</span>
+              </div>
+
+              <div className="rounded-xl border border-border bg-paper/40 p-4 space-y-1">
+                <span className="text-xs font-medium text-ink-muted block">SOL Gas Balance</span>
+                <span className="text-xl font-bold text-ink font-mono">0.45 SOL</span>
+                <span className="text-[11px] text-ink-muted block">Fee Subsidized</span>
+              </div>
+            </div>
+
+            {/* Quick Rail Buttons */}
+            <div className="flex flex-wrap items-center gap-3 pt-2">
+              <Button
+                variant="primary"
+                size="sm"
+                onClick={() => {
+                  setWalletTab('onramp');
+                  setWalletModalOpen(true);
+                }}
+              >
+                Deposit / On-Ramp Fiat
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setWalletTab('offramp');
+                  setWalletModalOpen(true);
+                }}
+              >
+                Cash Out to Bank
+              </Button>
+
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  setWalletTab('transfer');
+                  setWalletModalOpen(true);
+                }}
+              >
+                Transfer / Send Token
+              </Button>
+            </div>
+          </div>
         </section>
 
         <div className="h-px bg-border/80" />
@@ -778,6 +890,13 @@ export function SettingsView() {
           </div>
         </div>
       )}
+
+      {/* MODAL 4: Web3 Wallet Modal */}
+      <WalletModal
+        isOpen={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        initialTab={walletTab}
+      />
     </div>
   );
 }

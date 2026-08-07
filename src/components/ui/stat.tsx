@@ -21,7 +21,7 @@ export function Stat({
   label,
   value,
   type = 'count',
-  currency = 'NGN',
+  currency = 'USD',
   delta,
   className,
   reserveClass,

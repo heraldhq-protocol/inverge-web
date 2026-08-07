@@ -28,9 +28,9 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
     {
       title: 'Monetary Pre-pledge Target',
       description: 'Weighted financial commitment threshold across supporters.',
-      have: 1850000,
-      need: 1500000,
-      unit: 'NGN',
+      have: 1850,
+      need: 1500,
+      unit: 'USD',
       isCurrency: true,
       met: true,
       ratio: 1.0,
@@ -131,7 +131,7 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
             Estimated interest
           </span>
           <div className="font-display text-2xl font-bold text-ink">
-            <Amount value={1850000} currency="NGN" />
+            <Amount value={1850} currency="USD" />
           </div>
           <span className="text-xs text-accent-700 mt-1 block">Weighted pre-pledges</span>
         </div>
@@ -200,7 +200,7 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
                 <span>
                   Target:{' '}
                   {gate.isCurrency ? (
-                    <Amount value={gate.need} currency="NGN" />
+                    <Amount value={gate.need} currency="USD" />
                   ) : typeof gate.need === 'number' ? (
                     <Count value={gate.need} />
                   ) : (
@@ -211,7 +211,7 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
                 <span className="text-ink font-semibold">
                   Achieved:{' '}
                   {gate.isCurrency ? (
-                    <Amount value={gate.have} currency="NGN" />
+                    <Amount value={gate.have} currency="USD" />
                   ) : typeof gate.have === 'number' ? (
                     <Count value={gate.have} />
                   ) : (

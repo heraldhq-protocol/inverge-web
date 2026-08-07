@@ -3,6 +3,7 @@
 import { useId, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Amount } from '@/components/ui/amount';
+import { supportIdea, unsupportIdea, prePledgeIdea, withdrawPrePledge } from '@/lib/ideas/ideas-api';
 
 /**
  * The two signals a reader can leave on an idea: support, and a non-binding pre-pledge (FR-202).
@@ -10,12 +11,7 @@ import { Amount } from '@/components/ui/amount';
  * Client island inside a Server Component page — only these controls need state, so only these ship to
  * the browser (conventions §3.1).
  *
- * Writes are not connected: this build runs on fixtures. The live calls are
- * `POST/DELETE /ideas/:id/support` and `POST/DELETE /ideas/:id/pre-pledge`, both already shipped on the
- * API, so wiring is one call per action in this file.
- *
- * The line under the pre-pledge control is mandatory and never softened: a pre-pledge must not be able
- * to read as a payment (brief §5.1).
+ * Live calls are `POST/DELETE /ideas/:id/support` and `POST/DELETE /ideas/:id/pre-pledge`.
  */
 export function IdeaActions({ ideaId }: { ideaId: string }) {
   const amountId = useId();
@@ -23,9 +19,56 @@ export function IdeaActions({ ideaId }: { ideaId: string }) {
   const [pledged, setPledged] = useState<number | null>(null);
   const [amount, setAmount] = useState('50');
   const [showPledge, setShowPledge] = useState(false);
+  const [loading, setLoading] = useState(false);
 
   const parsed = Number(amount);
   const validAmount = Number.isFinite(parsed) && parsed >= 1;
+
+  const handleSupportToggle = async () => {
+    if (loading) return;
+    const next = !supporting;
+    setSupporting(next);
+    setLoading(true);
+    try {
+      if (next) {
+        await supportIdea(ideaId);
+      } else {
+        await unsupportIdea(ideaId);
+      }
+    } catch (err) {
+      console.warn('[IdeaActions] Support toggle failed:', err);
+      setSupporting(!next);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePledgeConfirm = async () => {
+    if (!validAmount || loading) return;
+    setLoading(true);
+    try {
+      await prePledgeIdea(ideaId, parsed);
+      setPledged(parsed);
+    } catch (err) {
+      console.warn('[IdeaActions] Pre-pledge failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handlePledgeWithdraw = async () => {
+    if (loading) return;
+    setLoading(true);
+    try {
+      await withdrawPrePledge(ideaId);
+      setPledged(null);
+      setShowPledge(false);
+    } catch (err) {
+      console.warn('[IdeaActions] Withdraw pre-pledge failed:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="space-y-3">
@@ -34,7 +77,8 @@ export function IdeaActions({ ideaId }: { ideaId: string }) {
         size="lg"
         className="w-full"
         aria-pressed={supporting}
-        onClick={() => setSupporting((v) => !v)}
+        disabled={loading}
+        onClick={handleSupportToggle}
       >
         {supporting ? 'You support this idea' : 'Support this idea'}
       </Button>
@@ -72,10 +116,10 @@ export function IdeaActions({ ideaId }: { ideaId: string }) {
                 <Button
                   variant="primary"
                   size="md"
-                  disabled={!validAmount}
-                  onClick={() => validAmount && setPledged(parsed)}
+                  disabled={!validAmount || loading}
+                  onClick={handlePledgeConfirm}
                 >
-                  Confirm
+                  {loading ? '...' : 'Confirm'}
                 </Button>
               </div>
             </div>
@@ -94,13 +138,11 @@ export function IdeaActions({ ideaId }: { ideaId: string }) {
           </p>
           <button
             type="button"
-            onClick={() => {
-              setPledged(null);
-              setShowPledge(false);
-            }}
+            disabled={loading}
+            onClick={handlePledgeWithdraw}
             className="mt-2 min-h-11 rounded text-sm font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           >
-            Withdraw my pre-pledge
+            {loading ? 'Withdrawing...' : 'Withdraw my pre-pledge'}
           </button>
         </div>
       )}

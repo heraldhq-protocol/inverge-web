@@ -81,7 +81,7 @@ export function TrustRow() {
             <span className="mt-1 block text-ink-muted">
               Founder, CampusKonekt ·{' '}
               <span className="font-medium text-accent-700">
-                <Amount value={3_600_000} currency="NGN" /> raised
+                <Amount value={3600} currency="USD" /> raised
               </span>{' '}
               · <Count value={2} /> milestones completed
             </span>

@@ -25,7 +25,7 @@ const DEMO_IDEAS: DashboardIdeaRow[] = [
     status: 'Threshold met',
     tone: 'accent',
     supporters: 842,
-    prePledgeTotal: 1850000,
+    prePledgeTotal: 1850,
     updatedAt: '2 hours ago',
   },
   {
@@ -35,7 +35,7 @@ const DEMO_IDEAS: DashboardIdeaRow[] = [
     status: 'Campaign live',
     tone: 'accent',
     supporters: 610,
-    prePledgeTotal: 1420000,
+    prePledgeTotal: 1420,
     updatedAt: 'Yesterday',
   },
   {
@@ -45,7 +45,7 @@ const DEMO_IDEAS: DashboardIdeaRow[] = [
     status: 'Validating',
     tone: 'neutral',
     supporters: 352,
-    prePledgeTotal: 850000,
+    prePledgeTotal: 850,
     updatedAt: '3 days ago',
   },
   {
@@ -65,14 +65,18 @@ const DEMO_IDEAS: DashboardIdeaRow[] = [
     status: 'Validating',
     tone: 'neutral',
     supporters: 180,
-    prePledgeTotal: 420000,
+    prePledgeTotal: 420,
     updatedAt: '1 week ago',
   },
 ];
 
+import { WalletModal, type WalletTab } from '@/components/wallets/wallet-modal';
+
 export function DashboardView() {
   const [ideas] = useState<DashboardIdeaRow[]>(DEMO_IDEAS);
   const [openRowId, setOpenRowId] = useState<string | null>(null);
+  const [walletModalOpen, setWalletModalOpen] = useState(false);
+  const [walletTab, setWalletTab] = useState<WalletTab>('overview');
 
   // Compute stat totals
   const totalIdeas = ideas.length;
@@ -112,8 +116,71 @@ export function DashboardView() {
         </Button>
       </div>
 
-      {/* Three Tabular Stat Blocks */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      {/* Three Tabular Stat Blocks & Web3 Wallet Strip */}
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-4">
+        {/* Wallet Overview Widget */}
+        <div className="rounded-2xl border border-emerald-900/30 bg-gradient-to-br from-[#052617] via-[#083823] to-[#041f13] p-6 shadow-xs text-white sm:col-span-4 lg:col-span-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">Privy Web3 Wallet Connected</span>
+            </div>
+            <h2 className="text-xl font-bold text-white tracking-tight font-display">Stablecoin &amp; On-Chain Escrow Balance</h2>
+            <div className="flex flex-wrap items-center gap-5 pt-1 text-sm font-mono">
+              <div>
+                <span className="text-xs text-emerald-100/70 block font-sans">USDC Balance</span>
+                <span className="font-extrabold text-white text-base">$450.00</span>
+              </div>
+              <div className="h-7 w-px bg-white/15 hidden sm:block" />
+              <div>
+                <span className="text-xs text-emerald-100/70 block font-sans">cNGN (Naira Token)</span>
+                <span className="font-extrabold text-emerald-300 text-base">$166.67 <span className="text-xs font-normal text-emerald-100/60 font-sans">(₦250k)</span></span>
+              </div>
+              <div className="h-7 w-px bg-white/15 hidden sm:block" />
+              <div>
+                <span className="text-xs text-emerald-100/70 block font-sans">SOL Gas</span>
+                <span className="font-semibold text-emerald-100/90 text-base">0.45 SOL</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0 w-full sm:w-auto pt-2 sm:pt-0">
+            <Button
+              variant="primary"
+              size="sm"
+              onClick={() => {
+                setWalletTab('onramp');
+                setWalletModalOpen(true);
+              }}
+              className="flex-1 sm:flex-none"
+            >
+              Deposit / On-Ramp
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setWalletTab('offramp');
+                setWalletModalOpen(true);
+              }}
+              className="flex-1 sm:flex-none text-white border-white/25 hover:bg-white/10"
+            >
+              Cash Out
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setWalletTab('transfer');
+                setWalletModalOpen(true);
+              }}
+              className="flex-1 sm:flex-none text-white border-white/25 hover:bg-white/10"
+            >
+              Transfer
+            </Button>
+          </div>
+        </div>
+
         <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted block mb-1">
             Ideas published
@@ -123,12 +190,12 @@ export function DashboardView() {
           </div>
         </div>
 
-        <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs">
+        <div className="rounded-2xl border border-border bg-surface p-5 shadow-xs sm:col-span-2">
           <span className="text-xs font-semibold uppercase tracking-wider text-ink-muted block mb-1">
-            Total pre-pledged
+            Total pre-pledged intent
           </span>
           <div className="font-display text-3xl font-bold text-ink">
-            <Amount value={totalPrePledge} currency="NGN" />
+            <Amount value={totalPrePledge} currency="USD" />
           </div>
         </div>
 
@@ -202,7 +269,7 @@ export function DashboardView() {
                       <Count value={idea.supporters} />
                     </td>
                     <td className="px-4 py-4 text-right font-semibold text-ink whitespace-nowrap">
-                      <Amount value={idea.prePledgeTotal} currency="NGN" />
+                      <Amount value={idea.prePledgeTotal} currency="USD" />
                     </td>
                     <td className="px-4 py-4 text-xs text-ink-muted whitespace-nowrap">
                       {idea.updatedAt}
@@ -278,7 +345,7 @@ export function DashboardView() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-semibold text-ink">Basic Boost</h3>
-                <span className="text-sm font-bold text-ink">₦15,000</span>
+                <span className="text-sm font-bold text-ink">$15</span>
               </div>
               <p className="text-xs text-ink-muted">
                 Highlighted placement in topic directory and category lanes for 7 days.
@@ -298,7 +365,7 @@ export function DashboardView() {
             <div>
               <div className="flex items-center justify-between mb-1">
                 <h3 className="font-semibold text-ink">Featured Boost</h3>
-                <span className="text-sm font-bold text-accent-700">₦45,000</span>
+                <span className="text-sm font-bold text-accent-700">$45</span>
               </div>
               <p className="text-xs text-ink-muted">
                 Top carousel placement on homepage and category headers for 14 days.
@@ -318,6 +385,12 @@ export function DashboardView() {
           Boosts affect where your idea appears. They never change your validation numbers.
         </p>
       </section>
+
+      <WalletModal
+        isOpen={walletModalOpen}
+        onClose={() => setWalletModalOpen(false)}
+        initialTab={walletTab}
+      />
     </div>
   );
 }

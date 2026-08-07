@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth/use-auth';
 import { isPrivyConfigured } from '@/lib/env';
 
@@ -10,172 +11,112 @@ interface AuthFormProps {
 }
 
 export function AuthForm({ initialMode = 'signup' }: AuthFormProps) {
-  const [mode, setMode] = useState<'signin' | 'signup'>(initialMode);
-  const [email, setEmail] = useState('amara.okonkwo@gmail.com');
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
+  const { authenticated, user, login, logout } = useAuth();
 
-  const { login } = useAuth();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!email || !email.includes('@')) {
-      setError('Please enter a valid email address.');
-      return;
-    }
-    setError(null);
-    setIsLoading(true);
-
-    if (isPrivyConfigured) {
+  const handlePrivyLogin = () => {
+    if (isPrivyConfigured && login) {
       login();
-      setIsLoading(false);
     } else {
-      // Graceful fallback when Privy ID is not set in dev env
-      setTimeout(() => {
-        setIsLoading(false);
-        alert(`Demo mode: Code requested for ${email}`);
-      }, 600);
+      alert('Demo Mode: Privy authentication modal requested');
     }
   };
 
-  const handleOAuthLogin = (provider: 'google' | 'x') => {
-    if (isPrivyConfigured) {
-      login();
-    } else {
-      alert(`Demo mode: ${provider} authentication selected`);
-    }
-  };
+  const userEmail =
+    user?.email?.address ??
+    user?.google?.email ??
+    (user?.wallet?.address ? `${user.wallet.address.slice(0, 6)}...${user.wallet.address.slice(-4)}` : null);
+
+  // If already authenticated with Privy, present a clean session card
+  if (authenticated) {
+    return (
+      <div className="w-full max-w-[380px] mx-auto px-4 sm:px-0">
+        <div className="rounded-2xl border border-emerald-500/30 bg-surface p-7 shadow-lift space-y-6 text-center">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-emerald-50 border border-emerald-200">
+            <svg className="h-8 w-8 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+
+          <div className="space-y-1.5">
+            <h2 className="font-display text-2xl font-bold text-ink tracking-tight">You&apos;re Signed In</h2>
+            <p className="text-sm font-medium text-ink-muted break-all">
+              {userEmail ? `Connected as ${userEmail}` : 'Connected via Privy'}
+            </p>
+          </div>
+
+          <div className="pt-2 space-y-3">
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard')}
+              className="w-full py-3.5 px-5 rounded-xl bg-accent-700 hover:bg-accent-900 text-white font-bold text-[14px] transition-all shadow-md flex items-center justify-center gap-2"
+            >
+              <span>Go to My Dashboard</span>
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
+              </svg>
+            </button>
+            <button
+              type="button"
+              onClick={() => logout()}
+              className="w-full py-2.5 px-4 rounded-xl border border-border bg-paper text-ink-muted hover:text-ink hover:bg-surface font-semibold text-[13px] transition-colors"
+            >
+              Sign out
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="w-full max-w-[400px] mx-auto px-4 sm:px-0">
+    <div className="w-full max-w-[380px] mx-auto px-4 sm:px-0 space-y-7">
       {/* Header */}
-      <div className="text-left mb-8">
-        <h1 className="font-display text-2xl sm:text-[28px] font-semibold text-ink tracking-tight leading-snug">
-          {mode === 'signup' ? 'Create your Inverge account' : 'Sign in to Inverge'}
+      <div className="text-left space-y-2">
+        <h1 className="font-display text-2xl sm:text-[30px] font-bold text-ink tracking-tight leading-tight">
+          {initialMode === 'signup' ? 'Get started with Inverge' : 'Sign in to Inverge'}
         </h1>
-        <p className="text-[14px] text-ink-muted mt-2 leading-normal">
-          We&apos;ll email you a 6-digit code. There&apos;s no password to remember.
+        <p className="text-[14px] text-ink-muted leading-relaxed">
+          Sign in or create an account with Email OTP code or Google.
         </p>
       </div>
 
-      {/* Form */}
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label htmlFor="email" className="block text-[13px] font-medium text-ink mb-1.5">
-            Email address
-          </label>
-          <input
-            id="email"
-            type="email"
-            required
-            autoComplete="email"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            placeholder="amara.okonkwo@gmail.com"
-            className={`w-full px-3.5 py-2.5 rounded-md border text-[14px] text-ink bg-paper/60 focus:bg-surface focus:outline-none focus:ring-2 focus:ring-accent-500 transition-colors placeholder:text-ink-muted/50 ${
-              error ? 'border-red-400 bg-red-50/50' : 'border-border'
-            }`}
-          />
-          {error && (
-            <p className="text-xs text-red-600 mt-1.5 font-medium">{error}</p>
-          )}
-        </div>
-
-        <button
-          type="submit"
-          disabled={isLoading}
-          className="w-full py-3 px-4 rounded-md bg-accent-700 hover:bg-accent-900 text-white font-medium text-[14px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 disabled:opacity-60 shadow-xs"
-        >
-          {isLoading ? 'Sending code...' : 'Email me a code'}
-        </button>
-      </form>
-
-      {/* Divider */}
-      <div className="relative my-7 text-center">
-        <div className="absolute inset-0 flex items-center" aria-hidden="true">
-          <div className="w-full border-t border-border" />
-        </div>
-        <span className="relative bg-paper px-3 text-[13px] text-ink-muted">
-          or
-        </span>
-      </div>
-
-      {/* OAuth Buttons */}
-      <div className="space-y-3">
+      {/* Clean Single Action Card */}
+      <div className="rounded-2xl border border-border/90 bg-surface p-7 shadow-lift space-y-6">
         <button
           type="button"
-          onClick={() => handleOAuthLogin('google')}
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-md border border-border bg-surface text-ink text-[14px] font-medium hover:bg-accent-50/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 shadow-xs"
+          onClick={handlePrivyLogin}
+          className="w-full py-4 px-6 rounded-xl bg-accent-700 hover:bg-accent-900 text-white font-bold text-[15px] transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
         >
-          <svg className="w-4 h-4" viewBox="0 0 24 24" aria-hidden="true">
-            <path
-              fill="#4285F4"
-              d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-            />
-            <path
-              fill="#34A853"
-              d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-            />
-            <path
-              fill="#FBBC05"
-              d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"
-            />
-            <path
-              fill="#EA4335"
-              d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"
-            />
+          <svg className="w-5 h-5 text-white/90" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
           </svg>
-          Continue with Google
+          <span>Continue with Privy</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleOAuthLogin('x')}
-          className="w-full flex items-center justify-center gap-3 py-2.5 px-4 rounded-md border border-border bg-surface text-ink text-[14px] font-medium hover:bg-accent-50/50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2 shadow-xs"
-        >
-          <svg className="w-4 h-4 fill-ink" viewBox="0 0 24 24" aria-hidden="true">
-            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+        <div className="pt-2 border-t border-border/60 text-center">
+          <span className="text-xs font-medium text-ink-muted">
+            Email OTP &bull; Google Auth Supported
+          </span>
+        </div>
+      </div>
+
+      {/* Security & Terms Footer */}
+      <div className="pt-2 text-center space-y-2">
+        <div className="flex items-center justify-center gap-1.5 text-[11px] font-medium text-ink-muted">
+          <svg className="h-3.5 w-3.5 text-accent-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
           </svg>
-          Continue with X
-        </button>
-      </div>
+          <span>Secured by Privy</span>
+        </div>
 
-      {/* Mode Switch Link */}
-      <div className="mt-8 text-center text-[13px] text-ink-muted">
-        {mode === 'signup' ? (
-          <p>
-            Already have an account?{' '}
-            <button
-              type="button"
-              onClick={() => setMode('signin')}
-              className="text-accent-700 font-medium hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 rounded"
-            >
-              Sign in
-            </button>
-          </p>
-        ) : (
-          <p>
-            New to Inverge?{' '}
-            <button
-              type="button"
-              onClick={() => setMode('signup')}
-              className="text-accent-700 font-medium hover:underline focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-accent-500 rounded"
-            >
-              Create an account
-            </button>
-          </p>
-        )}
-      </div>
-
-      {/* Legal Footer */}
-      <div className="mt-12 text-center text-[12px] text-ink-muted">
-        <p>
+        <p className="text-[11px] text-ink-muted/80">
           By continuing you agree to our{' '}
-          <Link href="/terms" className="text-accent-700 hover:underline">
+          <Link href="/terms" className="text-accent-700 hover:underline font-medium">
             Terms
           </Link>{' '}
           and{' '}
-          <Link href="/privacy" className="text-accent-700 hover:underline">
+          <Link href="/privacy" className="text-accent-700 hover:underline font-medium">
             Privacy Policy
           </Link>
           .

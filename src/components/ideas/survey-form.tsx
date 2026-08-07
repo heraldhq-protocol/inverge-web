@@ -26,13 +26,17 @@ import type { SurveyAggregate, SurveyQuestion } from '@/lib/ideas/types';
  * `{ answers: [{ questionId, value }] }`, and `DELETE` to withdraw.
  */
 
+import { submitSurveyResponses } from '@/lib/ideas/ideas-api';
+
 type AnswerValue = number | boolean | string;
 type Answers = Record<string, AnswerValue>;
 
 export function SurveyForm({
+  ideaId,
   questions,
   aggregates: initialAggregates,
 }: {
+  ideaId?: string;
   questions: SurveyQuestion[];
   aggregates: SurveyAggregate[];
 }) {
@@ -55,7 +59,7 @@ export function SurveyForm({
 
   const missing = ordered.filter((q) => q.required && draft[q.id] === undefined);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setAttempted(true);
     if (missing.length > 0) {
@@ -64,6 +68,20 @@ export function SurveyForm({
     }
     setAggregates((prev) => prev.map((agg) => applyAnswer(agg, draft[agg.questionId])));
     setSubmitted(draft);
+
+    if (ideaId) {
+      try {
+        const payload = Object.entries(draft).map(([questionId, val]) => ({
+          questionId,
+          rating: typeof val === 'number' ? val : undefined,
+          text: typeof val === 'string' ? val : undefined,
+          selectedOptions: typeof val === 'string' ? [val] : undefined,
+        }));
+        await submitSurveyResponses(ideaId, payload);
+      } catch (err) {
+        console.warn('[SurveyForm] Live survey submission failed:', err);
+      }
+    }
   }
 
   function reopen() {

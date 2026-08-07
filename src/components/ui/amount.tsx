@@ -3,7 +3,7 @@ import { cn } from '@/lib/utils';
 // Money renders with tabular figures so columns align.
 export function Amount({
   value,
-  currency = 'NGN',
+  currency = 'USD',
   className,
 }: {
   value: number | string;
