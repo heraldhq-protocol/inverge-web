@@ -8,12 +8,15 @@ import { env, isPrivyConfigured } from '@/lib/env';
 import { QueryProvider } from './query-provider';
 import { OnboardingModal } from '../auth/onboarding-modal';
 
+import { useCurrentUser } from '@/lib/auth/use-user';
+
 // Watches Privy auth state and exchanges the provider token for an Inverge session
 // (POST /auth/session). Centralised here so pages never touch the exchange directly.
 function SessionSync() {
-  const { ready, authenticated, user: privyUser, getAccessToken } = usePrivy();
+  const { ready, authenticated, user: privyUser, getAccessToken, logout } = usePrivy();
   const [showOnboarding, setShowOnboarding] = useState(false);
   const queryClient = useQueryClient();
+  const { data: currentUser } = useCurrentUser();
 
   useEffect(() => {
     if (!ready) return;
@@ -45,13 +48,16 @@ function SessionSync() {
     };
   }, [ready, authenticated, getAccessToken, queryClient]);
 
-  const userEmail = privyUser?.email?.address ?? privyUser?.google?.email;
+  const needsOnboarding = showOnboarding || Boolean(authenticated && currentUser && currentUser.requiresOnboarding);
+  const userEmail = privyUser?.email?.address ?? privyUser?.google?.email ?? currentUser?.email ?? undefined;
 
   return (
     <OnboardingModal
-      isOpen={showOnboarding}
+      isOpen={needsOnboarding}
+      isMandatory={needsOnboarding}
       onClose={() => setShowOnboarding(false)}
       initialEmail={userEmail}
+      onLogout={() => logout()}
     />
   );
 }

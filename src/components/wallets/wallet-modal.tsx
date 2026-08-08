@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useCurrentUser } from '@/lib/auth/use-user';
 import { Button } from '@/components/ui/button';
+import { AFRICAN_CURRENCIES, detectAfricanCurrency } from '@/lib/currency/african-currencies';
 
 export type WalletTab = 'overview' | 'onramp' | 'offramp' | 'transfer';
 
@@ -18,20 +19,41 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
   const { data: currentUser } = useCurrentUser();
   const [activeTab, setActiveTab] = useState<WalletTab>(initialTab);
 
-  // Balances state (mocked/simulated with real SPL token fallback)
+  // Dynamic African currency selection (auto-detects Nigeria, Kenya, Ghana, South Africa, etc.)
+  const [currencyCode, setCurrencyCode] = useState<string>(() => detectAfricanCurrency().code);
+  const currency = AFRICAN_CURRENCIES[currencyCode] || AFRICAN_CURRENCIES.NGN;
+  const [currencyDropdownOpen, setCurrencyDropdownOpen] = useState(false);
+  const currencyDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Balances state (simulated Web3 multi-asset balance)
   const [usdcBalance] = useState<number>(450.0);
-  const [cngnBalance] = useState<number>(250000.0);
   const [solBalance] = useState<number>(0.45);
+  // Equivalent $166.67 USD in local token balance
+  const localUsdEquivalent = 166.67;
+  const localTokenBalance = localUsdEquivalent * currency.ratePerUsd;
 
   // Form states
   const [copied, setCopied] = useState(false);
   const [amount, setAmount] = useState('');
-  const [token, setToken] = useState<'USDC' | 'cNGN'>('USDC');
+  const [token, setToken] = useState<'USDC' | 'LOCAL'>('USDC');
   const [recipient, setRecipient] = useState('');
   const [bankAccount, setBankAccount] = useState('');
-  const [bankName, setBankName] = useState('Kuda Bank');
+  const [bankName, setBankName] = useState<string>(currency.banks[0] || 'Local Bank');
   const [processing, setProcessing] = useState(false);
   const [txSuccess, setTxSuccess] = useState<string | null>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (currencyDropdownRef.current && !currencyDropdownRef.current.contains(e.target as Node)) {
+        setCurrencyDropdownOpen(false);
+      }
+    };
+    if (currencyDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [currencyDropdownOpen]);
 
   if (!isOpen) return null;
 
@@ -50,13 +72,21 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
     }
   };
 
+  const handleCurrencyChange = (newCode: string) => {
+    setCurrencyCode(newCode);
+    const newCurr = AFRICAN_CURRENCIES[newCode] || AFRICAN_CURRENCIES.NGN;
+    setBankName(newCurr.banks[0] || 'Local Bank');
+  };
+
+  const selectedTokenName = token === 'USDC' ? 'USDC' : currency.tokenSymbol;
+
   const handleOnRamp = (e: React.FormEvent) => {
     e.preventDefault();
     setProcessing(true);
     setTxSuccess(null);
     setTimeout(() => {
       setProcessing(false);
-      setTxSuccess(`Successfully deposited $${amount} ${token} into your wallet!`);
+      setTxSuccess(`Successfully deposited $${amount} ${selectedTokenName} into your wallet!`);
       setAmount('');
     }, 1500);
   };
@@ -67,7 +97,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
     setTxSuccess(null);
     setTimeout(() => {
       setProcessing(false);
-      setTxSuccess(`Successfully initiated cash out of $${amount} ${token} to ${bankName} (${bankAccount}).`);
+      setTxSuccess(`Successfully initiated cash out of $${amount} ${selectedTokenName} to ${bankName} (${bankAccount}).`);
       setAmount('');
     }, 1500);
   };
@@ -78,7 +108,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
     setTxSuccess(null);
     setTimeout(() => {
       setProcessing(false);
-      setTxSuccess(`Transferred $${amount} ${token} to ${recipient.slice(0, 6)}...${recipient.slice(-4)}`);
+      setTxSuccess(`Transferred $${amount} ${selectedTokenName} to ${recipient.slice(0, 6)}...${recipient.slice(-4)}`);
       setAmount('');
       setRecipient('');
     }, 1500);
@@ -88,7 +118,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-ink/50 backdrop-blur-xs p-4 animate-in fade-in duration-200">
       <div className="relative w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-surface shadow-lift text-ink flex flex-col max-h-[90vh]">
         {/* Modal Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-paper/50">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-border px-6 py-4 bg-paper/50 gap-3">
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 border border-accent-200 text-accent-700">
               <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -97,19 +127,87 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
             </div>
             <div>
               <h2 className="font-display text-lg font-bold text-ink tracking-tight">Privy Web3 Wallet</h2>
-              <p className="text-xs text-ink-muted">Non-custodial Solana wallet &amp; stablecoin rails</p>
+              <p className="text-xs text-ink-muted">Non-custodial Solana wallet &amp; African stablecoin rails</p>
             </div>
           </div>
 
-          <button
-            onClick={onClose}
-            className="rounded-full p-1.5 text-ink-muted hover:bg-ink/5 hover:text-ink transition"
-            aria-label="Close wallet modal"
-          >
-            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            </svg>
-          </button>
+          <div className="flex items-center gap-2">
+            {/* Custom Interactive African Currency Selector Dropdown */}
+            <div className="relative" ref={currencyDropdownRef}>
+              <button
+                type="button"
+                onClick={() => setCurrencyDropdownOpen(!currencyDropdownOpen)}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-paper/80 px-3 py-1.5 text-xs font-semibold text-ink shadow-2xs hover:bg-surface hover:border-accent-500/40 transition cursor-pointer"
+                title="Select Region / Fiat Currency"
+              >
+                <span>{currency.flag}</span>
+                <span>{currency.code}</span>
+                <span className="text-[11px] text-ink-muted">({currency.symbol})</span>
+                <svg
+                  className={`h-3.5 w-3.5 text-ink-muted transition-transform duration-200 ${
+                    currencyDropdownOpen ? 'rotate-180 text-accent-700' : ''
+                  }`}
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                </svg>
+              </button>
+
+              {currencyDropdownOpen && (
+                <div className="absolute right-0 top-full mt-2 z-50 w-64 rounded-2xl border border-border bg-surface p-1.5 shadow-lift text-ink animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-3 py-1.5 text-[10px] font-semibold uppercase tracking-wider text-ink-muted border-b border-border/80 mb-1 flex items-center justify-between">
+                    <span>Select African Region</span>
+                    <span className="text-accent-700 font-bold">8 Currencies</span>
+                  </div>
+                  <div className="max-h-60 overflow-y-auto space-y-0.5 pr-0.5">
+                    {Object.values(AFRICAN_CURRENCIES).map((curr) => {
+                      const isSelected = curr.code === currencyCode;
+                      return (
+                        <button
+                          key={curr.code}
+                          type="button"
+                          onClick={() => {
+                            handleCurrencyChange(curr.code);
+                            setCurrencyDropdownOpen(false);
+                          }}
+                          className={`w-full text-left px-3 py-2 rounded-xl text-xs flex items-center justify-between transition cursor-pointer ${
+                            isSelected
+                              ? 'bg-accent-50 text-accent-900 font-semibold ring-1 ring-accent-500/20'
+                              : 'text-ink hover:bg-paper/80'
+                          }`}
+                        >
+                          <div className="flex items-center gap-2.5">
+                            <span className="text-base">{curr.flag}</span>
+                            <div>
+                              <span className="font-medium text-ink block">{curr.country}</span>
+                              <span className="text-[10px] text-ink-muted block">{curr.code} · {curr.name} ({curr.symbol})</span>
+                            </div>
+                          </div>
+                          {isSelected && (
+                            <svg className="h-4 w-4 text-accent-700 shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                            </svg>
+                          )}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={onClose}
+              className="rounded-full p-1.5 text-ink-muted hover:bg-ink/5 hover:text-ink transition"
+              aria-label="Close wallet modal"
+            >
+              <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+              </svg>
+            </button>
+          </div>
         </div>
 
         {/* Wallet Address Bar */}
@@ -197,9 +295,12 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
                 </div>
 
                 <div className="rounded-xl border border-border bg-paper/60 p-4 space-y-1">
-                  <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">cNGN Balance</span>
-                  <p className="text-xl font-bold text-ink font-mono">${(cngnBalance / 1500).toFixed(2)}</p>
-                  <span className="text-[11px] text-ink-muted block">₦250,000 cNGN</span>
+                  <div className="flex items-center gap-1">
+                    <span className="text-[11px] font-semibold text-ink-muted uppercase tracking-wider block">{currency.tokenSymbol} Balance</span>
+                    <span className="text-xs">{currency.flag}</span>
+                  </div>
+                  <p className="text-xl font-bold text-ink font-mono">${localUsdEquivalent.toFixed(2)}</p>
+                  <span className="text-[11px] text-ink-muted block">{currency.symbol}{Math.round(localTokenBalance).toLocaleString()} {currency.code}</span>
                 </div>
 
                 <div className="rounded-xl border border-border bg-paper/60 p-4 space-y-1">
@@ -210,7 +311,10 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
               </div>
 
               <div className="rounded-xl border border-border bg-paper/40 p-4 space-y-3">
-                <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">Quick Wallet Actions</h3>
+                <div className="flex items-center justify-between">
+                  <h3 className="text-xs font-semibold text-ink uppercase tracking-wider">Quick Wallet Actions</h3>
+                  <span className="text-xs text-ink-muted">{currency.flag} {currency.name} ({currency.symbol})</span>
+                </div>
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <Button
                     variant="primary"
@@ -242,7 +346,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
           {activeTab === 'onramp' && (
             <form onSubmit={handleOnRamp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">Select Asset to Buy</label>
+                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">Select Asset to Buy ({currency.flag} {currency.country})</label>
                 <div className="grid grid-cols-2 gap-3">
                   <button
                     type="button"
@@ -254,19 +358,19 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
                     }`}
                   >
                     <span>USDC (USD Stablecoin)</span>
-                    <span>$1 = ₦1,500</span>
+                    <span>$1 = {currency.symbol}{currency.ratePerUsd.toLocaleString()}</span>
                   </button>
                   <button
                     type="button"
-                    onClick={() => setToken('cNGN')}
+                    onClick={() => setToken('LOCAL')}
                     className={`rounded-xl p-3 border text-xs font-bold transition flex items-center justify-between ${
-                      token === 'cNGN'
+                      token === 'LOCAL'
                         ? 'border-accent-600 bg-accent-50 text-accent-900'
                         : 'border-border bg-paper/60 text-ink-muted'
                     }`}
                   >
-                    <span>cNGN (Naira Token)</span>
-                    <span>1 cNGN = ₦1</span>
+                    <span>{currency.tokenName}</span>
+                    <span>1 {currency.tokenSymbol} = {currency.symbol}1</span>
                   </button>
                 </div>
               </div>
@@ -287,9 +391,9 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
               {amount && (
                 <div className="rounded-xl bg-paper p-3 text-xs space-y-1 text-ink-muted border border-border">
                   <div className="flex justify-between">
-                    <span>Estimated Fiat Payment:</span>
+                    <span>Estimated Fiat Payment ({currency.code}):</span>
                     <span className="font-semibold text-ink">
-                      ₦{(Number(amount) * (token === 'USDC' ? 1500 : 1)).toLocaleString()}
+                      {currency.symbol}{(Number(amount) * (token === 'USDC' ? currency.ratePerUsd : 1)).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between">
@@ -306,7 +410,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
                 disabled={processing || !amount}
                 className="w-full"
               >
-                {processing ? 'Processing On-Ramp...' : `Pay & Deposit $${amount || '0'} ${token}`}
+                {processing ? 'Processing On-Ramp...' : `Pay & Deposit $${amount || '0'} ${selectedTokenName}`}
               </Button>
             </form>
           )}
@@ -315,22 +419,24 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
           {activeTab === 'offramp' && (
             <form onSubmit={handleOffRamp} className="space-y-4">
               <div>
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">Select Destination Bank</label>
+                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">
+                  Select Destination Bank / Provider ({currency.flag} {currency.country})
+                </label>
                 <select
                   value={bankName}
                   onChange={(e) => setBankName(e.target.value)}
                   className="w-full rounded-xl border border-border bg-paper/60 px-4 py-2.5 text-sm text-ink focus:bg-surface focus:border-accent-500 focus:outline-none"
                 >
-                  <option value="Kuda Bank">Kuda Bank</option>
-                  <option value="GTBank">Guaranty Trust Bank (GTB)</option>
-                  <option value="Zenith Bank">Zenith Bank</option>
-                  <option value="First Bank">First Bank Nigeria</option>
-                  <option value="OPay">OPay Digital Services</option>
+                  {currency.banks.map((b) => (
+                    <option key={b} value={b}>
+                      {b}
+                    </option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">Account Number</label>
+                <label className="block text-xs font-semibold text-ink-muted uppercase tracking-wider mb-1.5">Account / Phone Number</label>
                 <input
                   type="text"
                   required
@@ -357,9 +463,9 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
               {amount && (
                 <div className="rounded-xl bg-paper p-3 text-xs space-y-1 text-ink-muted border border-border">
                   <div className="flex justify-between">
-                    <span>Naira Payout to Bank Account:</span>
+                    <span>{currency.name} Payout to {bankName}:</span>
                     <span className="font-semibold text-accent-700">
-                      ₦{(Number(amount) * 1500).toLocaleString()}
+                      {currency.symbol}{(Number(amount) * currency.ratePerUsd).toLocaleString()} {currency.code}
                     </span>
                   </div>
                 </div>
@@ -408,14 +514,14 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
                   </button>
                   <button
                     type="button"
-                    onClick={() => setToken('cNGN')}
+                    onClick={() => setToken('LOCAL')}
                     className={`rounded-xl p-3 border text-xs font-bold transition ${
-                      token === 'cNGN'
+                      token === 'LOCAL'
                         ? 'border-accent-600 bg-accent-50 text-accent-900'
                         : 'border-border bg-paper/60 text-ink-muted'
                     }`}
                   >
-                    cNGN (${(cngnBalance / 1500).toFixed(2)})
+                    {currency.tokenSymbol} (${localUsdEquivalent.toFixed(2)})
                   </button>
                 </div>
               </div>
@@ -440,7 +546,7 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
                 disabled={processing || !amount || !recipient}
                 className="w-full"
               >
-                {processing ? 'Signing Transaction...' : `Transfer $${amount || '0'} ${token}`}
+                {processing ? 'Signing Transaction...' : `Transfer $${amount || '0'} ${selectedTokenName}`}
               </Button>
             </form>
           )}
@@ -449,3 +555,4 @@ export function WalletModal({ isOpen, onClose, initialTab = 'overview' }: Wallet
     </div>
   );
 }
+

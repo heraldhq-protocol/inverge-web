@@ -347,3 +347,23 @@ export async function convertIdea(id: string, data: any, token?: string): Promis
   if (!res.ok) throw new Error(`Convert idea failed (${res.status})`);
   return res.json();
 }
+
+/** Fetch creator analytics & insights for an idea */
+export async function getIdeaInsights(ideaId: string, token?: string): Promise<any> {
+  try {
+    const headers = getAuthHeaders(token);
+    const res = await fetch(`${env.apiUrl}/ideas/${ideaId}/insights`, {
+      headers,
+      cache: 'no-store',
+    });
+    if (!res.ok) {
+      console.warn(`[ideas-api] getIdeaInsights returned ${res.status}`);
+      return null;
+    }
+    return await res.json();
+  } catch (err) {
+    console.warn(`[ideas-api] getIdeaInsights failed for ${ideaId}:`, err);
+    return null;
+  }
+}
+
