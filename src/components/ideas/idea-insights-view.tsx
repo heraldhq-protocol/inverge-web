@@ -7,6 +7,7 @@ import { Amount, Count } from '@/components/ui/amount';
 import { Button } from '@/components/ui/button';
 import { Pill } from '@/components/ui/pill';
 import { getIdeaInsights } from '@/lib/ideas/ideas-api';
+import { FeedbackSimulator, type SimulatedFeedbackState } from './feedback-simulator';
 
 export interface IdeaInsightsProps {
   ideaId: string;
@@ -15,6 +16,8 @@ export interface IdeaInsightsProps {
 export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
   const [timeframe, setTimeframe] = useState<'7d' | '30d'>('7d');
   const [copiedLink, setCopiedLink] = useState(false);
+  const [activePreset, setActivePreset] = useState<'positive' | 'mixed' | 'weak' | 'custom' | null>(null);
+  const [simulated, setSimulated] = useState<SimulatedFeedbackState | null>(null);
 
   // Fetch live API insights if backend server is active
   const { data: apiInsights } = useQuery({
@@ -29,15 +32,144 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
     .replace(/[-_]/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase());
 
-  // Dynamic values with fallback metrics
-  const uniqueViews = apiInsights?.summary?.uniqueViews ?? 2850;
-  const rawPledgeTotalUsd = apiInsights?.summary?.rawPrePledgeTotalUsd ?? apiInsights?.summary?.weightedPrePledgeTotal ?? 48500;
-  const supporterCount = apiInsights?.summary?.supporterCount ?? 842;
-  const surveyResponseCount = apiInsights?.summary?.feedbackCount ?? 352;
-  const conversionRate = apiInsights?.summary?.conversionRate ?? 29.5;
+  // Dynamic values with fallback metrics & simulator overrides
+  const uniqueViews = simulated?.uniqueViews ?? (apiInsights?.summary?.uniqueViews ?? 2850);
+  const rawPledgeTotalUsd = simulated?.rawPrePledgeTotalUsd ?? (apiInsights?.summary?.rawPrePledgeTotalUsd ?? apiInsights?.summary?.weightedPrePledgeTotal ?? 48500);
+  const supporterCount = simulated?.supporterCount ?? (apiInsights?.summary?.supporterCount ?? 842);
+  const surveyResponseCount = simulated?.surveyResponseCount ?? (apiInsights?.summary?.feedbackCount ?? 352);
+  const conversionRate = simulated?.conversionRate ?? (apiInsights?.summary?.conversionRate ?? 29.5);
+  const feedbackScore = simulated?.feedbackScore ?? Number(apiInsights?.summary?.feedbackScore ?? 4.2);
+
+  const applyPreset = (preset: 'positive' | 'mixed' | 'weak') => {
+    setActivePreset(preset);
+    if (preset === 'positive') {
+      setSimulated({
+        supporterCount: 412,
+        rawPrePledgeTotalUsd: 48500,
+        weightedPrePledgeTotalUsd: 42300,
+        surveyResponseCount: 352,
+        feedbackScore: 4.8,
+        uniqueViews: 3850,
+        conversionRate: 32.4,
+        gateMet: true,
+        timeseries: [
+          { day: 'Mon', views: 240, visitors: 180 },
+          { day: 'Tue', views: 420, visitors: 310 },
+          { day: 'Wed', views: 580, visitors: 420 },
+          { day: 'Thu', views: 490, visitors: 360 },
+          { day: 'Fri', views: 740, visitors: 520 },
+          { day: 'Sat', views: 890, visitors: 640 },
+          { day: 'Sun', views: 760, visitors: 580 },
+        ],
+        backerQuotes: [
+          { author: 'Tayo O.', role: 'Agri-Distributor', location: 'Oyo, Nigeria', quote: 'This cold storage concept solves our exact crop spoilage issue. Happy to pre-pledge $500 USDC!', pledge: '$500 USDC' },
+          { author: 'Amaka N.', role: 'Micro-Finance Operator', location: 'Lagos, Nigeria', quote: 'Offline USSD micro-payments make this viable for market women in Yaba who lack mobile data.', pledge: '$250 USDC' },
+          { author: 'Kofi M.', role: 'Software Engineer', location: 'London, UK', quote: 'Pre-pledging via USDC gives diaspora investors full transparency over validation readiness.', pledge: '$1,000 USDC' },
+        ],
+      });
+    } else if (preset === 'mixed') {
+      setSimulated({
+        supporterCount: 18,
+        rawPrePledgeTotalUsd: 1250,
+        weightedPrePledgeTotalUsd: 950,
+        surveyResponseCount: 14,
+        feedbackScore: 3.8,
+        uniqueViews: 1420,
+        conversionRate: 18.5,
+        gateMet: false,
+        timeseries: [
+          { day: 'Mon', views: 90, visitors: 65 },
+          { day: 'Tue', views: 140, visitors: 95 },
+          { day: 'Wed', views: 210, visitors: 150 },
+          { day: 'Thu', views: 170, visitors: 120 },
+          { day: 'Fri', views: 280, visitors: 190 },
+          { day: 'Sat', views: 320, visitors: 220 },
+          { day: 'Sun', views: 250, visitors: 180 },
+        ],
+        backerQuotes: [
+          { author: 'Buchi I.', role: 'Tech Enthusiast', location: 'Abuja, Nigeria', quote: 'Interesting concept, but pricing per crate needs to stay competitive with local options.', pledge: '$50 USDC' },
+          { author: 'Grace E.', role: 'Retail Vendor', location: 'Lagos, Nigeria', quote: 'Would use it if battery backup holds up during 3-day power cuts.', pledge: '$100 USDC' },
+          { author: 'David K.', role: 'Investor', location: 'Nairobi, Kenya', quote: 'Validation is progressing nicely. Looking forward to pilot metrics.', pledge: '$200 USDC' },
+        ],
+      });
+    } else {
+      setSimulated({
+        supporterCount: 6,
+        rawPrePledgeTotalUsd: 150,
+        weightedPrePledgeTotalUsd: 100,
+        surveyResponseCount: 5,
+        feedbackScore: 2.2,
+        uniqueViews: 650,
+        conversionRate: 8.2,
+        gateMet: false,
+        timeseries: [
+          { day: 'Mon', views: 40, visitors: 30 },
+          { day: 'Tue', views: 65, visitors: 45 },
+          { day: 'Wed', views: 80, visitors: 55 },
+          { day: 'Thu', views: 70, visitors: 50 },
+          { day: 'Fri', views: 110, visitors: 80 },
+          { day: 'Sat', views: 130, visitors: 90 },
+          { day: 'Sun', views: 95, visitors: 70 },
+        ],
+        backerQuotes: [
+          { author: 'Anonymous Backer', role: 'Trader', location: 'Kano, Nigeria', quote: 'High upfront cost for farmers; alternative solutions already exist locally.', pledge: '$20 USDC' },
+          { author: 'Chidi M.', role: 'Developer', location: 'Enugu, Nigeria', quote: 'Not convinced about USSD reliability during grid shutdowns.', pledge: '$10 USDC' },
+          { author: 'Sola A.', role: 'Analyst', location: 'Ibadan, Nigeria', quote: 'Needs stronger evidence of farmer adoption in target rural areas.', pledge: '$0 USDC' },
+        ],
+      });
+    }
+  };
+
+  const addRandomSignal = () => {
+    setActivePreset('custom');
+    setSimulated((prev) => {
+      const current = prev ?? {
+        supporterCount: supporterCount,
+        rawPrePledgeTotalUsd: rawPledgeTotalUsd,
+        weightedPrePledgeTotalUsd: rawPledgeTotalUsd,
+        surveyResponseCount: surveyResponseCount,
+        feedbackScore: feedbackScore,
+        uniqueViews: uniqueViews,
+        conversionRate: conversionRate,
+        gateMet: false,
+        timeseries: [
+          { day: 'Mon', views: 180, visitors: 140 },
+          { day: 'Tue', views: 320, visitors: 230 },
+          { day: 'Wed', views: 410, visitors: 310 },
+          { day: 'Thu', views: 290, visitors: 210 },
+          { day: 'Fri', views: 540, visitors: 390 },
+          { day: 'Sat', views: 620, visitors: 450 },
+          { day: 'Sun', views: 490, visitors: 390 },
+        ],
+        backerQuotes: [],
+      };
+
+      const addedPledge = Math.floor(Math.random() * 250) + 25;
+      const nextSupporters = current.supporterCount + 1;
+      const nextPledges = current.rawPrePledgeTotalUsd + addedPledge;
+      const nextSurveys = current.surveyResponseCount + 1;
+      const randomRating = (Math.random() * 2 + 3).toFixed(1); // 3.0 to 5.0
+      const nextScore = Number(((current.feedbackScore * current.surveyResponseCount + Number(randomRating)) / nextSurveys).toFixed(2));
+
+      return {
+        ...current,
+        supporterCount: nextSupporters,
+        rawPrePledgeTotalUsd: nextPledges,
+        weightedPrePledgeTotalUsd: nextPledges,
+        surveyResponseCount: nextSurveys,
+        feedbackScore: nextScore,
+        gateMet: nextSupporters >= 30 && nextPledges >= 2000 && nextSurveys >= 10 && nextScore >= 3.0,
+      };
+    });
+  };
+
+  const resetSimulation = () => {
+    setActivePreset(null);
+    setSimulated(null);
+  };
 
   // Analytics - Daily Impressions Data
-  const viewsTrend = apiInsights?.timeseries?.length > 0
+  const viewsTrend = simulated?.timeseries ?? (apiInsights?.timeseries?.length > 0
     ? apiInsights.timeseries.map((s: any) => ({
         day: new Date(s.capturedAt).toLocaleDateString('en-US', { weekday: 'short' }),
         views: s.supporterCount * 3 + 10,
@@ -51,7 +183,7 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
         { day: 'Fri', views: 540, visitors: 390 },
         { day: 'Sat', views: 620, visitors: 450 },
         { day: 'Sun', views: 490, visitors: 390 },
-      ];
+      ]);
 
   const maxViews = Math.max(...viewsTrend.map((d: any) => d.views));
 
@@ -73,36 +205,95 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
   ];
 
   // Backer Testimonial Voice
-  const backerQuotes = [
-    {
-      author: 'Tayo O.',
-      role: 'Agri-Distributor',
-      location: 'Oyo, Nigeria',
-      quote: 'This cold storage concept solves our exact 35% crop spoilage in Ibadan. Happy to pre-pledge $100 USDC up front!',
-      pledge: '$100 USDC',
-    },
-    {
-      author: 'Amaka N.',
-      role: 'Micro-Finance Operator',
-      location: 'Lagos, Nigeria',
-      quote: 'Offline USSD micro-payments make this viable for market women in Yaba who don’t have constant mobile data.',
-      pledge: '$250 USDC',
-    },
-    {
-      author: 'Kofi M.',
-      role: 'Software Engineer',
-      location: 'London, UK',
-      quote: 'Pre-pledging via USDC gives diaspora investors full transparency over validation readiness.',
-      pledge: '$500 USDC',
-    },
-  ];
+  const backerQuotes = simulated?.backerQuotes?.length
+    ? simulated.backerQuotes
+    : [
+        {
+          author: 'Tayo O.',
+          role: 'Agri-Distributor',
+          location: 'Oyo, Nigeria',
+          quote: 'This cold storage concept solves our exact 35% crop spoilage in Ibadan. Happy to pre-pledge $100 USDC up front!',
+          pledge: '$100 USDC',
+        },
+        {
+          author: 'Amaka N.',
+          role: 'Micro-Finance Operator',
+          location: 'Lagos, Nigeria',
+          quote: 'Offline USSD micro-payments make this viable for market women in Yaba who don’t have constant mobile data.',
+          pledge: '$250 USDC',
+        },
+        {
+          author: 'Kofi M.',
+          role: 'Software Engineer',
+          location: 'London, UK',
+          quote: 'Pre-pledging via USDC gives diaspora investors full transparency over validation readiness.',
+          pledge: '$500 USDC',
+        },
+      ];
 
-  const gates = [
-    { title: 'Problem Validation', desc: 'Backers confirmed experiencing problem first-hand', need: '300 supporters', have: `${supporterCount} supporters`, met: true },
-    { title: 'Monetary Pre-pledge Target', desc: 'Financial commitment threshold in USDC pre-pledges', need: '$35,000 USDC', have: `$${rawPledgeTotalUsd.toLocaleString()} USDC`, met: true },
-    { title: 'Structured Survey Feedback', desc: 'Detailed feedback forms completed by verified members', need: '250 responses', have: `${surveyResponseCount} responses`, met: true },
-    { title: 'Diaspora Backer Ratio', desc: 'Proportion of backing coming from diaspora in UK, US, CA', need: '50% diaspora', have: '62% diaspora', met: true },
-  ];
+  const isGateMet = simulated ? simulated.gateMet : (apiInsights?.gate?.met ?? true);
+
+  const gates = apiInsights?.gate && !simulated
+    ? [
+        {
+          title: 'Supporter Signal Threshold',
+          desc: 'Minimum unique verified backer support signals required',
+          need: `${apiInsights.gate.targets?.minSupporters ?? 30} supporters`,
+          have: `${apiInsights.gate.metrics?.supporterCount ?? supporterCount} supporters`,
+          met: (apiInsights.gate.metrics?.supporterCount ?? 0) >= (apiInsights.gate.targets?.minSupporters ?? 30),
+        },
+        {
+          title: 'Monetary Pre-pledge Target',
+          desc: 'Weighted financial commitment threshold in USDC pre-pledges',
+          need: `$${(apiInsights.gate.targets?.minWeightedUSD ?? 2000).toLocaleString()} USDC`,
+          have: `$${(apiInsights.gate.metrics?.weighted ?? rawPledgeTotalUsd).toLocaleString()} USDC`,
+          met: (apiInsights.gate.metrics?.weighted ?? 0) >= (apiInsights.gate.targets?.minWeightedUSD ?? 2000),
+        },
+        {
+          title: 'Structured Feedback Count',
+          desc: 'Detailed feedback responses completed by verified community members',
+          need: `${apiInsights.gate.targets?.minFeedbackCount ?? 10} responses`,
+          have: `${apiInsights.gate.metrics?.feedbackCount ?? surveyResponseCount} responses`,
+          met: (apiInsights.gate.metrics?.feedbackCount ?? 0) >= (apiInsights.gate.targets?.minFeedbackCount ?? 10),
+        },
+        {
+          title: 'Average Feedback Rating',
+          desc: 'Minimum average feedback score from community reviewers (out of 5)',
+          need: `${apiInsights.gate.targets?.minAvgFeedbackRating ?? 3.0} / 5.0 rating`,
+          have: `${Number(apiInsights.gate.metrics?.feedbackScore ?? 0).toFixed(1)} / 5.0 rating`,
+          met: (apiInsights.gate.metrics?.feedbackScore ?? 0) >= (apiInsights.gate.targets?.minAvgFeedbackRating ?? 3.0),
+        },
+      ]
+    : [
+        {
+          title: 'Problem Validation (Supporters)',
+          desc: 'Minimum unique verified backer support signals required',
+          need: '30 supporters',
+          have: `${supporterCount} supporters`,
+          met: supporterCount >= 30,
+        },
+        {
+          title: 'Monetary Pre-pledge Target',
+          desc: 'Financial commitment threshold in USDC pre-pledges',
+          need: '$2,000 USDC',
+          have: `$${rawPledgeTotalUsd.toLocaleString()} USDC`,
+          met: rawPledgeTotalUsd >= 2000,
+        },
+        {
+          title: 'Structured Survey Feedback',
+          desc: 'Detailed feedback forms completed by verified members',
+          need: '10 responses',
+          have: `${surveyResponseCount} responses`,
+          met: surveyResponseCount >= 10,
+        },
+        {
+          title: 'Average Feedback Rating',
+          desc: 'Minimum average rating from community reviewers (out of 5)',
+          need: '3.0 / 5.0 rating',
+          have: `${feedbackScore.toFixed(1)} / 5.0 rating`,
+          met: feedbackScore >= 3.0,
+        },
+      ];
 
   const demographics = [
     { region: 'Lagos, Nigeria', countryCode: 'NG', share: 42, count: 353 },
@@ -119,6 +310,14 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
 
   return (
     <div className="mx-auto w-full max-w-5xl space-y-8 pb-24 text-ink">
+      {/* Feedback & Validation Test Simulator */}
+      <FeedbackSimulator
+        onApplyPreset={applyPreset}
+        onAddRandomSignal={addRandomSignal}
+        onReset={resetSimulation}
+        activePreset={activePreset}
+      />
+
       {/* Page Header */}
       <div className="border-b border-border/80 pb-6">
         <nav aria-label="Breadcrumbs" className="mb-3 flex items-center gap-1.5 text-xs text-ink-muted">
@@ -137,7 +336,9 @@ export function IdeaInsightsView({ ideaId }: IdeaInsightsProps) {
               <h1 className="font-display text-3xl font-extrabold tracking-tight text-ink sm:text-4xl">
                 {ideaTitle}
               </h1>
-              <Pill tone="accent" size="sm">Threshold met</Pill>
+              <Pill tone={isGateMet ? 'accent' : 'neutral'} size="sm">
+                {isGateMet ? 'Threshold met' : 'Validation in progress'}
+              </Pill>
               <span className="rounded-full bg-paper px-2.5 py-0.5 text-xs font-semibold text-ink-muted border border-border">
                 Solana USDC Pre-Pledge
               </span>

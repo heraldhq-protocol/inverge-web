@@ -54,19 +54,22 @@ export function AccountMenu() {
 
   const email = user?.email?.address ?? userProfile?.email ?? null;
 
-  // Resolve display name / username with graceful fallbacks
+  // Resolve display name with graceful fallbacks (prefer creator projection)
   const privyUser = user as any;
   const rawDisplayName =
-    userProfile?.creatorProfile?.displayName ||
     userProfile?.creator?.displayName ||
+    userProfile?.creatorProfile?.displayName ||
     privyUser?.google?.name ||
     (privyUser?.github?.username ? `@${privyUser.github.username}` : null) ||
     (privyUser?.twitter?.username ? `@${privyUser.twitter.username}` : null);
 
-  // If display name is not explicitly set, use the clean part of the email (e.g. adebayo.anuoluwa02)
   const emailUsername = email ? email.split('@')[0] : null;
   const displayName = rawDisplayName || emailUsername || 'Creator';
-  const avatarUrl = userProfile?.creatorProfile?.avatarUrl || userProfile?.creator?.avatarUrl || null;
+  const avatarUrl = userProfile?.creator?.avatarUrl || userProfile?.creatorProfile?.avatarUrl || null;
+
+  // Username handle for subtitle (prefer stored username from creator projection)
+  const storedUsername = userProfile?.creator?.username || userProfile?.creatorProfile?.username;
+  const usernameHandle = storedUsername ? `@${storedUsername}` : null;
 
   return (
     <div ref={wrap} className="relative shrink-0">
@@ -93,9 +96,11 @@ export function AccountMenu() {
             <Avatar name={displayName} src={avatarUrl} size={40} />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-bold text-ink">{displayName}</p>
-              {email && (
+              {usernameHandle ? (
+                <p className="truncate text-xs text-accent-600 font-medium">{usernameHandle}</p>
+              ) : email ? (
                 <p className="truncate text-xs text-ink-muted font-normal">{email}</p>
-              )}
+              ) : null}
             </div>
           </div>
 
@@ -107,6 +112,16 @@ export function AccountMenu() {
           >
             Creator Dashboard
           </Link>
+          {storedUsername && (
+            <Link
+              role="menuitem"
+              href={`/creators/@${storedUsername}`}
+              onClick={() => setOpen(false)}
+              className="block px-4 py-2.5 text-sm text-ink transition-colors hover:bg-accent-50 focus-visible:outline-none focus-visible:bg-accent-50"
+            >
+              Public Profile
+            </Link>
+          )}
           <Link
             role="menuitem"
             href="/ideas/my"

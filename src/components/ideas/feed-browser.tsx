@@ -12,14 +12,6 @@ import { IdeaCard, IdeaCardSkeleton } from './idea-card';
 
 /**
  * Search, topic and collection filtering over the ranked feed, with client paging.
- *
- * Mobile first, and it is the reason for most of the layout decisions here: the topic bar is a single
- * horizontally scrollable row rather than a wrapping block (fifteen wrapping chips eat a phone screen
- * before any content appears), the grid is one column until `sm`, and the controls stack.
- *
- * Search debounces at 250ms and is **not** a page navigation: re-rendering the whole route on every
- * keystroke would throw away scroll position and re-fetch the hero. It updates the query key, and
- * TanStack keeps the previous page on screen while the next one loads.
  */
 export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
   const [rawQuery, setRawQuery] = useState('');
@@ -56,7 +48,7 @@ export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
   };
 
   return (
-    <section aria-label="Browse ideas" className="space-y-6">
+    <section aria-label="Browse ideas" className="space-y-5">
       {/* Search + collections. Stacks on a phone, one row from sm up. */}
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <div className="relative min-w-0 flex-1">
@@ -77,7 +69,7 @@ export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
             type="search"
             value={rawQuery}
             onChange={(e) => setRawQuery(e.target.value)}
-            placeholder="Search ideas, places, creators"
+            placeholder="Search ideas, places, creators..."
             className="min-h-11 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm text-ink placeholder:text-ink-muted transition-all focus:border-accent-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500/20"
           />
         </div>
@@ -104,9 +96,9 @@ export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
         </div>
       </div>
 
-      {/* Topics. One scrollable row: fifteen wrapping chips would push content off a phone screen. */}
+      {/* Topic Filter Pills Bar */}
       <div className="w-full min-w-0 overflow-x-auto no-scrollbar">
-        <div className="flex min-w-max items-center gap-1.5 pb-1">
+        <div className="flex min-w-max items-center gap-1.5">
           <TopicChip active={!topic} onClick={() => setTopic('')} label="All topics" />
           {TOPICS.map((t) => (
             <TopicChip
@@ -132,9 +124,10 @@ export function FeedBrowser({ initialPage }: { initialPage: FeedResponse }) {
               <span>·</span>
               <Link
                 href={`/topics/${topic}`}
-                className="rounded font-semibold text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                className="inline-flex items-center gap-1 font-semibold text-accent-800 hover:text-accent-900 underline-offset-2 hover:underline focus-visible:outline-none"
               >
-                Open {topicFor(topic)?.label ?? 'topic'} page
+                <span>View dedicated {topicFor(topic)?.label ?? topic} page</span>
+                <span aria-hidden="true">→</span>
               </Link>
             </>
           )}

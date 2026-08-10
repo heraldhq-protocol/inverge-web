@@ -14,36 +14,6 @@ interface OnboardingModalProps {
   onLogout?: () => void;
 }
 
-function compressAvatar(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const img = new window.Image();
-    const objectUrl = URL.createObjectURL(file);
-    img.onload = () => {
-      URL.revokeObjectURL(objectUrl);
-      const canvas = document.createElement('canvas');
-      const size = 256;
-      canvas.width = size;
-      canvas.height = size;
-      const ctx = canvas.getContext('2d');
-      if (!ctx) {
-        resolve(objectUrl);
-        return;
-      }
-      const minDim = Math.min(img.width, img.height);
-      const sx = (img.width - minDim) / 2;
-      const sy = (img.height - minDim) / 2;
-      ctx.drawImage(img, sx, sy, minDim, minDim, 0, 0, size, size);
-      const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
-      resolve(dataUrl);
-    };
-    img.onerror = () => {
-      URL.revokeObjectURL(objectUrl);
-      reject(new Error('Failed to process image file.'));
-    };
-    img.src = objectUrl;
-  });
-}
-
 export function OnboardingModal({
   isOpen,
   onClose,
@@ -52,6 +22,12 @@ export function OnboardingModal({
   onLogout,
 }: OnboardingModalProps) {
   const [displayName, setDisplayName] = useState('');
+  const [username, setUsername] = useState('');
+  const [usernameStatus, setUsernameStatus] = useState<{
+    loading: boolean;
+    available?: boolean;
+    message?: string;
+  }>({ loading: false });
   const [bio, setBio] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
   const [localAvatarPreview, setLocalAvatarPreview] = useState<string | null>(null);
@@ -69,11 +45,12 @@ export function OnboardingModal({
       const namePart = initialEmail.split('@')[0];
       if (namePart) {
         setDisplayName(namePart.charAt(0).toUpperCase() + namePart.slice(1));
+        const slug = namePart.toLowerCase().replace(/[^a-z0-9_-]/g, '');
+        setUsername(slug);
       }
     }
-  }, [initialEmail, displayName]);
+  }, [initialEmail]);
 
-  // Clean up object URLs when component unmounts or preview changes
   useEffect(() => {
     return () => {
       if (localAvatarPreview && localAvatarPreview.startsWith('blob:')) {
@@ -82,7 +59,6 @@ export function OnboardingModal({
     };
   }, [localAvatarPreview]);
 
-  // Handle escape key press
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -113,6 +89,48 @@ export function OnboardingModal({
     }
   };
 
+  const handleDisplayNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const val = e.target.value;
+    setDisplayName(val);
+    if (!username) {
+      const slug = val.toLowerCase().replace(/[^a-z0-9_-]/g, '-').replace(/^-+|-+$/g, '');
+      setUsername(slug);
+    }
+  };
+
+  const checkUsername = async (val: string) => {
+    const clean = val.trim().toLowerCase().replace(/^@/, '');
+    if (!clean) {
+      setUsernameStatus({ loading: false, available: false, message: 'Username handle is required' });
+      return;
+    }
+    if (clean.length < 3) {
+      setUsernameStatus({ loading: false, available: false, message: 'Username must be at least 3 characters' });
+      return;
+    }
+    if (!/^[a-zA-Z0-9_-]+$/.test(clean)) {
+      setUsernameStatus({ loading: false, available: false, message: 'Only letters, numbers, underscores & dashes allowed' });
+      return;
+    }
+
+    setUsernameStatus({ loading: true });
+    try {
+      const res = await fetch(`${env.apiUrl}/auth/check-username?username=${encodeURIComponent(clean)}`);
+      if (!res.ok) {
+        setUsernameStatus({ loading: false, available: false, message: 'Could not verify username availability' });
+        return;
+      }
+      const data = await res.json();
+      if (data.available) {
+        setUsernameStatus({ loading: false, available: true, message: `Username @${clean} is available!` });
+      } else {
+        setUsernameStatus({ loading: false, available: false, message: data.reason || 'This username is already taken' });
+      }
+    } catch {
+      setUsernameStatus({ loading: false, available: false, message: 'Availability check failed' });
+    }
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -132,23 +150,17 @@ export function OnboardingModal({
       URL.revokeObjectURL(localAvatarPreview);
     }
 
-    // Create object URL for instant local preview
     const objectUrl = URL.createObjectURL(file);
     setLocalAvatarPreview(objectUrl);
 
     try {
-      // Downscale & compress image to 256x256 JPEG (~25KB) so payload size stays well within backend limits
-      const compressedDataUrl = await compressAvatar(file);
-      setAvatarUrl(compressedDataUrl);
-    } catch {
-      // Fallback to FileReader if canvas compression fails
       const reader = new FileReader();
       reader.onloadend = () => {
-        if (typeof reader.result === 'string') {
-          setAvatarUrl(reader.result);
-        }
+        setAvatarUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+    } catch (err) {
+      console.warn('[OnboardingModal] Failed to process avatar image:', err);
     }
   };
 
@@ -156,6 +168,14 @@ export function OnboardingModal({
     e.preventDefault();
     if (!displayName.trim()) {
       setError('Display name is required');
+      return;
+    }
+    if (!username.trim()) {
+      setError('Username handle is required');
+      return;
+    }
+    if (usernameStatus.available === false) {
+      setError(usernameStatus.message || 'Please choose an available username');
       return;
     }
 
@@ -175,6 +195,7 @@ export function OnboardingModal({
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
+          username: username.trim().toLowerCase(),
           displayName: displayName.trim(),
           bio: bio.trim()
             ? `${role === 'CREATOR' ? '[Creator]' : role === 'BACKER' ? '[Backer]' : '[Builder & Backer]'} ${bio.trim()}`
@@ -210,11 +231,9 @@ export function OnboardingModal({
           shaking ? 'animate-bounce' : ''
         }`}
       >
-        {/* Glow ambient background accents matching Inverge palette */}
         <div className="pointer-events-none absolute -top-24 -right-24 h-48 w-48 rounded-full bg-accent-500/10 blur-3xl" />
         <div className="pointer-events-none absolute -bottom-24 -left-24 h-48 w-48 rounded-full bg-accent-500/10 blur-3xl" />
 
-        {/* Close Button - Only shown if modal is not mandatory */}
         {!isMandatory && (
           <button
             onClick={onClose}
@@ -227,7 +246,6 @@ export function OnboardingModal({
           </button>
         )}
 
-        {/* Header with official Inverge /icon.svg */}
         <div className="mb-3.5 text-center">
           <div className="mx-auto mb-1.5 flex h-10 w-10 items-center justify-center rounded-xl bg-accent-50 border border-accent-200 shadow-xs">
             <Image src="/icon.svg" width={24} height={24} alt="Inverge logo" className="h-6 w-6" />
@@ -263,7 +281,7 @@ export function OnboardingModal({
               className="hidden"
               onChange={handleFileChange}
             />
-            
+
             <div
               onClick={() => fileInputRef.current?.click()}
               className="group relative flex h-12 w-12 shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-full border border-accent-300 bg-accent-50 text-accent-700 transition hover:border-accent-500"
@@ -281,11 +299,6 @@ export function OnboardingModal({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
               )}
-              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition group-hover:opacity-100">
-                <svg className="h-4 w-4 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h.93a2 2 0 001.664-.89l.812-1.22A2 2 0 0110.07 4h3.86a2 2 0 011.664.89l.812 1.22A2 2 0 0018.07 7H19a2 2 0 012 2v9a2 2 0 01-2 2H5a2 2 0 01-2-2V9z" />
-                </svg>
-              </div>
             </div>
 
             <div className="flex-1 min-w-0">
@@ -299,7 +312,7 @@ export function OnboardingModal({
                   {showUrlInput ? 'Upload file' : 'Paste URL'}
                 </button>
               </div>
-              
+
               {!showUrlInput ? (
                 <div className="flex items-center gap-2 mt-1">
                   <button
@@ -403,9 +416,46 @@ export function OnboardingModal({
               required
               placeholder="e.g. Ada Lovelace"
               value={displayName}
-              onChange={(e) => setDisplayName(e.target.value)}
+              onChange={handleDisplayNameChange}
               className="w-full rounded-xl border border-border bg-paper/60 px-3.5 py-2 text-sm text-ink placeholder:text-ink-muted/50 transition focus:bg-surface focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
             />
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold uppercase tracking-wider text-ink-muted mb-1">
+              Username Handle <span className="text-accent-700">*</span>
+            </label>
+            <div className="relative">
+              <span className="absolute inset-y-0 left-0 flex items-center pl-3.5 text-sm font-semibold text-accent-600">@</span>
+              <input
+                type="text"
+                required
+                placeholder="username"
+                value={username}
+                onChange={(e) => {
+                  const val = e.target.value.replace(/[^a-zA-Z0-9_-]/g, '');
+                  setUsername(val);
+                  setUsernameStatus({ loading: false });
+                }}
+                onBlur={() => checkUsername(username)}
+                className="w-full rounded-xl border border-border bg-paper/60 pl-8 pr-3.5 py-2 text-sm text-ink placeholder:text-ink-muted/50 transition focus:bg-surface focus:border-accent-500 focus:outline-none focus:ring-2 focus:ring-accent-500/20"
+              />
+            </div>
+            {usernameStatus.loading && (
+              <p className="mt-1 flex items-center gap-1.5 text-xs text-ink-muted">
+                <svg className="h-3 w-3 animate-spin text-accent-500" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                </svg>
+                <span>Checking availability...</span>
+              </p>
+            )}
+            {!usernameStatus.loading && usernameStatus.message && (
+              <p className={`mt-1 flex items-center gap-1 text-xs font-medium ${usernameStatus.available ? 'text-accent-600' : 'text-danger-700'}`}>
+                {usernameStatus.available ? '✓ ' : '✕ '}
+                {usernameStatus.message}
+              </p>
+            )}
           </div>
 
           <div>
@@ -441,7 +491,6 @@ export function OnboardingModal({
             </button>
           </div>
 
-          {/* Escape hatch for signing out if logged into wrong account */}
           {onLogout && (
             <div className="pt-0.5 text-center text-xs text-ink-muted">
               {initialEmail && <span className="block mb-0.5">Signed in as <strong className="text-ink font-medium">{initialEmail}</strong></span>}
@@ -459,6 +508,3 @@ export function OnboardingModal({
     </div>
   );
 }
-
-
-

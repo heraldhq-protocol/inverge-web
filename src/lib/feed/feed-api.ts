@@ -120,12 +120,35 @@ export async function getFeed(query: FeedQuery = {}, token?: string): Promise<Fe
       return getFixtureFeed(query, token);
     }
 
-    const body = (await res.json()) as FeedResponse;
+    let rawText = '';
+    try {
+      rawText = await res.text();
+    } catch (e) {
+      console.warn('[feed-api] Failed reading feed response text, falling back to fixtures');
+      return getFixtureFeed(query, token);
+    }
+
+    let body: FeedResponse;
+    try {
+      body = JSON.parse(rawText) as FeedResponse;
+    } catch (e) {
+      console.warn('[feed-api] Failed parsing feed JSON, falling back to fixtures');
+      return getFixtureFeed(query, token);
+    }
 
     let items = body.items ?? [];
     if (topic) {
       const t = topicFor(topic);
-      if (t) items = items.filter((i) => i.category === t.category);
+      if (t) {
+        items = items.filter(
+          (i) =>
+            i.category === t.category &&
+            (i.topics?.includes(t.slug) ||
+              t.keywords.some((k) =>
+                `${i.title} ${i.problem} ${i.solution}`.toLowerCase().includes(k)
+              ))
+        );
+      }
     }
     if (collection) items = applyCollection(items, collection);
     if (q) items = items.filter((i) => matchesQuery(i, q));

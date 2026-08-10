@@ -1,10 +1,9 @@
 import type { Metadata } from 'next';
 import { notFound } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { EmptyState } from '@/components/ui/empty-state';
 import { FeedGrid } from '@/components/ideas/feed-sections';
 import { FilterRail, SortSelect } from '@/components/ideas/filter-rail';
-import { TOPICS, topicFor } from '@/lib/feed/categories';
+import { CATEGORY_LABEL, TOPICS, topicFor } from '@/lib/feed/categories';
 import { getFeed } from '@/lib/feed/feed-api';
 import {
   applyFilters,
@@ -27,7 +26,12 @@ import {
  */
 
 export function generateStaticParams() {
-  return TOPICS.map((topic) => ({ slug: topic.slug }));
+  const topicSlugs = TOPICS.map((t) => ({ slug: t.slug }));
+  const categorySlugs = (Object.keys(CATEGORY_LABEL) as string[]).map((s) => ({ slug: s }));
+  // Deduplicate in case any topic slug matches a category slug
+  const seen = new Set(topicSlugs.map((t) => t.slug));
+  const unique = categorySlugs.filter((c) => !seen.has(c.slug));
+  return [...topicSlugs, ...unique];
 }
 
 export async function generateMetadata({
@@ -44,6 +48,9 @@ export async function generateMetadata({
   };
 }
 
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+
 export default async function TopicPage({
   params,
   searchParams,
@@ -56,10 +63,6 @@ export default async function TopicPage({
   const topic = topicFor(slug);
   if (!topic) notFound();
 
-  // The whole topic pool is fetched once, then narrowed in memory. That is honest at this size and
-  // wrong at scale: when the API grows filter params, these move into the query and only a page comes
-  // back. `facetCounts` is the piece that needs a server-side equivalent first — counts cannot be
-  // computed from a page you have not fetched.
   const { items } = await getFeed({ topic: topic.slug, take: 50 });
 
   const filters = filtersFromParams(query);
@@ -67,59 +70,94 @@ export default async function TopicPage({
   const counts = facetCounts(items, filters);
   const regions = regionsOf(items);
 
+  const siblingTopics = TOPICS.filter((t) => t.category === topic.category);
+
   return (
     <div className="space-y-6">
-      <nav aria-label="Breadcrumb" className="text-[13px] text-ink-muted">
-        <a href="/feed" className="rounded hover:text-ink hover:underline underline-offset-2">
-          Discover
-        </a>
-        <span aria-hidden="true" className="mx-1.5">
-          /
-        </span>
-        <span className="text-ink">{topic.label}</span>
-      </nav>
+      {/* Header Banner */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between border-b border-border/60 pb-4">
+        <div>
+          <nav aria-label="Breadcrumb" className="mb-2 text-xs text-ink-muted flex items-center gap-1.5">
+            <Link href="/feed" className="hover:text-ink hover:underline">
+              Discover
+            </Link>
+            <span aria-hidden="true" className="text-ink-muted/40">
+              /
+            </span>
+            <Link href="/topics" className="hover:text-ink hover:underline">
+              Topics
+            </Link>
+            <span aria-hidden="true" className="text-ink-muted/40">
+              /
+            </span>
+            <span className="font-semibold text-ink">{topic.label}</span>
+          </nav>
+          <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+            {topic.label}
+          </h1>
+          <p className="mt-1 text-xs text-ink-muted tabular-nums" aria-live="polite">
+            Showing {visible.length} {visible.length === 1 ? 'idea' : 'ideas'} being validated
+            {hasAnyFilter(filters) && items.length !== visible.length && (
+              <span className="text-ink-muted/80"> (filtered from {items.length})</span>
+            )}
+          </p>
+        </div>
 
-      <div className="grid gap-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:items-start">
+        <div className="flex items-center gap-3 shrink-0">
+          <SortSelect value={filters.sort} />
+        </div>
+      </div>
+
+      {/* Sibling Sub-Topics Navigation Pills */}
+      {siblingTopics.length > 1 && (
+        <div className="w-full min-w-0 overflow-x-auto no-scrollbar pb-1">
+          <div className="flex min-w-max items-center gap-1.5">
+            {siblingTopics.map((t) => (
+              <Link
+                key={t.slug}
+                href={`/topics/${t.slug}`}
+                className={cn(
+                  'rounded-full px-3.5 py-1 text-xs font-medium transition-all shrink-0',
+                  slug === t.slug
+                    ? 'bg-ink text-surface font-semibold shadow-xs'
+                    : 'border border-border/60 bg-surface text-ink-muted hover:border-ink/30 hover:text-ink'
+                )}
+              >
+                {t.label}
+              </Link>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 2-Column Desktop Grid Layout */}
+      <div className="grid gap-8 lg:grid-cols-[16rem_minmax(0,1fr)] lg:items-start pt-1">
         <FilterRail filters={filters} counts={counts} regions={regions} total={visible.length} />
 
         <div className="min-w-0 space-y-5">
-          <div className="flex flex-wrap items-end justify-between gap-4">
-            <div>
-              <h1 className="font-display text-2xl font-bold tracking-tight text-ink sm:text-3xl">
-                {topic.label}
-              </h1>
-              <p className="mt-1 text-[13px] text-ink-muted tabular-nums" aria-live="polite">
-                {visible.length} {visible.length === 1 ? 'idea' : 'ideas'}
-                {hasAnyFilter(filters) && items.length !== visible.length && (
-                  <span className="text-ink-muted/80"> of {items.length}</span>
-                )}
-              </p>
-            </div>
-
-            <SortSelect value={filters.sort} />
-          </div>
-
           {visible.length === 0 ? (
-            <EmptyState
-              title={
-                hasAnyFilter(filters)
-                  ? 'Nothing matches those filters yet.'
-                  : `No ${topic.label.toLowerCase()} ideas yet. Yours would be the first.`
-              }
-              body="Publishing an idea is free, and nothing is charged while it is being validated."
-              actions={
-                <>
+            <div className="rounded-2xl border border-border/60 bg-surface p-8 sm:p-12 text-center shadow-xs">
+              <div className="mx-auto max-w-md space-y-3">
+                <h3 className="font-display text-base font-bold text-ink sm:text-lg">
+                  {hasAnyFilter(filters)
+                    ? 'No ideas match these specific filters.'
+                    : `No ${topic.label.toLowerCase()} ideas published yet.`}
+                </h3>
+                <p className="text-xs text-ink-muted leading-relaxed">
+                  Publishing an idea is completely free. Be the first creator to validate an idea in {topic.label}!
+                </p>
+                <div className="pt-3 flex flex-wrap justify-center gap-3">
                   <Button variant="primary" size="md" href="/ideas/new">
                     Start an idea
                   </Button>
                   {hasAnyFilter(filters) && (
                     <Button variant="outline" size="md" href={`/topics/${topic.slug}`}>
-                      Clear filters
+                      Reset filters
                     </Button>
                   )}
-                </>
-              }
-            />
+                </div>
+              </div>
+            </div>
           ) : (
             <FeedGrid items={visible} />
           )}

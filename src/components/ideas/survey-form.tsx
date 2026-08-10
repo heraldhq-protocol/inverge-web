@@ -33,20 +33,26 @@ type Answers = Record<string, AnswerValue>;
 
 export function SurveyForm({
   ideaId,
-  questions,
-  aggregates: initialAggregates,
+  questions = [],
+  aggregates: initialAggregates = [],
 }: {
   ideaId?: string;
-  questions: SurveyQuestion[];
-  aggregates: SurveyAggregate[];
+  questions?: SurveyQuestion[];
+  aggregates?: SurveyAggregate[];
 }) {
-  const [aggregates, setAggregates] = useState<SurveyAggregate[]>(initialAggregates);
+  const [aggregates, setAggregates] = useState<SurveyAggregate[]>(initialAggregates ?? []);
   const [draft, setDraft] = useState<Answers>({});
   const [submitted, setSubmitted] = useState<Answers | null>(null);
   const [attempted, setAttempted] = useState(false);
 
-  const ordered = useMemo(() => [...questions].sort((a, b) => a.index - b.index), [questions]);
-  const byId = useMemo(() => new Map(aggregates.map((a) => [a.questionId, a])), [aggregates]);
+  const ordered = useMemo(
+    () => [...(questions ?? [])].sort((a, b) => a.index - b.index),
+    [questions]
+  );
+  const byId = useMemo(
+    () => new Map((aggregates ?? []).map((a) => [a.questionId, a])),
+    [aggregates]
+  );
 
   if (ordered.length === 0) {
     return (

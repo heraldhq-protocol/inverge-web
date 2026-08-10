@@ -107,7 +107,11 @@ export default async function IdeaDetailPage({
           )}
 
           {tab === 'feedback' && (
-            <SurveyForm ideaId={idea.id} questions={survey.questions} aggregates={survey.aggregates} />
+            <SurveyForm
+              ideaId={idea.id}
+              questions={survey?.questions ?? []}
+              aggregates={survey?.aggregates ?? []}
+            />
           )}
 
           {tab === 'discussion' && <CommentThread ideaId={idea.id} comments={comments} />}

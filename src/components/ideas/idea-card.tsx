@@ -79,12 +79,22 @@ export function IdeaCard({ item, size = 'grid' }: { item: FeedItem; size?: IdeaC
 
         {/* Attribution: supporting detail, so it sits at the bottom of the scale. */}
         <div className="flex items-center justify-between gap-2">
-          <div className="flex min-w-0 items-center gap-1.5">
-            <Avatar name={item.creator?.displayName ?? null} src={item.creator?.avatarUrl} size={20} />
-            <span className="truncate text-[11px] leading-none text-ink-muted">
-              {item.creator?.displayName ?? 'Creator'}
-            </span>
-          </div>
+          {item.creator ? (
+            <Link
+              href={`/creators/@${item.creator.username || item.creator.id}`}
+              className="group/creator flex min-w-0 items-center gap-1.5 hover:underline"
+            >
+              <Avatar name={item.creator.displayName} src={item.creator.avatarUrl} size={20} />
+              <span className="truncate text-[11px] leading-none text-ink-muted group-hover/creator:text-ink">
+                {item.creator.displayName ?? 'Creator'}
+              </span>
+            </Link>
+          ) : (
+            <div className="flex min-w-0 items-center gap-1.5">
+              <Avatar name={null} size={20} />
+              <span className="truncate text-[11px] leading-none text-ink-muted">Creator</span>
+            </div>
+          )}
           {item.creator?.identityVerified && (
             <VerifiedBadge
               tier={item.creator.verificationTier}

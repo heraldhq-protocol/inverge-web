@@ -1,23 +1,53 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Avatar } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Pill } from '@/components/ui/pill';
 import { daysSince, pluralise } from '@/lib/format';
-import { likeComment, unlikeComment, postComment } from '@/lib/ideas/ideas-api';
+import { likeComment, unlikeComment, postComment, getComments } from '@/lib/ideas/ideas-api';
 import type { IdeaComment } from '@/lib/ideas/types';
 
 export function CommentThread({ ideaId, comments: initialComments }: { ideaId: string; comments: IdeaComment[] }) {
+  const router = useRouter();
   const [comments, setComments] = useState<IdeaComment[]>(initialComments);
   const [likes, setLikes] = useState<Record<string, boolean>>(() =>
     Object.fromEntries(initialComments.filter((c) => c.likedByMe).map((c) => [c.id, true]))
   );
-  const [newComment, setNewComment] = useState('');
+  const [mainComment, setMainComment] = useState('');
+  const [replyComment, setReplyComment] = useState('');
   const [replyTo, setReplyTo] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Client-side re-fetch to ensure `likedByMe` status resolves with client localStorage session token
+  useEffect(() => {
+    let active = true;
+    getComments(ideaId)
+      .then((freshComments) => {
+        if (!active) return;
+        if (Array.isArray(freshComments) && freshComments.length > 0) {
+          setComments(freshComments);
+          setLikes((prev) => {
+            const next = { ...prev };
+            for (const c of freshComments) {
+              if (c.likedByMe !== undefined) {
+                next[c.id] = Boolean(c.likedByMe);
+              }
+            }
+            return next;
+          });
+        }
+      })
+      .catch((err) => {
+        console.warn('[CommentThread] Client fetch comments failed:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [ideaId]);
 
   const roots = comments.filter((c) => !c.parentId);
   const repliesOf = (id: string) => comments.filter((c) => c.parentId === id);
@@ -39,13 +69,19 @@ export function CommentThread({ ideaId, comments: initialComments }: { ideaId: s
   };
 
   const handlePost = async (parentId?: string | null) => {
-    if (!newComment.trim() || submitting) return;
+    const text = parentId ? replyComment.trim() : mainComment.trim();
+    if (!text || submitting) return;
     setSubmitting(true);
     try {
-      const created = await postComment(ideaId, newComment.trim(), parentId);
+      const created = await postComment(ideaId, text, parentId);
       setComments((prev) => [created, ...prev]);
-      setNewComment('');
-      setReplyTo(null);
+      if (parentId) {
+        setReplyComment('');
+        setReplyTo(null);
+      } else {
+        setMainComment('');
+      }
+      router.refresh();
     } catch (err) {
       console.warn('[CommentThread] Failed to post comment:', err);
     } finally {
@@ -63,8 +99,8 @@ export function CommentThread({ ideaId, comments: initialComments }: { ideaId: s
         <textarea
           id="new-comment"
           rows={3}
-          value={newComment}
-          onChange={(e) => setNewComment(e.target.value)}
+          value={mainComment}
+          onChange={(e) => setMainComment(e.target.value)}
           placeholder="What would you like to know about this idea?"
           className="mt-2 w-full rounded-lg border border-border bg-surface p-3 text-sm text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
         />
@@ -72,7 +108,7 @@ export function CommentThread({ ideaId, comments: initialComments }: { ideaId: s
           <Button
             variant="primary"
             size="md"
-            disabled={!newComment.trim() || submitting}
+            disabled={!mainComment.trim() || submitting}
             onClick={() => handlePost(null)}
           >
             {submitting ? 'Posting...' : 'Post Question'}
@@ -105,26 +141,32 @@ export function CommentThread({ ideaId, comments: initialComments }: { ideaId: s
                   comment={comment}
                   liked={!!likes[comment.id]}
                   onLike={() => toggleLike(comment.id)}
-                  onReply={() => setReplyTo(replyTo === comment.id ? null : comment.id)}
+                  onReply={() => {
+                    setReplyTo((current) => {
+                      const next = current === comment.id ? null : comment.id;
+                      setReplyComment('');
+                      return next;
+                    });
+                  }}
                 />
 
                 {replyTo === comment.id && (
                   <div className="mt-3 rounded-lg border border-border bg-surface p-3">
                     <textarea
                       rows={2}
-                      value={newComment}
-                      onChange={(e) => setNewComment(e.target.value)}
+                      value={replyComment}
+                      onChange={(e) => setReplyComment(e.target.value)}
                       placeholder="Write a reply..."
                       className="w-full rounded border border-border bg-paper p-2 text-xs text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
                     />
                     <div className="mt-2 flex justify-end gap-2">
-                      <Button variant="ghost" size="sm" onClick={() => setReplyTo(null)}>
+                      <Button variant="ghost" size="sm" onClick={() => { setReplyTo(null); setReplyComment(''); }}>
                         Cancel
                       </Button>
                       <Button
                         variant="primary"
                         size="sm"
-                        disabled={!newComment.trim() || submitting}
+                        disabled={!replyComment.trim() || submitting}
                         onClick={() => handlePost(comment.id)}
                       >
                         Reply
@@ -173,7 +215,12 @@ function Comment({
   }
 
   const days = daysSince(comment.createdAt);
-  const count = comment.likeCount + (liked && !comment.likedByMe ? 1 : 0);
+  const baseCount = comment.likeCount;
+  const initialLiked = Boolean(comment.likedByMe);
+  let count = baseCount;
+  if (liked && !initialLiked) count += 1;
+  if (!liked && initialLiked) count -= 1;
+  if (count < 0) count = 0;
 
   return (
     <article>
@@ -192,15 +239,19 @@ function Comment({
 
       <p className="mt-2.5 whitespace-pre-line text-sm leading-relaxed text-ink">{comment.body}</p>
 
-      <div className="mt-2.5 flex items-center gap-4">
+      <div className="mt-2.5 flex items-center gap-3">
         <button
           type="button"
           onClick={onLike}
           aria-pressed={liked}
-          className="inline-flex min-h-11 items-center gap-1.5 rounded text-xs font-medium text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+          className={`group inline-flex min-h-9 items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-medium transition-all ${
+            liked
+              ? 'bg-rose-50 text-rose-600 ring-1 ring-rose-200 hover:bg-rose-100'
+              : 'text-ink-muted hover:bg-surface hover:text-rose-500'
+          }`}
         >
-          <span aria-hidden="true">{liked ? '♥' : '♡'}</span>
-          <span className="tabular-nums">{count}</span>
+          <HeartIcon filled={liked} className={`h-4 w-4 transition-transform group-active:scale-125 ${liked ? 'text-rose-500 fill-rose-500' : 'text-ink-muted group-hover:text-rose-500'}`} />
+          <span className="tabular-nums font-semibold">{count}</span>
           <span className="sr-only">{liked ? 'Remove your like' : 'Like this comment'}</span>
         </button>
 
@@ -208,12 +259,29 @@ function Comment({
           <button
             type="button"
             onClick={onReply}
-            className="inline-flex min-h-11 items-center text-xs font-medium text-ink-muted transition-colors hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+            className="inline-flex min-h-9 items-center rounded-full px-2.5 py-1 text-xs font-medium text-ink-muted transition-colors hover:bg-surface hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
           >
             Reply
           </button>
         )}
       </div>
     </article>
+  );
+}
+
+function HeartIcon({ filled, className }: { filled?: boolean; className?: string }) {
+  return (
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 24 24"
+      fill={filled ? 'currentColor' : 'none'}
+      stroke="currentColor"
+      strokeWidth={filled ? '0' : '2'}
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      className={className}
+    >
+      <path d="M19.5 12.572l-7.5 7.428l-7.5 -7.428a5 5 0 1 1 7.5 -6.566a5 5 0 1 1 7.5 6.572" />
+    </svg>
   );
 }

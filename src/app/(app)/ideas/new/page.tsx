@@ -9,8 +9,10 @@ import { RichTextField } from '@/components/ui/rich-text-field';
 import type { TiptapDoc } from '@/lib/ideas/rich-content';
 import { IdeaCard } from '@/components/ideas/idea-card';
 import { CATEGORIES, type FeedItem, type IdeaCategory } from '@/lib/feed/types';
-import { createIdea, publishIdea } from '@/lib/ideas/ideas-api';
+import { cacheCreatedIdea, createIdea, publishIdea } from '@/lib/ideas/ideas-api';
 import { env } from '@/lib/env';
+import { IDEA_PRESETS, type IdeaPreset } from '@/lib/ideas/presets';
+import { Pill } from '@/components/ui/pill';
 
 type FormKey =
   | 'title'
@@ -29,6 +31,7 @@ export default function NewIdeaPage() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [activePreset, setActivePreset] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -49,6 +52,48 @@ export default function NewIdeaPage() {
 
   const set = <K extends keyof typeof form>(key: K, value: (typeof form)[K]) =>
     setForm((f) => ({ ...f, [key]: value }));
+
+  const applyPreset = (presetKey: 'weak' | 'normal' | 'detailed') => {
+    const preset = IDEA_PRESETS[presetKey];
+    setActivePreset(presetKey);
+    setForm({
+      title: preset.form.title,
+      category: preset.form.category,
+      region: preset.form.region,
+      problem: preset.form.problem,
+      targetUser: preset.form.targetUser,
+      currentAlternative: preset.form.currentAlternative,
+      solution: preset.form.solution,
+      solutionDoc: preset.form.solutionDoc,
+      problemDoc: preset.form.problemDoc,
+      coverImageUrl: preset.form.coverImageUrl,
+      coverPreview: preset.form.coverImageUrl,
+      askAmount: preset.form.askAmount,
+      risks: preset.form.risks,
+      steps: preset.form.steps.map((s) => ({ ...s })),
+    });
+    setSubmitError(null);
+  };
+
+  const clearPreset = () => {
+    setActivePreset(null);
+    setForm({
+      title: '',
+      category: 'software',
+      region: '',
+      problem: '',
+      targetUser: '',
+      currentAlternative: '',
+      solution: '',
+      solutionDoc: null,
+      problemDoc: null,
+      coverImageUrl: null,
+      coverPreview: null,
+      askAmount: '',
+      risks: '',
+      steps: [{ ...EMPTY_STEP }, { ...EMPTY_STEP }],
+    });
+  };
 
   const errors: Partial<Record<FormKey, string>> = {};
   if (!form.title.trim()) errors.title = 'Give the idea a name people can search for.';
@@ -117,8 +162,11 @@ export default function NewIdeaPage() {
           title: form.title.trim(),
           problem: form.problem.trim(),
           solution: form.solution.trim(),
+          problemDoc: form.problemDoc ?? undefined,
+          solutionDoc: form.solutionDoc ?? undefined,
           targetUser: form.targetUser.trim() || undefined,
           currentAlternative: form.currentAlternative.trim() || undefined,
+          askBreakdown: {},
           category: form.category,
           region: form.region.trim() || undefined,
           coverImageUrl: form.coverPreview ?? form.coverImageUrl ?? undefined,
@@ -130,10 +178,57 @@ export default function NewIdeaPage() {
         const published = await publishIdea(created.id);
         router.push(`/ideas/${published.id}`);
       } else {
+        const mockSlug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'new-idea';
+        const mockId = `idea_${mockSlug}`;
+        const mockCreated = {
+          objectType: 'idea' as const,
+          id: mockId,
+          slug: mockSlug,
+          title: form.title.trim(),
+          problem: form.problem.trim(),
+          solution: form.solution.trim(),
+          solutionDoc: form.solutionDoc,
+          problemDoc: form.problemDoc,
+          targetUser: form.targetUser.trim() || null,
+          currentAlternative: form.currentAlternative.trim() || null,
+          askAmount: form.askAmount || '0',
+          category: form.category,
+          region: form.region.trim() || null,
+          coverImageUrl: form.coverPreview ?? form.coverImageUrl ?? null,
+          status: 'VALIDATING' as const,
+          discoverabilityTier: 'DISCOVERABLE' as const,
+          supporterCount: 0,
+          weightedPrePledgeTotal: '0',
+          feedbackScore: '0',
+          feedbackCount: 0,
+          commentCount: 0,
+          qualityScore: '0.8500',
+          creatorId: 'you',
+          creator: {
+            id: 'you',
+            displayName: 'You',
+            avatarUrl: null,
+            identityVerified: false,
+            bio: 'Creator',
+            tier: 'STARTER' as const,
+            completedCampaigns: 0,
+            ideasPublished: 1,
+            memberSince: new Date().toISOString(),
+          },
+          roadmapSteps: form.steps.filter((s) => s.date && s.description.trim()),
+          roadmap: form.steps.map((s) => `${s.date}: ${s.description}`).join('; '),
+          risks: form.risks.trim() || null,
+          askBreakdown: null,
+          createdAt: new Date().toISOString(),
+          publishedAt: new Date().toISOString(),
+        };
+
+        cacheCreatedIdea(mockCreated);
+
         setTimeout(() => {
           setIsSubmitting(false);
-          router.push('/ideas/payflex-lagos');
-        }, 800);
+          router.push(`/ideas/${mockCreated.id}`);
+        }, 400);
       }
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to publish idea. Please check your connection and try again.');
@@ -153,6 +248,59 @@ export default function NewIdeaPage() {
           return.
         </p>
       </header>
+
+      {/* Testing Preset Selector Toolbar */}
+      <div className="rounded-2xl border border-accent-500/30 bg-accent-500/5 p-4 shadow-2xs space-y-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="flex h-2.5 w-2.5 rounded-full bg-accent-500 animate-pulse" />
+            <h3 className="text-xs font-bold uppercase tracking-wider text-accent-700">
+              Quick-Fill Test Presets
+            </h3>
+            <span className="text-[11px] text-ink-muted hidden sm:inline">
+              (Auto-fill pitch form with weak, normal, or detailed test data)
+            </span>
+          </div>
+          {activePreset && (
+            <button
+              type="button"
+              onClick={clearPreset}
+              className="text-xs font-semibold text-ink-muted hover:text-danger-700 hover:underline transition cursor-pointer"
+            >
+              Clear form
+            </button>
+          )}
+        </div>
+
+        <div className="grid gap-2.5 sm:grid-cols-3">
+          {(['weak', 'normal', 'detailed'] as const).map((key) => {
+            const p = IDEA_PRESETS[key];
+            const isSelected = activePreset === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => applyPreset(key)}
+                className={`flex flex-col text-left rounded-xl p-3 border transition-all cursor-pointer ${
+                  isSelected
+                    ? 'border-accent-500 bg-surface ring-2 ring-accent-500/20 shadow-xs'
+                    : 'border-border bg-surface/70 hover:border-accent-500/40 hover:bg-surface'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-xs font-bold text-ink">{p.name}</span>
+                  <Pill tone={p.badgeTone} size="sm">
+                    {p.badge}
+                  </Pill>
+                </div>
+                <p className="text-[11px] leading-relaxed text-ink-muted line-clamp-2">
+                  {p.description}
+                </p>
+              </button>
+            );
+          })}
+        </div>
+      </div>
 
       <div className="grid gap-6 lg:grid-cols-[1fr_20rem] lg:items-start">
         <form onSubmit={submit} noValidate className="min-w-0 space-y-5">

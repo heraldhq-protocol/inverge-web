@@ -2,12 +2,31 @@ import { fixtureComments, fixtureIdeaDetail, fixtureSurvey } from '@/lib/fixture
 import { getSessionToken } from '@/lib/api/client';
 import { env } from '@/lib/env';
 import type { IdeaComment, IdeaDetail, SurveyAggregate, SurveyQuestion } from './types';
+import type { FeedItem } from '@/lib/feed/types';
 
 function getAuthHeaders(token?: string): Record<string, string> {
   const authToken = token ?? getSessionToken();
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   return headers;
+}
+
+async function handleApiError(res: Response, fallbackPrefix: string): Promise<never> {
+  let detail = '';
+  try {
+    const errData = await res.json();
+    if (Array.isArray(errData.message)) {
+      detail = errData.message.join('; ');
+    } else if (typeof errData.message === 'string') {
+      detail = errData.message;
+    } else if (errData.error) {
+      detail = errData.error;
+    }
+  } catch {
+    // Response body was not JSON
+  }
+  const fullMsg = detail ? `${fallbackPrefix}: ${detail}` : `${fallbackPrefix} (${res.status})`;
+  throw new Error(fullMsg);
 }
 
 function normalizeIdeaDetail(raw: any): IdeaDetail {
@@ -47,6 +66,7 @@ function normalizeIdeaDetail(raw: any): IdeaDetail {
     creator: raw.creator
       ? {
           id: raw.creator.id ?? raw.creatorId,
+          username: raw.creator.username ?? raw.creator.id ?? raw.creatorId,
           displayName: raw.creator.displayName ?? 'Anonymous',
           avatarUrl: raw.creator.avatarUrl ?? null,
           identityVerified: Boolean(raw.creator.identityVerified),
@@ -58,6 +78,7 @@ function normalizeIdeaDetail(raw: any): IdeaDetail {
         }
       : {
           id: raw.creatorId ?? 'unknown',
+          username: raw.creatorId ?? 'unknown',
           displayName: 'Anonymous',
           avatarUrl: null,
           identityVerified: false,
@@ -82,7 +103,7 @@ function normalizeComment(c: any): IdeaComment {
     createdAt: typeof c.createdAt === 'string' ? c.createdAt : new Date(c.createdAt).toISOString(),
     author: {
       id: c.author?.id ?? c.userId ?? 'unknown',
-      displayName: c.author?.displayName ?? 'Anonymous',
+      displayName: c.author?.displayName || 'Creator',
       avatarUrl: c.author?.avatarUrl ?? null,
       identityVerified: Boolean(c.author?.identityVerified),
       isCreator: Boolean(c.author?.isCreator),
@@ -90,7 +111,18 @@ function normalizeComment(c: any): IdeaComment {
   };
 }
 
+const createdIdeasCache = new Map<string, IdeaDetail>();
+
+export function cacheCreatedIdea(idea: IdeaDetail): void {
+  if (!idea) return;
+  if (idea.id) createdIdeasCache.set(idea.id, idea);
+  if (idea.slug) createdIdeasCache.set(idea.slug, idea);
+}
+
 export async function getIdea(idOrSlug: string, token?: string): Promise<IdeaDetail | null> {
+  const cached = createdIdeasCache.get(idOrSlug);
+  if (cached) return cached;
+
   if (env.useFixtures) return fixtureIdeaDetail(idOrSlug);
 
   try {
@@ -103,7 +135,9 @@ export async function getIdea(idOrSlug: string, token?: string): Promise<IdeaDet
       return fixtureIdeaDetail(idOrSlug);
     }
     const raw = await res.json();
-    return normalizeIdeaDetail(raw);
+    const detail = normalizeIdeaDetail(raw);
+    cacheCreatedIdea(detail);
+    return detail;
   } catch (err) {
     console.warn(`[ideas-api] getIdea failed (${idOrSlug}), falling back to fixture:`, err);
     return fixtureIdeaDetail(idOrSlug);
@@ -160,7 +194,7 @@ export async function supportIdea(ideaId: string, token?: string): Promise<void>
     method: 'POST',
     headers,
   });
-  if (!res.ok) throw new Error(`Support request failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Support request failed');
 }
 
 /** Validation signal: remove support */
@@ -170,7 +204,7 @@ export async function unsupportIdea(ideaId: string, token?: string): Promise<voi
     method: 'DELETE',
     headers,
   });
-  if (!res.ok) throw new Error(`Unsupport request failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Unsupport request failed');
 }
 
 /** Validation signal: pre-pledge intent amount */
@@ -186,7 +220,7 @@ export async function prePledgeIdea(
     headers,
     body: JSON.stringify({ amount, currency }),
   });
-  if (!res.ok) throw new Error(`Pre-pledge failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Pre-pledge failed');
 }
 
 /** Validation signal: withdraw pre-pledge */
@@ -196,7 +230,7 @@ export async function withdrawPrePledge(ideaId: string, token?: string): Promise
     method: 'DELETE',
     headers,
   });
-  if (!res.ok) throw new Error(`Withdraw pre-pledge failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Withdraw pre-pledge failed');
 }
 
 /** Post a new comment */
@@ -212,7 +246,7 @@ export async function postComment(
     headers,
     body: JSON.stringify({ body, parentId: parentId ?? undefined }),
   });
-  if (!res.ok) throw new Error(`Post comment failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Post comment failed');
   const raw = await res.json();
   return normalizeComment(raw);
 }
@@ -224,7 +258,7 @@ export async function likeComment(ideaId: string, commentId: string, token?: str
     method: 'POST',
     headers,
   });
-  if (!res.ok) throw new Error(`Like comment failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Like comment failed');
 }
 
 /** Unlike a comment */
@@ -234,7 +268,7 @@ export async function unlikeComment(ideaId: string, commentId: string, token?: s
     method: 'DELETE',
     headers,
   });
-  if (!res.ok) throw new Error(`Unlike comment failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Unlike comment failed');
 }
 
 /** Remove a comment (author or creator) */
@@ -244,7 +278,7 @@ export async function removeComment(ideaId: string, commentId: string, token?: s
     method: 'DELETE',
     headers,
   });
-  if (!res.ok) throw new Error(`Delete comment failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Delete comment failed');
 }
 
 /** Highlight a comment (creator only) */
@@ -260,7 +294,7 @@ export async function highlightComment(
     headers,
     body: JSON.stringify({ highlighted }),
   });
-  if (!res.ok) throw new Error(`Highlight comment failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Highlight comment failed');
 }
 
 /** Submit survey feedback responses */
@@ -275,7 +309,7 @@ export async function submitSurveyResponses(
     headers,
     body: JSON.stringify({ responses }),
   });
-  if (!res.ok) throw new Error(`Survey submission failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Survey submission failed');
 }
 
 /** Submit quick feedback (rating + optional body) */
@@ -291,7 +325,7 @@ export async function submitFeedback(
     headers,
     body: JSON.stringify({ rating, body }),
   });
-  if (!res.ok) throw new Error(`Feedback submission failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Feedback submission failed');
 }
 
 /** Create a new idea draft */
@@ -300,9 +334,11 @@ export async function createIdea(
     title: string;
     problem: string;
     solution: string;
+    problemDoc?: any;
+    solutionDoc?: any;
     targetUser?: string;
     currentAlternative?: string;
-    askBreakdown?: any[];
+    askBreakdown?: any;
     roadmapSteps?: any[];
     category: string;
     region?: string;
@@ -314,14 +350,20 @@ export async function createIdea(
   token?: string
 ): Promise<IdeaDetail> {
   const headers = getAuthHeaders(token);
+  const payload = {
+    ...data,
+    askBreakdown: data.askBreakdown ?? {},
+  };
   const res = await fetch(`${env.apiUrl}/ideas`, {
     method: 'POST',
     headers,
-    body: JSON.stringify(data),
+    body: JSON.stringify(payload),
   });
-  if (!res.ok) throw new Error(`Create idea failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Create idea failed');
   const raw = await res.json();
-  return normalizeIdeaDetail(raw);
+  const detail = normalizeIdeaDetail(raw);
+  cacheCreatedIdea(detail);
+  return detail;
 }
 
 /** Publish a draft idea */
@@ -331,9 +373,11 @@ export async function publishIdea(id: string, token?: string): Promise<IdeaDetai
     method: 'POST',
     headers,
   });
-  if (!res.ok) throw new Error(`Publish idea failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Publish idea failed');
   const raw = await res.json();
-  return normalizeIdeaDetail(raw);
+  const detail = normalizeIdeaDetail(raw);
+  cacheCreatedIdea(detail);
+  return detail;
 }
 
 /** Convert a validated idea to a campaign draft */
@@ -344,7 +388,7 @@ export async function convertIdea(id: string, data: any, token?: string): Promis
     headers,
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Convert idea failed (${res.status})`);
+  if (!res.ok) await handleApiError(res, 'Convert idea failed');
   return res.json();
 }
 
@@ -366,4 +410,84 @@ export async function getIdeaInsights(ideaId: string, token?: string): Promise<a
     return null;
   }
 }
+
+export type CreatorPublicProfile = {
+  creator: {
+    id: string;
+    username: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    bio: string | null;
+    tier: string;
+    completedCampaigns: number;
+    ideasPublished: number;
+    identityVerified: boolean;
+    memberSince: string;
+  };
+  ideasPublished: FeedItem[];
+  ideasSupported: FeedItem[];
+};
+
+/** Map a raw DB-shaped idea (from the creator profile endpoint) to a FeedItem */
+function normalizeCreatorIdea(raw: any): FeedItem {
+  const creator = raw.creator;
+  return {
+    objectType: 'idea',
+    id: raw.id,
+    slug: raw.slug ?? raw.id,
+    title: raw.title ?? 'Untitled',
+    problem: raw.problem ?? '',
+    solution: raw.solution ?? '',
+    category: raw.category ?? 'other',
+    region: raw.region ?? null,
+    askAmount: String(raw.askAmount ?? '0'),
+    status: raw.status ?? 'VALIDATING',
+    discoverabilityTier: raw.discoverabilityTier ?? 'DISCOVERABLE',
+    supporterCount: raw.supporterCount ?? 0,
+    weightedPrePledgeTotal: String(raw.weightedPrePledgeTotal ?? '0'),
+    feedbackScore: String(raw.feedbackScore ?? '0'),
+    feedbackCount: raw.feedbackCount ?? 0,
+    commentCount: raw.commentCount ?? 0,
+    qualityScore: raw.qualityScore ? String(raw.qualityScore) : null,
+    creatorId: raw.creatorId ?? creator?.id ?? 'unknown',
+    creator: creator
+      ? {
+          id: creator.id,
+          username: creator.username ?? creator.id,
+          displayName: creator.displayName ?? 'Creator',
+          avatarUrl: creator.avatarUrl ?? null,
+          identityVerified: Boolean(creator.identityVerified),
+        }
+      : undefined,
+    promoted: Boolean(raw.promoted),
+    boostTier: raw.boostTier ?? null,
+    exploration: Boolean(raw.exploration),
+    // Creator profile ideas have no feed ranking reason — omit the chip gracefully
+    reason: raw.reason ?? undefined,
+    creatorPrePledgeTarget: raw.creatorPrePledgeTarget ?? null,
+    validatingSince: raw.validatingSince ?? null,
+    topics: raw.topics ?? [],
+    coverImageUrl: raw.coverImageUrl ?? null,
+  } as FeedItem;
+}
+
+/** Fetch public creator profile and their published + supported projects */
+export async function getCreatorProfile(idOrUsername: string): Promise<CreatorPublicProfile | null> {
+  try {
+    const res = await fetch(`${env.apiUrl}/auth/creators/${encodeURIComponent(idOrUsername)}`, {
+      cache: 'no-store',
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return {
+      creator: data.creator,
+      ideasPublished: (data.ideasPublished ?? []).map(normalizeCreatorIdea),
+      ideasSupported: (data.ideasSupported ?? []).map(normalizeCreatorIdea),
+    };
+  } catch (err) {
+    console.warn(`[ideas-api] getCreatorProfile failed for ${idOrUsername}:`, err);
+    return null;
+  }
+}
+
 

@@ -18,13 +18,15 @@ export interface UserProfile {
     role: string;
   }>;
   creatorProfile?: {
+    username: string | null;
     displayName: string | null;
     avatarUrl: string | null;
     bio: string | null;
   } | null;
   creator?: {
     id: string;
-    displayName: string;
+    username: string;
+    displayName: string | null;
     avatarUrl: string | null;
     bio: string | null;
   };

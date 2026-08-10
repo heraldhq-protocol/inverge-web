@@ -38,19 +38,21 @@ export function useFeed(filters: FeedFilters, initialPage?: FeedResponse) {
 
       const res = await fetch(`/api/feed?${params.toString()}`, { signal });
       if (!res.ok) throw new Error('Could not load more ideas');
-      return (await res.json()) as FeedResponse;
+      const text = await res.text();
+      return JSON.parse(text) as FeedResponse;
     },
     getNextPageParam: (lastPage, allPages) => {
       if (!lastPage.hasMore) return undefined;
       const seen = allPages.flatMap((page) => page.items.map((item) => item.id));
-      // A page that came back empty means the pool is exhausted; returning undefined stops the loop
-      // rather than requesting the same empty page forever.
       return lastPage.items.length > 0 ? seen : undefined;
     },
     select: (data) => data.pages,
-    // The server already rendered page one; seeding it means no duplicate fetch on mount.
+    staleTime: 60 * 1000,
+    refetchOnWindowFocus: false,
+    retry: 1,
     initialData: initialPage
       ? { pages: [initialPage], pageParams: [[]] }
       : undefined,
+    initialDataUpdatedAt: initialPage ? Date.now() : undefined,
   });
 }
