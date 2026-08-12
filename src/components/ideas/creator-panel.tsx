@@ -1,4 +1,6 @@
+import Link from 'next/link';
 import { Avatar } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Count } from '@/components/ui/amount';
 import { Pill } from '@/components/ui/pill';
@@ -7,23 +9,30 @@ import { formatDate, humaniseEnum } from '@/lib/format';
 import type { IdeaDetail } from '@/lib/ideas/types';
 
 export function CreatorPanel({ creator }: { creator: IdeaDetail['creator'] }) {
+  const profileUrl = `/creators/@${creator.username || creator.id}`;
+
   return (
     <Card className="p-5">
-      <div className="flex items-center gap-3">
-        <Avatar name={creator.displayName} src={creator.avatarUrl} size={44} />
-        <div>
-          <p className="font-display text-lg font-bold tracking-tight text-ink">
-            {creator.displayName}
-          </p>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            {creator.identityVerified ? (
-              <VerifiedBadge tier={creator.verificationTier} />
-            ) : (
-              <Pill>Not yet verified</Pill>
-            )}
-            <Pill>{humaniseEnum(creator.tier)} tier</Pill>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href={profileUrl} className="group flex items-center gap-3">
+          <Avatar name={creator.displayName} src={creator.avatarUrl} size={44} className="transition-transform group-hover:scale-105" />
+          <div>
+            <p className="font-display text-lg font-bold tracking-tight text-ink group-hover:text-accent-600 transition-colors">
+              {creator.displayName}
+            </p>
+            <div className="mt-1 flex flex-wrap items-center gap-2">
+              {creator.identityVerified ? (
+                <VerifiedBadge tier={creator.verificationTier} />
+              ) : (
+                <Pill>Not yet verified</Pill>
+              )}
+              <Pill>{humaniseEnum(creator.tier)} tier</Pill>
+            </div>
           </div>
-        </div>
+        </Link>
+        <Button variant="ghost" size="sm" href={profileUrl}>
+          View profile &rarr;
+        </Button>
       </div>
 
       {creator.bio && (

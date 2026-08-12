@@ -13,21 +13,21 @@ const RECENT = [
   {
     name: 'Zowasel Eats',
     blurb: 'School food ordering platform in Ibadan',
-    amount: 4_200_000,
+    amount: 4_200,
     milestone: 'Milestone 1 funded',
     progress: 100,
   },
   {
     name: 'CampusKonekt',
     blurb: 'Student marketplace across Lagos campuses',
-    amount: 3_600_000,
+    amount: 3_600,
     milestone: 'Milestone 2 funded',
     progress: 72,
   },
   {
     name: 'Kudi Logistics',
     blurb: 'Last-mile delivery for Aba traders',
-    amount: 2_850_000,
+    amount: 2_850,
     milestone: 'Milestone 1 funded',
     progress: 45,
   },
@@ -99,7 +99,7 @@ export function RecentlyFunded() {
 
                 <div className="shrink-0 text-right">
                   <div className="text-base font-bold text-ink sm:text-lg">
-                    <Amount value={project.amount} currency="NGN" />
+                    <Amount value={project.amount} currency="USD" />
                   </div>
                   <span className="mt-0.5 inline-flex items-center gap-1.5 text-xs font-medium text-accent-700">
                     <span className="relative flex h-2 w-2 shrink-0" aria-hidden="true">

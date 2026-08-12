@@ -70,7 +70,7 @@ export const POSTS: Post[] = [
   },
   {
     slug: 'campuskonekt-two-milestones',
-    title: 'How CampusKonekt raised ₦3.6M and shipped in two milestones',
+    title: 'How CampusKonekt raised $3,600 and shipped in two milestones',
     excerpt:
       'A campus food-ordering platform in Ibadan went from an idea with feedback to a funded product. Here’s exactly how the milestones played out.',
     category: 'Builder Stories',
@@ -86,7 +86,7 @@ export const POSTS: Post[] = [
           for food, and vendors had no reliable way to take orders.
         </p>
         <p>
-          Before raising a naira, Tobi validated. He gathered feedback, refined the pitch, and only
+          Before raising a dollar, Tobi validated. He gathered feedback, refined the pitch, and only
           then opened a campaign structured around two milestones.
         </p>
         <h3>Milestone one: a working ordering flow</h3>
@@ -100,7 +100,7 @@ export const POSTS: Post[] = [
           could see the network grow before that money released.
         </p>
         <p>
-          By the end, CampusKonekt had raised <strong>₦3.6M</strong> across two milestones. Just as
+          By the end, CampusKonekt had raised <strong>$3,600</strong> across two milestones. Just as
           importantly, it had a base of backers who’d watched it deliver and would back the next thing
           too. That’s what accountability compounds into.
         </p>

@@ -40,11 +40,11 @@ export function StatStrip() {
 
           <Stat
             label="Total escrowed"
-            value={1248450000}
+            value={1248450}
             type="amount"
-            currency="NGN"
-            delta="+₦73,650,000 this week"
-            reserveClass="min-w-[14ch]"
+            currency="USD"
+            delta="+$73,650 this week"
+            reserveClass="min-w-[10ch]"
             className="lg:px-8"
           />
 

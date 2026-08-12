@@ -107,10 +107,14 @@ export default async function IdeaDetailPage({
           )}
 
           {tab === 'feedback' && (
-            <SurveyForm questions={survey.questions} aggregates={survey.aggregates} />
+            <SurveyForm
+              ideaId={idea.id}
+              questions={survey?.questions ?? []}
+              aggregates={survey?.aggregates ?? []}
+            />
           )}
 
-          {tab === 'discussion' && <CommentThread comments={comments} />}
+          {tab === 'discussion' && <CommentThread ideaId={idea.id} comments={comments} />}
 
           {tab === 'creator' && <CreatorPanel creator={idea.creator} />}
         </div>

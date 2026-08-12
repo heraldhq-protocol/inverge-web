@@ -19,9 +19,7 @@ import type { FeedItem, FeedQuery, FeedResponse } from './types';
  * define (see categories.ts). Filtering after ranking keeps the order the ranker produced, which is the
  * only correct place to do it — re-sorting client-side would throw away the ranking.
  */
-const USE_FIXTURES = true;
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL ?? 'http://localhost:3000';
+import { env } from '@/lib/env';
 
 const DAY = 86_400_000;
 
@@ -69,15 +67,76 @@ function applyCollection(items: FeedItem[], collection: string): FeedItem[] {
   }
 }
 
+function getFixtureFeed(query: FeedQuery, token?: string): FeedResponse {
+  const { take = 25, excludeIds = [], category, q, topic, collection } = query;
+  const exclude = new Set(excludeIds);
+  let items = fixtureFeedItems().filter((i) => !exclude.has(i.id));
+
+  if (category) items = items.filter((i) => i.category === category);
+
+  if (topic) {
+    const t = topicFor(topic);
+    if (t) {
+      items = items.filter(
+        (i) =>
+          i.category === t.category &&
+          (i.topics?.includes(t.slug) ||
+            t.keywords.some((k) => `${i.title} ${i.problem} ${i.solution}`.toLowerCase().includes(k)))
+      );
+    }
+  }
+
+  if (collection) items = applyCollection(items, collection);
+  if (q) items = items.filter((i) => matchesQuery(i, q));
+
+  const page = items.slice(0, take);
+  return {
+    anonymous: !token,
+    items: page,
+    hasMore: items.length > page.length,
+    total: items.length,
+  };
+}
+
 export async function getFeed(query: FeedQuery = {}, token?: string): Promise<FeedResponse> {
   const { type = 'ideas', take = 25, excludeIds = [], category, q, topic, collection } = query;
 
-  if (USE_FIXTURES) {
-    const exclude = new Set(excludeIds);
-    let items = fixtureFeedItems().filter((i) => !exclude.has(i.id));
+  if (env.useFixtures) {
+    return getFixtureFeed(query, token);
+  }
 
-    if (category) items = items.filter((i) => i.category === category);
+  const params = new URLSearchParams({ type, take: String(take) });
+  if (excludeIds.length) params.set('excludeIds', excludeIds.join(','));
+  if (category) params.set('category', category);
 
+  try {
+    const res = await fetch(`${env.apiUrl}/feed?${params.toString()}`, {
+      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      cache: 'no-store',
+    });
+
+    if (!res.ok) {
+      console.warn(`[feed-api] Live feed returned ${res.status}, falling back to fixtures`);
+      return getFixtureFeed(query, token);
+    }
+
+    let rawText = '';
+    try {
+      rawText = await res.text();
+    } catch (e) {
+      console.warn('[feed-api] Failed reading feed response text, falling back to fixtures');
+      return getFixtureFeed(query, token);
+    }
+
+    let body: FeedResponse;
+    try {
+      body = JSON.parse(rawText) as FeedResponse;
+    } catch (e) {
+      console.warn('[feed-api] Failed parsing feed JSON, falling back to fixtures');
+      return getFixtureFeed(query, token);
+    }
+
+    let items = body.items ?? [];
     if (topic) {
       const t = topicFor(topic);
       if (t) {
@@ -85,47 +144,20 @@ export async function getFeed(query: FeedQuery = {}, token?: string): Promise<Fe
           (i) =>
             i.category === t.category &&
             (i.topics?.includes(t.slug) ||
-              t.keywords.some((k) => `${i.title} ${i.problem} ${i.solution}`.toLowerCase().includes(k)))
+              t.keywords.some((k) =>
+                `${i.title} ${i.problem} ${i.solution}`.toLowerCase().includes(k)
+              ))
         );
       }
     }
-
     if (collection) items = applyCollection(items, collection);
     if (q) items = items.filter((i) => matchesQuery(i, q));
 
-    const page = items.slice(0, take);
-    return {
-      anonymous: !token,
-      items: page,
-      // Stateless paging: the caller accumulates ids and sends them back. There is no offset, because
-      // scores shift between requests and an offset would silently skip or repeat items.
-      hasMore: items.length > page.length,
-      total: items.length,
-    };
+    return { ...body, items, hasMore: items.length >= take, total: items.length };
+  } catch (err) {
+    console.warn('[feed-api] Live feed fetch failed, falling back to fixtures:', err);
+    return getFixtureFeed(query, token);
   }
-
-  const params = new URLSearchParams({ type, take: String(take) });
-  if (excludeIds.length) params.set('excludeIds', excludeIds.join(','));
-  if (category) params.set('category', category);
-
-  const res = await fetch(`${API_URL}/feed?${params.toString()}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : undefined,
-    cache: 'no-store',
-  });
-  if (!res.ok) throw new Error(`Feed request failed (${res.status})`);
-  const body = (await res.json()) as FeedResponse;
-
-  // Upstream knows nothing about search, topics or collections yet, so they are applied here until it
-  // does. Documented as API asks rather than hidden.
-  let items = body.items;
-  if (topic) {
-    const t = topicFor(topic);
-    if (t) items = items.filter((i) => i.category === t.category);
-  }
-  if (collection) items = applyCollection(items, collection);
-  if (q) items = items.filter((i) => matchesQuery(i, q));
-
-  return { ...body, items, hasMore: items.length >= take, total: items.length };
 }
 
 /** Onboarding personalization capture. Explicit preferences outrank inferred behaviour. */
@@ -133,11 +165,17 @@ export async function updateInterests(
   body: { preferredCategories?: string[]; preferredRegions?: string[] },
   token: string
 ): Promise<void> {
-  if (USE_FIXTURES) return;
-  const res = await fetch(`${API_URL}/me/interests`, {
-    method: 'PUT',
-    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-    body: JSON.stringify(body),
-  });
-  if (!res.ok) throw new Error(`Interests update failed (${res.status})`);
+  if (env.useFixtures) return;
+  try {
+    const res = await fetch(`${env.apiUrl}/me/interests`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) {
+      console.warn(`[feed-api] Interests update returned ${res.status}`);
+    }
+  } catch (err) {
+    console.warn('[feed-api] Interests update failed:', err);
+  }
 }

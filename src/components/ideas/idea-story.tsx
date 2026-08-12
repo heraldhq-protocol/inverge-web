@@ -24,14 +24,20 @@ export function storySections(idea: IdeaDetail): StorySection[] {
   if (idea.targetUser) sections.push({ id: 'who', heading: 'Who has this problem' });
   if (idea.currentAlternative) sections.push({ id: 'today', heading: 'What they do today' });
   sections.push({ id: 'solution', heading: 'The solution' });
-  if (idea.askBreakdown?.length) sections.push({ id: 'ask', heading: 'What the money buys' });
-  if (idea.roadmapSteps?.length) sections.push({ id: 'roadmap', heading: 'What happens when' });
+  if (Array.isArray(idea.askBreakdown) && idea.askBreakdown.length > 0) {
+    sections.push({ id: 'ask', heading: 'What the money buys' });
+  }
+  if (Array.isArray(idea.roadmapSteps) && idea.roadmapSteps.length > 0) {
+    sections.push({ id: 'roadmap', heading: 'What happens when' });
+  }
   if (idea.risks) sections.push({ id: 'risks', heading: 'What could go wrong' });
   return sections;
 }
 
 export function IdeaStory({ idea }: { idea: IdeaDetail }) {
-  const askTotal = idea.askBreakdown?.reduce((sum, line) => sum + line.amount, 0) ?? 0;
+  const askTotal = Array.isArray(idea.askBreakdown)
+    ? idea.askBreakdown.reduce((sum, line) => sum + (Number(line.amount) || 0), 0)
+    : 0;
 
   return (
     <div className="space-y-10">
@@ -60,7 +66,7 @@ export function IdeaStory({ idea }: { idea: IdeaDetail }) {
         <RichContent doc={idea.solutionDoc ?? plainTextToDoc(idea.solution)} />
       </Section>
 
-      {idea.askBreakdown && idea.askBreakdown.length > 0 && (
+      {Array.isArray(idea.askBreakdown) && idea.askBreakdown.length > 0 && (
         <Section id="ask" heading="What the money buys">
           <p className="mb-4">
             An indicative breakdown of the{' '}
@@ -91,7 +97,7 @@ export function IdeaStory({ idea }: { idea: IdeaDetail }) {
         </Section>
       )}
 
-      {idea.roadmapSteps && idea.roadmapSteps.length > 0 && (
+      {Array.isArray(idea.roadmapSteps) && idea.roadmapSteps.length > 0 && (
         <Section id="roadmap" heading="What happens when">
           <ol className="space-y-4">
             {idea.roadmapSteps.map((step, i) => (

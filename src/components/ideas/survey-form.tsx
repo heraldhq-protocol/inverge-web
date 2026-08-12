@@ -26,23 +26,33 @@ import type { SurveyAggregate, SurveyQuestion } from '@/lib/ideas/types';
  * `{ answers: [{ questionId, value }] }`, and `DELETE` to withdraw.
  */
 
+import { submitSurveyResponses } from '@/lib/ideas/ideas-api';
+
 type AnswerValue = number | boolean | string;
 type Answers = Record<string, AnswerValue>;
 
 export function SurveyForm({
-  questions,
-  aggregates: initialAggregates,
+  ideaId,
+  questions = [],
+  aggregates: initialAggregates = [],
 }: {
-  questions: SurveyQuestion[];
-  aggregates: SurveyAggregate[];
+  ideaId?: string;
+  questions?: SurveyQuestion[];
+  aggregates?: SurveyAggregate[];
 }) {
-  const [aggregates, setAggregates] = useState<SurveyAggregate[]>(initialAggregates);
+  const [aggregates, setAggregates] = useState<SurveyAggregate[]>(initialAggregates ?? []);
   const [draft, setDraft] = useState<Answers>({});
   const [submitted, setSubmitted] = useState<Answers | null>(null);
   const [attempted, setAttempted] = useState(false);
 
-  const ordered = useMemo(() => [...questions].sort((a, b) => a.index - b.index), [questions]);
-  const byId = useMemo(() => new Map(aggregates.map((a) => [a.questionId, a])), [aggregates]);
+  const ordered = useMemo(
+    () => [...(questions ?? [])].sort((a, b) => a.index - b.index),
+    [questions]
+  );
+  const byId = useMemo(
+    () => new Map((aggregates ?? []).map((a) => [a.questionId, a])),
+    [aggregates]
+  );
 
   if (ordered.length === 0) {
     return (
@@ -55,7 +65,7 @@ export function SurveyForm({
 
   const missing = ordered.filter((q) => q.required && draft[q.id] === undefined);
 
-  function submit(e: React.FormEvent) {
+  async function submit(e: React.FormEvent) {
     e.preventDefault();
     setAttempted(true);
     if (missing.length > 0) {
@@ -64,6 +74,20 @@ export function SurveyForm({
     }
     setAggregates((prev) => prev.map((agg) => applyAnswer(agg, draft[agg.questionId])));
     setSubmitted(draft);
+
+    if (ideaId) {
+      try {
+        const payload = Object.entries(draft).map(([questionId, val]) => ({
+          questionId,
+          rating: typeof val === 'number' ? val : undefined,
+          text: typeof val === 'string' ? val : undefined,
+          selectedOptions: typeof val === 'string' ? [val] : undefined,
+        }));
+        await submitSurveyResponses(ideaId, payload);
+      } catch (err) {
+        console.warn('[SurveyForm] Live survey submission failed:', err);
+      }
+    }
   }
 
   function reopen() {

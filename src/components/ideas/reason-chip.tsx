@@ -9,8 +9,8 @@ import type { Reason } from '@/lib/feed/types';
  * from organic results, and rendering its label in the same chip slot as an organic reason is exactly
  * the merge FR-206a forbids.
  */
-export function ReasonChip({ reason, size = 'sm' }: { reason: Reason; size?: 'xs' | 'sm' }) {
-  if (reason.code === 'PROMOTED') return null;
+export function ReasonChip({ reason, size = 'sm' }: { reason?: Reason; size?: 'xs' | 'sm' }) {
+  if (!reason || reason.code === 'PROMOTED') return null;
 
   return (
     <Pill tone={reason.code === 'EXPLORE' ? 'neutral' : 'accent'} size={size} className="font-medium">

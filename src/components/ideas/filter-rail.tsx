@@ -56,8 +56,6 @@ export function FilterRail({
       const next = new URLSearchParams(params.toString());
       mutate(next);
       const query = next.toString();
-      // `scroll: false` keeps the reader where they were: a filter change is a refinement of the list
-      // in front of them, not a new page.
       router.push(query ? `${pathname}?${query}` : pathname, { scroll: false });
     },
     [params, pathname, router]
@@ -103,115 +101,233 @@ export function FilterRail({
 
   return (
     <aside aria-label="Filter ideas" className="lg:sticky lg:top-24">
-      {/* Native disclosure below `lg`, always-open panel above it. `open` is not toggled by JS, so the
-          desktop rail cannot get stuck closed. */}
       <details open className="group [&>summary]:lg:hidden" name="filters">
-        <summary className="mb-3 flex min-h-11 cursor-pointer list-none items-center justify-between rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-ink marker:content-none lg:mb-0 [&::-webkit-details-marker]:hidden">
+        <summary className="mb-3 flex min-h-11 cursor-pointer list-none items-center justify-between rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink marker:content-none lg:mb-0 [&::-webkit-details-marker]:hidden">
           <span>
             Filters
-            {anyFilter && <span className="ml-2 font-normal text-ink-muted">on</span>}
+            {anyFilter && (
+              <span className="ml-2 rounded-full bg-ink/10 px-2 py-0.5 text-xs font-semibold text-ink">
+                Active
+              </span>
+            )}
           </span>
           <span aria-hidden="true" className="text-ink-muted transition-transform group-open:rotate-180">
             ⌄
           </span>
         </summary>
 
-        <div className="space-y-6">
-          <div className="flex items-baseline justify-between gap-3">
-            <h2 className="text-sm font-semibold text-ink">Filter by</h2>
+        {/* Modern Dribbble/Linear Reference Filter Card */}
+        <div className="rounded-2xl border border-border/70 bg-surface p-4 space-y-5 shadow-xs">
+          {/* Header */}
+          <div className="flex items-center justify-between border-b border-border/50 pb-3">
+            <h2 className="font-display text-sm font-bold text-ink">Filters</h2>
             {anyFilter && (
               <button
                 type="button"
                 onClick={clearAll}
-                className="rounded text-xs font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
+                className="rounded-full border border-border/80 bg-paper px-3 py-1 text-xs font-medium text-ink-muted transition-colors hover:border-ink/30 hover:text-ink"
               >
-                Clear all
+                Reset filters
               </button>
             )}
           </div>
 
-          <Group label="Stage">
-            <CheckRow
-              label="Being validated"
-              count={counts.stage.validating}
-              checked={filters.stages.includes('validating')}
-              onChange={() => toggleInList('stage', 'validating')}
-            />
-            <CheckRow
-              label="Threshold met"
-              count={counts.stage['threshold-met']}
-              checked={filters.stages.includes('threshold-met')}
-              onChange={() => toggleInList('stage', 'threshold-met')}
-            />
-          </Group>
+          {/* Validation Stage Segmented Bar */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Validation Stage
+            </label>
+            <div className="grid grid-cols-3 gap-1 rounded-xl bg-paper p-1 border border-border/50">
+              <button
+                type="button"
+                onClick={() => commit((next) => next.delete('stage'))}
+                className={cn(
+                  'rounded-lg py-1.5 text-xs font-medium transition-all text-center',
+                  filters.stages.length === 0
+                    ? 'bg-surface text-ink font-semibold shadow-2xs'
+                    : 'text-ink-muted hover:text-ink'
+                )}
+              >
+                All
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleInList('stage', 'validating')}
+                className={cn(
+                  'rounded-lg py-1.5 text-xs font-medium transition-all text-center',
+                  filters.stages.includes('validating')
+                    ? 'bg-surface text-ink font-semibold shadow-2xs'
+                    : 'text-ink-muted hover:text-ink'
+                )}
+              >
+                Validating
+              </button>
+              <button
+                type="button"
+                onClick={() => toggleInList('stage', 'threshold-met')}
+                className={cn(
+                  'rounded-lg py-1.5 text-xs font-medium transition-all text-center',
+                  filters.stages.includes('threshold-met')
+                    ? 'bg-surface text-ink font-semibold shadow-2xs'
+                    : 'text-ink-muted hover:text-ink'
+                )}
+              >
+                Passed
+              </button>
+            </div>
+          </div>
 
-          <Group label="How far along">
-            {PROGRESS_BANDS.map((band) => (
-              <CheckRow
-                key={band.value}
-                label={band.label}
-                count={counts.progress[band.value]}
-                checked={filters.progress.includes(band.value)}
-                onChange={() => toggleInList('progress', band.value)}
-              />
-            ))}
-          </Group>
-
-          {regions.length > 0 && (
-            <Group label="Where the creator is">
-              {regions.map((region) => (
-                <CheckRow
-                  key={region}
-                  label={region}
-                  count={counts.region[region] ?? 0}
-                  checked={filters.regions.includes(region)}
-                  onChange={() => toggleInList('region', region)}
-                />
+          {/* Progression Segmented Chips */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              How Far Along
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => commit((next) => next.delete('progress'))}
+                className={cn(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                  filters.progress.length === 0
+                    ? 'border-ink bg-ink text-surface font-semibold shadow-2xs'
+                    : 'border-border/60 bg-paper text-ink-muted hover:border-ink/30 hover:text-ink'
+                )}
+              >
+                Any
+              </button>
+              {PROGRESS_BANDS.map((band) => (
+                <button
+                  key={band.value}
+                  type="button"
+                  onClick={() => toggleInList('progress', band.value)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                    filters.progress.includes(band.value)
+                      ? 'border-ink bg-ink text-surface font-semibold shadow-2xs'
+                      : 'border-border/60 bg-paper text-ink-muted hover:border-ink/30 hover:text-ink'
+                  )}
+                >
+                  {band.label}
+                </button>
               ))}
-            </Group>
+            </div>
+          </div>
+
+          {/* Funding Target Range Pills */}
+          <div className="space-y-2">
+            <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+              Funding Target Range
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              <button
+                type="button"
+                onClick={() => setAsk()}
+                className={cn(
+                  'rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                  filters.askMin === undefined && filters.askMax === undefined
+                    ? 'border-ink bg-ink text-surface font-semibold shadow-2xs'
+                    : 'border-border/60 bg-paper text-ink-muted hover:border-ink/30 hover:text-ink'
+                )}
+              >
+                Any amount
+              </button>
+              {ASK_BANDS.map((band) => (
+                <button
+                  key={band.label}
+                  type="button"
+                  onClick={() => setAsk(band.min, band.max)}
+                  className={cn(
+                    'rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                    askActive(band.min, band.max)
+                      ? 'border-ink bg-ink text-surface font-semibold shadow-2xs'
+                      : 'border-border/60 bg-paper text-ink-muted hover:border-ink/30 hover:text-ink'
+                  )}
+                >
+                  {band.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Location / Region Pills */}
+          {regions.length > 0 && (
+            <div className="space-y-2">
+              <label className="text-[11px] font-bold uppercase tracking-wider text-ink-muted">
+                Creator Region
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {regions.map((region) => (
+                  <button
+                    key={region}
+                    type="button"
+                    onClick={() => toggleInList('region', region)}
+                    className={cn(
+                      'rounded-full px-3 py-1 text-xs font-medium transition-all border',
+                      filters.regions.includes(region)
+                        ? 'border-ink bg-ink text-surface font-semibold shadow-2xs'
+                        : 'border-border/60 bg-paper text-ink-muted hover:border-ink/30 hover:text-ink'
+                    )}
+                  >
+                    {region}
+                  </button>
+                ))}
+              </div>
+            </div>
           )}
 
-          <Group
-            label="What they are asking for"
-            note="What the idea would raise as a campaign. Nothing has been charged."
-          >
-            <RadioRow
-              label="Any amount"
-              checked={filters.askMin === undefined && filters.askMax === undefined}
-              onChange={() => setAsk()}
-            />
-            {ASK_BANDS.map((band) => (
-              <RadioRow
-                key={band.label}
-                label={band.label}
-                checked={askActive(band.min, band.max)}
-                onChange={() => setAsk(band.min, band.max)}
-              />
-            ))}
-          </Group>
+          {/* Toggle Switches */}
+          <div className="space-y-3 pt-2 border-t border-border/50">
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-xs font-medium text-ink">Featured ideas only</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={filters.featuredOnly}
+                onClick={() => toggleFlag('featured', !filters.featuredOnly)}
+                className={cn(
+                  'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                  filters.featuredOnly ? 'bg-ink' : 'bg-ink/15'
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                    filters.featuredOnly ? 'translate-x-4' : 'translate-x-0'
+                  )}
+                />
+              </button>
+            </label>
 
-          <Group label="Show only">
-            <CheckRow
-              label="Featured"
-              hint="Cleared the quality bar for wider discovery. Not an endorsement."
-              count={counts.featured}
-              checked={filters.featuredOnly}
-              onChange={() => toggleFlag('featured', !filters.featuredOnly)}
-            />
-            <CheckRow
-              label="Verified creator"
-              hint="Identity confirmed. Required before anyone can receive money."
-              count={counts.verified}
-              checked={filters.verifiedOnly}
-              onChange={() => toggleFlag('verified', !filters.verifiedOnly)}
-            />
-          </Group>
+            <label className="flex items-center justify-between cursor-pointer">
+              <span className="text-xs font-medium text-ink">Verified creators only</span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={filters.verifiedOnly}
+                onClick={() => toggleFlag('verified', !filters.verifiedOnly)}
+                className={cn(
+                  'relative inline-flex h-5 w-9 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none',
+                  filters.verifiedOnly ? 'bg-ink' : 'bg-ink/15'
+                )}
+              >
+                <span
+                  aria-hidden="true"
+                  className={cn(
+                    'pointer-events-none inline-block h-4 w-4 transform rounded-full bg-white shadow-xs ring-0 transition duration-200 ease-in-out',
+                    filters.verifiedOnly ? 'translate-x-4' : 'translate-x-0'
+                  )}
+                />
+              </button>
+            </label>
+          </div>
 
-          {anyFilter && (
-            <p className="text-xs leading-relaxed text-ink-muted">
-              {total} {total === 1 ? 'idea matches' : 'ideas match'} these filters.
-            </p>
-          )}
+          {/* Results Summary Button */}
+          <div className="pt-2">
+            <div className="w-full rounded-xl bg-ink py-2 px-3 text-center text-xs font-semibold text-surface shadow-2xs">
+              Show {total} {total === 1 ? 'result' : 'results'}
+            </div>
+          </div>
         </div>
       </details>
     </aside>
@@ -244,91 +360,6 @@ export function SortSelect({ value }: { value: FeedFilters['sort'] }) {
           </option>
         ))}
       </select>
-    </label>
-  );
-}
-
-function Group({
-  label,
-  note,
-  children,
-}: {
-  label: string;
-  note?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <fieldset className="border-t border-border pt-4 first:border-t-0 first:pt-0">
-      <legend className="mb-2 text-xs font-semibold uppercase tracking-[0.1em] text-ink-muted">
-        {label}
-      </legend>
-      {note && <p className="mb-2 text-[11px] leading-relaxed text-ink-muted">{note}</p>}
-      <div className="space-y-1">{children}</div>
-    </fieldset>
-  );
-}
-
-function CheckRow({
-  label,
-  hint,
-  count,
-  checked,
-  onChange,
-}: {
-  label: string;
-  hint?: string;
-  count: number;
-  checked: boolean;
-  onChange: () => void;
-}) {
-  // An option that would return nothing is disabled rather than removed: a rail that reshuffles as you
-  // use it is far more disorienting than one with a greyed row in it.
-  const empty = count === 0 && !checked;
-
-  return (
-    <label
-      className={cn(
-        'flex min-h-9 cursor-pointer items-start gap-2.5 rounded px-1 py-1 text-sm transition-colors',
-        empty ? 'cursor-not-allowed opacity-45' : 'hover:bg-accent-50'
-      )}
-    >
-      <input
-        type="checkbox"
-        checked={checked}
-        disabled={empty}
-        onChange={onChange}
-        className="mt-0.5 h-4 w-4 shrink-0 accent-accent-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-      />
-      <span className="min-w-0 flex-1">
-        <span className="flex items-baseline justify-between gap-2">
-          <span className="text-ink">{label}</span>
-          <span className="shrink-0 text-xs text-ink-muted tabular-nums">{count}</span>
-        </span>
-        {hint && <span className="mt-0.5 block text-[11px] leading-snug text-ink-muted">{hint}</span>}
-      </span>
-    </label>
-  );
-}
-
-function RadioRow({
-  label,
-  checked,
-  onChange,
-}: {
-  label: string;
-  checked: boolean;
-  onChange: () => void;
-}) {
-  return (
-    <label className="flex min-h-9 cursor-pointer items-center gap-2.5 rounded px-1 py-1 text-sm transition-colors hover:bg-accent-50">
-      <input
-        type="radio"
-        name="ask"
-        checked={checked}
-        onChange={onChange}
-        className="h-4 w-4 shrink-0 accent-accent-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-      />
-      <span className="text-ink">{label}</span>
     </label>
   );
 }

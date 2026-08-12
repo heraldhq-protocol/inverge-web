@@ -53,10 +53,15 @@ backing whatsoever (see [`reference-teardown-kickstarter.md`](./reference-teardo
 Derived from the Prisma models plus the FRs so the shapes will not drift when the endpoints land.
 Decimals serialise as **strings**, matching the feed contract. Dates are ISO 8601 strings.
 
+**These shapes are implemented.** `src/lib/campaigns/types.ts` is this section in TypeScript, and the
+fixtures are typed against it, so a drift between this document and the screens is a bug in one of the
+two. Keep them together.
+
 ### 2.1 `GET /campaigns` — list
 
 Same query shape as the feed where they overlap, because campaigns eventually join `GET /feed`
-(`type=campaigns|all`, already accepted, ideas-only today).
+(`type=campaigns|all`, already accepted, ideas-only today). Query params per ask 13:
+`?segment=&category=&region=&sort=`.
 
 ```jsonc
 {
@@ -69,18 +74,26 @@ Same query shape as the feed where they overlap, because campaigns eventually jo
       "summary": "Students in Ibadan wait 40 minutes for lunch between lectures.",
       "category": "software",
       "region": "Ibadan",
-      "coverImageUrl": null,           // see §4
+      "topics": ["apps", "food"],      // web-side display taxonomy, for a specific cover label
       "type": "ALL_OR_NOTHING",
       "status": "ACTIVE",
       "tokenType": "USDC",
       "targetAmount": "5000.00",
       "totalRaised": "3600.00",
+      "workingCapitalPct": "20.00",    // on the LIST too — the split needs it wherever a stage renders
       "fundingFloorPct": null,         // FLEXIBLE_FUNDING only (FR-306)
       "backerCount": 214,
       "deadline": "2026-08-30T17:00:00.000Z",
-      "creatorId": "clx…",
+      "launchedAt": "2026-06-10T09:00:00.000Z",   // drives the "Newest" sort and the timeline head
+
+      // Media. `videoUrl` is REQUIRED to publish (ask 16): every campaign a reader can reach has one.
+      // The card prefers `coverImageUrl`, falls back to `videoPosterUrl`, then to a generated cover.
+      "videoUrl": "https://…/pitch.mp4",
+      "videoPosterUrl": null,
+      "coverImageUrl": null,
+
       "creator": { "id": "clx…", "displayName": "Tobi Adeyemi", "avatarUrl": null,
-                   "tier": "TRUSTED", "completedCampaigns": 1 },
+                   "identityVerified": true, "verificationTier": "TIER_3_TRACK_RECORD" },
       "milestoneSummary": { "total": 4, "released": 2, "underReview": 1, "failed": 0 },
       "promoted": false,
       "reason": { "code": "VELOCITY", "label": "Gaining momentum" }
@@ -95,14 +108,28 @@ Same query shape as the feed where they overlap, because campaigns eventually jo
 {
   "…": "every field from the list item, plus:",
 
-  "ideaId": "clx…",                    // link back to the validated idea
+  "ideaId": "clx…",                    // null on a standalone campaign (ask 17)
+  "ideaSlug": "campuskonekt",          // so the page can link back without a second fetch
   "story": {                            // from ideaSnapshot until campaigns get their own story
-    "problem": "…", "solution": "…", "roadmap": "…", "askBreakdown": [ … ]
+    "problem": "…", "targetUser": "…", "currentAlternative": "…", "solution": "…",
+    "roadmap": "…",
+    "askBreakdown": [ { "label": "Pickup lockers", "amount": "2200" } ]
   },
+  "risks": "…",                        // mandated section, creator-written (teardown §5.1)
   "termsHash": "…",                    // FR-303, present once published; NEVER rendered as a hash
-  "workingCapitalPct": "20.00",        // FR-503a, disclosed at checkout
   "workingCapitalReleasedAt": "2026-07-04T10:02:00.000Z",
-  "launchedAt": "2026-07-01T09:00:00.000Z",
+
+  // The fuller creator projection (ask 14). NEVER carries activeStrikes.
+  "creator": { "…": "list fields, plus:", "bio": "…", "tier": "TRUSTED",
+               "completedCampaigns": 1, "ideasPublished": 2, "memberSince": "2025-02-11" },
+
+  // Optional per FR-301, and out of the escrow path entirely (§2b).
+  "rewards": [
+    { "id": "clx…", "title": "Early access", "description": "…", "amount": "45.00",
+      "estimatedDelivery": "2026-11-01T…", "limitedQuantity": 250, "claimed": 206,
+      "items": [ { "label": "HercShirt V5.0 Max", "quantity": 2 } ],
+      "shipping": "WORLDWIDE" }
+  ],
 
   "milestones": [
     {
@@ -149,6 +176,10 @@ Rules the UI must honour regardless of what the eventual endpoint returns:
   backer-facing. FR-608's public voting history is a separate, later surface with its own privacy
   pass.
 - `myContribution` is the only per-user field. Absent means "not a backer", not zero.
+- `creator.activeStrikes` **does not exist in this payload** and must not be reconstructible from it.
+  A demoted creator projects as their current tier and nothing more (brief §9 rule 6).
+- `milestone.state` is **derived**, not stored — see §3. If the API returns it too, both sides must
+  compute it the same way, which is an argument for the API owning it.
 
 ### 2.3 Writes, deliberately not designed yet
 
@@ -184,7 +215,20 @@ Web-side this lives in `src/lib/campaigns/campaign-stats.ts`. If the API derives
 two must agree exactly, so put it in one pure module and consider returning the derived amounts rather
 than having both sides compute them.
 
+## 2b. Rewards never touch escrow
+
+Rewards are optional (FR-301) and are a **thank-you attached to a pledge, not a deliverable the escrow
+knows about**. The invariant, which matters more than the shape above:
+
+> A reward cannot gate a tranche, cannot accelerate one, and is never what a milestone claim is judged
+> against. The evidence definition is.
+
+Collapse the two and the objection mechanism ends up adjudicating late t-shirts instead of undelivered
+work, which is the failure mode the whole product exists to avoid. `CampaignRewards` renders them as a
+list beside the stages, never inside the tracker, for the same reason.
+
 ---
+
 
 ## 3. Milestone state is derived, not stored
 

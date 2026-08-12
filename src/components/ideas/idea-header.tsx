@@ -63,13 +63,8 @@ export function IdeaHeader({ idea }: { idea: IdeaDetail }) {
   );
 }
 
+import { CATEGORY_LABEL } from '@/lib/feed/categories';
+
 function categoryLabel(category: IdeaDetail['category']): string {
-  const labels = {
-    software: 'Software',
-    agriculture: 'Agriculture',
-    film: 'Film',
-    arts: 'Arts',
-    other: 'Other',
-  } as const;
-  return labels[category];
+  return CATEGORY_LABEL[category] ?? category;
 }

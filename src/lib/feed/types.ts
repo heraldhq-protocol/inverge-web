@@ -3,14 +3,63 @@
 
 export type FeedObjectType = 'idea' | 'campaign';
 
-export type IdeaCategory = 'software' | 'agriculture' | 'film' | 'arts' | 'other';
+export type IdeaCategory =
+  | 'technology'
+  | 'software'
+  | 'fintech'
+  | 'agritech'
+  | 'agriculture'
+  | 'healthtech'
+  | 'cleantech'
+  | 'edtech'
+  | 'logistics'
+  | 'e-commerce'
+  | 'web3'
+  | 'art'
+  | 'arts'
+  | 'comics'
+  | 'crafts'
+  | 'dance'
+  | 'design'
+  | 'fashion'
+  | 'film'
+  | 'food'
+  | 'games'
+  | 'journalism'
+  | 'music'
+  | 'photography'
+  | 'publishing'
+  | 'theater'
+  | 'community'
+  | 'other';
 
 export const CATEGORIES: { value: IdeaCategory; label: string }[] = [
-  { value: 'software', label: 'Software' },
-  { value: 'agriculture', label: 'Agriculture' },
+  { value: 'technology', label: 'Technology' },
+  { value: 'fintech', label: 'Fintech & Payments' },
+  { value: 'software', label: 'Software & B2B SaaS' },
+  { value: 'agritech', label: 'AgriTech & Farming' },
+  { value: 'healthtech', label: 'Health & MedTech' },
+  { value: 'cleantech', label: 'Clean Energy & Solar' },
+  { value: 'edtech', label: 'EdTech & Learning' },
+  { value: 'logistics', label: 'Logistics & Mobility' },
+  { value: 'e-commerce', label: 'E-Commerce & Retail' },
+  { value: 'web3', label: 'Web3 & Crypto' },
+  { value: 'art', label: 'Art' },
+  { value: 'comics', label: 'Comics' },
+  { value: 'crafts', label: 'Crafts' },
+  { value: 'dance', label: 'Dance' },
+  { value: 'design', label: 'Design' },
+  { value: 'fashion', label: 'Fashion' },
   { value: 'film', label: 'Film' },
-  { value: 'arts', label: 'Arts' },
-  { value: 'other', label: 'Other' },
+  { value: 'food', label: 'Food' },
+  { value: 'games', label: 'Games' },
+  { value: 'journalism', label: 'Journalism' },
+  { value: 'music', label: 'Music' },
+  { value: 'photography', label: 'Photography' },
+  { value: 'publishing', label: 'Publishing' },
+  { value: 'theater', label: 'Theater' },
+  { value: 'community', label: 'Community' },
+  { value: 'other', label: 'Other Innovations' },
 ];
 
 /**
@@ -40,6 +89,7 @@ export type DiscoverabilityTier = 'DISCOVERABLE' | 'FEATURED';
  */
 export type PublicCreator = {
   id: string;
+  username?: string;
   displayName: string;
   avatarUrl?: string | null;
   identityVerified: boolean;
