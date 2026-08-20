@@ -29,7 +29,7 @@ export function LogoShowcase() {
       {/* 1. Core Logo Variations Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Primary Logo (Warm Paper Background) */}
-        <div className="rounded-2xl bg-paper border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm">
+        <div className="rounded-2xl bg-paper border border-border p-5 sm:p-8 flex flex-col justify-between space-y-8 shadow-sm">
           <div className="flex items-center justify-between text-xs font-semibold text-ink-muted uppercase tracking-wider">
             <span>Primary Brand Logo</span>
             <span className="bg-surface px-2 py-1 rounded-md border border-border">Warm Paper (#FBF9F5)</span>
@@ -53,7 +53,7 @@ export function LogoShowcase() {
         </div>
 
         {/* Reversed Logo (Deep Forest Background) */}
-        <div className="rounded-2xl bg-forest border border-forest p-8 flex flex-col justify-between space-y-8 shadow-md">
+        <div className="rounded-2xl bg-forest border border-forest p-5 sm:p-8 flex flex-col justify-between space-y-8 shadow-md">
           <div className="flex items-center justify-between text-xs font-semibold text-white/70 uppercase tracking-wider">
             <span>Reversed Logo</span>
             <span className="bg-white/10 px-2 py-1 rounded-md text-white">Deep Forest (#0D1D15)</span>
@@ -77,7 +77,7 @@ export function LogoShowcase() {
         </div>
 
         {/* Icon Only Mark */}
-        <div className="rounded-2xl bg-surface border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm">
+        <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 flex flex-col justify-between space-y-8 shadow-sm">
           <div className="flex items-center justify-between text-xs font-semibold text-ink-muted uppercase tracking-wider">
             <span>Icon Only Mark</span>
             <span className="bg-paper px-2 py-1 rounded-md border border-border">25% Corner Radius</span>
@@ -102,7 +102,7 @@ export function LogoShowcase() {
         </div>
 
         {/* Monochrome Logo Variations */}
-        <div className="rounded-2xl bg-surface border border-border p-8 flex flex-col justify-between space-y-8 shadow-sm">
+        <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 flex flex-col justify-between space-y-8 shadow-sm">
           <div className="flex items-center justify-between text-xs font-semibold text-ink-muted uppercase tracking-wider">
             <span>Monochrome Versions</span>
             <span className="bg-paper px-2 py-1 rounded-md border border-border">1-Color Printing</span>
@@ -134,7 +134,7 @@ export function LogoShowcase() {
       </div>
 
       {/* 2. Interactive Logo Sizing Presets */}
-      <div className="rounded-2xl bg-surface border border-border p-8 space-y-6">
+      <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 space-y-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-border pb-4">
           <div>
             <h3 className="font-bold text-lg text-ink">Logo Sizing & Proportion Presets</h3>
@@ -224,7 +224,7 @@ export function LogoShowcase() {
       </div>
 
       {/* 4. Prohibited Logo Misuses Grid */}
-      <div className="rounded-2xl bg-surface border border-border p-8 space-y-6">
+      <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 space-y-6">
         <div>
           <h3 className="font-bold text-lg text-ink">Logo Misuse Rules (10 Prohibited Executions)</h3>
           <p className="text-xs text-ink-muted">

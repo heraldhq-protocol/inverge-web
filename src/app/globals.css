@@ -321,6 +321,9 @@ body {
   }
 }
 
+/* Mobile touch target utility */
+.btn-touch { @apply min-h-[44px]; }
+
 /* ---------------------------------------------------------------------------
    Print & PDF Export Layer
    Hides non-printable chrome (sidebar, sticky header, copy buttons) and formats

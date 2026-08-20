@@ -12,6 +12,7 @@ import { ComponentShowcase } from '@/components/brand/component-showcase';
 import { TokenCopyButton } from '@/components/brand/token-copy-button';
 import { DosAndDonts } from '@/components/brand/dos-and-donts';
 import { ChecklistInteractive } from '@/components/brand/checklist-interactive';
+import { LockIcon } from '@/components/brand/brand-icons';
 
 export default function BrandGuidelinesPage() {
   const [activeSection, setActiveSection] = useState('overview');

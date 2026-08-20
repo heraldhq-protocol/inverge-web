@@ -1,6 +1,7 @@
 'use client';
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
+import { CoinIcon, FlagIcon, LockIcon, SignalIcon, UsersIcon, PaletteIcon } from '@/components/brand/brand-icons';
 
 export function ComponentShowcase() {
   const [buttonState, setButtonState] = useState<'default' | 'loading' | 'success'>('default');
@@ -18,7 +19,7 @@ export function ComponentShowcase() {
   return (
     <div className="space-y-12">
       {/* Interactive Category Filter Tabs */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-border">
+      <div className="flex flex-wrap items-center gap-2 overflow-x-auto pb-2 scrollbar-none border-b border-border text-sm">
         {[
           { id: 'all', label: 'All Components' },
           { id: 'buttons', label: 'Buttons (44px Min)' },
@@ -64,7 +65,7 @@ export function ComponentShowcase() {
                 <p className="text-[11px] text-ink-muted">Emerald fill (#1FA85C) + White text</p>
               </div>
               <div className="pt-2">
-                <Button variant="primary" size="md" className="w-full">
+                <Button variant="primary" size="md" className="btn-touch w-full">
                   Pledge Funds (44px)
                 </Button>
               </div>
@@ -77,7 +78,7 @@ export function ComponentShowcase() {
                 <p className="text-[11px] text-ink-muted">White surface + Warm border</p>
               </div>
               <div className="pt-2">
-                <Button variant="outline" size="md" className="w-full">
+                <Button variant="outline" size="md" className="btn-touch w-full">
                   View Pitch Details
                 </Button>
               </div>
@@ -90,7 +91,7 @@ export function ComponentShowcase() {
                 <p className="text-[11px] text-ink-muted">Transparent + Muted text</p>
               </div>
               <div className="pt-2">
-                <Button variant="ghost" size="md" className="w-full">
+                <Button variant="ghost" size="md" className="btn-touch w-full">
                   Share Campaign
                 </Button>
               </div>
@@ -103,7 +104,7 @@ export function ComponentShowcase() {
                 <p className="text-[11px] text-ink-muted">Terracotta (#D94A38) + White</p>
               </div>
               <div className="pt-2">
-                <button className="w-full min-h-[44px] rounded-full bg-danger hover:bg-danger-700 text-white font-medium text-sm px-4 py-2.5 transition-all shadow-xs active:scale-[0.98]">
+                <button className="btn-touch w-full rounded-full bg-danger hover:bg-danger-700 text-white font-medium text-sm px-4 py-2.5 transition-all shadow-xs active:scale-[0.98]">
                   Cancel Pre-Pledge
                 </button>
               </div>
@@ -229,7 +230,7 @@ export function ComponentShowcase() {
 
       {/* 4. CARDS & RECEIPTS SECTION */}
       {(activeTab === 'all' || activeTab === 'cards') && (
-        <div className="rounded-2xl bg-surface border border-border p-8 space-y-6">
+        <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 space-y-6">
           <div className="border-b border-border pb-4">
             <h3 className="font-bold text-lg text-ink">4. Cards, Receipts & Wallet Identity</h3>
             <p className="text-xs text-ink-muted">
@@ -237,9 +238,9 @@ export function ComponentShowcase() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 pt-2">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-2">
             {/* Campaign Card Preview */}
-            <div className="rounded-2xl bg-surface border border-border p-6 shadow-lift space-y-4 hover:border-accent-500/40 transition-all">
+            <div className="rounded-2xl bg-surface border border-border p-4 sm:p-6 shadow-lift space-y-4 hover:border-accent-500/40 transition-all">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[11px] font-semibold bg-accent-50 text-accent-700 border border-accent-100">
                   ✓ Milestone Escrow Active
@@ -278,7 +279,7 @@ export function ComponentShowcase() {
             </div>
 
             {/* Solana On-Chain Transaction Receipt */}
-            <div className="rounded-2xl bg-forest text-white p-6 shadow-md space-y-4 font-mono text-xs">
+            <div className="rounded-2xl bg-forest text-white p-4 sm:p-6 shadow-md space-y-4 font-mono text-xs">
               <div className="flex items-center justify-between border-b border-white/10 pb-3">
                 <span className="font-bold text-accent-100 uppercase tracking-wider text-[11px]">
                   Solana Escrow Receipt
@@ -305,7 +306,7 @@ export function ComponentShowcase() {
                 </div>
               </div>
 
-              <div className="border-t border-white/10 pt-3 flex items-center justify-between text-[11px] text-white/70">
+              <div className="border-t border-white/10 pt-3 flex flex-col sm:flex-row sm:items-center justify-between gap-1 text-[11px] text-white/70">
                 <span>Timestamp: 2026-08-20 10:14:02 UTC</span>
                 <span className="text-accent-100 hover:underline cursor-pointer">View on Solscan ↗</span>
               </div>
@@ -316,7 +317,7 @@ export function ComponentShowcase() {
 
       {/* 5. FORMS & INPUTS SECTION */}
       {(activeTab === 'all' || activeTab === 'forms') && (
-        <div className="rounded-2xl bg-surface border border-border p-8 space-y-6">
+        <div className="rounded-2xl bg-surface border border-border p-5 sm:p-8 space-y-6">
           <div className="border-b border-border pb-4">
             <h3 className="font-bold text-lg text-ink">5. Form Fields & Interactive Inputs</h3>
             <p className="text-xs text-ink-muted">
