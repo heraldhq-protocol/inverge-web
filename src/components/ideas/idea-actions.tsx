@@ -129,21 +129,36 @@ export function IdeaActions({ ideaId }: { ideaId: string }) {
           </p>
         </>
       ) : (
-        <div className="rounded-lg border border-accent-500/30 bg-accent-50 p-3">
+        <div className="rounded-lg border border-accent-500/30 bg-accent-50 p-3 space-y-2">
           <p className="text-sm text-ink">
             You pre-pledged <Amount value={pledged} currency="USD" className="font-semibold" />.
           </p>
-          <p className="mt-1 text-xs leading-relaxed text-ink-muted">
-            Still no money moved. You can change or withdraw this while the idea is being validated.
+          <p className="text-xs leading-relaxed text-ink-muted">
+            Pre-pledges contribute to the idea&apos;s <strong className="font-semibold text-ink">Estimated interest</strong> figure. Still no money moved. You can change or withdraw this anytime.
           </p>
-          <button
-            type="button"
-            disabled={loading}
-            onClick={handlePledgeWithdraw}
-            className="mt-2 min-h-11 rounded text-sm font-medium text-accent-700 underline-offset-2 hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500"
-          >
-            {loading ? 'Withdrawing...' : 'Withdraw my pre-pledge'}
-          </button>
+          <div className="flex items-center gap-3 pt-1">
+            <button
+              type="button"
+              disabled={loading}
+              onClick={() => {
+                setAmount(String(pledged));
+                setPledged(null);
+                setShowPledge(true);
+              }}
+              className="text-xs font-semibold text-accent-700 hover:underline"
+            >
+              Edit pre-pledge
+            </button>
+            <span className="text-xs text-ink-muted">•</span>
+            <button
+              type="button"
+              disabled={loading}
+              onClick={handlePledgeWithdraw}
+              className="text-xs font-semibold text-danger-700 hover:underline"
+            >
+              {loading ? 'Withdrawing...' : 'Withdraw pre-pledge'}
+            </button>
+          </div>
         </div>
       )}
 

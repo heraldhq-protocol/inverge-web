@@ -1,17 +1,11 @@
 import type { Metadata } from 'next';
 import { GeistSans } from 'geist/font/sans';
 import { GeistMono } from 'geist/font/mono';
-import { Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import { Providers } from '@/components/providers/providers';
 import { SITE } from '@/lib/site';
 
-const displayFont = Plus_Jakarta_Sans({
-  subsets: ['latin'],
-  variable: '--font-display',
-  weight: ['500', '600', '700', '800'],
-  display: 'swap',
-});
+const displayFontClass = GeistSans.variable;
 
 export const metadata: Metadata = {
   // Absolute base for OG/canonical URLs; the opengraph-image/twitter-image files resolve against it.
@@ -63,7 +57,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${GeistSans.variable} ${GeistMono.variable} ${displayFont.variable} h-full antialiased`}
+      className={`${GeistSans.variable} ${GeistMono.variable} ${displayFontClass} h-full antialiased`}
       data-scroll-behavior="smooth"
     >
       <body className="flex min-h-full flex-col bg-paper text-ink font-sans">

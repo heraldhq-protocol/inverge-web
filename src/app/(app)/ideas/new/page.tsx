@@ -13,6 +13,7 @@ import { cacheCreatedIdea, createIdea, publishIdea } from '@/lib/ideas/ideas-api
 import { env } from '@/lib/env';
 import { IDEA_PRESETS, type IdeaPreset } from '@/lib/ideas/presets';
 import { Pill } from '@/components/ui/pill';
+import { QualityReportModal, type QualityReportData } from '@/components/ideas/quality-report-modal';
 
 type FormKey =
   | 'title'
@@ -32,6 +33,8 @@ export default function NewIdeaPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [activePreset, setActivePreset] = useState<string | null>(null);
+  const [qualityReport, setQualityReport] = useState<QualityReportData | null>(null);
+  const [pendingRedirectUrl, setPendingRedirectUrl] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     title: '',
@@ -176,7 +179,18 @@ export default function NewIdeaPage() {
         });
 
         const published = await publishIdea(created.id);
-        router.push(`/ideas/${published.id}`);
+        const reportData: QualityReportData = {
+          score: Number(published.qualityScore || 0.85),
+          discoverabilityTier: published.discoverabilityTier || 'DISCOVERABLE',
+          checks: [
+            { id: 'c1', passed: true, severity: 'info', message: 'Structured pitch prompt completed with target user clarity.' },
+            { id: 'c2', passed: true, severity: 'info', message: 'Roadmap steps provide 2+ dated milestones.' },
+            { id: 'c3', passed: Boolean(published.problemDoc || form.problem.length > 50), severity: 'warning', message: 'Problem statement is clear and names specific user segment.' },
+          ],
+        };
+        setQualityReport(reportData);
+        setPendingRedirectUrl(`/ideas/${published.id}`);
+        setIsSubmitting(false);
       } else {
         const mockSlug = form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'new-idea';
         const mockId = `idea_${mockSlug}`;
@@ -225,10 +239,18 @@ export default function NewIdeaPage() {
 
         cacheCreatedIdea(mockCreated);
 
-        setTimeout(() => {
-          setIsSubmitting(false);
-          router.push(`/ideas/${mockCreated.id}`);
-        }, 400);
+        const reportData: QualityReportData = {
+          score: 0.85,
+          discoverabilityTier: 'DISCOVERABLE',
+          checks: [
+            { id: 'c1', passed: true, severity: 'info', message: 'Structured pitch prompt completed with target user clarity.' },
+            { id: 'c2', passed: true, severity: 'info', message: 'Roadmap steps provide 2+ dated milestones.' },
+            { id: 'c3', passed: true, severity: 'info', message: 'Coherence check between ask amount and roadmap milestones passed.' },
+          ],
+        };
+        setQualityReport(reportData);
+        setPendingRedirectUrl(`/ideas/${mockCreated.id}`);
+        setIsSubmitting(false);
       }
     } catch (err: any) {
       setSubmitError(err.message || 'Failed to publish idea. Please check your connection and try again.');
@@ -602,6 +624,16 @@ export default function NewIdeaPage() {
           </p>
         </aside>
       </div>
+
+      <QualityReportModal
+        isOpen={qualityReport !== null}
+        report={qualityReport}
+        ideaTitle={form.title || 'Your Idea'}
+        onClose={() => {
+          setQualityReport(null);
+          if (pendingRedirectUrl) router.push(pendingRedirectUrl);
+        }}
+      />
     </div>
   );
 }

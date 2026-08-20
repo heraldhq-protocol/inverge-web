@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Pill, type PillTone } from '@/components/ui/pill';
 import { listMyIdeas } from '@/lib/campaigns/my-ideas';
 import { WalletModal, type WalletTab } from '@/components/wallets/wallet-modal';
+import { BoostModal } from '@/components/ideas/boost-modal';
 import { detectAfricanCurrency } from '@/lib/currency/african-currencies';
 
 export interface DashboardIdeaRow {
@@ -95,6 +96,7 @@ export function DashboardView() {
   const [activePhase, setActivePhase] = useState<'VALIDATION' | 'CAMPAIGN'>('VALIDATION');
   const [walletModalOpen, setWalletModalOpen] = useState(false);
   const [walletTab, setWalletTab] = useState<WalletTab>('overview');
+  const [boostTarget, setBoostTarget] = useState<{ id: string; title: string; discoverabilityTier?: 'LINK_ONLY' | 'DISCOVERABLE' | 'FEATURED' } | null>(null);
 
   const ideas: DashboardIdeaRow[] = (liveIdeas && liveIdeas.length > 0)
     ? liveIdeas.map((i) => ({
@@ -441,6 +443,14 @@ export function DashboardView() {
         isOpen={walletModalOpen}
         onClose={() => setWalletModalOpen(false)}
         initialTab={walletTab}
+      />
+
+      <BoostModal
+        isOpen={boostTarget !== null}
+        ideaId={boostTarget?.id ?? ''}
+        ideaTitle={boostTarget?.title ?? ''}
+        discoverabilityTier={boostTarget?.discoverabilityTier}
+        onClose={() => setBoostTarget(null)}
       />
     </div>
   );
