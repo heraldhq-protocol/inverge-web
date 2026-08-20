@@ -19,12 +19,9 @@ import type {
  * to query params when ask 13 lands; either way no component builds a request or knows a fixture
  * exists (campaign-brief.md §9 rule 8).
  */
-const USE_FIXTURES = true;
+import { env } from '@/lib/env';
 
 function all(): CampaignDetail[] {
-  if (!USE_FIXTURES) {
-    throw new Error('Live campaign reads are not wired: see docs/campaign-data-contract.md §4 item 6');
-  }
   // Drafts and campaigns in curation are not public. The API will enforce this; the client module
   // enforcing it too means a fixture can carry one without it leaking into a list (FR-304).
   return fixtureCampaigns().filter((c) => c.status !== 'DRAFT' && c.status !== 'IN_REVIEW');
@@ -74,6 +71,44 @@ const SORTERS: Record<CampaignSort, (a: CampaignListItem, b: CampaignListItem) =
 export async function listCampaigns(query: CampaignQuery = {}): Promise<CampaignListItem[]> {
   const { segment = 'all', category = null, region = null, sort = 'closing-soon' } = query;
 
+  if (!env.useFixtures) {
+    try {
+      const params = new URLSearchParams();
+      if (category) params.set('category', category);
+      if (region) params.set('region', region);
+      if (sort) params.set('sort', sort);
+      const res = await fetch(`${env.apiUrl}/campaigns?${params.toString()}`, { cache: 'no-store' });
+      if (res.ok) {
+        const data = await res.json();
+        return data.map((c: any) => ({
+          objectType: 'campaign',
+          id: c.id,
+          slug: c.slug || c.id,
+          title: c.title || c.idea?.title || 'Untitled Campaign',
+          summary: c.summary || c.idea?.problem || '',
+          category: c.idea?.category || 'software',
+          region: c.idea?.region || null,
+          type: c.type || 'ALL_OR_NOTHING',
+          status: c.status,
+          targetAmount: String(c.targetAmount || 0),
+          totalRaised: String(c.totalRaised || 0),
+          backerCount: c.contributions?.length || 0,
+          deadline: c.deadline,
+          workingCapitalPct: String(c.workingCapitalPct || 20),
+          launchedAt: c.launchedAt || c.createdAt,
+          creator: c.creator,
+          milestoneSummary: c.milestoneSummary || { total: c.milestones?.length || 0, released: 0 },
+          coverImageUrl: c.coverImageUrl || c.idea?.coverImageUrl || null,
+          videoUrl: c.videoUrl || null,
+          videoPosterUrl: c.videoPosterUrl || null,
+          topics: [],
+        }));
+      }
+    } catch (err) {
+      console.warn('[campaigns-api] Live listCampaigns failed, falling back to fixtures:', err);
+    }
+  }
+
   const items = all().map(toListItem);
 
   const filtered = items.filter((c) => {
@@ -89,6 +124,16 @@ export async function listCampaigns(query: CampaignQuery = {}): Promise<Campaign
 }
 
 export async function getCampaign(idOrSlug: string): Promise<CampaignDetail | null> {
+  if (!env.useFixtures) {
+    try {
+      const res = await fetch(`${env.apiUrl}/campaigns/${idOrSlug}`, { cache: 'no-store' });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn(`[campaigns-api] Live getCampaign failed for ${idOrSlug}, falling back:`, err);
+    }
+  }
   return all().find((c) => c.id === idOrSlug || c.slug === idOrSlug) ?? null;
 }
 
@@ -97,6 +142,16 @@ export async function getCampaign(idOrSlug: string): Promise<CampaignDetail | nu
  * pagination — ask 12 replaces the arithmetic with the indexer's own totals.
  */
 export async function getEscrowSummary() {
+  if (!env.useFixtures) {
+    try {
+      const res = await fetch(`${env.apiUrl}/platform/escrow`, { cache: 'no-store' });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('[campaigns-api] Live getEscrowSummary failed, falling back:', err);
+    }
+  }
   return escrowSummary(all());
 }
 

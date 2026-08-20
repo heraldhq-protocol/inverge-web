@@ -152,8 +152,14 @@ export function StepReview({ draft, idea }: { draft: CampaignDraft; idea: Eligib
         </Card>
       )}
 
-      <Card tone="quiet" className="p-5">
-        <h3 className="text-sm font-semibold text-ink">Before this can launch</h3>
+      <Card tone="quiet" className="p-5 border border-accent-300/40 bg-accent-50/30">
+        <div className="flex items-center justify-between border-b border-border/60 pb-3">
+          <div>
+            <h3 className="text-sm font-bold text-ink">FR-311 Curation Application Fee</h3>
+            <p className="text-xs text-ink-muted">Mandatory non-refundable fee required to enter the admin review queue.</p>
+          </div>
+          <Pill tone="accent" size="sm">₦15,000 / $20</Pill>
+        </div>
         <ul className="mt-3 space-y-3 text-sm leading-relaxed text-ink-muted">
           {!idea && (
             <li>
@@ -173,8 +179,8 @@ export function StepReview({ draft, idea }: { draft: CampaignDraft; idea: Eligib
             never to publish an idea.
           </li>
           <li>
-            <span className="font-medium text-ink">Submitting for review costs a one off fee.</span>{' '}
-            It is not refundable, and it is charged whether or not the campaign is approved.
+            <span className="font-medium text-ink">Submitting for review requires paying the FR-311 fee.</span>{' '}
+            It funds administrative curation, is non-refundable, and is charged before queue placement regardless of outcome.
           </li>
           <li>
             <span className="font-medium text-ink">Backers decide each stage.</span> When you claim
