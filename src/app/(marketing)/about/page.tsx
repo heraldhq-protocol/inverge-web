@@ -1,11 +1,9 @@
 import {
   ArrowRight,
-  CheckCircle2,
   FileCheck2,
   Globe,
   Milestone,
   Smartphone,
-  XCircle,
 } from "lucide-react";
 import type { Metadata } from "next";
 
@@ -43,52 +41,6 @@ const values = [
     title: "Built for African reality",
     body: "We build for how money, trust, and community actually work here, not a template borrowed from somewhere else.",
     icon: Smartphone,
-  },
-] as const;
-
-const guarantees = [
-  {
-    title: "On-chain escrow PDAs",
-    desc: "100% of campaign funds sit in Solana smart contract escrow until milestones are met, never in company accounts.",
-  },
-  {
-    title: "7-day review window",
-    desc: "Backers review milestone proof during a silence-is-consent window with capped objection weight (max 15%).",
-  },
-  {
-    title: "Direct claim-based refunds",
-    desc: "Backers claim eligible remaining funds directly on-chain if a milestone stalls, fails review, or the campaign misses its target.",
-  },
-  {
-    title: "Disclosed working capital",
-    desc: "A published runway tranche (capped at 20–25%) jumpstarts execution for milestone 1, declared upfront.",
-  },
-  {
-    title: "Strict promotion separation",
-    desc: "Paid promotion affects discovery placement only, never organic validation data or milestone governance.",
-  },
-] as const;
-
-const exclusions = [
-  {
-    title: "No platform tokens",
-    desc: "No speculative tokens, meme coins, or airdrop farming mechanisms whatsoever.",
-  },
-  {
-    title: "No equity or profit promises",
-    desc: "Strictly rewards-based and donation crowdfunding at launch, preserving regulatory clarity.",
-  },
-  {
-    title: "No DeFi yield or lending risk",
-    desc: "Escrowed backer funds remain inert and are never deployed into yield strategies or lending protocols.",
-  },
-  {
-    title: "No manufactured proof",
-    desc: "No fabricated traction numbers, artificial social proof, or paid fake endorsements.",
-  },
-  {
-    title: "No centralized spending custody",
-    desc: "No unilateral backend authority or discretionary withdrawal power over escrowed money.",
   },
 ] as const;
 
@@ -181,98 +133,8 @@ export default function AboutPage() {
         </Container>
       </section>
 
-      {/* What We Guarantee vs What We Exclude */}
-      <section className="bg-surface py-16 sm:py-24">
-        <Container>
-          <div className="max-w-2xl">
-            <div className="flex items-center gap-3">
-              <span className="h-0.5 w-6 bg-brand" aria-hidden="true" />
-              <span className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
-                The Inverge Standard
-              </span>
-            </div>
-            <h2 className="mt-3 text-3xl font-bold tracking-[-0.04em] text-ink sm:text-4xl">
-              What we guarantee vs. what we exclude
-            </h2>
-            <p className="mt-3 text-base leading-relaxed text-muted">
-              Clear accountability starts with explicit boundaries. Here is what
-              you can rely on in our escrow rules, and what we deliberately
-              refuse to introduce.
-            </p>
-          </div>
-
-          <div className="mt-10 grid gap-8 md:grid-cols-2">
-            {/* Guarantees */}
-            <div className="flex flex-col rounded-2xl border border-border bg-canvas p-6 sm:p-8">
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-brand/10 text-brand">
-                    <CheckCircle2 className="size-4" aria-hidden="true" />
-                  </span>
-                  <h3 className="text-lg font-bold text-ink">
-                    What we commit to
-                  </h3>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-brand">
-                  Guaranteed
-                </span>
-              </div>
-              <ul className="mt-6 space-y-4">
-                {guarantees.map(({ title, desc }) => (
-                  <li key={title} className="flex items-start gap-3">
-                    <CheckCircle2
-                      className="mt-1 size-4 shrink-0 text-brand"
-                      aria-hidden="true"
-                    />
-                    <div className="text-sm leading-relaxed">
-                      <strong className="font-semibold text-ink">
-                        {title}:
-                      </strong>{" "}
-                      <span className="text-muted">{desc}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-
-            {/* Exclusions */}
-            <div className="flex flex-col rounded-2xl border border-border bg-canvas p-6 sm:p-8">
-              <div className="flex items-center justify-between border-b border-border pb-4">
-                <div className="flex items-center gap-2.5">
-                  <span className="flex size-7 items-center justify-center rounded-lg bg-danger/10 text-danger">
-                    <XCircle className="size-4" aria-hidden="true" />
-                  </span>
-                  <h3 className="text-lg font-bold text-ink">
-                    What we explicitly exclude
-                  </h3>
-                </div>
-                <span className="text-xs font-semibold uppercase tracking-[0.14em] text-danger">
-                  Excluded
-                </span>
-              </div>
-              <ul className="mt-6 space-y-4">
-                {exclusions.map(({ title, desc }) => (
-                  <li key={title} className="flex items-start gap-3">
-                    <XCircle
-                      className="mt-1 size-4 shrink-0 text-danger"
-                      aria-hidden="true"
-                    />
-                    <div className="text-sm leading-relaxed">
-                      <strong className="font-semibold text-ink">
-                        {title}:
-                      </strong>{" "}
-                      <span className="text-muted">{desc}</span>
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          </div>
-        </Container>
-      </section>
-
       {/* The Team */}
-      <section className="border-t border-border bg-canvas py-16 sm:py-24">
+      <section className="bg-surface py-16 sm:py-24">
         <Container>
           <div className="mx-auto max-w-2xl text-center">
             <div className="flex items-center justify-center gap-3">

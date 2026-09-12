@@ -74,8 +74,8 @@ export function HomeHero() {
                 />
               </div>
 
-              <div className="relative z-20 mt-4 lg:absolute lg:-bottom-8 lg:-left-12 lg:right-4 lg:mt-0">
-                <div className="border border-brand/20 bg-surface p-5 shadow-xl sm:p-6">
+              <div className="relative z-20 -mt-16 mx-4 sm:-mt-20 sm:mx-6 lg:absolute lg:-bottom-8 lg:-left-12 lg:right-4 lg:mx-0 lg:mt-0">
+                <div className="rounded-2xl border border-brand/20 bg-surface p-5 shadow-2xl shadow-contrast/15 sm:p-6">
                   <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-strong">
                     Why Inverge
                   </p>
