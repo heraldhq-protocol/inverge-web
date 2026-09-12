@@ -1,6 +1,5 @@
-import React from 'react';
-import { Nav } from '@/components/marketing/nav';
-import { Footer } from '@/components/marketing/footer';
+import { SiteFooter } from "@/features/marketing/components/site-footer";
+import { SiteHeader } from "@/features/marketing/components/site-header";
 
 export default function MarketingLayout({
   children,
@@ -8,10 +7,10 @@ export default function MarketingLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col bg-paper text-ink selection:bg-accent-500 selection:text-white">
-      <Nav />
-      <main className="flex-1 w-full">{children}</main>
-      <Footer />
-    </div>
+    <>
+      <SiteHeader />
+      {children}
+      <SiteFooter />
+    </>
   );
 }

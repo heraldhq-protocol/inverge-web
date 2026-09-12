@@ -1,296 +1,123 @@
-import React from 'react';
-import { pageMetadata } from '@/lib/metadata';
-import Link from 'next/link';
-import { PageHeader } from '@/components/marketing/page-header';
-import { LegalDoc, type LegalSection } from '@/components/marketing/legal-doc';
+import type { Metadata } from "next";
 
-export const metadata = pageMetadata({
-  title: 'Terms of Service',
-  description:
-    'The terms that govern your use of Inverge: how backing, milestone funding, refunds, and builder obligations work.',
-  path: '/terms',
-});
+import {
+  LegalDocument,
+  type LegalSection,
+} from "@/features/marketing/components/legal-document";
+import { PageHeader } from "@/features/marketing/components/page-header";
 
-const UPDATED = '29 July 2026';
+export const metadata: Metadata = {
+  title: "Terms preview — Inverge",
+  description: "The pre-launch draft terms preview for Inverge.",
+};
 
 const sections: LegalSection[] = [
   {
-    id: 'agreement',
-    heading: 'Agreement to these terms',
-    body: (
-      <>
-        <p>
-          These Terms of Service (the “Terms”) govern your access to and use of Inverge: our
-          website, applications, and services (together, the “Platform”). Inverge is a platform for
-          validating ideas and backing early-stage builders across Africa, where funds are held and
-          released against verified milestones.
-        </p>
-        <p>
-          By creating an account, backing an idea, or otherwise using the Platform, you agree to be
-          bound by these Terms and by our{' '}
-          <Link href="/privacy">Privacy Policy</Link>. If you do not agree, please do not use the
-          Platform.
-        </p>
-      </>
-    ),
+    heading: "Status of this preview",
+    paragraphs: [
+      "This page is a plain-language, pre-launch preview of the rules Inverge expects the service to require. It is not a binding user agreement, is not yet in force, and must be completed and reviewed by Nigerian counsel before accounts or live financial services launch.",
+      "The final terms will identify the operating legal entity, governing law, dispute process, service providers, fees, launch jurisdictions, and effective date. Product checkout disclosures and published campaign terms will also govern specific transactions.",
+    ],
   },
   {
-    id: 'who',
-    heading: 'Who can use Inverge',
-    body: (
-      <>
-        <p>To use Inverge, you must:</p>
-        <ul>
-          <li>Be at least 18 years old and able to enter a binding contract;</li>
-          <li>
-            Provide accurate, current, and complete information, and keep it up to date;
-          </li>
-          <li>
-            Use the Platform only where you are legally permitted to do so, and not in breach of any
-            law that applies to you.
-          </li>
-        </ul>
-        <p>
-          If you use Inverge on behalf of an organisation, you confirm that you are authorised to
-          accept these Terms for that organisation, and “you” refers to both you and it.
-        </p>
-      </>
-    ),
+    heading: "What Inverge is",
+    paragraphs: [
+      "Inverge is being built as an idea-validation and crowdfunding platform. It will help builders publish ideas, gather non-financial validation signals, submit curated campaigns, receive rewards or donation-based contributions, and deliver work through published milestones.",
+      "Inverge is not a bank, deposit account, investment adviser, securities exchange, or promise of business success. Launch campaigns will not offer equity, dividends, interest, yield, profit share, or other financial returns.",
+    ],
   },
   {
-    id: 'accounts',
-    heading: 'Your account and verification',
-    body: (
-      <>
-        <p>
-          You are responsible for the activity on your account and for keeping your sign-in details
-          secure. Tell us promptly if you believe your account has been accessed without your
-          permission.
-        </p>
-        <p>
-          Certain activities, in particular raising funds as a builder, require identity
-          verification. We use trusted verification partners to confirm your identity and, where
-          relevant, your business details. You agree to provide the information they reasonably
-          request, and you confirm it is truthful. We may limit, pause, or decline access where
-          verification cannot be completed.
-        </p>
-      </>
-    ),
+    heading: "Eligibility and accounts",
+    paragraphs: [
+      "The launch service is intended for people aged 18 or older who can lawfully use it. Users will need to provide accurate information, protect account access, and promptly report suspected compromise.",
+      "Builders must complete identity verification before campaign review. Backers may be required to verify after configurable contribution thresholds or where law, risk controls, or a payment provider requires it. Inverge may limit jurisdictions and features based on legal and operational readiness.",
+    ],
   },
   {
-    id: 'how',
-    heading: 'How Inverge works',
-    body: (
-      <>
-        <p>Inverge supports two connected activities:</p>
-        <ul>
-          <li>
-            <strong>Idea validation.</strong> Builders publish an idea; the community can follow it,
-            leave feedback, and signal support or pre-pledge interest before any campaign goes live.
-          </li>
-          <li>
-            <strong>Milestone funding.</strong> When a campaign runs, the amounts you contribute are
-            held in escrow and released to the builder in stages, as each milestone is delivered and
-            verified, not all at once up front.
-          </li>
-        </ul>
-        <p>
-          Inverge provides the Platform that connects backers and builders and administers the
-          escrow and milestone process. Inverge is not the builder, does not create the projects,
-          and does not guarantee that any idea will succeed.
-        </p>
-      </>
-    ),
+    heading: "Ideas and pre-pledges",
+    paragraphs: [
+      "Publishing or supporting an idea is not a crowdfunding transaction. Support, structured feedback, and a pre-pledge are validation signals. A pre-pledge is non-binding, moves no money, and does not oblige either person to participate in a later campaign.",
+      "Paid idea placement, where available, will be labelled. Payment for discovery must not alter or be merged with organic supporter, feedback, or pre-pledge metrics.",
+    ],
   },
   {
-    id: 'backers',
-    heading: 'Backing an idea or campaign',
-    body: (
-      <>
-        <p>
-          When you back a campaign, you authorise the amount you choose to be collected and held in
-          escrow. Funds are released to the builder only as milestones are met and verified.
-        </p>
-        <p>
-          <strong>Refunds.</strong> If a builder fails to deliver a funded milestone within the
-          terms of their campaign, the portion of your contribution tied to undelivered milestones is
-          eligible to be returned to you. Amounts already released against milestones that were
-          delivered are not refundable simply because a later milestone fails.
-        </p>
-        <p>
-          Backing a builder carries risk. A returned contribution is not a guaranteed investment
-          return, and Inverge does not promise any profit, equity, or reward beyond what a campaign
-          expressly states.
-        </p>
-      </>
-    ),
+    heading: "Campaign submission and curation",
+    paragraphs: [
+      "Launch campaigns must publish a target, deadline, reward terms where applicable, risks, and two to six ordered milestones with tranche percentages and evidence definitions. Campaigns require review before publication.",
+      "A disclosed, flat application fee is payable before entering the review queue. It is non-refundable regardless of approval, requested changes, or rejection. Paying it does not guarantee publication, promotion, funding, or delivery.",
+      "Campaign terms and evidence definitions become fixed when the campaign succeeds. Builders are responsible for truthful content, lawful rewards, realistic delivery information, updates, and evidence they have the right to publish.",
+    ],
   },
   {
-    id: 'builders',
-    heading: 'Publishing and raising as a builder',
-    body: (
-      <>
-        <p>If you publish an idea or run a campaign, you agree that:</p>
-        <ul>
-          <li>
-            Everything you present (your identity, your team, your milestones, and your progress)
-            is honest and not misleading;
-          </li>
-          <li>
-            You will use funds released to you for the purpose described in your campaign, and make a
-            genuine, good-faith effort to deliver each milestone;
-          </li>
-          <li>
-            You will provide the proof of delivery your campaign requires, and respond reasonably to
-            questions from your backers and from Inverge;
-          </li>
-          <li>
-            You have the rights to everything you publish, and it does not infringe anyone else’s
-            rights.
-          </li>
-        </ul>
-        <p>
-          Failing to deliver milestones, or misrepresenting your project, may result in refunds to
-          backers, suspension of your campaign, and removal from the Platform.
-        </p>
-      </>
-    ),
+    heading: "Contributions and funding outcomes",
+    paragraphs: [
+      "Launch campaigns use all-or-nothing funding. If the target is not reached by the deadline, each backer can claim the full contribution. If the target is reached, the campaign activates under its published terms.",
+      "Checkout will disclose the contribution amount, supported settlement asset, payment or conversion charges, platform fees where relevant, reward terms, working-capital release, and refund rules before confirmation. Exact configured values will control over illustrative marketing copy.",
+      "A contribution supports work still to be completed. It is not a purchase of an investment and does not guarantee delivery, timing, reward quality, or business success.",
+    ],
   },
   {
-    id: 'fees',
-    heading: 'Fees',
-    body: (
-      <>
-        <p>
-          Backing an idea is free. When a campaign successfully raises and releases funds, Inverge
-          charges a platform fee, which is disclosed before you commit. Any applicable fee is shown
-          to you clearly at the point it applies, and we do not add hidden charges.
-        </p>
-        <p>
-          We may change our fees from time to time. Changes apply to campaigns that start after the
-          change takes effect, not to funds already committed.
-        </p>
-      </>
-    ),
+    heading: "Milestones and working capital",
+    paragraphs: [
+      "When a campaign succeeds, the published working-capital tranche releases immediately to help begin milestone one. It is limited by the approved campaign budget and platform cap and is not refundable after release.",
+      "For later tranches, the builder submits the required proof bundle and a review window opens. A milestone auto-approves at the end of the window unless backer objections reach the configured threshold. Voting-weight limits and a governed appeal process apply as shown in the campaign.",
+      "Released funds are not clawed back and are not restricted by Inverge after release. A subsequent tranche remains conditional on approval of the corresponding milestone.",
+    ],
   },
   {
-    id: 'conduct',
-    heading: 'Acceptable use',
-    body: (
-      <>
-        <p>You agree not to:</p>
-        <ul>
-          <li>Use Inverge for fraud, money laundering, or any unlawful purpose;</li>
-          <li>
-            Misrepresent yourself, impersonate others, or create accounts to manipulate funding,
-            feedback, or rankings;
-          </li>
-          <li>
-            Upload content that is illegal, deceptive, hateful, or that infringes others’ rights;
-          </li>
-          <li>
-            Interfere with, probe, or attempt to gain unauthorised access to the Platform or its
-            security;
-          </li>
-          <li>Scrape or harvest data from the Platform except as we expressly permit.</li>
-        </ul>
-      </>
-    ),
+    heading: "Refunds",
+    paragraphs: [
+      "A missed all-or-nothing target makes the full contribution claimable. An upheld milestone objection makes each backer's pro-rata share of the remaining escrow balance claimable. Previously released working capital and approved tranches are excluded.",
+      "Refunds are claim based. Eligible users remain responsible for initiating a claim through the available product or programme path. Network costs, payment-provider reversals, currency conversion, tax treatment, and reward consequences will be disclosed in the final terms and checkout where applicable.",
+    ],
   },
   {
-    id: 'content',
-    heading: 'Your content and intellectual property',
-    body: (
-      <>
-        <p>
-          You keep ownership of the content you publish: your idea descriptions, updates, images,
-          and comments. By publishing it on Inverge, you grant us a non-exclusive, worldwide,
-          royalty-free licence to host, display, and share that content for the purpose of operating
-          and promoting the Platform.
-        </p>
-        <p>
-          The Inverge name, logo, and the Platform itself remain our property. These Terms do not
-          give you any right to use our brand without our written permission.
-        </p>
-      </>
-    ),
+    heading: "Acceptable use and content",
+    paragraphs: [
+      "Users must not misuse Inverge or use it to harm others. Prohibited conduct will include:",
+    ],
+    bullets: [
+      "False, misleading, fraudulent, unlawful, infringing, or impersonating content.",
+      "Promised financial returns, prohibited securities offers, money laundering, sanctions evasion, or unlawful goods and services.",
+      "Manipulation of validation metrics, campaigns, objections, reviews, referrals, or platform systems.",
+      "Malware, credential theft, private-key solicitation, unauthorised access, scraping that degrades the service, or attempts to bypass safeguards.",
+      "Harassment, hate, exploitation, privacy violations, or publication of another person's sensitive information without a lawful basis.",
+    ],
   },
   {
-    id: 'disclaimers',
-    heading: 'Disclaimers and limitation of liability',
-    body: (
-      <>
-        <p>
-          The Platform is provided “as is”. We work hard to keep it accurate and available, but we do
-          not warrant that it will be uninterrupted, error-free, or that any project you back will
-          succeed. Verification and milestone review reduce risk; they do not remove it.
-        </p>
-        <p>
-          To the fullest extent permitted by law, Inverge is not liable for indirect or consequential
-          losses, or for loss of profit or opportunity. Nothing in these Terms limits any liability
-          that cannot lawfully be limited, including for fraud.
-        </p>
-      </>
-    ),
+    heading: "Intellectual property",
+    paragraphs: [
+      "Users will retain ownership of content they create. The final terms will grant Inverge only the licence needed to host, display, moderate, promote, archive, and operate that content in connection with the service.",
+      "Users must have the rights needed for anything they publish and must respect campaign backers' permitted use of rewards and materials. A notice-and-review process for infringement reports will be included before launch.",
+    ],
   },
   {
-    id: 'termination',
-    heading: 'Suspension and termination',
-    body: (
-      <p>
-        You may stop using Inverge at any time. We may suspend or close an account that breaches
-        these Terms, poses a risk to backers or builders, or that we are required to act on by law.
-        Where funds are held in escrow when an account is suspended, we will resolve them in line
-        with the refund and milestone rules above.
-      </p>
-    ),
+    heading: "Platform action and availability",
+    paragraphs: [
+      "Inverge may reject content, pause actions, restrict accounts, preserve evidence, or cooperate with authorities when reasonably needed for safety, law, sanctions, fraud controls, system integrity, or enforcement. The final terms will define notice and appeal procedures where appropriate.",
+      "Internet, payment, identity, wallet, blockchain, and third-party services can be unavailable or delayed. A submitted transaction is not final merely because a button was pressed. The product will distinguish pending, confirmed, failed, and reconciling states.",
+    ],
   },
   {
-    id: 'changes',
-    heading: 'Changes to these terms',
-    body: (
-      <p>
-        We may update these Terms as the Platform evolves. If we make a material change, we will give
-        reasonable notice, for example by posting the updated Terms here and updating the date
-        above. Continuing to use Inverge after a change means you accept the updated Terms.
-      </p>
-    ),
-  },
-  {
-    id: 'law',
-    heading: 'Governing law and disputes',
-    body: (
-      <p>
-        These Terms are governed by the laws of the Federal Republic of Nigeria. We would always
-        rather resolve a concern with you directly, so please contact us first. Any dispute that
-        cannot be resolved that way will be subject to the courts of Lagos State, Nigeria, unless a
-        law that protects you requires otherwise.
-      </p>
-    ),
-  },
-  {
-    id: 'contact',
-    heading: 'Contact us',
-    body: (
-      <p>
-        Questions about these Terms? Reach us at{' '}
-        <a href="mailto:legal@inverge.africa">legal@inverge.africa</a> or through our{' '}
-        <Link href="/contact">contact page</Link>.
-      </p>
-    ),
+    heading: "Risk and final legal terms",
+    paragraphs: [
+      "Crowdfunding involves delivery, timing, fraud, technical, payment, regulatory, and currency risks. Escrow and milestones can reduce or govern some risks but cannot eliminate them.",
+      "Limitations of liability, warranties, indemnities, governing law, complaints, dispute resolution, amendment rights, termination effects, and consumer-law protections require legal drafting and are intentionally not invented in this preview.",
+      "Questions about this draft can be sent to hello@inverge.africa. Do not send passwords, private keys, recovery phrases, or identity documents by email.",
+    ],
   },
 ];
 
 export default function TermsPage() {
   return (
-    <>
+    <main>
       <PageHeader
         eyebrow="Legal"
-        title="Terms of Service"
-        lede="The agreement between you and Inverge: how backing, milestone funding, refunds, and builder obligations work."
-        meta={`Last updated ${UPDATED}`}
+        title="Terms preview"
+        description="A plain-language preview of the intended rules for ideas, curated campaigns, contributions, milestones, and refunds."
+        note="Pre-launch draft · Not yet in force · Nigerian legal review required"
       />
-      <LegalDoc sections={sections} />
-    </>
+      <LegalDocument sections={sections} />
+    </main>
   );
 }

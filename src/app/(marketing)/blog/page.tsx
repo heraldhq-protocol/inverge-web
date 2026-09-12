@@ -1,110 +1,69 @@
-import React from 'react';
-import { pageMetadata } from '@/lib/metadata';
-import Link from 'next/link';
-import { PageHeader } from '@/components/marketing/page-header';
-import { Container } from '@/components/ui/container';
-import { POSTS, type Post } from '@/lib/content/posts';
+import { ArrowRight } from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-export const metadata = pageMetadata({
-  title: 'Blog',
+import { Container } from "@/features/marketing/components/container";
+import { JournalCover } from "@/features/marketing/components/journal-cover";
+import { PageHeader } from "@/features/marketing/components/page-header";
+import { journalEntries } from "@/features/marketing/content/editorial";
+
+export const metadata: Metadata = {
+  title: "Journal — Inverge",
   description:
-    'Product thinking, builder stories, and insights on backing early-stage builders across Africa.',
-  path: '/blog',
-});
-
-function CategoryTag({ children }: { children: React.ReactNode }) {
-  return (
-    <span className="inline-flex items-center rounded-full bg-accent-50 px-2.5 py-1 text-xs font-semibold uppercase tracking-wide text-accent-700">
-      {children}
-    </span>
-  );
-}
-
-function PostMeta({ post }: { post: Post }) {
-  return (
-    <p className="text-xs text-ink-muted">
-      <time dateTime={post.date}>{post.dateLabel}</time>
-      <span aria-hidden="true"> · </span>
-      {post.readingTime}
-    </p>
-  );
-}
+    "Notes on idea validation, accountable crowdfunding, milestone delivery, and backing African builders.",
+};
 
 export default function BlogPage() {
-  const [featured, ...rest] = POSTS;
-
   return (
-    <>
+    <main>
       <PageHeader
-        eyebrow="Blog"
-        title="Notes from the build"
-        lede="Product thinking, builder stories, and what we’re learning about backing early-stage builders across Africa."
+        eyebrow="INVERGE JOURNAL"
+        title="Thinking clearly about trust and funding."
+        description="Product notes and practical perspectives from the work of building a more accountable path for African ideas."
       />
-
-      <Container className="pb-16 md:pb-24">
-        {/* Featured post */}
-        <Link
-          href={`/blog/${featured.slug}`}
-          className="group block overflow-hidden rounded-3xl border border-border bg-surface shadow-lift transition-shadow hover:shadow-lift-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
-          data-reveal
-        >
-          <div className="grid grid-cols-1 lg:grid-cols-2">
-            <div
-              aria-hidden="true"
-              className="relative min-h-[200px] bg-gradient-to-br from-accent-500 to-forest lg:min-h-[340px]"
+      <Container className="py-12 sm:py-16">
+        <div className="grid gap-6 md:grid-cols-2">
+          {journalEntries.map((entry) => (
+            <Link
+              key={entry.slug}
+              href={`/blog/${entry.slug}`}
+              className="group flex flex-col justify-between rounded-2xl border border-border bg-surface p-4 transition-colors duration-200 hover:border-brand/40 sm:p-5"
             >
-              <span className="absolute bottom-4 left-5 font-display text-sm font-semibold uppercase tracking-widest text-white/80">
-                Featured
-              </span>
-            </div>
-            <div className="flex flex-col gap-4 p-6 sm:p-8 lg:p-10">
-              <CategoryTag>{featured.category}</CategoryTag>
-              <h2 className="font-display text-2xl font-bold tracking-tight text-ink text-balance group-hover:text-accent-700 sm:text-3xl">
-                {featured.title}
-              </h2>
-              <p className="leading-relaxed text-ink-muted text-pretty">{featured.excerpt}</p>
-              <div className="mt-auto flex items-center justify-between pt-2">
-                <PostMeta post={featured} />
-                <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-accent-700">
-                  Read
-                  <span aria-hidden="true" className="transition-transform group-hover:translate-x-1">
-                    →
-                  </span>
+              <div>
+                {entry.cover ? (
+                  <JournalCover
+                    cover={entry.cover}
+                    title={entry.title}
+                    size="compact"
+                  />
+                ) : null}
+                <div className="mt-4 flex items-center gap-2">
+                  <span className="h-0.5 w-4 bg-brand" aria-hidden="true" />
+                  <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand">
+                    Product note
+                  </p>
+                </div>
+                <h2 className="mt-2 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-brand-strong sm:text-xl">
+                  {entry.title}
+                </h2>
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted">
+                  {entry.summary}
+                </p>
+              </div>
+              <div className="mt-6 flex items-center justify-between border-t border-border/60 pt-3 text-xs">
+                <span className="text-muted">{entry.readTime}</span>
+                <span className="inline-flex items-center gap-1.5 font-semibold text-brand-strong group-hover:text-brand">
+                  <span>Read entry</span>
+                  <ArrowRight
+                    className="size-3.5 transition-transform duration-200 group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
                 </span>
               </div>
-            </div>
-          </div>
-        </Link>
-
-        {/* Grid of remaining posts */}
-        <ul className="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3" data-stagger>
-          {rest.map((post) => (
-            <li key={post.slug}>
-              <Link
-                href={`/blog/${post.slug}`}
-                className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-shadow hover:shadow-lift focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent-500 focus-visible:ring-offset-2"
-              >
-                <div
-                  aria-hidden="true"
-                  className="h-32 bg-gradient-to-br from-accent-100 to-accent-500/40"
-                />
-                <div className="flex flex-1 flex-col gap-3 p-5">
-                  <CategoryTag>{post.category}</CategoryTag>
-                  <h3 className="font-display text-lg font-semibold text-ink text-balance group-hover:text-accent-700">
-                    {post.title}
-                  </h3>
-                  <p className="text-sm leading-relaxed text-ink-muted line-clamp-3">
-                    {post.excerpt}
-                  </p>
-                  <div className="mt-auto pt-2">
-                    <PostMeta post={post} />
-                  </div>
-                </div>
-              </Link>
-            </li>
+            </Link>
           ))}
-        </ul>
+        </div>
       </Container>
-    </>
+    </main>
   );
 }

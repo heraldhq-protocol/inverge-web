@@ -1,229 +1,111 @@
-import React from 'react';
-import { pageMetadata } from '@/lib/metadata';
-import Link from 'next/link';
-import { PageHeader } from '@/components/marketing/page-header';
-import { LegalDoc, type LegalSection } from '@/components/marketing/legal-doc';
+import type { Metadata } from "next";
 
-export const metadata = pageMetadata({
-  title: 'Privacy Policy',
-  description:
-    'How Inverge collects, uses, and protects your personal information, and the rights you have over it.',
-  path: '/privacy',
-});
+import {
+  LegalDocument,
+  type LegalSection,
+} from "@/features/marketing/components/legal-document";
+import { PageHeader } from "@/features/marketing/components/page-header";
 
-const UPDATED = '29 July 2026';
+export const metadata: Metadata = {
+  title: "Privacy notice — Inverge",
+  description: "The pre-launch draft privacy notice for Inverge.",
+};
 
 const sections: LegalSection[] = [
   {
-    id: 'intro',
-    heading: 'Introduction',
-    body: (
-      <>
-        <p>
-          This Privacy Policy explains how Inverge collects, uses, shares, and protects your
-          personal information when you use our website, applications, and services (the “Platform”).
-          It applies to backers, builders, and visitors.
-        </p>
-        <p>
-          We aim to collect only what we need to run a trustworthy platform, to be clear about why,
-          and to give you real control. If anything here is unclear, please{' '}
-          <Link href="/contact">contact us</Link>.
-        </p>
-      </>
-    ),
+    heading: "Status and scope",
+    paragraphs: [
+      "This page is a pre-launch working draft, provided so prospective users can see the intended privacy posture while Inverge is being built. It is not the final privacy notice and must be reviewed by Nigerian counsel before accounts or live financial services launch.",
+      "The final notice will identify the legal entity responsible for personal data, its registered contact details, launch jurisdictions, service providers, lawful bases, and effective date.",
+    ],
   },
   {
-    id: 'collect',
-    heading: 'Information we collect',
-    body: (
-      <>
-        <ul>
-          <li>
-            <strong>Account information</strong>:your name, email address, and the details you add
-            to your profile.
-          </li>
-          <li>
-            <strong>Identity and business verification</strong>:where you raise funds as a builder,
-            information needed to confirm your identity and business, collected through our
-            verification partners (for example, a government ID and a selfie check).
-          </li>
-          <li>
-            <strong>Activity on the Platform</strong>:the ideas you publish, back, or follow, the
-            feedback you leave, and your contribution and milestone history.
-          </li>
-          <li>
-            <strong>Payment information</strong>:the details needed to collect, hold, and return
-            funds, handled through our payment and escrow partners.
-          </li>
-          <li>
-            <strong>Technical information</strong>:device and browser data, approximate location,
-            and how you interact with the Platform, collected to keep it secure and working well.
-          </li>
-        </ul>
-      </>
-    ),
+    heading: "Information we expect to process",
+    paragraphs: [
+      "The information needed will depend on how a person uses Inverge. Planned categories include:",
+    ],
+    bullets: [
+      "Account and contact details such as name, email address, and authentication identifiers.",
+      "Profile, idea, campaign, reward, feedback, discussion, and support content a user chooses to submit.",
+      "Payment, contribution, refund, and payout references needed to provide receipts and reconcile records.",
+      "Wallet addresses, transaction signatures, and public network activity connected with Inverge transactions.",
+      "Identity-verification provider references, status changes, and timestamps. Inverge must not store raw identity documents on its infrastructure.",
+      "Security, device, diagnostic, consent, and support records needed to operate and protect the service.",
+    ],
   },
   {
-    id: 'use',
-    heading: 'How we use your information',
-    body: (
-      <>
-        <p>We use your information to:</p>
-        <ul>
-          <li>Operate the Platform: accounts, publishing, backing, escrow, and milestones;</li>
-          <li>Verify identity and prevent fraud, money laundering, and abuse;</li>
-          <li>Personalise your discovery feed and show you relevant ideas;</li>
-          <li>Communicate with you about your account, campaigns you back, and important changes;</li>
-          <li>Meet our legal, tax, and regulatory obligations;</li>
-          <li>Improve the Platform and develop new features.</li>
-        </ul>
-      </>
-    ),
+    heading: "Why information is used",
+    paragraphs: [
+      "The final product is expected to use personal data only for stated, necessary purposes, including:",
+    ],
+    bullets: [
+      "Providing accounts, idea validation, campaigns, contributions, milestone review, refunds, and support.",
+      "Meeting identity, fraud-prevention, sanctions, financial-crime, tax, accounting, and other legal obligations that apply at launch.",
+      "Protecting users and the platform, investigating abuse, enforcing platform rules, and preserving audit records.",
+      "Sending service messages and, only with an appropriate choice or lawful basis, optional product or marketing updates.",
+      "Understanding product reliability and usage with data-minimising analytics selected before launch.",
+    ],
   },
   {
-    id: 'verification',
-    heading: 'Identity verification',
-    body: (
-      <p>
-        To keep the Platform safe and to meet our obligations, builders raising funds go through
-        identity verification, and business verification where relevant, handled by trusted verification
-        partners. These partners process the documents and biometric checks you provide, and share
-        the result with us so we can decide whether to enable fund-raising. They handle that data
-        under their own privacy terms and their agreements with us, and only for verification.
-      </p>
-    ),
+    heading: "Identity verification",
+    paragraphs: [
+      "A selected verification provider will collect and assess identity information under its own privacy notice. Inverge will receive only the provider reference, decision or status, and audit timestamps needed for platform workflows.",
+      "The verification screen will identify the provider and link its terms before a user submits information. Provider selection remains an open implementation decision.",
+    ],
   },
   {
-    id: 'share',
-    heading: 'How we share information',
-    body: (
-      <>
-        <p>We do not sell your personal information. We share it only:</p>
-        <ul>
-          <li>
-            <strong>With service providers</strong>:verification, payment, escrow, hosting, and
-            analytics partners who process data on our behalf under contract;
-          </li>
-          <li>
-            <strong>Between backers and builders</strong>:limited information needed for a campaign
-            to work, such as a builder’s public profile and a backer’s support of a campaign;
-          </li>
-          <li>
-            <strong>For legal reasons</strong>:where we must comply with the law, respond to a
-            valid legal request, or protect the rights and safety of our users and the Platform;
-          </li>
-          <li>
-            <strong>In a business transfer</strong>:if Inverge is involved in a merger or
-            acquisition, with continued protection under this Policy.
-          </li>
-        </ul>
-      </>
-    ),
+    heading: "Public and on-chain information",
+    paragraphs: [
+      "Idea and campaign content deliberately published to a public page can be seen, copied, or indexed by others. Users should not include private identity, financial, or contact information in public content.",
+      "Supported contribution, escrow, release, and refund activity will create records on a public blockchain. Blockchain records can be permanent and may not be erasable by Inverge. The product will explain this before a wallet-linked action and keep unnecessary personal data off-chain.",
+    ],
   },
   {
-    id: 'retention',
-    heading: 'How long we keep it',
-    body: (
-      <p>
-        We keep your information for as long as your account is active and as long as we need it for
-        the purposes in this Policy, including to honour milestone and refund obligations and to
-        meet legal, tax, and anti-fraud requirements. When we no longer need it, we delete or
-        anonymise it.
-      </p>
-    ),
+    heading: "Sharing and service providers",
+    paragraphs: [
+      "Inverge expects to use selected providers for hosting, authentication, identity checks, communications, payments, fiat conversion, wallet infrastructure, security, analytics, and support. The final notice will name or clearly categorise active providers and explain relevant international transfers.",
+      "Personal data will not be sold. Information may be disclosed when required by law, to protect rights and safety, in a properly governed corporate transaction, or to processors acting under contract and instruction.",
+    ],
   },
   {
-    id: 'rights',
-    heading: 'Your rights',
-    body: (
-      <>
-        <p>
-          Subject to the applicable law, including the Nigeria Data Protection Act, you
-          may:
-        </p>
-        <ul>
-          <li>Access the personal information we hold about you;</li>
-          <li>Ask us to correct information that is wrong or incomplete;</li>
-          <li>Ask us to delete information, where we are not required to keep it;</li>
-          <li>Object to or restrict certain uses, and withdraw consent where we rely on it;</li>
-          <li>Ask for a copy of certain information in a portable format.</li>
-        </ul>
-        <p>
-          To exercise any of these, contact us using the details below. We will respond within the
-          time the law requires.
-        </p>
-      </>
-    ),
+    heading: "Retention and security",
+    paragraphs: [
+      "Retention periods will be based on the purpose of processing, user choices, financial and compliance obligations, disputes, security needs, and applicable law. The final schedule will distinguish account content, support records, KYC status records, payment records, and backups.",
+      "Inverge will use proportionate technical and organisational safeguards, including access controls, encryption where appropriate, secret management, monitoring, and incident response. No service can promise absolute security.",
+    ],
   },
   {
-    id: 'security',
-    heading: 'How we protect your information',
-    body: (
-      <p>
-        We use technical and organisational measures like encryption in transit, access controls, and
-        regular review to protect your information. No system is perfectly secure, so we also ask
-        you to protect your own account by keeping your sign-in details private and telling us
-        promptly if something looks wrong.
-      </p>
-    ),
+    heading: "Your choices and rights",
+    paragraphs: [
+      "Subject to applicable law, people may have rights to be informed, access personal data, correct it, object to or restrict processing, request deletion, receive portable data, withdraw consent, seek human review of relevant automated decisions, and complain to the Nigeria Data Protection Commission or another competent authority.",
+      "Some requests may be limited by legal retention duties, the rights of others, fraud prevention, or the permanent nature of public blockchain records. The final notice will provide a verified request process and expected response times.",
+    ],
   },
   {
-    id: 'cookies',
-    heading: 'Cookies and similar technologies',
-    body: (
-      <p>
-        We use cookies and similar technologies to keep you signed in, remember your preferences,
-        keep the Platform secure, and understand how it is used so we can improve it. You can control
-        cookies through your browser settings; turning some off may affect how parts of the Platform
-        work.
-      </p>
-    ),
+    heading: "Children",
+    paragraphs: [
+      "The launch service is intended for people aged 18 or older. Inverge does not intend to knowingly open accounts for children. The final policy will document the deletion and escalation process if child data is identified.",
+    ],
   },
   {
-    id: 'children',
-    heading: 'Children',
-    body: (
-      <p>
-        Inverge is not intended for anyone under 18, and we do not knowingly collect information from
-        children. If you believe a child has given us personal information, please contact us and we
-        will remove it.
-      </p>
-    ),
-  },
-  {
-    id: 'changes',
-    heading: 'Changes to this policy',
-    body: (
-      <p>
-        We may update this Policy as the Platform and the law evolve. If we make a material change,
-        we will give reasonable notice, for example by posting the updated Policy here and updating
-        the date above.
-      </p>
-    ),
-  },
-  {
-    id: 'contact',
-    heading: 'Contact us',
-    body: (
-      <p>
-        For any privacy question, or to exercise your rights, email{' '}
-        <a href="mailto:privacy@inverge.africa">privacy@inverge.africa</a> or use our{' '}
-        <Link href="/contact">contact page</Link>. We take every request seriously.
-      </p>
-    ),
+    heading: "Questions and changes",
+    paragraphs: [
+      "Material changes will be dated and communicated appropriately before they take effect. The final notice will not apply retroactively in a way that removes rights without a lawful basis.",
+      "For questions about this draft, email hello@inverge.africa. Do not send identity documents, passwords, private keys, or wallet recovery phrases by email.",
+    ],
   },
 ];
 
 export default function PrivacyPage() {
   return (
-    <>
+    <main>
       <PageHeader
         eyebrow="Legal"
-        title="Privacy Policy"
-        lede="What we collect, why we collect it, who we share it with, and the control you have over your information."
-        meta={`Last updated ${UPDATED}`}
+        title="Privacy notice"
+        description="A transparent preview of how Inverge intends to handle personal information, public content, provider checks, and on-chain records."
+        note="Pre-launch draft · Not yet in force · Nigerian legal review required"
       />
-      <LegalDoc sections={sections} />
-    </>
+      <LegalDocument sections={sections} />
+    </main>
   );
 }

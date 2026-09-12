@@ -1,27 +1,177 @@
-import React from 'react';
-import { Hero } from '@/components/marketing/hero';
-import { BackedBy } from '@/components/marketing/backed-by';
-import { HowItWorks } from '@/components/marketing/how-it-works';
-import { Momentum } from '@/components/marketing/momentum';
-import { StatStrip } from '@/components/marketing/stat-strip';
-import { TrustRow } from '@/components/marketing/trust-row';
+import {
+  ArrowRight,
+  CheckCircle2,
+  Compass,
+  FileCheck2,
+  Layers,
+} from "lucide-react";
+import type { Metadata } from "next";
+import Link from "next/link";
 
-/**
- * Revalidate every five minutes. The landing page is otherwise static, and the one live section on it
- * (Momentum) is an anonymous public read — fresh enough that the ideas shown still exist when a visitor
- * clicks through, cheap enough that the page is not rebuilt per visit.
- */
-export const revalidate = 300;
+import { ButtonLink } from "@/features/marketing/components/button-link";
+import { Container } from "@/features/marketing/components/container";
+import { HomeHero } from "@/features/marketing/components/home-hero";
+import { HowItWorks } from "@/features/marketing/components/how-it-works";
+import { StatsSection } from "@/features/marketing/components/stats-section";
 
-export default function MarketingPage() {
+export const metadata: Metadata = {
+  title: "Inverge — Back African builders with accountability",
+  description:
+    "Validate promising African ideas, fund clear milestones, and follow delivery through verifiable campaign records.",
+};
+
+const trustPoints = [
+  {
+    step: "01",
+    title: "Signal before funding",
+    body: "Idea support and pre-pledges are public validation signals, not paid endorsements or money collected in disguise.",
+    icon: Compass,
+  },
+  {
+    step: "02",
+    title: "Promises stay visible",
+    body: "Campaign milestones and evidence definitions are fixed when a campaign is published, so the standard cannot quietly move later.",
+    icon: FileCheck2,
+  },
+  {
+    step: "03",
+    title: "Money moves in stages",
+    body: "A disclosed working-capital tranche starts delivery; later tranches depend on milestone review instead of releasing the full raise at once.",
+    icon: Layers,
+  },
+  {
+    step: "04",
+    title: "Outcomes can be checked",
+    body: "Contribution, release, and refund records are designed to be verifiable without turning the default experience into a crypto dashboard.",
+    icon: CheckCircle2,
+  },
+] as const;
+
+export default function HomePage() {
   return (
-    <>
-      <Hero />
-      <BackedBy />
+    <main>
+      <HomeHero />
       <HowItWorks />
-      <Momentum />
-      <StatStrip />
-      <TrustRow />
-    </>
+      <StatsSection />
+
+      {/* About & Mission Spotlight Section */}
+      <section className="border-b border-border bg-surface py-20 sm:py-28">
+        <Container>
+          {/* Mission Narrative Row */}
+          <div className="grid items-start gap-8 lg:grid-cols-[1fr_1.2fr] lg:gap-16">
+            <div>
+              <div className="flex items-center gap-3">
+                <span className="h-0.5 w-6 bg-brand" aria-hidden="true" />
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                  About Inverge
+                </p>
+              </div>
+              <h2 className="mt-4 text-balance text-3xl font-bold tracking-[-0.04em] text-ink sm:text-4xl lg:text-5xl">
+                The funding gap is also a trust gap.
+              </h2>
+            </div>
+            <div className="space-y-5 text-base leading-relaxed text-muted sm:text-lg">
+              <p>
+                African builders often struggle to raise initial capital to
+                prove their ideas, facing geographic lockouts from mainstream
+                platforms. At the same time, backers—especially across the
+                diaspora—hesitate because traditional crowdfunding hands 100% of
+                the money over on day one, destroying accountability if work
+                stalls.
+              </p>
+              <p>
+                Inverge fixes that dynamic. Raised funds sit securely in Solana
+                smart contract escrow and unlock in milestone tranches approved
+                by backers. If delivery stops, eligible funds remain claimable
+                as a refund.
+              </p>
+              <div className="pt-2">
+                <Link
+                  href="/about"
+                  className="group inline-flex items-center gap-2 text-sm font-semibold text-brand-strong transition-colors hover:text-brand"
+                >
+                  <span>Learn more about our mission and principles</span>
+                  <ArrowRight
+                    className="size-4 transition-transform duration-200 group-hover:translate-x-1"
+                    aria-hidden="true"
+                  />
+                </Link>
+              </div>
+            </div>
+          </div>
+
+          {/* Four Controls Cards Grid */}
+          <div className="mt-16 sm:mt-20">
+            <div className="border-b border-border pb-6">
+              <div className="flex items-center gap-3">
+                <span className="h-0.5 w-6 bg-brand" aria-hidden="true" />
+                <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
+                  Accountability by design
+                </p>
+              </div>
+              <h3 className="mt-3 text-2xl font-bold tracking-tight text-ink sm:text-3xl">
+                Four controls. One clear record.
+              </h3>
+            </div>
+
+            <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+              {trustPoints.map(({ step, title, body, icon: Icon }) => (
+                <li
+                  key={title}
+                  className="group relative flex flex-col justify-between rounded-2xl border border-border bg-canvas p-6 transition-colors duration-200 hover:border-brand/40 hover:bg-surface"
+                >
+                  <div>
+                    <div className="flex items-center justify-between gap-4">
+                      <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand-strong">
+                        <Icon className="size-5" aria-hidden="true" />
+                      </span>
+                      <span className="font-mono text-xs font-semibold text-muted">
+                        {step}
+                      </span>
+                    </div>
+                    <h4 className="mt-6 text-xl font-bold tracking-[-0.025em] text-ink transition-colors group-hover:text-brand-strong">
+                      {title}
+                    </h4>
+                    <p className="mt-3 text-sm leading-relaxed text-muted">
+                      {body}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </Container>
+      </section>
+
+      {/* CTA Section */}
+      <section className="bg-canvas py-20 sm:py-24">
+        <Container>
+          <div className="rounded-[2rem] bg-contrast px-7 py-12 text-center text-white sm:px-12 sm:py-16">
+            <div className="flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60">
+              <span
+                className="size-1.5 rounded-full bg-brand"
+                aria-hidden="true"
+              />
+              <span>Building in the open</span>
+            </div>
+            <h2 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-bold tracking-[-0.04em] sm:text-5xl">
+              Interested in the next stage of Inverge?
+            </h2>
+            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
+              Whether you are building, backing, partnering, or testing the
+              pilot, we are open to feedback and conversations.
+            </p>
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+              <ButtonLink href="/contact" variant="light">
+                Talk to the Inverge team
+              </ButtonLink>
+              <ButtonLink href="/guides" variant="outline-light">
+                Explore builder & backer guides
+              </ButtonLink>
+            </div>
+          </div>
+        </Container>
+      </section>
+    </main>
   );
 }

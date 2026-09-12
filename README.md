@@ -1,60 +1,73 @@
-# inverge-web
+# Inverge
 
-Frontend for **Inverge** — milestone-escrowed crowdfunding & idea validation on Solana.
+A fresh Next.js and Tailwind CSS implementation of Inverge: milestone-escrowed
+crowdfunding and idea validation for African builders.
 
-Phase 0 (idea validation): browse ideas, publish an idea, and support / pre-pledge / leave
-feedback against the live `inverge-api`. Campaigns and the transparency dashboard come later.
+## Prerequisites
 
-## Stack
+- Node.js 24.21.0 (see `.nvmrc`)
+- pnpm 12.3.4 (pinned by `package.json#packageManager`)
 
-- **Next.js 16** (App Router, React 19) + **Tailwind v4**
-- **Privy** embedded Solana wallets — confined to a single provider wrapper (`components/providers/providers.tsx`) + `lib/auth/use-auth.ts`, so the wallet vendor stays swappable
-- **openapi-fetch** typed client generated from `inverge-api`'s OpenAPI spec
-- Fonts: Geist / Geist Mono via the `geist` package (bundled, offline-safe)
-
-## Getting started
+## Local development
 
 ```bash
-pnpm install
-cp .env.local.example .env.local      # set NEXT_PUBLIC_API_URL, optional NEXT_PUBLIC_PRIVY_APP_ID
-
-# 1. Run inverge-api first (defaults to :3000)
-# 2. Regenerate the typed client whenever the API changes:
-pnpm gen:api                          # openapi.json -> src/lib/api/schema.d.ts
-
-pnpm dev                              # http://localhost:3001
+pnpm install --frozen-lockfile
+pnpm dev
 ```
 
-> The API runs on `:3000`, so the web app runs on **`:3001`** to avoid a clash.
+Open `http://localhost:3000`.
 
-## Auth
+No application-specific environment variables are required by the scaffold. Add
+future variable names and safe example values to `.env.example`; keep real values
+in an ignored `.env.local` file.
 
-Sign-in uses Privy. Set `NEXT_PUBLIC_PRIVY_APP_ID` to enable it; without it the app still
-runs and public browsing works, but auth-gated actions (support, pre-pledge, feedback,
-publish) are disabled. On login, `SessionSync` exchanges the Privy token for an Inverge
-session (`POST /auth/session`) and stores it for the typed client's auth middleware.
-
-## Regenerating the API client
-
-The typed client is generated from the API's OpenAPI document:
+## Quality checks
 
 ```bash
-# from inverge-api, export the spec to inverge-web/openapi.json, then:
-pnpm gen:api
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm build
 ```
 
-Request paths, params and bodies are fully typed. Response bodies are declared in
-`src/lib/api/types.ts` until the API adds `@ApiOkResponse` response schemas.
+Run the full sequence with `pnpm check`. Use `pnpm format`, `pnpm lint:fix`, and
+`pnpm test:watch` while iterating.
 
-## Structure
+## Source structure
 
+```text
+src/
+  app/
+    (marketing)/       # Public marketing routes and route metadata
+  features/marketing/  # Shared marketing UI and editorial content
+  lib/env/              # Environment schema and server-only validated access
+public/images/          # Reviewed static marketing imagery
 ```
-src/app/
-  (validate)/ideas/         # list, [id] detail, new — live against the API
-  (campaign)/campaigns/     # placeholder (Phase 2)
-  (admin)/review/           # placeholder (Phase 1)
-src/components/
-  providers/  auth/  ideas/  ui/   # Privy confinement, login, actions, Amount/TxLink
-src/lib/
-  api/ (client, types, schema)  auth/ (use-auth)  env.ts
-```
+
+The public route set is `/`, `/about`, `/blog`, `/blog/[slug]`, `/guides`,
+`/guides/[slug]`, `/help`, `/careers`, `/contact`, `/privacy`, and `/terms`.
+Product, authentication, provider, API, and E2E directories are added only when
+their implementation begins, following `docs/ARCHITECTURE.md`.
+
+## Documentation
+
+- [`AGENTS.md`](./AGENTS.md): required starting point for coding agents.
+- [`CLAUDE.md`](./CLAUDE.md): loads the same instructions in Claude Code.
+- [`docs/Inverge_PRD_SRS_v1.2.md`](./docs/Inverge_PRD_SRS_v1.2.md): authoritative
+  PRD and SRS.
+- [`docs/PROJECT_BRIEF.md`](./docs/PROJECT_BRIEF.md): implementation scope and
+  product invariants.
+- [`docs/BRAND_SYSTEM.md`](./docs/BRAND_SYSTEM.md): product UI and content system.
+- [`docs/ARCHITECTURE.md`](./docs/ARCHITECTURE.md): intended structure and module
+  boundaries.
+- [`docs/ENGINEERING_STANDARDS.md`](./docs/ENGINEERING_STANDARDS.md): coding,
+  styling, testing, security, and delivery standards.
+- [`docs/DECISIONS.md`](./docs/DECISIONS.md): durable technical decisions.
+
+## Status
+
+The clean application foundation and public marketing website are implemented.
+Product screens, backend endpoints, authentication, wallet, database, and
+provider integrations have not been implemented. Privacy and terms pages are
+pre-launch drafts and require Nigerian legal review before they become binding.
