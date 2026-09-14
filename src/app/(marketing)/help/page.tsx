@@ -63,7 +63,7 @@ export default function HelpPage() {
         description="These answers describe the approved launch model. Exact fees, thresholds, supported assets, and partners will be shown from authoritative configuration when the product is live."
       />
       <Container className="py-12 sm:py-16">
-        <div className="mx-auto max-w-4xl divide-y divide-border border-y border-border">
+        <div className="mx-auto max-w-4xl divide-y divide-border">
           {faqs.map(([question, answer]) => (
             <details key={question} className="group py-1">
               <summary className="flex min-h-16 cursor-pointer list-none items-center justify-between gap-6 py-4 text-lg font-bold text-ink transition-colors hover:text-brand [&::-webkit-details-marker]:hidden">
