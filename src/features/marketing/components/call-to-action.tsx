@@ -19,7 +19,7 @@ export function CallToAction({ title, body, label, href }: CallToActionProps) {
           <p className="mx-auto mt-4 max-w-xl leading-7 text-white/68">
             {body}
           </p>
-          <div className="mt-8">
+          <div className="mx-auto mt-8 flex w-full max-w-xs justify-center sm:max-w-none">
             <ButtonLink href={href}>{label}</ButtonLink>
           </div>
         </div>

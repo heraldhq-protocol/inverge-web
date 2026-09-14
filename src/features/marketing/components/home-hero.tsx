@@ -23,7 +23,7 @@ export function HomeHero() {
               raising and backers can see what happens after funding.
             </p>
 
-            <div className="flex flex-wrap items-center gap-4 pt-1">
+            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-4">
               <ButtonLink href="#how-it-works">
                 <span>See how it works</span>
                 <ArrowRight className="ml-2 size-4" aria-hidden="true" />

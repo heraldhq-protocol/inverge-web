@@ -107,7 +107,7 @@ export function ContactForm() {
 
       <button
         type="submit"
-        className="min-h-11 self-start rounded-md bg-brand-strong px-6 text-sm font-semibold text-white transition-colors hover:bg-contrast focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+        className="min-h-11 w-full rounded-md bg-brand-strong px-6 text-sm font-semibold text-white transition-colors hover:bg-contrast focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand sm:w-auto"
       >
         Continue in email
       </button>

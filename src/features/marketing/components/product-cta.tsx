@@ -17,18 +17,18 @@ export function ProductCta({ compact = false }: { compact?: boolean }) {
             </p>
           </div>
           <div
-            className="flex flex-wrap items-center justify-center gap-4"
+            className="mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4"
             aria-label="Product actions coming soon"
           >
             <span
               aria-disabled="true"
-              className="inline-flex min-h-12 cursor-not-allowed items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white opacity-75"
+              className="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white opacity-75 sm:w-auto"
             >
               Explore ideas
             </span>
             <span
               aria-disabled="true"
-              className="inline-flex min-h-12 cursor-not-allowed items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white/75"
+              className="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white/75 sm:w-auto"
             >
               Publish an idea
             </span>

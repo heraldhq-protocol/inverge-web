@@ -27,12 +27,14 @@ type JournalCoverProps = {
   cover: NonNullable<EditorialEntry["cover"]>;
   title: string;
   size?: "compact" | "header";
+  className?: string;
 };
 
 export function JournalCover({
   cover,
   title,
   size = "compact",
+  className = "",
 }: JournalCoverProps) {
   const design = coverLabels[cover];
   const isHeader = size === "header";
@@ -44,8 +46,8 @@ export function JournalCover({
       className={`relative overflow-hidden bg-contrast text-white ${
         isHeader
           ? "aspect-[21/9] sm:aspect-[3/1] rounded-2xl p-6 sm:p-8"
-          : "aspect-[2.2/1] rounded-xl p-4 sm:p-5"
-      }`}
+          : "aspect-[2.2/1] w-full p-5 sm:p-6"
+      } ${className}`}
     >
       {/* Subtle decorative geometry without oversized shapes */}
       <div

@@ -26,7 +26,7 @@ export default function GuidesPage() {
         description="Short, practical walkthroughs, whether you are thinking about backing your first campaign or preparing an idea to validate."
       />
 
-      <Container className="pb-16 md:pb-24">
+      <Container className="py-12 sm:py-16 md:pb-24">
         <ul className="grid grid-cols-1 gap-6 sm:grid-cols-2">
           {guides.map((guide) => (
             <li key={guide.slug}>

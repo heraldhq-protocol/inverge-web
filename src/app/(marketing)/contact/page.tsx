@@ -38,7 +38,7 @@ export default function ContactPage() {
         description="Whether you are preparing an idea, thinking about backing, or writing about what we are building, we would like to hear from you."
       />
 
-      <Container className="pb-16 md:pb-24">
+      <Container className="py-12 sm:py-16 md:pb-24">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_360px] lg:gap-14">
           <section className="rounded-xl border border-border bg-surface p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-ink sm:text-[22px]">

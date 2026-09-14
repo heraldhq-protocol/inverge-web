@@ -41,7 +41,7 @@ export default function CareersPage() {
               matters to you.
             </p>
             <a
-              className="mt-7 inline-flex min-h-12 items-center rounded-full bg-brand px-6 text-sm font-semibold text-white"
+              className="mt-7 inline-flex min-h-12 w-full items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white sm:w-auto"
               href="mailto:hello@inverge.africa?subject=Future%20work%20with%20Inverge"
             >
               Introduce yourself

@@ -100,9 +100,9 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Four Controls Cards Grid */}
+          {/* Four Controls: Editorial Top-Border Grid */}
           <div className="mt-16 sm:mt-20">
-            <div className="border-b border-border pb-6">
+            <div className="max-w-2xl">
               <div className="flex items-center gap-3">
                 <span className="h-0.5 w-6 bg-brand" aria-hidden="true" />
                 <p className="text-xs font-bold uppercase tracking-[0.2em] text-brand">
@@ -114,28 +114,26 @@ export default function HomePage() {
               </h3>
             </div>
 
-            <ol className="mt-8 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+            <ol className="mt-10 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
               {trustPoints.map(({ step, title, body, icon: Icon }) => (
                 <li
                   key={title}
-                  className="group relative flex flex-col justify-between rounded-2xl border border-border bg-canvas p-6 transition-colors duration-200 hover:border-brand/40 hover:bg-surface"
+                  className="group relative border-t-2 border-border/80 pt-6 transition-colors duration-200 hover:border-brand"
                 >
-                  <div>
-                    <div className="flex items-center justify-between gap-4">
-                      <span className="grid size-11 place-items-center rounded-xl bg-brand/10 text-brand-strong">
-                        <Icon className="size-5" aria-hidden="true" />
-                      </span>
-                      <span className="font-mono text-xs font-semibold text-muted">
-                        {step}
-                      </span>
-                    </div>
-                    <h4 className="mt-6 text-xl font-bold tracking-[-0.025em] text-ink transition-colors group-hover:text-brand-strong">
-                      {title}
-                    </h4>
-                    <p className="mt-3 text-sm leading-relaxed text-muted">
-                      {body}
-                    </p>
+                  <div className="flex items-center justify-between">
+                    <span className="font-mono text-xl font-bold tracking-tight text-brand">
+                      {step}
+                    </span>
+                    <span className="grid size-8 place-items-center rounded-lg bg-brand/10 text-brand-strong transition-colors group-hover:bg-brand group-hover:text-white">
+                      <Icon className="size-4" aria-hidden="true" />
+                    </span>
                   </div>
+                  <h4 className="mt-4 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-brand-strong sm:text-xl">
+                    {title}
+                  </h4>
+                  <p className="mt-2 text-sm leading-relaxed text-muted">
+                    {body}
+                  </p>
                 </li>
               ))}
             </ol>
@@ -161,7 +159,7 @@ export default function HomePage() {
               Whether you are building, backing, partnering, or testing the
               pilot, we are open to feedback and conversations.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4">
               <ButtonLink href="/contact" variant="light">
                 Talk to the Inverge team
               </ButtonLink>

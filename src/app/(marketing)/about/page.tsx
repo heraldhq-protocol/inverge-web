@@ -107,29 +107,29 @@ export default function AboutPage() {
             </h2>
           </div>
 
-          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+          <ol className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4 lg:gap-10">
             {values.map(({ step, title, body, icon: Icon }) => (
-              <div
+              <li
                 key={title}
-                className="flex flex-col rounded-xl border border-border bg-surface p-6 transition-colors duration-200 hover:border-brand/40"
+                className="group relative border-t-2 border-border/80 pt-6 transition-colors duration-200 hover:border-brand"
               >
                 <div className="flex items-center justify-between">
-                  <span className="flex size-10 items-center justify-center rounded-lg bg-brand/10 text-brand-strong">
-                    <Icon className="size-5" aria-hidden="true" />
-                  </span>
-                  <span className="font-mono text-xs font-semibold text-muted">
+                  <span className="font-mono text-xl font-bold tracking-tight text-brand">
                     {step}
                   </span>
+                  <span className="grid size-8 place-items-center rounded-lg bg-brand/10 text-brand-strong transition-colors group-hover:bg-brand group-hover:text-white">
+                    <Icon className="size-4" aria-hidden="true" />
+                  </span>
                 </div>
-                <h3 className="mt-5 text-lg font-bold tracking-tight text-ink">
+                <h3 className="mt-4 text-lg font-bold tracking-tight text-ink transition-colors group-hover:text-brand-strong sm:text-xl">
                   {title}
                 </h3>
                 <p className="mt-2 text-sm leading-relaxed text-muted">
                   {body}
                 </p>
-              </div>
+              </li>
             ))}
-          </div>
+          </ol>
         </Container>
       </section>
 
@@ -175,7 +175,7 @@ export default function AboutPage() {
               Good accountability starts before the first campaign opens. Talk
               to us or explore the guides.
             </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-4">
+            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4">
               <ButtonLink href="/contact" variant="light">
                 Talk to the Inverge team
               </ButtonLink>
