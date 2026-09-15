@@ -4,6 +4,9 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AuthForm } from "@/features/auth/components/auth-form";
 import { AuthPage } from "@/features/auth/components/auth-page";
 import { EmailVerificationForm } from "@/features/auth/components/email-verification-form";
+import { EmailVerificationPage } from "@/features/auth/components/email-verification-page";
+import { ProfileOnboardingForm } from "@/features/auth/components/profile-onboarding-form";
+import { RoleOnboardingForm } from "@/features/auth/components/role-onboarding-form";
 
 const routerPush = vi.hoisted(() => vi.fn());
 
@@ -17,11 +20,11 @@ afterEach(() => {
 });
 
 describe("AuthForm", () => {
-  it("renders the complete account creation form and provider options", () => {
+  it("keeps account creation lean and offers provider options", () => {
     render(<AuthForm mode="sign-up" />);
 
-    expect(screen.getByLabelText("First name")).toBeInTheDocument();
-    expect(screen.getByLabelText("Last name")).toBeInTheDocument();
+    expect(screen.queryByLabelText("First name")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Last name")).not.toBeInTheDocument();
     expect(screen.getByLabelText("Email address")).toBeInTheDocument();
     expect(screen.getByLabelText("Password")).toHaveAttribute(
       "autocomplete",
@@ -137,6 +140,74 @@ describe("EmailVerificationForm", () => {
 
     expect(
       screen.getByText("Enter all six digits from your verification email."),
+    ).toBeInTheDocument();
+  });
+
+  it("continues a completed verification to profile onboarding", () => {
+    render(<EmailVerificationForm mode="sign-up" />);
+
+    fireEvent.paste(screen.getByLabelText("Digit 1 of 6"), {
+      clipboardData: { getData: () => "123456" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "Verify email" }));
+
+    expect(routerPush).toHaveBeenCalledWith("/onboarding/profile");
+  });
+});
+
+describe("EmailVerificationPage", () => {
+  it("does not offer a marketing escape link during verification", () => {
+    render(<EmailVerificationPage mode="sign-in" />);
+
+    expect(
+      screen.queryByRole("link", { name: "How Inverge works" }),
+    ).not.toBeInTheDocument();
+  });
+});
+
+describe("ProfileOnboardingForm", () => {
+  it("collects public profile details and continues to the starting choice", () => {
+    render(<ProfileOnboardingForm />);
+
+    expect(screen.getByLabelText("Display name")).toBeRequired();
+    expect(screen.getByLabelText("Username")).toHaveAttribute(
+      "pattern",
+      "[a-z0-9-]+",
+    );
+    expect(screen.getByLabelText(/Where are you based/)).not.toBeRequired();
+
+    const form = screen
+      .getByRole("button", { name: "Continue" })
+      .closest("form");
+
+    if (!form) {
+      throw new Error("Expected the profile continue button to be in a form.");
+    }
+
+    fireEvent.submit(form);
+
+    expect(routerPush).toHaveBeenCalledWith("/onboarding/role");
+  });
+});
+
+describe("RoleOnboardingForm", () => {
+  it("treats the choice as a starting preference rather than a fixed role", () => {
+    render(<RoleOnboardingForm />);
+
+    expect(
+      screen.getByText(/You are not locked into a role/i),
+    ).toBeInTheDocument();
+    expect(screen.getAllByRole("radio")).toHaveLength(2);
+
+    fireEvent.click(
+      screen.getByRole("radio", { name: /Find ideas worth backing/i }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Continue" }));
+
+    expect(
+      screen.getByText(
+        "Your starting point will be saved when onboarding is connected.",
+      ),
     ).toBeInTheDocument();
   });
 });

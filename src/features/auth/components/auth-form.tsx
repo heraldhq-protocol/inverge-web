@@ -164,43 +164,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
-        {isSignUp ? (
-          <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
-            <div className="space-y-1.5">
-              <label
-                htmlFor="first-name"
-                className="block text-sm font-semibold text-ink"
-              >
-                First name
-              </label>
-              <input
-                id="first-name"
-                name="firstName"
-                required
-                autoComplete="given-name"
-                placeholder="Ada"
-                className={fieldClass}
-              />
-            </div>
-            <div className="space-y-1.5">
-              <label
-                htmlFor="last-name"
-                className="block text-sm font-semibold text-ink"
-              >
-                Last name
-              </label>
-              <input
-                id="last-name"
-                name="lastName"
-                required
-                autoComplete="family-name"
-                placeholder="Okafor"
-                className={fieldClass}
-              />
-            </div>
-          </div>
-        ) : null}
-
         <div className="space-y-1.5">
           <label
             htmlFor="email"

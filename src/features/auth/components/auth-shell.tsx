@@ -12,6 +12,8 @@ type AuthShellProps = {
   description: ReactNode;
   panelTitle: string;
   panelDescription: string;
+  beforeTitle?: ReactNode;
+  headerAction?: ReactNode;
 };
 
 export function AuthShell({
@@ -21,23 +23,33 @@ export function AuthShell({
   description,
   panelTitle,
   panelDescription,
+  beforeTitle,
+  headerAction,
 }: AuthShellProps) {
+  const resolvedHeaderAction =
+    headerAction === undefined ? (
+      <Link
+        href="/#how-it-works"
+        className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-1 text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+      >
+        How Inverge works
+        <ArrowUpRight className="size-4" aria-hidden="true" />
+      </Link>
+    ) : (
+      headerAction
+    );
+
   return (
     <div className="min-h-svh bg-surface lg:h-svh lg:overflow-hidden lg:grid lg:grid-cols-[minmax(0,3fr)_minmax(0,2fr)]">
       <section className="flex min-h-svh min-w-0 flex-col bg-surface lg:h-full lg:min-h-0 lg:overflow-y-auto">
         <header className="flex min-h-16 shrink-0 items-center justify-between gap-5 px-5 sm:px-8 lg:min-h-20 lg:px-12 xl:px-16">
           <BrandMark />
-          <Link
-            href="/#how-it-works"
-            className="inline-flex min-h-11 items-center gap-1.5 rounded-md px-1 text-sm font-medium text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
-          >
-            How Inverge works
-            <ArrowUpRight className="size-4" aria-hidden="true" />
-          </Link>
+          {resolvedHeaderAction}
         </header>
 
         <main className="flex flex-1 justify-center px-5 pt-3 pb-12 sm:px-8 sm:py-8 lg:px-12 lg:py-10 lg:pb-10 xl:px-16">
           <div className="w-full max-w-[35rem] lg:my-auto">
+            {beforeTitle}
             <div className="mb-5 sm:mb-6">
               <h1 className="text-balance text-2xl font-bold tracking-[-0.04em] text-ink sm:text-3xl lg:text-4xl">
                 {title}

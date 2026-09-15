@@ -18,6 +18,7 @@ export function EmailVerificationPage({ mode }: { mode: AuthMode }) {
       }
       panelTitle={content.panelTitle}
       panelDescription={content.panelDescription}
+      headerAction={null}
     >
       <EmailVerificationForm mode={mode} />
     </AuthShell>

@@ -39,7 +39,7 @@ Run the full sequence with `pnpm check`. Use `pnpm format`, `pnpm lint:fix`, and
 ```text
 src/
   app/
-    (auth)/            # Sign-in and account-creation routes
+    (auth)/            # Authentication and account-onboarding routes
     (marketing)/       # Public marketing routes and route metadata
   components/shared/   # Proven cross-feature compositions and brand elements
   features/auth/       # Reusable authentication screens and form UI
@@ -50,9 +50,9 @@ public/images/          # Reviewed static marketing imagery
 
 The public route set is `/`, `/about`, `/blog`, `/blog/[slug]`, `/guides`,
 `/guides/[slug]`, `/help`, `/careers`, `/contact`, `/privacy`, `/terms`,
-`/sign-in`, `/sign-up`, and `/verify-email`. Additional product, provider, API,
-and E2E directories are added only when their implementation begins, following
-`docs/ARCHITECTURE.md`.
+`/sign-in`, `/sign-up`, `/verify-email`, `/onboarding/profile`, and
+`/onboarding/role`. Additional product, provider, API, and E2E directories are
+added only when their implementation begins, following `docs/ARCHITECTURE.md`.
 
 ## Documentation
 
@@ -72,7 +72,8 @@ and E2E directories are added only when their implementation begins, following
 ## Status
 
 The clean application foundation, public marketing website, and reusable sign-in,
-account-creation, and email-verification UI are implemented. Authentication
-behavior, backend endpoints, wallet provisioning, database access, and provider
-integrations have not yet been connected. Privacy and terms pages are pre-launch
-drafts and require Nigerian legal review before they become binding.
+account-creation, email-verification, and two-step profile onboarding UI are
+implemented. Authentication behavior, profile persistence, backend endpoints,
+wallet provisioning, database access, and provider integrations have not yet
+been connected. Privacy and terms pages are pre-launch drafts and require
+Nigerian legal review before they become binding.

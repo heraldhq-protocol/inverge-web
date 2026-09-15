@@ -2,6 +2,7 @@
 
 import { LockKeyhole } from "lucide-react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import {
   type ClipboardEvent,
   type FormEvent,
@@ -15,6 +16,7 @@ import type { AuthMode } from "@/features/auth/types";
 const codeLength = 6;
 
 export function EmailVerificationForm({ mode }: { mode: AuthMode }) {
+  const router = useRouter();
   const [digits, setDigits] = useState(() =>
     Array<string>(codeLength).fill(""),
   );
@@ -87,9 +89,8 @@ export function EmailVerificationForm({ mode }: { mode: AuthMode }) {
       return;
     }
 
-    setStatus(
-      "Code verification will be connected with the authentication provider.",
-    );
+    setStatus("");
+    router.push("/onboarding/profile");
   }
 
   function handleResend() {
