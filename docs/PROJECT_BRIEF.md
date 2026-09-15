@@ -1,7 +1,7 @@
 # Inverge implementation brief
 
-Status: **Application foundation scaffolded; product implementation not started**  
-Last updated: 2026-09-12
+Status: **Public marketing implemented; product implementation in progress**
+Last updated: 2026-09-15
 
 The complete product contract is
 [`Inverge_PRD_SRS_v1.2.md`](./Inverge_PRD_SRS_v1.2.md). Do not duplicate its
@@ -88,6 +88,14 @@ and third-party identity, KYC, payment, wallet, notification, and RPC services.
 This repository owns the web client unless the owner explicitly expands its
 scope.
 
+## Current implementation slice
+
+Authentication and embedded-wallet onboarding are the first product slice.
+Privy is the accepted provider for user authentication and automatic embedded
+Solana wallet provisioning. The backend remains responsible for mapping the
+provider identity and wallet to an Inverge account and for authorizing protected
+operations.
+
 ## Non-functional launch gates
 
 - Core flows meet at least WCAG 2.2 AA, which also satisfies the SRS's WCAG 2.1
@@ -106,11 +114,9 @@ scope.
 Resolve these before the affected integration is built and record material choices
 in `DECISIONS.md`:
 
-- final embedded-wallet/authentication provider;
 - KYC, fiat on/off-ramp, and flat-fee payment providers;
 - typed API contract source and versioning workflow with the NestJS service;
 - Solana RPC/indexing provider and failover design;
 - notification providers and delivery/retry policy;
 - production deployment, observability, analytics, and consent tooling;
-- exact first implementation slice within Phase 0; and
 - final visual assets and any revisions to the working brand system.

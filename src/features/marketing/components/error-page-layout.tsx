@@ -2,7 +2,7 @@ import { Menu, X } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { BrandMark } from "@/features/marketing/components/brand-mark";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
 
 const navLinks = [
@@ -77,7 +77,7 @@ function BackgroundDecorations() {
 export function ErrorPageLayout({ children }: { children: ReactNode }) {
   return (
     <div className="relative flex min-h-dvh flex-col justify-between overflow-x-hidden bg-canvas">
-      {/* Background vectors */}
+      {/* Background decoration */}
       <BackgroundDecorations />
 
       {/* Top Header */}

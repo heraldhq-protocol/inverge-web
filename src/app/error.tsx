@@ -5,8 +5,8 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 import { ErrorHeroIllustration } from "@/components/ui/error-hero-illustration";
-import { ErrorPageLayout } from "@/components/ui/error-page-layout";
 import { ErrorReferenceBadge } from "@/components/ui/error-reference-badge";
+import { ErrorPageLayout } from "@/features/marketing/components/error-page-layout";
 
 export default function ErrorPage({
   error,

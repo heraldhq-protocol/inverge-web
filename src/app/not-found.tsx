@@ -2,7 +2,7 @@ import { ArrowRight, BookOpen, Home } from "lucide-react";
 import Link from "next/link";
 
 import { ErrorHeroIllustration } from "@/components/ui/error-hero-illustration";
-import { ErrorPageLayout } from "@/components/ui/error-page-layout";
+import { ErrorPageLayout } from "@/features/marketing/components/error-page-layout";
 
 export default function NotFound() {
   return (

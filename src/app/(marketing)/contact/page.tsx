@@ -40,7 +40,7 @@ export default function ContactPage() {
 
       <Container className="py-12 sm:py-16 md:pb-24">
         <div className="grid grid-cols-1 items-start gap-10 lg:grid-cols-[1fr_360px] lg:gap-14">
-          <section className="rounded-xl border border-border bg-surface p-6 sm:p-8">
+          <section className="rounded-2xl border border-border bg-surface p-6 sm:p-8">
             <h2 className="text-xl font-semibold text-ink sm:text-[22px]">
               Send a message
             </h2>
@@ -59,7 +59,7 @@ export default function ContactPage() {
                 {channels.map((channel) => (
                   <li
                     key={channel.value}
-                    className="rounded-xl border border-border bg-surface p-5"
+                    className="rounded-2xl border border-border bg-surface p-5"
                   >
                     <p className="text-[15px] font-semibold text-ink">
                       {channel.label}
@@ -78,7 +78,7 @@ export default function ContactPage() {
               </ul>
             </div>
 
-            <div className="rounded-xl bg-contrast p-5 text-white">
+            <div className="rounded-2xl bg-contrast p-5 text-white">
               <p className="text-[15px] font-semibold">
                 Looking for a quick answer?
               </p>

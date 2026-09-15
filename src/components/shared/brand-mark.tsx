@@ -4,7 +4,7 @@ export function BrandMark({ inverted = false }: { inverted?: boolean }) {
   return (
     <Link
       href="/"
-      className={`inline-flex min-h-11 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand ${inverted ? "text-white" : "text-ink"}`}
+      className={`inline-flex min-h-11 shrink-0 items-center gap-2.5 rounded-md focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand ${inverted ? "text-white" : "text-ink"}`}
       aria-label="Inverge home"
     >
       <svg

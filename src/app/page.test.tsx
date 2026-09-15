@@ -13,5 +13,8 @@ describe("HomePage", () => {
         name: /Back bold ideas\. Keep delivery accountable\./i,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Create account" }),
+    ).toHaveAttribute("href", "/sign-up");
   });
 });

@@ -18,7 +18,7 @@ third-party providers. Keep those boundaries visible in the code:
 | Escrow balances and state transitions | Solana program state and finalized transactions. |
 | Public settlement/transparency totals | Chain-derived indexer projection, reconcilable to Solana. |
 | Idea and campaign content, discussions, notification preferences | Backend API. |
-| User session and linked wallet identity | Selected auth/embedded-wallet provider plus backend account mapping. |
+| User session and linked wallet identity | Privy plus backend account mapping. |
 | KYC decision | KYC provider status mirrored by the backend; never raw documents. |
 | Fees, thresholds, windows, caps, supported assets | Versioned authoritative configuration; on-chain values where behavior is enforced on-chain. |
 

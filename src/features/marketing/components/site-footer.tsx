@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import { BrandMark } from "@/features/marketing/components/brand-mark";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
 import { NewsletterField } from "@/features/marketing/components/newsletter-field";
 

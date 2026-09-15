@@ -1,3 +1,4 @@
+import { ButtonLink } from "@/features/marketing/components/button-link";
 import { Container } from "@/features/marketing/components/container";
 
 export function ProductCta({ compact = false }: { compact?: boolean }) {
@@ -12,29 +13,26 @@ export function ProductCta({ compact = false }: { compact?: boolean }) {
                 : "Ready to put it into practice?"}
             </h2>
             <p className="mx-auto mt-4 max-w-xl leading-7 text-white/72">
-              Explore live ideas or publish your own and start validating it
-              today.
+              Create your account to discover promising ideas and follow
+              builders from early validation through delivery.
             </p>
           </div>
           <div
             className="mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4"
-            aria-label="Product actions coming soon"
+            aria-label="Account and product actions"
           >
-            <span
-              aria-disabled="true"
-              className="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white opacity-75 sm:w-auto"
-            >
-              Explore ideas
-            </span>
+            <ButtonLink href="/sign-up" className="sm:w-auto">
+              Create account
+            </ButtonLink>
             <span
               aria-disabled="true"
               className="inline-flex min-h-12 w-full cursor-not-allowed items-center justify-center rounded-full border border-white/20 px-6 text-sm font-semibold text-white/75 sm:w-auto"
             >
-              Publish an idea
+              Explore ideas
             </span>
           </div>
           <p className="text-xs text-white/48">
-            These actions will open when the product screens are ready.
+            Idea discovery will open when the product screens are ready.
           </p>
         </div>
       </Container>

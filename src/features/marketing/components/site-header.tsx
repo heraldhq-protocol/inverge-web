@@ -1,7 +1,7 @@
 import { Menu, X } from "lucide-react";
 import Link from "next/link";
 
-import { BrandMark } from "@/features/marketing/components/brand-mark";
+import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
 
 const navigation = [
@@ -38,10 +38,10 @@ export function SiteHeader() {
         </nav>
 
         <Link
-          href="/contact"
+          href="/sign-up"
           className="hidden min-h-11 items-center rounded-full bg-contrast px-5 text-sm font-semibold text-white transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand md:inline-flex"
         >
-          Talk to us
+          Create account
         </Link>
 
         <details className="group relative md:hidden">
@@ -54,10 +54,10 @@ export function SiteHeader() {
             <nav aria-label="Mobile navigation" className="flex flex-col">
               <NavigationLinks mobile />
               <Link
-                href="/contact"
+                href="/sign-up"
                 className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white"
               >
-                Talk to us
+                Create account
               </Link>
             </nav>
           </div>

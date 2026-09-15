@@ -1,12 +1,11 @@
 # Inverge product UI and brand system
 
 Status: **Working baseline; owner may revise**  
-Live reference: [inverge-web.vercel.app/brand](https://inverge-web.vercel.app/brand)  
-Last reviewed: 2026-09-12
+Last reviewed: 2026-09-15
 
-The live brand book is useful direction, not an immutable specification. Product
-correctness, accessibility, and the PRD/SRS override any conflicting sample. Keep
-tokens centralized so visual changes are deliberate and inexpensive.
+This working brand direction is not an immutable specification. Product
+correctness, accessibility, and the PRD/SRS override any conflicting sample.
+Keep tokens centralized so visual changes are deliberate and inexpensive.
 
 ## Product character
 

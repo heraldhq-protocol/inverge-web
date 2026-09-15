@@ -39,16 +39,20 @@ Run the full sequence with `pnpm check`. Use `pnpm format`, `pnpm lint:fix`, and
 ```text
 src/
   app/
+    (auth)/            # Sign-in and account-creation routes
     (marketing)/       # Public marketing routes and route metadata
+  components/shared/   # Proven cross-feature compositions and brand elements
+  features/auth/       # Reusable authentication screens and form UI
   features/marketing/  # Shared marketing UI and editorial content
   lib/env/              # Environment schema and server-only validated access
 public/images/          # Reviewed static marketing imagery
 ```
 
 The public route set is `/`, `/about`, `/blog`, `/blog/[slug]`, `/guides`,
-`/guides/[slug]`, `/help`, `/careers`, `/contact`, `/privacy`, and `/terms`.
-Product, authentication, provider, API, and E2E directories are added only when
-their implementation begins, following `docs/ARCHITECTURE.md`.
+`/guides/[slug]`, `/help`, `/careers`, `/contact`, `/privacy`, `/terms`,
+`/sign-in`, `/sign-up`, and `/verify-email`. Additional product, provider, API,
+and E2E directories are added only when their implementation begins, following
+`docs/ARCHITECTURE.md`.
 
 ## Documentation
 
@@ -67,7 +71,8 @@ their implementation begins, following `docs/ARCHITECTURE.md`.
 
 ## Status
 
-The clean application foundation and public marketing website are implemented.
-Product screens, backend endpoints, authentication, wallet, database, and
-provider integrations have not been implemented. Privacy and terms pages are
-pre-launch drafts and require Nigerian legal review before they become binding.
+The clean application foundation, public marketing website, and reusable sign-in,
+account-creation, and email-verification UI are implemented. Authentication
+behavior, backend endpoints, wallet provisioning, database access, and provider
+integrations have not yet been connected. Privacy and terms pages are pre-launch
+drafts and require Nigerian legal review before they become binding.

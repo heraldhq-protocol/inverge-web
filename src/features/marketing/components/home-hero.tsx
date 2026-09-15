@@ -24,8 +24,8 @@ export function HomeHero() {
             </p>
 
             <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-4">
-              <ButtonLink href="#how-it-works">
-                <span>See how it works</span>
+              <ButtonLink href="/sign-up">
+                <span>Create account</span>
                 <ArrowRight className="ml-2 size-4" aria-hidden="true" />
               </ButtonLink>
               <ButtonLink
