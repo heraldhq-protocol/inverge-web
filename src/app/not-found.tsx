@@ -1,14 +1,14 @@
 import { ArrowRight, BookOpen, Home } from "lucide-react";
 import Link from "next/link";
 
-import { ErrorHeroIllustration } from "@/components/ui/error-hero-illustration";
+import { StateIllustration } from "@/components/ui/state-illustration";
 import { ErrorPageLayout } from "@/features/marketing/components/error-page-layout";
 
 export default function NotFound() {
   return (
     <ErrorPageLayout>
       {/* Decorative illustration */}
-      <ErrorHeroIllustration variant="not-found" />
+      <StateIllustration variant="not-found" />
 
       {/* Eyebrow */}
       <div className="mt-5 flex items-center justify-center gap-2 sm:mt-6">

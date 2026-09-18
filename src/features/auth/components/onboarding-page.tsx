@@ -14,6 +14,8 @@ const onboardingContent = {
     panelTitle: "Discover early. Support thoughtfully.",
     panelDescription:
       "Follow ideas from their earliest validation through the work that comes after funding.",
+    visualSrc: "/images/profile_img.png",
+    visualAlt: "African leather artisan working carefully in her studio",
   },
   role: {
     step: 2 as const,
@@ -26,6 +28,8 @@ const onboardingContent = {
       "Discover something worth backing. Or prove something worth building.",
     panelDescription:
       "Inverge connects early belief with accountable delivery.",
+    visualSrc: "/images/role_img.png",
+    visualAlt: "African builders discussing a hardware prototype in a workshop",
   },
 } as const;
 
@@ -45,6 +49,8 @@ export function OnboardingPage({
       description={<p>{content.description}</p>}
       panelTitle={content.panelTitle}
       panelDescription={content.panelDescription}
+      visualSrc={content.visualSrc}
+      visualAlt={content.visualAlt}
       headerAction={null}
       beforeTitle={
         <>

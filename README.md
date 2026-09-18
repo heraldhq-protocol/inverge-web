@@ -41,8 +41,12 @@ src/
   app/
     (auth)/            # Authentication and account-onboarding routes
     (marketing)/       # Public marketing routes and route metadata
+    (product)/         # Authenticated product shell and initial product routes
   components/shared/   # Proven cross-feature compositions and brand elements
+  components/ui/       # Domain-neutral controls, states, and illustrations
+  features/app-shell/  # Responsive product navigation, shell, and footer
   features/auth/       # Reusable authentication screens and form UI
+  features/home/       # Product-home compositions and typed preview data
   features/marketing/  # Shared marketing UI and editorial content
   lib/env/              # Environment schema and server-only validated access
 public/images/          # Reviewed static marketing imagery
@@ -51,8 +55,10 @@ public/images/          # Reviewed static marketing imagery
 The public route set is `/`, `/about`, `/blog`, `/blog/[slug]`, `/guides`,
 `/guides/[slug]`, `/help`, `/careers`, `/contact`, `/privacy`, `/terms`,
 `/sign-in`, `/sign-up`, `/verify-email`, `/onboarding/profile`, and
-`/onboarding/role`. Additional product, provider, API, and E2E directories are
-added only when their implementation begins, following `docs/ARCHITECTURE.md`.
+`/onboarding/role`. The first authenticated routes are `/home`, `/ideas`,
+`/pre-pledges`, `/notifications`, `/profile`, and `/settings`. Additional
+provider, API, and E2E directories are added only when their implementation
+begins, following `docs/ARCHITECTURE.md`.
 
 ## Documentation
 
@@ -71,9 +77,12 @@ added only when their implementation begins, following `docs/ARCHITECTURE.md`.
 
 ## Status
 
-The clean application foundation, public marketing website, and reusable sign-in,
-account-creation, email-verification, and two-step profile onboarding UI are
-implemented. Authentication behavior, profile persistence, backend endpoints,
-wallet provisioning, database access, and provider integrations have not yet
-been connected. Privacy and terms pages are pre-launch drafts and require
-Nigerian legal review before they become binding.
+The clean application foundation, public marketing website, reusable sign-in,
+account-creation, email-verification, two-step onboarding, and responsive product
+shell/home preview are implemented. Product-home content is explicitly preview
+data until authenticated backend projections are connected; the remaining
+product routes show honest empty or unavailable states. Authentication behavior,
+profile persistence, backend endpoints, wallet provisioning, database access,
+and provider integrations have not yet been connected. Privacy and terms pages
+are pre-launch drafts and require Nigerian legal review before they become
+binding.
