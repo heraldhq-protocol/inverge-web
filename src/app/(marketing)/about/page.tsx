@@ -8,6 +8,7 @@ import {
 import type { Metadata } from "next";
 
 import { ButtonLink } from "@/features/marketing/components/button-link";
+import { CallToAction } from "@/features/marketing/components/call-to-action";
 import { Container } from "@/features/marketing/components/container";
 import { PageHeader } from "@/features/marketing/components/page-header";
 
@@ -80,7 +81,8 @@ export default function AboutPage() {
                 feedback before they raise a dollar. When they do raise, the
                 money is held in escrow and released in milestones, each one
                 unlocked by proof of delivery, not the passage of time. If a
-                milestone isn&apos;t met, the funds tied to it go back.
+                milestone fails review, remaining escrow becomes claimable as a
+                pro-rata refund—without clawing back already-delivered stages.
               </p>
               <p className="font-medium text-ink">
                 The result is simple: backers support with confidence, and
@@ -158,35 +160,20 @@ export default function AboutPage() {
       </section>
 
       {/* CTA */}
-      <section className="bg-canvas pb-20 sm:pb-24">
-        <Container>
-          <div className="rounded-[2rem] bg-contrast px-7 py-12 text-center text-white sm:px-12 sm:py-16">
-            <div className="flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-              <span
-                className="size-1.5 rounded-full bg-brand"
-                aria-hidden="true"
-              />
-              <span>Join us</span>
-            </div>
-            <h2 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
-              Back a builder, or become one
-            </h2>
-            <p className="mx-auto mt-4 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
-              Good accountability starts before the first campaign opens. Talk
-              to us or explore the guides.
-            </p>
-            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4">
-              <ButtonLink href="/contact" variant="light">
-                Talk to the Inverge team
-              </ButtonLink>
-              <ButtonLink href="/guides" variant="outline-light">
-                Explore our guides
-                <ArrowRight className="ml-2 size-4" aria-hidden="true" />
-              </ButtonLink>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <CallToAction
+        eyebrow="Join us"
+        title="Back a builder, or become one"
+        className="pb-20 sm:pb-24"
+        body="Good accountability starts before the first campaign opens. Talk to us or explore the guides."
+      >
+        <ButtonLink href="/contact" variant="light">
+          Talk to the Inverge team
+        </ButtonLink>
+        <ButtonLink href="/guides" variant="outline-light">
+          Explore our guides
+          <ArrowRight className="ml-2 size-4" aria-hidden="true" />
+        </ButtonLink>
+      </CallToAction>
     </main>
   );
 }

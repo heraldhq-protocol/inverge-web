@@ -74,9 +74,9 @@ export function MobileNavigation() {
   return (
     <nav
       aria-label="Mobile product navigation"
-      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-2 pb-[max(0.4rem,env(safe-area-inset-bottom))] pt-1.5 shadow-[0_-10px_30px_rgba(13,29,21,0.08)] backdrop-blur lg:hidden"
+      className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(13,29,21,0.08)] backdrop-blur lg:hidden"
     >
-      <ul className="mx-auto grid max-w-2xl grid-cols-5">
+      <ul className="mx-auto grid h-14 max-w-2xl grid-cols-5">
         {mobileItems.map(({ href, label, icon: Icon }) => {
           const isCurrent = isCurrentPath(pathname, href);
 
@@ -85,16 +85,19 @@ export function MobileNavigation() {
               <Link
                 href={href}
                 aria-current={isCurrent ? "page" : undefined}
-                className={`flex min-h-14 flex-col items-center justify-center gap-1 rounded-xl px-1 text-[0.6875rem] font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-brand sm:text-xs ${
+                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-[0.625rem] font-semibold leading-none transition-colors focus-visible:outline-2 focus-visible:outline-brand sm:text-[0.6875rem] ${
                   isCurrent ? "text-brand-strong" : "text-muted"
                 }`}
               >
+                {isCurrent ? (
+                  <span className="absolute -top-2 h-0.5 w-9 rounded-full bg-brand" />
+                ) : null}
                 <Icon
                   className="size-5 sm:size-[1.375rem]"
                   strokeWidth={isCurrent ? 2.2 : 1.7}
                   aria-hidden="true"
                 />
-                <span className="max-w-full truncate">{label}</span>
+                <span className="max-w-full truncate px-0.5">{label}</span>
               </Link>
             </li>
           );

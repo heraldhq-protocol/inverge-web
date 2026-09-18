@@ -5,12 +5,20 @@ import { IdeaArtwork } from "@/features/home/components/idea-artwork";
 import { formatCompactNaira } from "@/features/home/lib/format-money";
 import type { IdeaSummary } from "@/features/home/types";
 
-function ValidationProgress({ value }: { value: number }) {
+function ValidationProgress({
+  showLabel = true,
+  value,
+}: {
+  showLabel?: boolean;
+  value: number;
+}) {
   return (
     <div>
       <div className="flex items-center justify-between gap-3 text-xs">
         <span className="font-semibold text-ink">{value}% validated</span>
-        <span className="text-muted">Validation signal</span>
+        {showLabel ? (
+          <span className="text-muted">Validation signal</span>
+        ) : null}
       </div>
       <div
         className="mt-2 h-1.5 overflow-hidden rounded-full bg-border"
@@ -38,7 +46,7 @@ function IdeaDetails({
 }) {
   return (
     <div
-      className={`flex min-w-0 flex-col ${featured ? "p-5 sm:p-6" : "p-4 sm:p-5"}`}
+      className={`flex min-w-0 flex-1 flex-col ${featured ? "p-5 sm:p-6" : "p-4 sm:p-5"}`}
     >
       <p className="text-xs font-semibold text-brand-strong">{idea.category}</p>
       <h3
@@ -53,31 +61,42 @@ function IdeaDetails({
           {idea.title}
         </Link>
       </h3>
-      <p className="mt-1.5 line-clamp-3 text-sm leading-5 text-muted">
+      <p
+        className={`mt-1.5 text-sm leading-5 text-muted ${
+          featured ? "line-clamp-3" : "line-clamp-2"
+        }`}
+      >
         {idea.description}
       </p>
 
-      <div className="mt-4 flex items-center gap-2 text-xs text-ink">
+      <div
+        className={`${featured ? "mt-4" : "mt-3"} flex items-center gap-2 text-xs text-ink`}
+      >
         <span className="grid size-7 place-items-center rounded-full bg-contrast text-[0.625rem] font-bold text-white">
           {idea.creatorInitials}
         </span>
         <span className="font-medium">{idea.creator}</span>
       </div>
 
-      <div className="mt-4">
-        <ValidationProgress value={idea.validationPercent} />
+      <div className={featured ? "mt-4" : "mt-3"}>
+        <ValidationProgress
+          value={idea.validationPercent}
+          showLabel={featured}
+        />
       </div>
 
-      <dl className="mt-4 grid grid-cols-2 gap-4 border-t border-border pt-4">
+      <dl
+        className={`${featured ? "mt-4 gap-4 pt-4" : "mt-3 gap-2 pt-3"} grid grid-cols-2 border-t border-border`}
+      >
         <div>
           <dt className="text-[0.6875rem] text-muted">Supporters</dt>
-          <dd className="mt-0.5 font-mono text-base font-semibold text-ink">
+          <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
             {idea.supporters.toLocaleString("en-NG")}
           </dd>
         </div>
         <div>
           <dt className="text-[0.6875rem] text-muted">Pre-pledged intent</dt>
-          <dd className="mt-0.5 font-mono text-base font-semibold text-ink">
+          <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
             {formatCompactNaira(idea.prePledged)}
           </dd>
         </div>
@@ -130,11 +149,11 @@ export function IdeaCard({
     <article
       className={`overflow-hidden rounded-2xl border border-border bg-surface transition-shadow hover:shadow-md ${
         isFeatured
-          ? "md:grid md:grid-cols-[1.2fr_0.9fr]"
+          ? "md:grid md:grid-cols-[minmax(0,1.15fr)_minmax(15rem,0.85fr)]"
           : "flex h-full flex-col"
       }`}
     >
-      <IdeaArtwork variant={idea.artwork} />
+      <IdeaArtwork variant={idea.artwork} featured={isFeatured} />
       <IdeaDetails idea={idea} featured={isFeatured} />
     </article>
   );

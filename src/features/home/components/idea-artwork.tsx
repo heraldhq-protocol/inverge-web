@@ -37,9 +37,11 @@ const artwork = {
 
 export function IdeaArtwork({
   compact = false,
+  featured = false,
   variant,
 }: {
   compact?: boolean;
+  featured?: boolean;
   variant: IdeaArtworkVariant;
 }) {
   const { Icon, background, accent } = artwork[variant];
@@ -47,8 +49,12 @@ export function IdeaArtwork({
   return (
     <div
       aria-hidden="true"
-      className={`relative isolate overflow-hidden bg-gradient-to-br ${background} ${
-        compact ? "h-full min-h-28" : "aspect-[16/9] min-h-44"
+      className={`relative isolate min-w-0 overflow-hidden bg-gradient-to-br ${background} ${
+        compact
+          ? "h-full min-h-28"
+          : featured
+            ? "aspect-[16/9] min-h-52 md:min-h-0 md:aspect-auto"
+            : "aspect-[16/9] min-h-40"
       }`}
     >
       <span

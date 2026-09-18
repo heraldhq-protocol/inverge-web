@@ -13,7 +13,7 @@ describe("HomeDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Good to see you, Amara." }),
     ).toBeInTheDocument();
-    expect(screen.getByText("₦8.4M")).toBeInTheDocument();
+    expect(screen.getByText("₦8.4M")).toHaveClass("tabular-nums");
     expect(screen.getByText("₦50,000 intent")).toBeInTheDocument();
     expect(screen.getByText(/No money has moved yet/i)).toBeInTheDocument();
     expect(
@@ -33,5 +33,21 @@ describe("HomeDashboard", () => {
       "href",
       "/home",
     );
+  });
+
+  it("switches discovery previews by category without client-only state", () => {
+    render(
+      <HomeDashboard data={homePreviewData} selectedCategory="agriculture" />,
+    );
+
+    expect(screen.getByRole("link", { name: "Agriculture" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("heading", { name: "CropCircle" })).toBeVisible();
+    expect(screen.getByRole("heading", { name: "AgroRoute" })).toBeVisible();
+    expect(
+      screen.queryByRole("heading", { name: "StudyMate NG" }),
+    ).not.toBeInTheDocument();
   });
 });

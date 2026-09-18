@@ -1,3 +1,5 @@
+import type { DiscoveryCategory } from "@/features/home/discovery-categories";
+
 export type NairaAmount = {
   atomic: string;
   currency: "NGN";
@@ -14,6 +16,7 @@ export type IdeaSummary = {
   creator: string;
   creatorInitials: string;
   description: string;
+  discoveryCategory: DiscoveryCategory;
   prePledged: NairaAmount;
   supporters: number;
   title: string;

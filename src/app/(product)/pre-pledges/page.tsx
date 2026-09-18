@@ -1,15 +1,47 @@
 import type { Metadata } from "next";
 
-import { ProductPlaceholderPage } from "@/features/app-shell/components/product-placeholder-page";
+import { PrePledgesDashboard } from "@/features/pre-pledges/components/pre-pledges-dashboard";
+import { prePledgesPreviewData } from "@/features/pre-pledges/content/preview-data";
+import {
+  isPrePledgeSort,
+  isPrePledgeStatusFilter,
+  type PrePledgeSort,
+  type PrePledgeStatusFilter,
+} from "@/features/pre-pledges/types";
 
-export const metadata: Metadata = { title: "Pre-pledges | Inverge" };
+export const metadata: Metadata = {
+  title: "Pre-pledges | Inverge",
+  description: "Review and manage your non-binding pre-pledge intentions.",
+};
 
-export default function PrePledgesPage() {
+type PrePledgesPageProps = {
+  searchParams: Promise<{
+    q?: string | string[];
+    sort?: string | string[];
+    status?: string | string[];
+  }>;
+};
+
+export default async function PrePledgesPage({
+  searchParams,
+}: PrePledgesPageProps) {
+  const params = await searchParams;
+  const query = typeof params.q === "string" ? params.q.slice(0, 120) : "";
+  const status: PrePledgeStatusFilter =
+    typeof params.status === "string" && isPrePledgeStatusFilter(params.status)
+      ? params.status
+      : "all";
+  const sort: PrePledgeSort =
+    typeof params.sort === "string" && isPrePledgeSort(params.sort)
+      ? params.sort
+      : "most-recent";
+
   return (
-    <ProductPlaceholderPage
-      eyebrow="Pre-pledges"
-      title="No connected pre-pledges yet"
-      description="Your non-binding backing intentions will appear here after account and idea data are connected. No money moves when you make a pre-pledge."
+    <PrePledgesDashboard
+      data={prePledgesPreviewData}
+      query={query}
+      sort={sort}
+      status={status}
     />
   );
 }

@@ -9,6 +9,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { ButtonLink } from "@/features/marketing/components/button-link";
+import { CallToAction } from "@/features/marketing/components/call-to-action";
 import { Container } from "@/features/marketing/components/container";
 import { HomeHero } from "@/features/marketing/components/home-hero";
 import { HowItWorks } from "@/features/marketing/components/how-it-works";
@@ -142,34 +143,19 @@ export default function HomePage() {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-canvas py-20 sm:py-24">
-        <Container>
-          <div className="rounded-[2rem] bg-contrast px-7 py-12 text-center text-white sm:px-12 sm:py-16">
-            <div className="flex items-center justify-center gap-2.5 text-xs font-bold uppercase tracking-[0.2em] text-white/60">
-              <span
-                className="size-1.5 rounded-full bg-brand"
-                aria-hidden="true"
-              />
-              <span>Building in the open</span>
-            </div>
-            <h2 className="mx-auto mt-4 max-w-2xl text-balance text-3xl font-bold tracking-[-0.04em] sm:text-5xl">
-              Interested in the next stage of Inverge?
-            </h2>
-            <p className="mx-auto mt-5 max-w-xl text-base leading-relaxed text-white/80 sm:text-lg">
-              Whether you are building, backing, partnering, or testing the
-              pilot, we are open to feedback and conversations.
-            </p>
-            <div className="mx-auto mt-8 flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4">
-              <ButtonLink href="/contact" variant="light">
-                Talk to the Inverge team
-              </ButtonLink>
-              <ButtonLink href="/guides" variant="outline-light">
-                Explore builder & backer guides
-              </ButtonLink>
-            </div>
-          </div>
-        </Container>
-      </section>
+      <CallToAction
+        eyebrow="Building in the open"
+        title="Interested in the next stage of Inverge?"
+        titleSize="large"
+        body="Whether you are building, backing, partnering, or testing the pilot, we are open to feedback and conversations."
+      >
+        <ButtonLink href="/contact" variant="light">
+          Talk to the Inverge team
+        </ButtonLink>
+        <ButtonLink href="/guides" variant="outline-light">
+          Explore builder & backer guides
+        </ButtonLink>
+      </CallToAction>
     </main>
   );
 }

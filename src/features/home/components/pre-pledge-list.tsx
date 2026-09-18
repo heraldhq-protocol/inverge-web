@@ -12,7 +12,7 @@ export function PrePledgeList({ items }: { items: PrePledgeSummary[] }) {
       {items.map(({ idea, intent, status }) => (
         <li
           key={idea.id}
-          className="grid gap-3 px-4 py-4 sm:grid-cols-[minmax(12rem,1.5fr)_minmax(8rem,0.65fr)_minmax(9rem,0.8fr)] sm:items-center sm:gap-5 sm:px-5 sm:py-3"
+          className="grid gap-3 px-4 py-4 md:grid-cols-[minmax(12rem,1.45fr)_minmax(9rem,0.65fr)_minmax(20rem,1.15fr)] md:items-center md:gap-6 md:px-5 md:py-3"
         >
           <div className="flex min-w-0 items-center gap-3">
             <span className="grid size-10 shrink-0 place-items-center rounded-lg bg-contrast text-[0.625rem] font-bold text-white">
@@ -23,14 +23,14 @@ export function PrePledgeList({ items }: { items: PrePledgeSummary[] }) {
             </span>
           </div>
 
-          <div className="flex items-baseline justify-between gap-3 sm:block">
-            <span className="text-xs text-muted sm:sr-only">Intent</span>
-            <span className="font-mono text-sm font-medium text-ink">
+          <div className="flex items-baseline justify-between gap-3 md:block">
+            <span className="text-xs text-muted md:sr-only">Intent</span>
+            <span className="text-sm font-medium tabular-nums text-ink">
               {formatNaira(intent)} intent
             </span>
           </div>
 
-          <div className="grid grid-cols-[minmax(0,1fr)_auto] items-center gap-4 sm:grid-cols-1 sm:gap-2 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div className="grid grid-cols-[minmax(7rem,0.75fr)_minmax(10rem,1fr)] items-center gap-5">
             <div>
               <span className="text-xs font-medium text-ink">
                 {idea.validationPercent}% validated

@@ -26,3 +26,13 @@ export function formatCompactNaira(amount: NairaAmount) {
 
   return `₦${integer}${fraction === 0n ? "" : `.${fraction}`}M`;
 }
+
+export function sumNairaAmounts(amounts: readonly NairaAmount[]): NairaAmount {
+  return {
+    atomic: amounts
+      .reduce((total, amount) => total + BigInt(amount.atomic), 0n)
+      .toString(),
+    currency: "NGN",
+    decimals: 2,
+  };
+}
