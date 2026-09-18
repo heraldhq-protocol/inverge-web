@@ -9,15 +9,19 @@ export function ProductSearch({
   action,
   defaultValue = "",
   hiddenFields = [],
+  label = "Search ideas, creators, and projects",
+  placeholder = "Search ideas, creators and projects",
 }: {
   action: string;
   defaultValue?: string;
   hiddenFields?: HiddenField[];
+  label?: string;
+  placeholder?: string;
 }) {
   return (
     <form action={action} role="search" className="flex max-w-2xl gap-2">
       <label htmlFor="product-search" className="sr-only">
-        Search ideas, creators, and projects
+        {label}
       </label>
       {hiddenFields.map(({ name, value }) => (
         <input key={name} type="hidden" name={name} value={value} />
@@ -32,7 +36,7 @@ export function ProductSearch({
           name="q"
           type="search"
           defaultValue={defaultValue}
-          placeholder="Search ideas, creators and projects"
+          placeholder={placeholder}
           className="min-h-12 w-full rounded-xl border border-border bg-surface py-2 pl-12 pr-4 text-sm text-ink outline-none transition placeholder:text-muted/70 hover:border-muted/45 focus:border-brand focus:ring-3 focus:ring-brand/12 sm:min-h-13"
         />
       </div>

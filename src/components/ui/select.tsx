@@ -1,7 +1,15 @@
 "use client";
 
 import { Check, ChevronDown } from "lucide-react";
-import { type KeyboardEvent, useEffect, useId, useRef, useState } from "react";
+import {
+  type KeyboardEvent,
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+} from "react";
+import { createPortal } from "react-dom";
 
 export type SelectOption = {
   disabled?: boolean;
@@ -23,6 +31,14 @@ type SelectProps = {
   value?: string;
 };
 
+type MenuPosition = {
+  left: number;
+  maxHeight: number;
+  placement: "above" | "below";
+  top: number;
+  width: number;
+};
+
 export function Select({
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
@@ -39,27 +55,75 @@ export function Select({
   const generatedId = useId();
   const listboxId = `${generatedId}-listbox`;
   const rootRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
+  const listboxRef = useRef<HTMLUListElement>(null);
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [isOpen, setIsOpen] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({
+    left: 0,
+    maxHeight: 288,
+    placement: "below",
+    top: 0,
+    width: 0,
+  });
   const selectedValue = value ?? internalValue;
   const selectedOption = options.find(
     (option) => option.value === selectedValue,
   );
 
+  const updateMenuPosition = useCallback(() => {
+    const trigger = triggerRef.current;
+    if (!trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const viewportPadding = 8;
+    const gap = 8;
+    const spaceBelow = window.innerHeight - rect.bottom - viewportPadding - gap;
+    const spaceAbove = rect.top - viewportPadding - gap;
+    const placement =
+      spaceBelow < 180 && spaceAbove > spaceBelow ? "above" : "below";
+    const availableHeight = placement === "above" ? spaceAbove : spaceBelow;
+    const width = Math.min(rect.width, window.innerWidth - viewportPadding * 2);
+    const left = Math.min(
+      Math.max(rect.left, viewportPadding),
+      window.innerWidth - width - viewportPadding,
+    );
+
+    setMenuPosition({
+      left,
+      maxHeight: Math.max(120, Math.min(288, availableHeight)),
+      placement,
+      top: placement === "above" ? rect.top - gap : rect.bottom + gap,
+      width,
+    });
+  }, []);
+
   useEffect(() => {
     if (!isOpen) return;
 
+    updateMenuPosition();
+
     function closeOnOutsidePress(event: PointerEvent) {
-      if (!rootRef.current?.contains(event.target as Node)) {
+      const target = event.target as Node;
+      if (
+        !rootRef.current?.contains(target) &&
+        !listboxRef.current?.contains(target)
+      ) {
         setIsOpen(false);
       }
     }
 
     document.addEventListener("pointerdown", closeOnOutsidePress);
-    return () =>
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
+
+    return () => {
       document.removeEventListener("pointerdown", closeOnOutsidePress);
-  }, [isOpen]);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
+    };
+  }, [isOpen, updateMenuPosition]);
 
   function firstEnabledIndex() {
     const index = options.findIndex((option) => !option.disabled);
@@ -79,6 +143,7 @@ export function Select({
         : firstEnabledIndex();
 
     setActiveIndex(selectedIndex >= 0 ? selectedIndex : fallbackIndex);
+    updateMenuPosition();
     setIsOpen(true);
   }
 
@@ -154,6 +219,7 @@ export function Select({
     <div ref={rootRef} className={`relative w-full ${className}`}>
       {name ? <input type="hidden" name={name} value={selectedValue} /> : null}
       <button
+        ref={triggerRef}
         id={id}
         type="button"
         role="combobox"
@@ -187,51 +253,65 @@ export function Select({
         />
       </button>
 
-      {isOpen ? (
-        <ul
-          id={listboxId}
-          role="listbox"
-          aria-label={ariaLabel}
-          aria-labelledby={ariaLabelledBy}
-          className="absolute z-50 mt-2 max-h-72 w-full overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-[0_18px_48px_rgba(13,29,21,0.16)]"
-        >
-          {options.map((option, index) => {
-            const isSelected = option.value === selectedValue;
-            const isActive = index === activeIndex;
+      {isOpen && typeof document !== "undefined"
+        ? createPortal(
+            <ul
+              ref={listboxRef}
+              id={listboxId}
+              role="listbox"
+              aria-label={ariaLabel}
+              aria-labelledby={ariaLabelledBy}
+              style={{
+                left: menuPosition.left,
+                maxHeight: menuPosition.maxHeight,
+                top: menuPosition.top,
+                width: menuPosition.width,
+                transform:
+                  menuPosition.placement === "above"
+                    ? "translateY(-100%)"
+                    : undefined,
+              }}
+              className="fixed z-[100] overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-[0_18px_48px_rgba(13,29,21,0.16)]"
+            >
+              {options.map((option, index) => {
+                const isSelected = option.value === selectedValue;
+                const isActive = index === activeIndex;
 
-            return (
-              <li
-                key={option.value}
-                id={`${listboxId}-option-${index}`}
-                role="option"
-                aria-selected={isSelected}
-                aria-disabled={option.disabled || undefined}
-                onPointerMove={() => {
-                  if (!option.disabled) setActiveIndex(index);
-                }}
-                onMouseDown={(event) => event.preventDefault()}
-                onClick={() => selectOption(option)}
-                className={`flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
-                  option.disabled
-                    ? "cursor-not-allowed text-muted/50"
-                    : isActive
-                      ? "cursor-pointer bg-brand/8 text-ink"
-                      : "cursor-pointer text-ink hover:bg-canvas"
-                }`}
-              >
-                <span>{option.label}</span>
-                <Check
-                  className={`size-4 text-brand-strong ${
-                    isSelected ? "opacity-100" : "opacity-0"
-                  }`}
-                  strokeWidth={2.2}
-                  aria-hidden="true"
-                />
-              </li>
-            );
-          })}
-        </ul>
-      ) : null}
+                return (
+                  <li
+                    key={option.value}
+                    id={`${listboxId}-option-${index}`}
+                    role="option"
+                    aria-selected={isSelected}
+                    aria-disabled={option.disabled || undefined}
+                    onPointerMove={() => {
+                      if (!option.disabled) setActiveIndex(index);
+                    }}
+                    onMouseDown={(event) => event.preventDefault()}
+                    onClick={() => selectOption(option)}
+                    className={`flex min-h-11 items-center justify-between gap-3 rounded-lg px-3 py-2 text-sm transition-colors ${
+                      option.disabled
+                        ? "cursor-not-allowed text-muted/50"
+                        : isActive
+                          ? "cursor-pointer bg-brand/8 text-ink"
+                          : "cursor-pointer text-ink hover:bg-canvas"
+                    }`}
+                  >
+                    <span>{option.label}</span>
+                    <Check
+                      className={`size-4 text-brand-strong ${
+                        isSelected ? "opacity-100" : "opacity-0"
+                      }`}
+                      strokeWidth={2.2}
+                      aria-hidden="true"
+                    />
+                  </li>
+                );
+              })}
+            </ul>,
+            document.body,
+          )
+        : null}
     </div>
   );
 }

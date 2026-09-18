@@ -1,7 +1,8 @@
 import { type ComponentProps, forwardRef } from "react";
 
-type ButtonVariant = "primary" | "secondary" | "outline";
-type ButtonSize = "md" | "lg";
+type ButtonVariant =
+  "destructive" | "ghost" | "outline" | "primary" | "secondary";
+type ButtonSize = "sm" | "md" | "lg";
 
 const variantClasses: Record<ButtonVariant, string> = {
   primary:
@@ -10,9 +11,14 @@ const variantClasses: Record<ButtonVariant, string> = {
     "border border-border bg-surface text-ink hover:border-brand/45 hover:bg-canvas focus-visible:outline-brand",
   outline:
     "border border-border bg-transparent text-ink hover:border-brand/45 hover:bg-canvas focus-visible:outline-brand",
+  ghost:
+    "bg-transparent text-brand-strong hover:bg-brand/[0.07] focus-visible:outline-brand",
+  destructive:
+    "bg-transparent text-danger hover:bg-danger/[0.08] focus-visible:outline-danger",
 };
 
 const sizeClasses: Record<ButtonSize, string> = {
+  sm: "min-h-11 px-3 text-sm",
   md: "min-h-11 px-5 text-sm",
   lg: "min-h-12 px-6 text-sm font-semibold",
 };

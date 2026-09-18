@@ -93,12 +93,14 @@ scope.
 Authentication, embedded-wallet onboarding, and the authenticated product shell
 form the first product slice. Privy is the accepted provider for user
 authentication and automatic embedded Solana wallet provisioning. The responsive
-home and pre-pledge surfaces currently use clearly labelled preview data to
-establish the navigation, discovery, pre-pledge lifecycle, filtering, loading,
-empty, unavailable, and retry states; they must be replaced by typed backend
-projections during integration. The backend remains responsible for mapping the
-provider identity and wallet to an Inverge account and for authorizing protected
-operations.
+home, pre-pledge, notification, and account-settings surfaces currently use
+clearly labelled preview data to establish the navigation, discovery,
+pre-pledge lifecycle, notification grouping, preferences, privacy disclosures,
+loading, empty, unavailable, and retry states; they must be replaced by typed
+backend projections during integration. The backend remains responsible for
+mapping the provider identity and wallet to an Inverge account and for
+authorizing protected operations, notification read state, account changes, and
+deletion requests.
 
 ## Non-functional launch gates
 

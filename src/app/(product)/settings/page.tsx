@@ -1,16 +1,13 @@
 import type { Metadata } from "next";
 
-import { ProductPlaceholderPage } from "@/features/app-shell/components/product-placeholder-page";
+import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
+import { settingsPreviewData } from "@/features/settings/content/preview-data";
 
-export const metadata: Metadata = { title: "Settings | Inverge" };
+export const metadata: Metadata = {
+  title: "Settings | Inverge",
+  description: "Manage your Inverge profile and account preferences.",
+};
 
 export default function SettingsPage() {
-  return (
-    <ProductPlaceholderPage
-      variant="unavailable"
-      eyebrow="Settings"
-      title="Settings are not connected yet"
-      description="Account preferences, linked wallets, privacy controls, and notification choices will appear here after authentication and profile persistence are integrated."
-    />
-  );
+  return <SettingsDashboard data={settingsPreviewData} />;
 }

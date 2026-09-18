@@ -31,6 +31,7 @@ describe("Select", () => {
     );
 
     fireEvent.click(screen.getByLabelText("Sort"));
+    expect(screen.getByRole("listbox").parentElement).toBe(document.body);
     fireEvent.click(screen.getByRole("option", { name: "Oldest first" }));
 
     expect(onValueChange).toHaveBeenCalledWith("oldest");
