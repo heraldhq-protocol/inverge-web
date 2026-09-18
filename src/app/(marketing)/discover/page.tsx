@@ -6,9 +6,9 @@ import { ideasPreviewData } from "@/features/ideas/content/preview-data";
 export const metadata: Metadata = {
   title: "Discover ideas | Inverge",
   description:
-    "Explore early-stage ideas gathering support, feedback, and pre-pledge intent on Inverge.",
+    "Browse public validation signals for early-stage ideas from African builders.",
 };
 
-export default function IdeasPage() {
-  return <IdeasDashboard data={ideasPreviewData} />;
+export default function DiscoverIdeasPage() {
+  return <IdeasDashboard data={ideasPreviewData} viewer="visitor" />;
 }

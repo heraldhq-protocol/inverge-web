@@ -47,6 +47,12 @@ body {
   margin: 0;
 }
 
+input[type="search"]::-webkit-search-cancel-button,
+input[type="search"]::-webkit-search-decoration {
+  appearance: none;
+  -webkit-appearance: none;
+}
+
 @media (min-width: 64rem) {
   .hero-photo-fade {
     -webkit-mask-image: linear-gradient(

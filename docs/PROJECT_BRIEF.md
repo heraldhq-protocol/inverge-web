@@ -93,8 +93,9 @@ scope.
 Authentication, embedded-wallet onboarding, and the authenticated product shell
 form the first product slice. Privy is the accepted provider for user
 authentication and automatic embedded Solana wallet provisioning. The responsive
-home, pre-pledge, notification, and account-settings surfaces currently use
-clearly labelled preview data to establish the navigation, discovery,
+home, public/authenticated idea-discovery, pre-pledge, notification, and
+account-settings surfaces currently use clearly labelled preview data to
+establish the navigation, discovery,
 pre-pledge lifecycle, notification grouping, preferences, privacy disclosures,
 loading, empty, unavailable, and retry states; they must be replaced by typed
 backend projections during integration. The backend remains responsible for

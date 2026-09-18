@@ -27,7 +27,7 @@ function isCurrentPath(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
-export function DesktopNavigation() {
+export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
   const pathname = usePathname();
 
   return (
@@ -40,14 +40,29 @@ export function DesktopNavigation() {
             key={href}
             href={href}
             aria-current={isCurrent ? "page" : undefined}
-            className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+            title={collapsed ? label : undefined}
+            className={`flex min-h-12 items-center overflow-hidden rounded-xl text-sm font-semibold transition-[padding,gap,background-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+              collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3.5"
+            } ${
               isCurrent
                 ? "bg-white/10 text-brand"
                 : "text-white/74 hover:bg-white/[0.06] hover:text-white"
             }`}
           >
-            <Icon className="size-5" strokeWidth={1.8} aria-hidden="true" />
-            {label}
+            <Icon
+              className="size-5 shrink-0"
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+            <span
+              className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
+                collapsed
+                  ? "max-w-0 -translate-x-1 opacity-0"
+                  : "max-w-36 translate-x-0 opacity-100"
+              }`}
+            >
+              {label}
+            </span>
           </Link>
         );
       })}
@@ -55,14 +70,29 @@ export function DesktopNavigation() {
       <Link
         href="/settings"
         aria-current={isCurrentPath(pathname, "/settings") ? "page" : undefined}
-        className={`flex min-h-12 items-center gap-3 rounded-xl px-3.5 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+        title={collapsed ? "Settings" : undefined}
+        className={`flex min-h-12 items-center overflow-hidden rounded-xl text-sm font-semibold transition-[padding,gap,background-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+          collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3.5"
+        } ${
           isCurrentPath(pathname, "/settings")
             ? "bg-white/10 text-brand"
             : "text-white/74 hover:bg-white/[0.06] hover:text-white"
         }`}
       >
-        <Settings className="size-5" strokeWidth={1.8} aria-hidden="true" />
-        Settings
+        <Settings
+          className="size-5 shrink-0"
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
+        <span
+          className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
+            collapsed
+              ? "max-w-0 -translate-x-1 opacity-0"
+              : "max-w-36 translate-x-0 opacity-100"
+          }`}
+        >
+          Settings
+        </span>
       </Link>
     </nav>
   );
