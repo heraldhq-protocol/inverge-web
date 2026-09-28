@@ -76,11 +76,12 @@ export function ContactForm() {
         >
           What is this about?
         </label>
-        <Select id="contact-topic" name="topic" defaultValue={topics[0]}>
-          {topics.map((topic) => (
-            <option key={topic}>{topic}</option>
-          ))}
-        </Select>
+        <Select
+          id="contact-topic"
+          name="topic"
+          defaultValue={topics[0]}
+          options={topics.map((topic) => ({ value: topic, label: topic }))}
+        />
       </div>
 
       <div className="flex flex-col gap-1.5">

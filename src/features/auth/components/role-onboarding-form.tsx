@@ -1,6 +1,7 @@
 "use client";
 
 import { Check, Lightbulb, Search } from "lucide-react";
+import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 type StartingPoint = "build" | "support";
@@ -27,6 +28,7 @@ const startingPoints = [
 ] as const;
 
 export function RoleOnboardingForm() {
+  const router = useRouter();
   const [startingPoint, setStartingPoint] = useState<StartingPoint | null>(
     null,
   );
@@ -40,14 +42,14 @@ export function RoleOnboardingForm() {
       return;
     }
 
-    setStatus(
-      "Your starting point will be saved when onboarding is connected.",
-    );
+    setStatus("");
+    router.push("/home");
   }
 
   function handleSkip() {
     setStartingPoint(null);
-    setStatus("Skipping onboarding will be connected with the product home.");
+    setStatus("");
+    router.push("/home");
   }
 
   return (

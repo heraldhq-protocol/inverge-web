@@ -204,11 +204,15 @@ describe("RoleOnboardingForm", () => {
     );
     fireEvent.click(screen.getByRole("button", { name: "Continue" }));
 
-    expect(
-      screen.getByText(
-        "Your starting point will be saved when onboarding is connected.",
-      ),
-    ).toBeInTheDocument();
+    expect(routerPush).toHaveBeenCalledWith("/home");
+  });
+
+  it("allows onboarding to be skipped without fixing a permanent role", () => {
+    render(<RoleOnboardingForm />);
+
+    fireEvent.click(screen.getByRole("button", { name: "Skip for now" }));
+
+    expect(routerPush).toHaveBeenCalledWith("/home");
   });
 });
 

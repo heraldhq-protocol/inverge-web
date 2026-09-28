@@ -5,6 +5,7 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
 
 const navigation = [
+  { href: "/discover", label: "Ideas" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/about", label: "About" },
   { href: "/guides", label: "Guides" },
@@ -37,12 +38,20 @@ export function SiteHeader() {
           <NavigationLinks />
         </nav>
 
-        <Link
-          href="/sign-up"
-          className="hidden min-h-11 items-center rounded-full bg-contrast px-5 text-sm font-semibold text-white transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand md:inline-flex"
-        >
-          Create account
-        </Link>
+        <div className="hidden items-center gap-3 md:flex">
+          <Link
+            href="/sign-in"
+            className="inline-flex min-h-11 items-center rounded-full px-3 text-sm font-semibold text-ink transition-colors hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+          >
+            Sign in
+          </Link>
+          <Link
+            href="/sign-up"
+            className="inline-flex min-h-11 items-center rounded-full bg-contrast px-5 text-sm font-semibold text-white transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-brand"
+          >
+            Start an idea
+          </Link>
+        </div>
 
         <details className="group relative md:hidden">
           <summary className="flex min-h-11 min-w-11 cursor-pointer list-none items-center justify-center rounded-full border border-border bg-surface text-ink [&::-webkit-details-marker]:hidden">
@@ -54,10 +63,16 @@ export function SiteHeader() {
             <nav aria-label="Mobile navigation" className="flex flex-col">
               <NavigationLinks mobile />
               <Link
-                href="/sign-up"
-                className="mt-5 inline-flex min-h-12 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white"
+                href="/sign-in"
+                className="mt-4 inline-flex min-h-12 items-center justify-center rounded-full border border-border px-5 text-sm font-semibold text-ink"
               >
-                Create account
+                Sign in
+              </Link>
+              <Link
+                href="/sign-up"
+                className="mt-3 inline-flex min-h-12 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white"
+              >
+                Start an idea
               </Link>
             </nav>
           </div>

@@ -1,7 +1,7 @@
 # Inverge implementation brief
 
 Status: **Public marketing implemented; product implementation in progress**
-Last updated: 2026-09-15
+Last updated: 2026-09-18
 
 The complete product contract is
 [`Inverge_PRD_SRS_v1.2.md`](./Inverge_PRD_SRS_v1.2.md). Do not duplicate its
@@ -90,11 +90,18 @@ scope.
 
 ## Current implementation slice
 
-Authentication and embedded-wallet onboarding are the first product slice.
-Privy is the accepted provider for user authentication and automatic embedded
-Solana wallet provisioning. The backend remains responsible for mapping the
-provider identity and wallet to an Inverge account and for authorizing protected
-operations.
+Authentication, embedded-wallet onboarding, and the authenticated product shell
+form the first product slice. Privy is the accepted provider for user
+authentication and automatic embedded Solana wallet provisioning. The responsive
+home, public/authenticated idea-discovery, pre-pledge, notification, and
+account-settings surfaces currently use clearly labelled preview data to
+establish the navigation, discovery,
+pre-pledge lifecycle, notification grouping, preferences, privacy disclosures,
+loading, empty, unavailable, and retry states; they must be replaced by typed
+backend projections during integration. The backend remains responsible for
+mapping the provider identity and wallet to an Inverge account and for
+authorizing protected operations, notification read state, account changes, and
+deletion requests.
 
 ## Non-functional launch gates
 

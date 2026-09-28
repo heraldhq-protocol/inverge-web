@@ -12,6 +12,8 @@ type AuthShellProps = {
   description: ReactNode;
   panelTitle: string;
   panelDescription: string;
+  visualAlt?: string;
+  visualSrc?: string;
   beforeTitle?: ReactNode;
   headerAction?: ReactNode;
 };
@@ -23,6 +25,8 @@ export function AuthShell({
   description,
   panelTitle,
   panelDescription,
+  visualAlt = "African builder working on hardware in a workshop",
+  visualSrc = "/images/auth_img.png",
   beforeTitle,
   headerAction,
 }: AuthShellProps) {
@@ -92,8 +96,8 @@ export function AuthShell({
             className="relative my-6 min-h-0 flex-1 overflow-hidden rounded-2xl border border-white/12 shadow-2xl shadow-black/40"
           >
             <Image
-              src="/images/auth_img.png"
-              alt="African builder working on hardware in a workshop"
+              src={visualSrc}
+              alt={visualAlt}
               fill
               sizes="(min-width: 1024px) 40vw, 100vw"
               priority

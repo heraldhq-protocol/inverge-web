@@ -4,8 +4,8 @@ import { ArrowRight, Home, RotateCcw } from "lucide-react";
 import Link from "next/link";
 import { useEffect } from "react";
 
-import { ErrorHeroIllustration } from "@/components/ui/error-hero-illustration";
 import { ErrorReferenceBadge } from "@/components/ui/error-reference-badge";
+import { StateIllustration } from "@/components/ui/state-illustration";
 import { ErrorPageLayout } from "@/features/marketing/components/error-page-layout";
 
 export default function ErrorPage({
@@ -27,7 +27,7 @@ export default function ErrorPage({
   return (
     <ErrorPageLayout>
       {/* Decorative illustration */}
-      <ErrorHeroIllustration variant="error" />
+      <StateIllustration variant="error" />
 
       {/* Eyebrow */}
       <div className="mt-5 flex items-center justify-center gap-2 sm:mt-6">
