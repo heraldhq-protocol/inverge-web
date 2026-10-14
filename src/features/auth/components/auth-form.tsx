@@ -155,7 +155,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         <ProviderButton provider="Google" onSelect={handleProvider} />
       </div>
 
-      <div className="my-4 flex items-center gap-3" aria-hidden="true">
+      {/* <div className="my-4 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
         <span className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
           or continue with email
@@ -221,9 +221,9 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         >
           {status}
         </p>
-      </form>
+      </form> */}
 
-      <p className="mt-3.5 text-center text-sm text-muted sm:mt-4">
+      {/* <p className="mt-3.5 text-center text-sm text-muted sm:mt-4">
         {isSignUp ? "Already have an account?" : "New to Inverge?"}{" "}
         <Link
           href={isSignUp ? "/sign-in" : "/sign-up"}
@@ -231,7 +231,7 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         >
           {isSignUp ? "Sign in" : "Create an account"}
         </Link>
-      </p>
+      </p> */}
 
       {isSignUp ? (
         <p className="mt-4 text-center text-xs leading-5 text-muted sm:mt-5">

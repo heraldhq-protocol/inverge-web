@@ -33,7 +33,7 @@ export function BrandMark({
             : "max-w-28 translate-x-0 opacity-100"
         }`}
       >
-        inverge
+        Inverge
       </span>
     </Link>
   );

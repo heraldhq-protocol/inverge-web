@@ -22,7 +22,8 @@ export function NewsletterField() {
         </button>
       </div>
       <p className="mt-2 text-xs text-white/48">
-        Email signup will open with backend integration.
+        Sign up is currently unavailable. Email signup will open with backend
+        integration.
       </p>
     </div>
   );

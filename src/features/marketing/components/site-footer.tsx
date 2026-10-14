@@ -3,6 +3,7 @@ import Link from "next/link";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
 import { NewsletterField } from "@/features/marketing/components/newsletter-field";
+import { SectionBackground } from "@/features/marketing/components/section-background";
 
 const groups = [
   {
@@ -34,7 +35,15 @@ const groups = [
 
 export function SiteFooter() {
   return (
-    <footer className="border-t border-white/10 bg-contrast py-16 text-white lg:py-20">
+    <footer className="relative isolate overflow-hidden border-t border-white/10 bg-contrast py-16 text-white lg:py-20">
+      <SectionBackground
+        tone="forest"
+        className="-z-10 object-[50%_65%] opacity-50"
+      />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-contrast/35 via-contrast/55 to-contrast/75"
+      />
       <Container>
         <div className="grid grid-cols-1 gap-10 border-b border-white/10 pb-14 sm:grid-cols-2 lg:grid-cols-12 lg:gap-12">
           <div className="space-y-4 sm:col-span-2 lg:col-span-3">

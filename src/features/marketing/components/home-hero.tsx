@@ -1,110 +1,129 @@
-import { ArrowRight } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  FileViewIcon,
+  Idea01Icon,
+  UsersRoundIcon,
+} from "@hugeicons/core-free-icons";
 import Image from "next/image";
+import Link from "next/link";
 
-import { ButtonLink } from "@/features/marketing/components/button-link";
 import { Container } from "@/features/marketing/components/container";
+import { SectionBackground } from "@/features/marketing/components/section-background";
+
+const heroStages = [
+  { step: "01", label: "Validate", icon: Idea01Icon },
+  { step: "02", label: "Fund", icon: UsersRoundIcon },
+  { step: "03", label: "Review", icon: FileViewIcon },
+] as const;
 
 export function HomeHero() {
   return (
-    <section className="overflow-hidden bg-canvas py-12 md:py-20 lg:py-24">
+    <section
+      data-hero
+      data-parallax-scope
+      className="relative isolate overflow-hidden bg-canvas py-12 md:py-20 lg:py-24"
+    >
+      <SectionBackground tone="canvas" priority className="-z-10 opacity-50" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-canvas/55 via-canvas/80 to-canvas"
+      />
       <Container>
-        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-8">
-          <div className="flex flex-col gap-8 lg:col-span-7">
-            <h1 className="max-w-4xl text-balance text-[clamp(2.5rem,4.6vw+0.75rem,4.75rem)] font-bold leading-[1.05] tracking-[-0.055em] text-ink">
+        <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-10">
+          {/* Left column: messaging and direct CTAs */}
+          <div className="flex flex-col gap-6 lg:col-span-7">
+            <p
+              data-hero-item
+              className="text-xs font-semibold uppercase tracking-[0.2em] text-muted"
+            >
+              Crowdfunding for African builders
+            </p>
+
+            <h1
+              data-hero-item
+              className="max-w-2xl text-4xl font-bold leading-[1.08] tracking-[-0.04em] text-ink sm:text-5xl lg:text-6xl"
+            >
               Back bold ideas.{" "}
-              <span className="mt-1 block text-brand sm:mt-0 sm:inline">
+              <span className="block text-brand sm:inline">
                 Keep delivery accountable.
               </span>
             </h1>
 
-            <p className="max-w-xl text-base leading-relaxed text-muted sm:text-lg lg:text-xl">
-              Inverge is building a path from early validation to
-              milestone-based crowdfunding—so builders can prove demand before
-              raising and backers can see what happens after funding.
+            <p
+              data-hero-item
+              className="max-w-xl text-base leading-relaxed text-muted sm:text-lg"
+            >
+              Validate first, fund in milestones, and get refunds if a milestone
+              fails review. Terms are published upfront.
             </p>
 
-            <div className="flex flex-col gap-3 pt-1 sm:flex-row sm:items-center sm:gap-4">
-              <ButtonLink href="/sign-up">
-                <span>Create account</span>
-                <ArrowRight className="ml-2 size-4" aria-hidden="true" />
-              </ButtonLink>
-              <ButtonLink
-                href="/guides/publish-and-validate-an-idea"
-                variant="secondary"
+            {/* Primary: Explore ideas. Secondary: Start an idea */}
+            <div
+              data-hero-item
+              className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4"
+            >
+              <Link
+                href="/discover"
+                className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand px-7 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                Read the builder guide
-              </ButtonLink>
-            </div>
-
-            <div className="flex items-center gap-3 pt-2">
-              <div className="flex -space-x-2.5" aria-hidden="true">
-                {[
-                  ["V", "bg-brand-strong"],
-                  ["M", "bg-brand"],
-                  ["R", "bg-contrast"],
-                ].map(([label, color]) => (
-                  <span
-                    key={label}
-                    className={`grid size-9 place-items-center rounded-full text-xs font-bold text-white ring-2 ring-canvas ${color}`}
-                  >
-                    {label}
-                  </span>
-                ))}
-              </div>
-              <p className="max-w-md text-xs font-medium leading-snug text-muted sm:text-sm">
-                Validate first. Fund in milestones. Put refund rules upfront.
-              </p>
+                Explore ideas
+              </Link>
+              <Link
+                href="/sign-up"
+                className="inline-flex min-h-12 items-center justify-center rounded-full border border-ink/80 bg-transparent px-7 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Start an idea
+              </Link>
             </div>
           </div>
 
-          <div className="relative mt-4 lg:col-span-5 lg:mt-0">
+          {/* Right column: authentic photo with integrated campaign protection card */}
+          <div data-hero-item className="relative mt-2 lg:col-span-5 lg:mt-0">
             <div className="relative mx-auto max-w-lg lg:max-w-none">
-              <div className="hero-photo-fade relative aspect-[4/3] overflow-hidden rounded-2xl border border-black/5 shadow-2xl shadow-contrast/15 sm:aspect-[16/11] lg:aspect-[4/5] lg:rounded-none lg:border-0 lg:shadow-none">
+              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border/80 shadow-xl shadow-contrast/8 sm:aspect-[16/12] lg:aspect-[4/5]">
                 <Image
-                  src="/images/hero-lagos-sunset.png"
-                  alt="A Lagos street with yellow buses and the city skyline"
+                  data-parallax
+                  src="/images/showcase/hero_builders.png"
+                  alt="African hardware and technology builders collaborating in a Lagos workshop studio with protected campaign framework"
                   fill
                   priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 600px"
+                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 560px"
                   className="object-cover object-center"
                 />
-                <div
-                  aria-hidden="true"
-                  className="absolute inset-x-0 bottom-0 h-1/3 bg-gradient-to-t from-black/25 to-transparent"
-                />
-              </div>
 
-              <div className="relative z-20 -mt-16 mx-4 sm:-mt-20 sm:mx-6 lg:absolute lg:-bottom-8 lg:-left-12 lg:right-4 lg:mx-0 lg:mt-0">
-                <div className="rounded-2xl border border-brand/20 bg-surface p-5 shadow-2xl shadow-contrast/15 sm:p-6">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-brand-strong">
-                    Why Inverge
+                {/* Campaign lifecycle summary, overlaid on the hero image */}
+                <div className="absolute inset-x-3 bottom-3 isolate overflow-hidden rounded-2xl border border-white/15 bg-contrast/85 p-3 text-white shadow-lg backdrop-blur-md sm:inset-x-4 sm:bottom-4 sm:p-4">
+                  <SectionBackground
+                    tone="pattern"
+                    sizes="360px"
+                    className="-z-10 opacity-10"
+                  />
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-white/60">
+                    How a campaign is protected
                   </p>
-                  <div className="mt-3 flex items-start justify-between gap-5">
-                    <div>
-                      <p className="text-lg font-bold tracking-tight text-ink sm:text-xl">
-                        Funding that follows delivery
-                      </p>
-                      <p className="mt-1 text-xs leading-5 text-muted sm:text-sm">
-                        Milestones and proof requirements are published before
-                        backing opens.
-                      </p>
-                    </div>
-                    <span className="inline-flex shrink-0 items-center gap-1.5 text-xs font-semibold text-brand-strong">
-                      <span
-                        className="size-2 rounded-full bg-brand"
-                        aria-hidden="true"
-                      />
-                      Clear terms
-                    </span>
-                  </div>
-                  <div
-                    className="mt-5 flex h-2.5 overflow-hidden rounded-full bg-brand/12"
-                    aria-hidden="true"
-                  >
-                    <span className="w-1/3 bg-brand" />
-                    <span className="w-1/3 border-l-2 border-surface bg-brand/65" />
-                    <span className="w-1/3 border-l-2 border-surface bg-brand/30" />
-                  </div>
+                  <ol className="mt-3 grid grid-cols-3">
+                    {heroStages.map(({ step, label, icon }, index) => (
+                      <li
+                        key={step}
+                        className={`flex flex-col items-center gap-1.5 px-1 text-center ${
+                          index > 0 ? "border-l border-white/15" : ""
+                        }`}
+                      >
+                        <span className="grid size-8 place-items-center rounded-full bg-brand/20 text-brand">
+                          <HugeiconsIcon
+                            icon={icon}
+                            size={16}
+                            strokeWidth={1.6}
+                            aria-hidden="true"
+                          />
+                        </span>
+                        <span className="text-[10px] font-medium uppercase tracking-wider text-white/50">
+                          {step}
+                        </span>
+                        <span className="text-xs font-semibold">{label}</span>
+                      </li>
+                    ))}
+                  </ol>
                 </div>
               </div>
             </div>

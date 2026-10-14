@@ -17,6 +17,7 @@ choices.
 | D-006 | 2026-09-12 | Accepted | Pin the scaffold to Node.js 24 LTS and pnpm 12 with exact dependency versions; defer ESLint 10 and TypeScript 7 until the full Next.js lint and test toolchain supports them. |
 | D-007 | 2026-09-12 | Accepted | Rebuild the legacy public marketing surface as an isolated marketing feature, preserving brand direction while rewriting unsupported claims and importing no legacy application architecture. |
 | D-008 | 2026-09-15 | Accepted | Use Privy for authentication and automatic embedded Solana wallet provisioning. |
+| D-009 | 2026-10-13 | Accepted | Implement marketing motion with one GSAP data-attribute engine mounted in the marketing layout, honoring `prefers-reduced-motion`. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -107,6 +108,44 @@ application roles, or escrow state.
 
 Revisit when: Privy no longer satisfies the required Solana, authentication,
 security, regional availability, reliability, or commercial constraints.
+
+### D-009: Central GSAP motion engine in the marketing layout
+
+- Date: 2026-10-13
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The marketing surface needed on-load and scroll-triggered motion without
+converting its Server Component sections into Client Components. The brand system
+requires motion to be fast, subtle, optional, compositor-friendly, and
+reduced-motion aware. `gsap` and `@gsap/react` were already pinned dependencies
+but unused.
+
+Decision: Add one `"use client"` `MotionProvider` to the marketing layout that
+reads `data-reveal`, `data-reveal-stagger`, `data-reveal-rule`, `data-hero`, and
+`data-parallax` attributes and wires GSAP timelines and ScrollTriggers within a
+scoped `useGSAP` context. Sections opt in with attributes only. A pre-paint inline
+bootstrap sets a `data-motion` attribute (skipped under `prefers-reduced-motion`)
+to hide reveal targets before hydration, and a timeout failsafe plus
+`!important` fallback CSS unhide content if the engine never initializes.
+Reduced motion is handled with `gsap.matchMedia()`; reveals run `once` and animate
+only `transform` and `opacity`.
+
+Alternatives: Converting each section to a Client Component with its own
+`useGSAP` hook would duplicate setup and expand the client boundary. Using
+`next/script` with `beforeInteractive` for the bootstrap is documented for the
+root document, not a nested layout.
+
+Consequences: GSAP's core and ScrollTrigger ship to the marketing client bundle
+(already-installed dependencies). The engine must re-initialize on client-side
+navigation within the marketing route group (handled via a `pathname` dependency
+with `revertOnUpdate`) and refresh ScrollTrigger on layout changes (handled with a
+`ResizeObserver`). Motion remains additive: with JavaScript disabled or reduced
+motion enabled, all content is visible and static.
+
+Revisit when: Product (non-marketing) surfaces need the same primitives, prompting
+promotion of the engine to `components/ui`; or GSAP no longer meets bundle,
+performance, or accessibility constraints.
 
 ## Decision template
 
