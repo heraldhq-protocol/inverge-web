@@ -2,17 +2,10 @@
 
 import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
 
 import { DURATIONS, EASINGS, STAGGER_STEP } from "@/features/marketing/motion/tokens";
 import { gsap, useGsap } from "@/features/marketing/motion/use-gsap";
-
-declare global {
-  interface Window {
-    __invergeMotion?: boolean;
-    __invergeMotionTimer?: number;
-  }
-}
 
 const REVEAL_FROM = {
   up: { y: 24 },
@@ -23,8 +16,6 @@ const REVEAL_FROM = {
 } as const;
 
 type RevealVariant = keyof typeof REVEAL_FROM;
-
-const MOTION_BOOTSTRAP = `(function(){try{var el=document.currentScript&&document.currentScript.parentElement;if(!el)return;if(window.matchMedia("(prefers-reduced-motion: reduce)").matches)return;el.setAttribute("data-motion","ready");window.__invergeMotionTimer=window.setTimeout(function(){if(!window.__invergeMotion){el.setAttribute("data-motion","fallback");}},2500);}catch(e){}})();`;
 
 function getVariant(value: string | null): RevealVariant {
   if (value && value in REVEAL_FROM) {
@@ -53,11 +44,6 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
       if (!scope) {
         return;
       }
-
-      if (window.__invergeMotionTimer) {
-        window.clearTimeout(window.__invergeMotionTimer);
-      }
-      window.__invergeMotion = true;
 
       const media = g.matchMedia();
       let refreshPriority = 0;
@@ -226,8 +212,7 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
   );
 
   return (
-    <div ref={root} data-motion-root>
-      <script dangerouslySetInnerHTML={{ __html: MOTION_BOOTSTRAP }} />
+    <div ref={root} data-motion="ready" data-motion-root>
       {children}
     </div>
   );

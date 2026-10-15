@@ -92,15 +92,16 @@ input[type="search"]::-webkit-search-decoration {
 @media (prefers-reduced-motion: no-preference) {
   [data-motion="ready"] [data-reveal] {
     opacity: 0;
+    animation: reveal-failsafe 0.01s linear 3s forwards;
   }
-}
 
-[data-motion="fallback"] [data-reveal],
-[data-motion="fallback"] [data-reveal-stagger] > *,
-[data-motion="fallback"] [data-hero-item] {
-  opacity: 1 !important;
-  visibility: visible !important;
-  transform: none !important;
+  @keyframes reveal-failsafe {
+    to {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
