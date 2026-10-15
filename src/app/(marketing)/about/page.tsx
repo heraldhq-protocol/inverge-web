@@ -138,7 +138,7 @@ export default function AboutPage() {
             >
               <Image
                 data-parallax
-                src="/images/showcase/hero_builders.png"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=900&fit=crop"
                 alt="African builders collaborating in a workshop"
                 fill
                 priority

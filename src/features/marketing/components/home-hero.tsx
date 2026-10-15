@@ -83,7 +83,7 @@ export function HomeHero() {
               <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border/80 shadow-xl shadow-contrast/8 sm:aspect-[16/12] lg:aspect-[4/5]">
                 <Image
                   data-parallax
-                  src="/images/showcase/hero_builders.png"
+                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=900&fit=crop"
                   alt="African hardware and technology builders collaborating in a Lagos workshop studio with protected campaign framework"
                   fill
                   priority

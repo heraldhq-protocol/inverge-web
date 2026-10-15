@@ -32,7 +32,7 @@ export function CampaignAnatomySection() {
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
                 <div className="relative aspect-square size-20 shrink-0 overflow-hidden rounded-xl border border-border/70 sm:size-24">
                   <Image
-                    src="/images/showcase/campaign_anatomy_solar.png"
+                    src="https://images.unsplash.com/photo-1466611653911-95081537e5b7?w=1200&h=800&fit=crop"
                     alt="Solar cold storage hardware installation"
                     fill
                     sizes="96px"

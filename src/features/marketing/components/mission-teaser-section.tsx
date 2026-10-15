@@ -16,7 +16,7 @@ export function MissionTeaserSection() {
           >
             <Image
               data-parallax
-              src="/images/showcase/mission_lagos.png"
+              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&h=800&fit=crop"
               alt="Lagos skyline and tech corridor at sunset"
               fill
               sizes="(max-width: 1024px) 100vw, 580px"

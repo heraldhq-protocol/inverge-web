@@ -15,7 +15,7 @@ export function TwoDoorsSection() {
           <div className="flex flex-col gap-6 rounded-3xl border border-border/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:p-7">
             <div className="relative h-44 w-36 shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
               <Image
-                src="/images/showcase/two_doors_builder.png"
+                src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=800&fit=crop"
                 alt="African builder planning project milestone delivery"
                 fill
                 priority
@@ -54,7 +54,7 @@ export function TwoDoorsSection() {
           <div className="flex flex-col gap-6 rounded-3xl border border-border/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:p-7">
             <div className="relative h-44 w-36 shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
               <Image
-                src="/images/showcase/two_doors_backer.png"
+                src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=800&fit=crop"
                 alt="African supporter reviewing community milestones"
                 fill
                 priority

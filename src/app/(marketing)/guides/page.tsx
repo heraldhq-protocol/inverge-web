@@ -139,7 +139,7 @@ export default function GuidesPage() {
             {/* Right – hero photo */}
             <div className="relative hidden aspect-[16/10] overflow-hidden rounded-2xl lg:block lg:aspect-[4/3]">
               <Image
-                src="/images/showcase/hero_builders.png"
+                src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=900&fit=crop"
                 alt="People learning about Inverge's crowdfunding platform"
                 fill
                 priority
@@ -218,7 +218,7 @@ export default function GuidesPage() {
                 {/* Thumbnail */}
                 <div className="relative hidden aspect-[3/2] sm:block md:hidden lg:block">
                   <Image
-                    src="/images/showcase/two_doors_builder.png"
+                    src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=800&fit=crop"
                     alt=""
                     fill
                     sizes="280px"
@@ -262,7 +262,7 @@ export default function GuidesPage() {
                 </div>
                 <div className="relative hidden aspect-[3/2] sm:block md:hidden lg:block">
                   <Image
-                    src="/images/showcase/two_doors_backer.png"
+                    src="https://images.unsplash.com/photo-1556742049-0cfed4f6a45d?w=1200&h=800&fit=crop"
                     alt=""
                     fill
                     sizes="280px"
