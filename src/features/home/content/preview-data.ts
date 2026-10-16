@@ -159,8 +159,8 @@ export const previewIdeas = {
     id: "skill-circle",
     artwork: "community",
     category: "Community",
-    creator: "Ngozi Okafor",
-    creatorInitials: "NO",
+    creator: "Amara Okonkwo",
+    creatorInitials: "AO",
     description:
       "Neighbourhood skill exchanges that turn spare time into practical local support.",
     discoveryCategory: "community",
