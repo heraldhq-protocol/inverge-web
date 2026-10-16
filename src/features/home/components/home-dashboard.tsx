@@ -6,7 +6,7 @@ import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
 import { IdeaCard } from "@/features/home/components/idea-card";
 import { PrePledgeList } from "@/features/home/components/pre-pledge-list";
-import { SectionHeading } from "@/features/home/components/section-heading";
+import { SectionHeading } from "@/components/ui/section-heading";
 import {
   discoveryCategories,
   type DiscoveryCategory,

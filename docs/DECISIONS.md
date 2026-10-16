@@ -21,6 +21,7 @@ choices.
 | D-010 | 2026-10-16 | Accepted | Denominate all product money in USD; replace `NairaAmount` with `MoneyAmount` (`currency: "USD"`, integer atomic cents). |
 | D-011 | 2026-10-16 | Accepted | Prefix dashboard routes with `/d` (`/d`, `/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`) and redirect the old paths. |
 | D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
+| D-013 | 2026-10-16 | Accepted | Add Tiptap 3.32.0 (`core`, `react`, `starter-kit`, `extension-image`, `extension-placeholder`) for the rich pitch editor and store pitches as ProseMirror JSON typed structurally by `src/lib/rich-text`. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -246,6 +247,47 @@ Consequences: Money is importable from a neutral layer by every feature and by
 
 Revisit when: Money formatting gains a currency or rate source, or a locale
 policy that belongs beside the finance domain rather than in generic `lib`.
+
+### D-013: Add Tiptap 3 for the rich pitch editor
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The create-idea flow needs a rich pitch (headings, lists, links,
+images) whose contents survive an API round-trip and are readable on the idea
+page and in discovery. The platform has no rich-text capability, and the last
+implementation used Tiptap 2, whose peer range excludes the installed React 19.
+
+Decision: Add Tiptap 3.32.0 — `@tiptap/core`, `@tiptap/react`,
+`@tiptap/starter-kit`, `@tiptap/extension-image`, and
+`@tiptap/extension-placeholder` — pinned to one version line, as the editor's
+packages are released together. Configure the Link extension that `starter-kit`
+already bundles through `StarterKit.configure({ link: … })` rather than adding
+`@tiptap/extension-link` separately, and harden it with
+`rel="noopener noreferrer nofollow"`, `target="_blank"`, and `openOnClick: false`.
+Restrict headings to levels 2–3 and reject base64 image sources. Store the
+document as ProseMirror JSON typed structurally in `src/lib/rich-text`, so
+fixtures and the server-side reader never import an editor package; link
+addresses are normalised through that module's `sanitizeUrl`. Initialize with
+`immediatelyRender: false` so the editor stays out of the server render and the
+first client render.
+
+Alternatives: Tiptap 2 (its React peer range rejects React 19); adding
+`@tiptap/extension-link` alongside `starter-kit`'s bundled copy (registers the
+extension twice); storing HTML (requires sanitisation before every render and
+loses structure when re-opened for editing); a Markdown textarea (no structured
+pitch layout and no in-editor affordances).
+
+Consequences: The editor bundle reaches any route that renders
+`RichTextField`, which stays a single Client Component. Pitch documents are JSON,
+so readers walk the document instead of using `dangerouslySetInnerHTML`, and the
+structural type must continue to match the editor's own JSON shape for the
+document to flow both ways without a cast.
+
+Revisit when: Collaboration, version history, or slash commands are needed (they
+bring their own packages), or the editor's React peer range stops accepting the
+installed React.
 
 ## Decision template
 

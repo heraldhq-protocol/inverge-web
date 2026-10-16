@@ -89,6 +89,79 @@ input[type="search"]::-webkit-search-decoration {
   background: color-mix(in srgb, var(--inverge-brand) 28%, transparent);
 }
 
+@keyframes inv-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@keyframes inv-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/*
+ * Rich pitch prose, shared by the editor and the reader so a creator sees the
+ * same thing they publish. Kept small on purpose: paragraphs, headings, lists,
+ * links and images are the whole vocabulary of a pitch.
+ */
+.inv-prose > * + * {
+  margin-top: 0.75rem;
+}
+
+.inv-prose h2 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+}
+
+.inv-prose h3 {
+  font-size: 1.0625rem;
+  font-weight: 700;
+}
+
+.inv-prose ul,
+.inv-prose ol {
+  padding-left: 1.25rem;
+}
+
+.inv-prose ul {
+  list-style: disc;
+}
+
+.inv-prose ol {
+  list-style: decimal;
+}
+
+.inv-prose li + li {
+  margin-top: 0.25rem;
+}
+
+.inv-prose a {
+  color: var(--inverge-brand-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.inv-prose img {
+  height: auto;
+  max-width: 100%;
+  border-radius: 0.5rem;
+}
+
+/* Tiptap Placeholder: shown only while the document is empty. */
+.inv-prose p.is-editor-empty:first-child::before {
+  content: attr(data-placeholder);
+  color: var(--inverge-muted);
+  float: left;
+  height: 0;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   [data-motion="ready"] [data-reveal] {
     opacity: 0;
