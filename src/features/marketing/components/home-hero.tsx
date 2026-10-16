@@ -63,7 +63,7 @@ export function HomeHero() {
               className="flex flex-col gap-3 pt-2 sm:flex-row sm:items-center sm:gap-4"
             >
               <Link
-                href="/discover"
+                href="/ideas"
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-brand px-7 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Explore ideas

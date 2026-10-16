@@ -22,6 +22,7 @@ choices.
 | D-011 | 2026-10-16 | Accepted | Prefix dashboard routes with `/d` (`/d`, `/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`) and redirect the old paths. |
 | D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
 | D-013 | 2026-10-16 | Accepted | Add Tiptap 3.32.0 (`core`, `react`, `starter-kit`, `extension-image`, `extension-placeholder`) for the rich pitch editor and store pitches as ProseMirror JSON typed structurally by `src/lib/rich-text`. |
+| D-014 | 2026-10-16 | Accepted | Split idea routes: public discovery, detail, and topics stay at `/ideas`, `/ideas/[id]`, and `/topics/[slug]`, while creator surfaces live under the `/d` dashboard at `/d/ideas`; `/discover` permanently redirects to `/ideas`. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -288,6 +289,42 @@ document to flow both ways without a cast.
 Revisit when: Collaboration, version history, or slash commands are needed (they
 bring their own packages), or the editor's React peer range stops accepting the
 installed React.
+
+### D-014: Split idea routes between public `/ideas` and dashboard `/d/ideas`
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The ideas rework adds both public surfaces and creator-only surfaces.
+D-011 had already prefixed dashboard routes with `/d` and, when `/ideas` was a
+dashboard route, redirected `/ideas/:path*` to `/d/ideas/:path*` in
+`next.config.ts`. Public discovery also lives at its own address, and a private
+idea must stay readable by anyone holding its link, which a dashboard-namespaced
+address cannot promise.
+
+Decision: Public idea surfaces stay outside the dashboard — `/ideas` for
+discovery, `/ideas/[id]` for the detail page (link-reachable for public and
+private ideas alike), and `/topics/[slug]` for the topic directory. Creator
+surfaces follow D-011 under `/d`: `/d/ideas` holds the creator's own ideas,
+`/d/ideas/new` the create flow, and `/d/ideas/[id]/insights` the insights page.
+The `/ideas/:path*` → `/d/ideas/:path*` redirect is removed, because config
+redirects are matched before the filesystem and would shadow the public pages;
+`/discover` permanently redirects to `/ideas` in its place, and the site header,
+footer, hero, about page, and their tests point at the new address.
+
+Alternatives: Every idea surface under `/ideas/*` (the plan's literal paths, but
+it puts creator-only pages outside the dashboard namespace D-011 established);
+keeping discovery at `/discover` (least churn, but contradicts the single public
+discovery surface and the detail paths later phases assume).
+
+Consequences: Two addresses now describe different things — `/ideas` is public
+discovery and `/d/ideas` is the creator's own list — so a link to "ideas" is
+ambiguous in prose and must be checked in code. The public pages carry the
+marketing shell rather than `AppShell`.
+
+Revisit when: Ideas gain an authenticated-only public review state, or the
+discovery surface needs the product shell's navigation.
 
 ## Decision template
 

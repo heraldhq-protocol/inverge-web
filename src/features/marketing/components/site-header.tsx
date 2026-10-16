@@ -8,7 +8,7 @@ import { Cancel01Icon, Menu01Icon } from "@/components/ui/hugeicons";
 import { Container } from "@/features/marketing/components/container";
 
 const navigation = [
-  { href: "/discover", label: "Ideas" },
+  { href: "/ideas", label: "Ideas" },
   { href: "/#how-it-works", label: "How it works" },
   { href: "/about", label: "About" },
   { href: "/guides", label: "Guides" },

@@ -13,11 +13,11 @@ const config: NextConfig = {
   async redirects() {
     return [
       { source: "/home", destination: "/d", permanent: true },
-      {
-        source: "/ideas/:path*",
-        destination: "/d/ideas/:path*",
-        permanent: true,
-      },
+      // Public idea surfaces live at `/ideas` and the dashboard's own at
+      // `/d/ideas` (D-014), so `/ideas` must never be redirected into the
+      // dashboard namespace — config redirects are matched before the
+      // filesystem and would shadow the public pages.
+      { source: "/discover", destination: "/ideas", permanent: true },
       {
         source: "/pre-pledges/:path*",
         destination: "/d/pre-pledges/:path*",

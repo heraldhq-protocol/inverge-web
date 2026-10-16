@@ -73,7 +73,7 @@ export function TwoDoorsSection() {
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5">
                 <Link
-                  href="/discover"
+                  href="/ideas"
                   className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   Explore ideas

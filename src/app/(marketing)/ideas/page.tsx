@@ -9,6 +9,6 @@ export const metadata: Metadata = {
     "Browse public validation signals for early-stage ideas from African builders.",
 };
 
-export default function DiscoverIdeasPage() {
+export default function IdeasPage() {
   return <IdeasDashboard data={ideasPreviewData} viewer="visitor" />;
 }
