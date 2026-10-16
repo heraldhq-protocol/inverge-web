@@ -26,7 +26,7 @@ export function ProductSidebar({
             : "justify-between gap-3 px-2"
         }`}
       >
-        <BrandMark href="/home" inverted compact={collapsed} />
+        <BrandMark href="/d" inverted compact={collapsed} />
         <button
           type="button"
           aria-controls="product-sidebar"
@@ -56,7 +56,7 @@ export function ProductSidebar({
       </div>
 
       <Link
-        href="/ideas"
+        href="/d/ideas"
         aria-label={collapsed ? "Start an idea" : undefined}
         title={collapsed ? "Start an idea" : undefined}
         className={`mt-8 inline-flex min-h-12 items-center justify-center overflow-hidden rounded-xl border border-brand bg-transparent text-sm font-semibold text-white transition-[padding,gap,background-color,color] duration-300 hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand ${
@@ -76,7 +76,7 @@ export function ProductSidebar({
       </Link>
 
       <Link
-        href="/profile"
+        href="/d/profile"
         aria-label={collapsed ? "Open Amara Okonkwo's profile" : undefined}
         title={collapsed ? "Amara Okonkwo" : undefined}
         className={`mt-auto flex min-h-16 items-center overflow-hidden rounded-xl py-3 text-white transition-[padding,gap,background-color] duration-300 hover:bg-white/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${

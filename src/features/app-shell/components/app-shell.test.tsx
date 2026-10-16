@@ -4,7 +4,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { AppShell } from "@/features/app-shell/components/app-shell";
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/home",
+  usePathname: () => "/d",
 }));
 
 afterEach(cleanup);

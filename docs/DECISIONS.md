@@ -180,6 +180,40 @@ rename.
 Revisit when: The product supports contributor-facing multi-currency display, or
 the PRD changes the unit of account.
 
+### D-011: Prefix dashboard routes with `/d`
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: Product (dashboard) routes lived at the site root alongside the marketing
+and auth route groups, so `/ideas`, `/profile`, `/settings`, and their siblings
+were indistinguishable from public marketing paths. The team wanted a short,
+explicit namespace for authenticated product pages.
+
+Decision: Namespace all dashboard pages under a short `/d` prefix: `/d` (home),
+`/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`.
+The `(product)` route group still wraps them, and the home route keeps its
+`loading.tsx`/`error.tsx` scoped inside a `d/(home)` group so those boundaries do
+not leak onto sibling routes. Auth and marketing keep their root-level paths.
+Permanent (308) redirects in `next.config.ts` map each old path, including nested
+segments, to its `/d` equivalent.
+
+Alternatives: A single unambiguous prefix such as `/app` (clearer but longer than
+the team's request); splitting content under `/d` and account pages under `/u`
+(arbitrary boundary, larger routing surface); middleware rewrites that keep the
+old canonical URLs (duplicate paths and a `usePathname` mismatch); leaving URLs at
+the root.
+
+Consequences: Product links and route tests reference the `/d` paths, and old
+bookmarks or shared links resolve through the redirects. `/u/*` stays free for a
+future public creator profile. New dashboard surfaces must be added under
+`(product)/d`, and the home `loading`/`error` files must stay in the `(home)`
+group.
+
+Revisit when: Public creator profiles need their own namespace, or the product
+adopts a different top-level information architecture.
+
 ## Decision template
 
 Copy this section for a new decision.

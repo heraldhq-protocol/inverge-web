@@ -31,7 +31,7 @@ describe("HomeDashboard", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Clear search" })).toHaveAttribute(
       "href",
-      "/home",
+      "/d",
     );
   });
 

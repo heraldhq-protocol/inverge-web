@@ -55,7 +55,7 @@ function IdeaDetails({
         }`}
       >
         <Link
-          href="/ideas"
+          href="/d/ideas"
           className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
         >
           {idea.title}
@@ -128,7 +128,7 @@ export function IdeaCard({
             {idea.category}
           </p>
           <h3 className="mt-0.5 text-base font-bold leading-tight tracking-tight text-ink">
-            <Link href="/ideas">{idea.title}</Link>
+            <Link href="/d/ideas">{idea.title}</Link>
           </h3>
           <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">
             {idea.description}

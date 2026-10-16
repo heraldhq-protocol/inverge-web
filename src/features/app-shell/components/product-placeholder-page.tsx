@@ -22,7 +22,7 @@ export function ProductPlaceholderPage({
         description={description}
         action={
           <Link
-            href="/home"
+            href="/d"
             className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Return home

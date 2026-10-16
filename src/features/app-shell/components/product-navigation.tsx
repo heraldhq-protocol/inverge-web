@@ -12,15 +12,15 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const primaryItems = [
-  { href: "/home", label: "Home", icon: Home },
-  { href: "/ideas", label: "Ideas", icon: Lightbulb },
-  { href: "/pre-pledges", label: "Pre-pledges", icon: Bookmark },
-  { href: "/notifications", label: "Notifications", icon: Bell },
+  { href: "/d", label: "Home", icon: Home },
+  { href: "/d/ideas", label: "Ideas", icon: Lightbulb },
+  { href: "/d/pre-pledges", label: "Pre-pledges", icon: Bookmark },
+  { href: "/d/notifications", label: "Notifications", icon: Bell },
 ] as const;
 
 const mobileItems = [
   ...primaryItems,
-  { href: "/profile", label: "Profile", icon: UserRound },
+  { href: "/d/profile", label: "Profile", icon: UserRound },
 ] as const;
 
 function isCurrentPath(pathname: string, href: string) {
@@ -68,13 +68,13 @@ export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
       })}
 
       <Link
-        href="/settings"
-        aria-current={isCurrentPath(pathname, "/settings") ? "page" : undefined}
+        href="/d/settings"
+        aria-current={isCurrentPath(pathname, "/d/settings") ? "page" : undefined}
         title={collapsed ? "Settings" : undefined}
         className={`flex min-h-12 items-center overflow-hidden rounded-xl text-sm font-semibold transition-[padding,gap,background-color,color] duration-300 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
           collapsed ? "justify-center gap-0 px-0" : "gap-3 px-3.5"
         } ${
-          isCurrentPath(pathname, "/settings")
+          isCurrentPath(pathname, "/d/settings")
             ? "bg-white/10 text-brand"
             : "text-white/74 hover:bg-white/[0.06] hover:text-white"
         }`}

@@ -76,7 +76,7 @@ function ActivePrePledgeCard({ item }: { item: PrePledgeRecord }) {
               </p>
             </div>
             <Link
-              href="/ideas"
+              href="/d/ideas"
               aria-label={`Edit pre-pledge intent for ${item.idea.title}`}
               className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-1 text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
@@ -121,7 +121,7 @@ function PastPrePledgeCard({ item }: { item: PrePledgeRecord }) {
           <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-4">
             <PrePledgeStatusLabel status={item.status} />
             <Link
-              href="/ideas"
+              href="/d/ideas"
               aria-label={`View ${item.idea.title}`}
               className="inline-flex min-h-10 items-center text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >

@@ -46,7 +46,7 @@ export function PrePledgesDashboard({
   return (
     <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
       <ProductSearch
-        action="/pre-pledges"
+        action="/d/pre-pledges"
         defaultValue={query}
         hiddenFields={searchFields}
       />
@@ -74,7 +74,7 @@ export function PrePledgesDashboard({
             </p>
           </div>
           <Link
-            href="/ideas"
+            href="/d/ideas"
             className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Explore ideas
@@ -135,7 +135,7 @@ export function PrePledgesDashboard({
           description="Clear the current search and status filters to see all of your pre-pledge activity."
           action={
             <Link
-              href="/pre-pledges"
+              href="/d/pre-pledges"
               scroll={false}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >

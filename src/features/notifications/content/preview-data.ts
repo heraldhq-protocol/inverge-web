@@ -12,7 +12,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "18 min ago",
     occurredAt: "2026-09-18T08:42:00.000Z",
     actionLabel: "Review milestone",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: false,
   },
   {
@@ -26,7 +26,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "2 hours ago",
     occurredAt: "2026-09-18T07:00:00.000Z",
     actionLabel: "View campaign",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: false,
   },
   {
@@ -40,7 +40,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "5 hours ago",
     occurredAt: "2026-09-18T04:00:00.000Z",
     actionLabel: "View proof",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: false,
   },
   {
@@ -54,7 +54,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "Yesterday",
     occurredAt: "2026-09-17T12:00:00.000Z",
     actionLabel: "See progress",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: true,
   },
   {
@@ -68,7 +68,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "Yesterday",
     occurredAt: "2026-09-17T08:00:00.000Z",
     actionLabel: "View refund",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: true,
   },
   {
@@ -81,7 +81,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "3 days ago",
     occurredAt: "2026-09-15T13:00:00.000Z",
     actionLabel: "Read update",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: true,
   },
   {
@@ -94,7 +94,7 @@ export const notificationsPreviewData: NotificationRecord[] = [
     timeLabel: "1 week ago",
     occurredAt: "2026-09-11T10:00:00.000Z",
     actionLabel: "View project",
-    actionHref: "/ideas",
+    actionHref: "/d/ideas",
     isRead: true,
   },
 ];

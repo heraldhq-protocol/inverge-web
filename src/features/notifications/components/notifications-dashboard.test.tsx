@@ -76,7 +76,7 @@ describe("NotificationsDashboard", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Show all notifications" }),
-    ).toHaveAttribute("href", "/notifications");
+    ).toHaveAttribute("href", "/d/notifications");
   });
 
   it("provides a recovery path when notification search has no matches", () => {
