@@ -1,4 +1,5 @@
 import { Container } from "@/features/marketing/components/container";
+import { SectionBackground } from "@/features/marketing/components/section-background";
 
 type PageHeaderProps = {
   eyebrow: string;
@@ -14,7 +15,12 @@ export function PageHeader({
   note,
 }: PageHeaderProps) {
   return (
-    <header className="border-b border-border bg-canvas py-14 sm:py-20">
+    <header className="relative isolate overflow-hidden border-b border-border bg-canvas py-14 sm:py-20">
+      <SectionBackground tone="canvas" className="-z-10 opacity-45" />
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 bg-gradient-to-b from-canvas/60 via-canvas/80 to-canvas"
+      />
       <Container>
         <div className="max-w-3xl">
           <div className="flex items-center gap-3">

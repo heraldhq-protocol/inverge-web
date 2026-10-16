@@ -38,6 +38,21 @@
   box-sizing: border-box;
 }
 
+/*
+ * Marketing surface: warm canvas overlaid with a small, repeating seamless
+ * pattern. The translucent canvas layer keeps text contrast high while the
+ * pattern reads as a subtle paper texture.
+ */
+.marketing-pattern {
+  background-color: var(--inverge-canvas);
+  background-image:
+    linear-gradient(rgb(251 249 245 / 82%), rgb(251 249 245 / 82%)),
+    url("/images/bg/minimalist-mint-leaf-wave-pattern.png");
+  background-repeat: repeat;
+  background-size: 400px auto;
+  background-position: center top;
+}
+
 html {
   background: var(--inverge-canvas);
   scroll-behavior: smooth;
@@ -74,8 +89,31 @@ input[type="search"]::-webkit-search-decoration {
   background: color-mix(in srgb, var(--inverge-brand) 28%, transparent);
 }
 
+@media (prefers-reduced-motion: no-preference) {
+  [data-motion="ready"] [data-reveal] {
+    opacity: 0;
+    animation: reveal-failsafe 0.01s linear 3s forwards;
+  }
+
+  @keyframes reveal-failsafe {
+    to {
+      opacity: 1;
+      visibility: visible;
+      transform: none;
+    }
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

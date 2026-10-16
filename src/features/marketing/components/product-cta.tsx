@@ -1,11 +1,13 @@
 import { ButtonLink } from "@/features/marketing/components/button-link";
 import { Container } from "@/features/marketing/components/container";
+import { SectionBackground } from "@/features/marketing/components/section-background";
 
 export function ProductCta({ compact = false }: { compact?: boolean }) {
   return (
-    <section className="bg-canvas py-12 md:py-16">
-      <Container>
-        <div className="flex flex-col items-center gap-6 overflow-hidden rounded-2xl bg-contrast p-8 text-center text-white md:rounded-3xl md:p-16">
+    <section className="relative overflow-hidden bg-contrast py-12 md:py-16">
+      <SectionBackground tone="forest" className="object-cover opacity-40" />
+      <Container className="relative z-10">
+        <div className="flex flex-col items-center gap-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 p-8 text-center text-white backdrop-blur-sm md:rounded-3xl md:p-16">
           <div>
             <h2 className="text-balance text-3xl font-bold tracking-[-0.04em] sm:text-4xl">
               {compact
