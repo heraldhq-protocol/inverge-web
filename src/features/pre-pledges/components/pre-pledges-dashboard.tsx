@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MetricStrip } from "@/components/ui/metric-strip";
 import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
-import { formatNaira, sumNairaAmounts } from "@/features/home/lib/format-money";
+import { formatMoney, sumMoneyAmounts } from "@/features/home/lib/format-money";
 import { PrePledgeFilters } from "@/features/pre-pledges/components/pre-pledge-filters";
 import { PrePledgeSection } from "@/features/pre-pledges/components/pre-pledge-section";
 import { filterAndSortPrePledges } from "@/features/pre-pledges/lib/filter-pre-pledges";
@@ -34,7 +34,7 @@ export function PrePledgesDashboard({
   });
   const visibleActive = visibleItems.filter((item) => item.stage === "active");
   const visiblePast = visibleItems.filter((item) => item.stage === "past");
-  const totalIntent = sumNairaAmounts(data.active.map((item) => item.intent));
+  const totalIntent = sumMoneyAmounts(data.active.map((item) => item.intent));
   const nearValidationCount = data.active.filter(
     (item) => item.status === "near-validation",
   ).length;
@@ -85,7 +85,7 @@ export function PrePledgesDashboard({
         <MetricStrip
           className="mt-7 max-w-2xl"
           items={[
-            { value: formatNaira(totalIntent), label: "Total intent" },
+            { value: formatMoney(totalIntent), label: "Total intent" },
             { value: data.active.length, label: "Active ideas" },
             { value: nearValidationCount, label: "Near validation" },
           ]}

@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactNaira } from "@/features/home/lib/format-money";
+import { formatCompactMoney } from "@/features/home/lib/format-money";
 import type { IdeaSummary } from "@/features/home/types";
 
 function ValidationProgress({
@@ -91,13 +91,13 @@ function IdeaDetails({
         <div>
           <dt className="text-[0.6875rem] text-muted">Supporters</dt>
           <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
-            {idea.supporters.toLocaleString("en-NG")}
+            {idea.supporters.toLocaleString("en-US")}
           </dd>
         </div>
         <div>
           <dt className="text-[0.6875rem] text-muted">Pre-pledged intent</dt>
           <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
-            {formatCompactNaira(idea.prePledged)}
+            {formatCompactMoney(idea.prePledged)}
           </dd>
         </div>
       </dl>

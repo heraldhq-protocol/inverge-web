@@ -1,8 +1,8 @@
 import type { DiscoveryCategory } from "@/features/home/discovery-categories";
 
-export type NairaAmount = {
+export type MoneyAmount = {
   atomic: string;
-  currency: "NGN";
+  currency: "USD";
   decimals: 2;
 };
 
@@ -17,7 +17,7 @@ export type IdeaSummary = {
   creatorInitials: string;
   description: string;
   discoveryCategory: DiscoveryCategory;
-  prePledged: NairaAmount;
+  prePledged: MoneyAmount;
   supporters: number;
   title: string;
   validationPercent: number;
@@ -25,7 +25,7 @@ export type IdeaSummary = {
 
 export type PrePledgeSummary = {
   idea: IdeaSummary;
-  intent: NairaAmount;
+  intent: MoneyAmount;
   status: "gathering" | "waiting";
 };
 

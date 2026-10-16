@@ -25,7 +25,7 @@ describe("PrePledgesDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Your pre-pledges" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("₦100,000")).toBeInTheDocument();
+    expect(screen.getByText("$100,000")).toBeInTheDocument();
     expect(screen.getByText("No payment yet")).toBeInTheDocument();
     expect(screen.getByText(/won't be charged/i)).toBeInTheDocument();
     expect(

@@ -1,4 +1,4 @@
-import { formatNaira } from "@/features/home/lib/format-money";
+import { formatMoney } from "@/features/home/lib/format-money";
 import type { PrePledgeSummary } from "@/features/home/types";
 
 const statusCopy = {
@@ -26,7 +26,7 @@ export function PrePledgeList({ items }: { items: PrePledgeSummary[] }) {
           <div className="flex items-baseline justify-between gap-3 md:block">
             <span className="text-xs text-muted md:sr-only">Intent</span>
             <span className="text-sm font-medium tabular-nums text-ink">
-              {formatNaira(intent)} intent
+              {formatMoney(intent)} intent
             </span>
           </div>
 

@@ -13,8 +13,8 @@ describe("HomeDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Good to see you, Amara." }),
     ).toBeInTheDocument();
-    expect(screen.getByText("₦8.4M")).toHaveClass("tabular-nums");
-    expect(screen.getByText("₦50,000 intent")).toBeInTheDocument();
+    expect(screen.getByText("$8.4M")).toHaveClass("tabular-nums");
+    expect(screen.getByText("$50,000 intent")).toBeInTheDocument();
     expect(screen.getByText(/No money has moved yet/i)).toBeInTheDocument();
     expect(
       screen.getAllByRole("progressbar", {

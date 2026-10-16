@@ -18,6 +18,7 @@ choices.
 | D-007 | 2026-09-12 | Accepted | Rebuild the legacy public marketing surface as an isolated marketing feature, preserving brand direction while rewriting unsupported claims and importing no legacy application architecture. |
 | D-008 | 2026-09-15 | Accepted | Use Privy for authentication and automatic embedded Solana wallet provisioning. |
 | D-009 | 2026-10-13 | Accepted | Implement marketing motion with one GSAP data-attribute engine mounted in the marketing layout, honoring `prefers-reduced-motion`. |
+| D-010 | 2026-10-16 | Accepted | Denominate all product money in USD; replace `NairaAmount` with `MoneyAmount` (`currency: "USD"`, integer atomic cents). |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -146,6 +147,38 @@ motion enabled, all content is visible and static.
 Revisit when: Product (non-marketing) surfaces need the same primitives, prompting
 promotion of the engine to `components/ui`; or GSAP no longer meets bundle,
 performance, or accessibility constraints.
+
+### D-010: Denominate product money in USD
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Product and web engineering
+
+Context: The web preview model represented money as `NairaAmount` with
+`currency: "NGN"` and formatted it with naira symbols, while the PRD/SRS
+denominates campaign funding and intended asks in USDC/USD (`FR-301`, `FR-270`),
+the backend DTOs treat ask and pre-pledge amounts as USD with NGN normalized to
+USD on input, and the marketing surface already displayed USD. The mismatch put
+naira figures on product screens that disagreed with the product's unit of
+account.
+
+Decision: Denominate all product money in USD. Replace `NairaAmount` with
+`MoneyAmount { atomic; currency: "USD"; decimals: 2 }` and format with
+`Intl.NumberFormat("en-US", { currency: "USD" })`. Keep integer atomic units
+(cents) and BigInt arithmetic — never binary floating point. The naira card and
+bank on-ramp remains a payment rail, not the unit of account.
+
+Alternatives: Keep NGN as the display currency (contradicts the PRD and the
+backend contract); or support a runtime currency switch (no product requirement,
+and the web app has no rate source or currency selection yet).
+
+Consequences: Home, pre-pledges, and idea screens share one USD money model and
+fixture amounts are now USD figures. Contributor-facing cNGN or multi-currency
+display would need an explicit currency field and a rate source rather than a
+rename.
+
+Revisit when: The product supports contributor-facing multi-currency display, or
+the PRD changes the unit of account.
 
 ## Decision template
 
