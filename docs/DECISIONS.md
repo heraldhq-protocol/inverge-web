@@ -19,6 +19,8 @@ choices.
 | D-008 | 2026-09-15 | Accepted | Use Privy for authentication and automatic embedded Solana wallet provisioning. |
 | D-009 | 2026-10-13 | Accepted | Implement marketing motion with one GSAP data-attribute engine mounted in the marketing layout, honoring `prefers-reduced-motion`. |
 | D-010 | 2026-10-16 | Accepted | Denominate all product money in USD; replace `NairaAmount` with `MoneyAmount` (`currency: "USD"`, integer atomic cents). |
+| D-011 | 2026-10-16 | Accepted | Prefix dashboard routes with `/d` (`/d`, `/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`) and redirect the old paths. |
+| D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -213,6 +215,37 @@ group.
 
 Revisit when: Public creator profiles need their own namespace, or the product
 adopts a different top-level information architecture.
+
+### D-012: Keep the shared money model in `src/lib/money`
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: D-010 established one USD money model that home, pre-pledges, and ideas
+share, but the type and its formatters sat in `features/home`. `ARCHITECTURE.md`
+forbids a feature from exposing its internals to another feature, keeps
+`components/ui` domain-neutral, and points at `src/lib` for cross-cutting pure
+helpers. Both the ideas feature and the new `Amount` primitive need the
+formatters, so the placement contradicted the dependency rule.
+
+Decision: Move `MoneyAmount` and its three formatters to `src/lib/money.ts`.
+Features import money from that module, and `components/ui/amount` reads it
+through the `lib` dependency the architecture permits.
+
+Alternatives: Keep the model in `features/home` and give the `Amount` primitive
+a local formatter (duplicates money formatting and drifts from D-010's single
+model); or keep it in `features/home` and let `Amount` take an already
+formatted string, with `features/ideas` importing `features/home` for formatting
+(forbidden by the dependency rule).
+
+Consequences: Money is importable from a neutral layer by every feature and by
+`components/ui`. This also removes a pre-existing `features/ideas` ->
+`features/home` import. Import paths move from
+`@/features/home/lib/format-money` to `@/lib/money`; behaviour is unchanged.
+
+Revisit when: Money formatting gains a currency or rate source, or a locale
+policy that belongs beside the finance domain rather than in generic `lib`.
 
 ## Decision template
 

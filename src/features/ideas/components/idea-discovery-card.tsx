@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactMoney } from "@/features/home/lib/format-money";
+import { formatCompactMoney } from "@/lib/money";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 
 function ValidationProgress({ value }: { value: number }) {

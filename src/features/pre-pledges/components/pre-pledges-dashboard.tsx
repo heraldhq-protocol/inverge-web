@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MetricStrip } from "@/components/ui/metric-strip";
 import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
-import { formatMoney, sumMoneyAmounts } from "@/features/home/lib/format-money";
+import { formatMoney, sumMoneyAmounts } from "@/lib/money";
 import { PrePledgeFilters } from "@/features/pre-pledges/components/pre-pledge-filters";
 import { PrePledgeSection } from "@/features/pre-pledges/components/pre-pledge-section";
 import { filterAndSortPrePledges } from "@/features/pre-pledges/lib/filter-pre-pledges";

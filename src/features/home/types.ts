@@ -1,10 +1,5 @@
 import type { DiscoveryCategory } from "@/features/home/discovery-categories";
-
-export type MoneyAmount = {
-  atomic: string;
-  currency: "USD";
-  decimals: 2;
-};
+import type { MoneyAmount } from "@/lib/money";
 
 export type IdeaArtworkVariant =
   "campus" | "community" | "creative" | "energy" | "food" | "logistics";

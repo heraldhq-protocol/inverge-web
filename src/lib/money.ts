@@ -1,4 +1,8 @@
-import type { MoneyAmount } from "@/features/home/types";
+export type MoneyAmount = {
+  atomic: string;
+  currency: "USD";
+  decimals: 2;
+};
 
 function wholeUnits({ atomic, decimals }: MoneyAmount) {
   return BigInt(atomic) / 10n ** BigInt(decimals);
@@ -12,7 +16,7 @@ function currencySymbol(currency: MoneyAmount["currency"]) {
   );
 }
 
-export function formatMoney(amount: MoneyAmount) {
+export function formatMoney(amount: MoneyAmount): string {
   return new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: amount.currency,
@@ -20,7 +24,7 @@ export function formatMoney(amount: MoneyAmount) {
   }).format(wholeUnits(amount));
 }
 
-export function formatCompactMoney(amount: MoneyAmount) {
+export function formatCompactMoney(amount: MoneyAmount): string {
   const value = wholeUnits(amount);
   const million = 1_000_000n;
 

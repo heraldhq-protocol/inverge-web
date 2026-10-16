@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactMoney } from "@/features/home/lib/format-money";
+import { formatCompactMoney } from "@/lib/money";
 import type { IdeaSummary } from "@/features/home/types";
 
 function ValidationProgress({

@@ -1,11 +1,11 @@
 import { describe, expect, it } from "vitest";
 
+import type { MoneyAmount } from "@/lib/money";
 import {
   formatCompactMoney,
   formatMoney,
   sumMoneyAmounts,
-} from "@/features/home/lib/format-money";
-import type { MoneyAmount } from "@/features/home/types";
+} from "@/lib/money";
 
 const usd = (atomic: string): MoneyAmount => ({
   atomic,

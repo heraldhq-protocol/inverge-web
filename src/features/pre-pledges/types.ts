@@ -1,4 +1,5 @@
-import type { IdeaSummary, MoneyAmount } from "@/features/home/types";
+import type { IdeaSummary } from "@/features/home/types";
+import type { MoneyAmount } from "@/lib/money";
 
 export type PrePledgeStage = "active" | "past";
 export type PrePledgeStatus =
