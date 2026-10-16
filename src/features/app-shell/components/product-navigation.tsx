@@ -11,8 +11,10 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
+const DASHBOARD_HOME = "/d";
+
 const primaryItems = [
-  { href: "/d", label: "Home", icon: Home },
+  { href: DASHBOARD_HOME, label: "Home", icon: Home },
   { href: "/d/ideas", label: "Ideas", icon: Lightbulb },
   { href: "/d/pre-pledges", label: "Pre-pledges", icon: Bookmark },
   { href: "/d/notifications", label: "Notifications", icon: Bell },
@@ -24,7 +26,11 @@ const mobileItems = [
 ] as const;
 
 function isCurrentPath(pathname: string, href: string) {
-  return pathname === href || pathname.startsWith(`${href}/`);
+  if (pathname === href) return true;
+
+  // The dashboard root prefixes every other product route, so it must match
+  // exactly; nested sections stay highlighted across their child routes.
+  return href !== DASHBOARD_HOME && pathname.startsWith(`${href}/`);
 }
 
 export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
