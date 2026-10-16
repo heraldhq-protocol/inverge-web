@@ -40,7 +40,7 @@ function filterHref(filter: NotificationFilter, query: string) {
   if (query.trim()) params.set("q", query.trim());
   if (filter !== "all") params.set("filter", filter);
   const search = params.toString();
-  return search ? `/notifications?${search}` : "/notifications";
+  return search ? `/d/notifications?${search}` : "/d/notifications";
 }
 
 export function NotificationCenter({
@@ -179,7 +179,7 @@ export function NotificationCenter({
             }
             action={
               <Link
-                href="/notifications"
+                href="/d/notifications"
                 scroll={false}
                 className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >

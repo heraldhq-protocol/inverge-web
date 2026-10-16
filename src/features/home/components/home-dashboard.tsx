@@ -43,7 +43,7 @@ export function HomeDashboard({
 
   return (
     <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
-      <ProductSearch action="/home" defaultValue={query} />
+      <ProductSearch action="/d" defaultValue={query} />
 
       <header className="mt-8 border-b border-border pb-7 sm:mt-10">
         <div className="flex flex-wrap items-start justify-between gap-5">
@@ -68,7 +68,7 @@ export function HomeDashboard({
             </p>
           </div>
           <Link
-            href="/ideas"
+            href="/d/ideas"
             className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand lg:hidden"
           >
             <Plus className="size-4 text-brand-strong" aria-hidden="true" />
@@ -97,7 +97,7 @@ export function HomeDashboard({
           <SectionHeading
             title={`Results for “${query.trim()}”`}
             description={`${searchResults.length} matching ${searchResults.length === 1 ? "idea" : "ideas"}`}
-            actionHref="/ideas"
+            actionHref="/d/ideas"
             actionLabel="Browse all ideas"
           />
           {searchResults.length > 0 ? (
@@ -114,7 +114,7 @@ export function HomeDashboard({
               description="Search by an idea name, creator, category, or the problem being solved."
               action={
                 <Link
-                  href="/home"
+                  href="/d"
                   className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   Clear search
@@ -129,7 +129,7 @@ export function HomeDashboard({
             <SectionHeading
               title="Ideas gaining momentum"
               description="Early ideas attracting meaningful support from the community."
-              actionHref="/ideas"
+              actionHref="/d/ideas"
               actionLabel="Explore all ideas"
             />
 
@@ -163,7 +163,7 @@ export function HomeDashboard({
             <SectionHeading
               title="Your pre-pledges"
               description="Amounts you may back if these ideas become campaigns. No money has moved yet."
-              actionHref="/pre-pledges"
+              actionHref="/d/pre-pledges"
               actionLabel="View all"
             />
             {data.prePledges.length > 0 ? (
@@ -181,7 +181,7 @@ export function HomeDashboard({
           <section className="border-t border-border pt-7 sm:pt-8">
             <SectionHeading
               title="Continue discovering"
-              actionHref="/ideas"
+              actionHref="/d/ideas"
               actionLabel="Browse all categories"
             />
             <ul
@@ -191,7 +191,7 @@ export function HomeDashboard({
               {discoveryCategories.map((category) => (
                 <li key={category.value} className="shrink-0">
                   <Link
-                    href={`/home?category=${category.value}`}
+                    href={`/d?category=${category.value}`}
                     scroll={false}
                     aria-current={
                       category.value === selectedCategory ? "page" : undefined
@@ -213,7 +213,7 @@ export function HomeDashboard({
               ))}
             </div>
             <Link
-              href="/ideas"
+              href="/d/ideas"
               className="mt-5 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand-strong sm:hidden"
             >
               Browse all ideas

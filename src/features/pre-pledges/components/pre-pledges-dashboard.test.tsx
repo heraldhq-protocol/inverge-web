@@ -8,7 +8,7 @@ import { filterAndSortPrePledges } from "@/features/pre-pledges/lib/filter-pre-p
 const { replace } = vi.hoisted(() => ({ replace: vi.fn() }));
 
 vi.mock("next/navigation", () => ({
-  usePathname: () => "/pre-pledges",
+  usePathname: () => "/d/pre-pledges",
   useRouter: () => ({ replace }),
   useSearchParams: () => new URLSearchParams(),
 }));
@@ -25,7 +25,7 @@ describe("PrePledgesDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Your pre-pledges" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("₦100,000")).toBeInTheDocument();
+    expect(screen.getByText("$100,000")).toBeInTheDocument();
     expect(screen.getByText("No payment yet")).toBeInTheDocument();
     expect(screen.getByText(/won't be charged/i)).toBeInTheDocument();
     expect(
@@ -69,7 +69,7 @@ describe("PrePledgesDashboard", () => {
     ).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Clear filters" })).toHaveAttribute(
       "href",
-      "/pre-pledges",
+      "/d/pre-pledges",
     );
   });
 
@@ -79,7 +79,7 @@ describe("PrePledgesDashboard", () => {
     fireEvent.click(screen.getByLabelText("Status"));
     fireEvent.click(screen.getByRole("option", { name: "Still validating" }));
 
-    expect(replace).toHaveBeenCalledWith("/pre-pledges?status=validating", {
+    expect(replace).toHaveBeenCalledWith("/d/pre-pledges?status=validating", {
       scroll: false,
     });
   });

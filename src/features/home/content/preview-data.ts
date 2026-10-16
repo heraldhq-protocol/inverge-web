@@ -10,7 +10,7 @@ export const previewIdeas = {
     description:
       "A student marketplace helping campus businesses reach the people already around them.",
     discoveryCategory: "technology",
-    prePledged: { atomic: "840000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "840000000", currency: "USD", decimals: 2 },
     supporters: 412,
     title: "CampusKonekt",
     validationPercent: 73,
@@ -24,7 +24,7 @@ export const previewIdeas = {
     description:
       "Shared solar infrastructure for small businesses in communities with unreliable power.",
     discoveryCategory: "clean-energy",
-    prePledged: { atomic: "1210000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "1210000000", currency: "USD", decimals: 2 },
     supporters: 286,
     title: "SunGrid Community Power",
     validationPercent: 61,
@@ -38,7 +38,7 @@ export const previewIdeas = {
     description:
       "Affordable cold storage helping small-scale farmers reduce post-harvest losses.",
     discoveryCategory: "agriculture",
-    prePledged: { atomic: "670000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "670000000", currency: "USD", decimals: 2 },
     supporters: 193,
     title: "FarmLink ColdBox",
     validationPercent: 48,
@@ -52,7 +52,7 @@ export const previewIdeas = {
     description:
       "An AI study companion helping Nigerian students learn smarter and faster.",
     discoveryCategory: "technology",
-    prePledged: { atomic: "280000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "280000000", currency: "USD", decimals: 2 },
     supporters: 112,
     title: "StudyMate NG",
     validationPercent: 67,
@@ -66,7 +66,7 @@ export const previewIdeas = {
     description:
       "A digital marketplace for Nigerian artisans and handmade goods.",
     discoveryCategory: "creative",
-    prePledged: { atomic: "190000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "190000000", currency: "USD", decimals: 2 },
     supporters: 98,
     title: "NaijaCraft Collective",
     validationPercent: 54,
@@ -80,7 +80,7 @@ export const previewIdeas = {
     description:
       "On-demand deliveries connecting students to anything on campus.",
     discoveryCategory: "technology",
-    prePledged: { atomic: "160000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "160000000", currency: "USD", decimals: 2 },
     supporters: 76,
     title: "ZippyCampus",
     validationPercent: 45,
@@ -94,7 +94,7 @@ export const previewIdeas = {
     description:
       "Shared equipment bookings that help small farms access tools when they need them.",
     discoveryCategory: "agriculture",
-    prePledged: { atomic: "240000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "240000000", currency: "USD", decimals: 2 },
     supporters: 104,
     title: "CropCircle",
     validationPercent: 58,
@@ -108,7 +108,7 @@ export const previewIdeas = {
     description:
       "A coordinated produce route connecting rural growers with city retailers.",
     discoveryCategory: "agriculture",
-    prePledged: { atomic: "310000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "310000000", currency: "USD", decimals: 2 },
     supporters: 127,
     title: "AgroRoute",
     validationPercent: 63,
@@ -122,7 +122,7 @@ export const previewIdeas = {
     description:
       "Solar charging kiosks for traders and commuters in busy neighbourhood markets.",
     discoveryCategory: "clean-energy",
-    prePledged: { atomic: "360000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "360000000", currency: "USD", decimals: 2 },
     supporters: 149,
     title: "EcoCharge Kiosks",
     validationPercent: 64,
@@ -136,7 +136,7 @@ export const previewIdeas = {
     description:
       "Modular solar refrigeration for medicine and fresh food in off-grid communities.",
     discoveryCategory: "clean-energy",
-    prePledged: { atomic: "420000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "420000000", currency: "USD", decimals: 2 },
     supporters: 171,
     title: "SolarChill",
     validationPercent: 69,
@@ -150,7 +150,7 @@ export const previewIdeas = {
     description:
       "A collaborative production space for independent African animators and writers.",
     discoveryCategory: "creative",
-    prePledged: { atomic: "220000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "220000000", currency: "USD", decimals: 2 },
     supporters: 91,
     title: "StoryFoundry",
     validationPercent: 52,
@@ -164,7 +164,7 @@ export const previewIdeas = {
     description:
       "Neighbourhood skill exchanges that turn spare time into practical local support.",
     discoveryCategory: "community",
-    prePledged: { atomic: "145000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "145000000", currency: "USD", decimals: 2 },
     supporters: 83,
     title: "SkillCircle",
     validationPercent: 49,
@@ -178,7 +178,7 @@ export const previewIdeas = {
     description:
       "A trusted coordination network for family caregivers and community volunteers.",
     discoveryCategory: "community",
-    prePledged: { atomic: "175000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "175000000", currency: "USD", decimals: 2 },
     supporters: 96,
     title: "CareBridge",
     validationPercent: 56,
@@ -192,7 +192,7 @@ export const previewIdeas = {
     description:
       "Group buying for household staples with transparent local pickup schedules.",
     discoveryCategory: "food-retail",
-    prePledged: { atomic: "205000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "205000000", currency: "USD", decimals: 2 },
     supporters: 118,
     title: "MarketBasket",
     validationPercent: 60,
@@ -206,7 +206,7 @@ export const previewIdeas = {
     description:
       "Shared certified kitchens helping small food brands produce and sell safely.",
     discoveryCategory: "food-retail",
-    prePledged: { atomic: "265000000", currency: "NGN", decimals: 2 },
+    prePledged: { atomic: "265000000", currency: "USD", decimals: 2 },
     supporters: 132,
     title: "Kitchen Collective",
     validationPercent: 62,
@@ -228,17 +228,17 @@ export const homePreviewData: HomeDashboardData = {
   prePledges: [
     {
       idea: previewIdeas.campusKonekt,
-      intent: { atomic: "5000000", currency: "NGN", decimals: 2 },
+      intent: { atomic: "5000000", currency: "USD", decimals: 2 },
       status: "waiting",
     },
     {
       idea: previewIdeas.sunGrid,
-      intent: { atomic: "3000000", currency: "NGN", decimals: 2 },
+      intent: { atomic: "3000000", currency: "USD", decimals: 2 },
       status: "gathering",
     },
     {
       idea: previewIdeas.farmLink,
-      intent: { atomic: "2000000", currency: "NGN", decimals: 2 },
+      intent: { atomic: "2000000", currency: "USD", decimals: 2 },
       status: "gathering",
     },
   ],

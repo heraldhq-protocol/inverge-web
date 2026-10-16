@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MetricStrip } from "@/components/ui/metric-strip";
 import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
-import { formatNaira, sumNairaAmounts } from "@/features/home/lib/format-money";
+import { formatMoney, sumMoneyAmounts } from "@/features/home/lib/format-money";
 import { PrePledgeFilters } from "@/features/pre-pledges/components/pre-pledge-filters";
 import { PrePledgeSection } from "@/features/pre-pledges/components/pre-pledge-section";
 import { filterAndSortPrePledges } from "@/features/pre-pledges/lib/filter-pre-pledges";
@@ -34,7 +34,7 @@ export function PrePledgesDashboard({
   });
   const visibleActive = visibleItems.filter((item) => item.stage === "active");
   const visiblePast = visibleItems.filter((item) => item.stage === "past");
-  const totalIntent = sumNairaAmounts(data.active.map((item) => item.intent));
+  const totalIntent = sumMoneyAmounts(data.active.map((item) => item.intent));
   const nearValidationCount = data.active.filter(
     (item) => item.status === "near-validation",
   ).length;
@@ -46,7 +46,7 @@ export function PrePledgesDashboard({
   return (
     <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
       <ProductSearch
-        action="/pre-pledges"
+        action="/d/pre-pledges"
         defaultValue={query}
         hiddenFields={searchFields}
       />
@@ -74,7 +74,7 @@ export function PrePledgesDashboard({
             </p>
           </div>
           <Link
-            href="/ideas"
+            href="/d/ideas"
             className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Explore ideas
@@ -85,7 +85,7 @@ export function PrePledgesDashboard({
         <MetricStrip
           className="mt-7 max-w-2xl"
           items={[
-            { value: formatNaira(totalIntent), label: "Total intent" },
+            { value: formatMoney(totalIntent), label: "Total intent" },
             { value: data.active.length, label: "Active ideas" },
             { value: nearValidationCount, label: "Near validation" },
           ]}
@@ -135,7 +135,7 @@ export function PrePledgesDashboard({
           description="Clear the current search and status filters to see all of your pre-pledge activity."
           action={
             <Link
-              href="/pre-pledges"
+              href="/d/pre-pledges"
               scroll={false}
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >

@@ -43,13 +43,13 @@ export function RoleOnboardingForm() {
     }
 
     setStatus("");
-    router.push("/home");
+    router.push("/d");
   }
 
   function handleSkip() {
     setStartingPoint(null);
     setStatus("");
-    router.push("/home");
+    router.push("/d");
   }
 
   return (

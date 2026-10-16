@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatNaira } from "@/features/home/lib/format-money";
+import { formatMoney } from "@/features/home/lib/format-money";
 import { PrePledgeStatusLabel } from "@/features/pre-pledges/components/pre-pledge-status";
 import type { PrePledgeRecord } from "@/features/pre-pledges/types";
 
@@ -57,13 +57,13 @@ function ActivePrePledgeCard({ item }: { item: PrePledgeRecord }) {
             <div className="pr-4">
               <dt className="text-xs text-muted">Supporters</dt>
               <dd className="mt-1 font-mono text-lg font-semibold text-ink">
-                {item.idea.supporters.toLocaleString("en-NG")}
+                {item.idea.supporters.toLocaleString("en-US")}
               </dd>
             </div>
             <div className="pl-4">
               <dt className="text-xs text-muted">Your intent</dt>
               <dd className="mt-1 whitespace-nowrap text-lg font-semibold tabular-nums text-ink">
-                {formatNaira(item.intent)}
+                {formatMoney(item.intent)}
               </dd>
             </div>
           </dl>
@@ -76,7 +76,7 @@ function ActivePrePledgeCard({ item }: { item: PrePledgeRecord }) {
               </p>
             </div>
             <Link
-              href="/ideas"
+              href="/d/ideas"
               aria-label={`Edit pre-pledge intent for ${item.idea.title}`}
               className="inline-flex min-h-11 shrink-0 items-center rounded-lg px-1 text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
@@ -107,7 +107,7 @@ function PastPrePledgeCard({ item }: { item: PrePledgeRecord }) {
             <div>
               <p className="text-muted">Previous intent</p>
               <p className="mt-1 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
-                {formatNaira(item.intent)}
+                {formatMoney(item.intent)}
               </p>
             </div>
             <div>
@@ -121,7 +121,7 @@ function PastPrePledgeCard({ item }: { item: PrePledgeRecord }) {
           <div className="mt-auto flex flex-wrap items-center justify-between gap-x-3 gap-y-1 pt-4">
             <PrePledgeStatusLabel status={item.status} />
             <Link
-              href="/ideas"
+              href="/d/ideas"
               aria-label={`View ${item.idea.title}`}
               className="inline-flex min-h-10 items-center text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >

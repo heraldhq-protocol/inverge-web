@@ -1,4 +1,4 @@
-import type { IdeaSummary, NairaAmount } from "@/features/home/types";
+import type { IdeaSummary, MoneyAmount } from "@/features/home/types";
 
 export type PrePledgeStage = "active" | "past";
 export type PrePledgeStatus =
@@ -6,7 +6,7 @@ export type PrePledgeStatus =
 
 export type PrePledgeRecord = {
   idea: IdeaSummary;
-  intent: NairaAmount;
+  intent: MoneyAmount;
   stage: PrePledgeStage;
   status: PrePledgeStatus;
   updatedAt: string;

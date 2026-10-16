@@ -1,7 +1,7 @@
 import { MapPin } from "lucide-react";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactNaira } from "@/features/home/lib/format-money";
+import { formatCompactMoney } from "@/features/home/lib/format-money";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 
 function ValidationProgress({ value }: { value: number }) {
@@ -57,13 +57,13 @@ function IdeaMetrics({ idea }: { idea: DiscoveryIdea }) {
       <div className="px-4 py-3 sm:px-5">
         <dt className="text-[0.6875rem] text-muted">Supporters</dt>
         <dd className="mt-0.5 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
-          {idea.supporters.toLocaleString("en-NG")}
+          {idea.supporters.toLocaleString("en-US")}
         </dd>
       </div>
       <div className="px-4 py-3 sm:px-5">
         <dt className="text-[0.6875rem] text-muted">Pre-pledged intent</dt>
         <dd className="mt-0.5 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
-          {formatCompactNaira(idea.prePledged)}
+          {formatCompactMoney(idea.prePledged)}
         </dd>
       </div>
     </dl>
@@ -108,7 +108,7 @@ export function IdeaDiscoveryCard({
           <div className="mt-auto pt-3">
             <div className="flex items-center justify-between gap-3">
               <span className="text-[0.6875rem] text-muted">
-                {idea.supporters.toLocaleString("en-NG")} supporters
+                {idea.supporters.toLocaleString("en-US")} supporters
               </span>
               <Location location={idea.location} />
             </div>

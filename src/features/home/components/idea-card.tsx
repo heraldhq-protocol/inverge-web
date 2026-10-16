@@ -2,7 +2,7 @@ import { ArrowUpRight } from "lucide-react";
 import Link from "next/link";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactNaira } from "@/features/home/lib/format-money";
+import { formatCompactMoney } from "@/features/home/lib/format-money";
 import type { IdeaSummary } from "@/features/home/types";
 
 function ValidationProgress({
@@ -55,7 +55,7 @@ function IdeaDetails({
         }`}
       >
         <Link
-          href="/ideas"
+          href="/d/ideas"
           className="rounded-sm focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
         >
           {idea.title}
@@ -91,13 +91,13 @@ function IdeaDetails({
         <div>
           <dt className="text-[0.6875rem] text-muted">Supporters</dt>
           <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
-            {idea.supporters.toLocaleString("en-NG")}
+            {idea.supporters.toLocaleString("en-US")}
           </dd>
         </div>
         <div>
           <dt className="text-[0.6875rem] text-muted">Pre-pledged intent</dt>
           <dd className="mt-0.5 whitespace-nowrap text-[0.9375rem] font-semibold tabular-nums text-ink sm:text-base">
-            {formatCompactNaira(idea.prePledged)}
+            {formatCompactMoney(idea.prePledged)}
           </dd>
         </div>
       </dl>
@@ -128,7 +128,7 @@ export function IdeaCard({
             {idea.category}
           </p>
           <h3 className="mt-0.5 text-base font-bold leading-tight tracking-tight text-ink">
-            <Link href="/ideas">{idea.title}</Link>
+            <Link href="/d/ideas">{idea.title}</Link>
           </h3>
           <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">
             {idea.description}
