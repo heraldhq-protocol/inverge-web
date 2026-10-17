@@ -362,6 +362,45 @@ the intended 1200–1320px range.
 Revisit when: The brand adopts a different heading voice, or the product needs a
 second measure (for example a full-bleed campaign page).
 
+### D-016: One shared app shell for every dashboard route
+
+- Date: 2026-10-17
+- Status: Accepted
+- Owner: Web engineering
+
+Context: `/d` screens were each laying out their own header, search, and
+navigation, so the dashboard had no single frame and every new route had to
+reassemble the same furniture. Authentication (D-008) is not implemented yet,
+so the shell still has to render an honest viewer without inventing a session.
+
+Decision: `AppShell` owns the whole dashboard frame - a textured forest sidebar
+with grouped navigation, a desktop topbar carrying the only search entry point,
+and the mobile header plus bottom navigation. Every `/d` route renders inside
+one `(product)` layout that assembles `ShellData` on the server from a single
+`getDashboardViewer()` seam, which reads preview identity and capabilities and
+is the one place a Privy session will attach later. Search lives in the shell
+and posts to `/d/discover`, the in-shell copy of D-014's discovery surface, so
+a dashboard viewer can search without leaving the frame; `/ideas` remains the
+public address for the same catalogue.
+
+Alternatives: Keep per-page headers (every route keeps drifting, and no single
+search entry point can exist); make `/d/discover` a redirect to `/ideas` (drops
+the viewer out of the shell, and the mobile bottom navigation loses its
+destination); gate `/d` behind middleware now (nothing to gate against, since
+no session exists, and the routes must stay reachable).
+
+Consequences: The sidebar surface is a CSS class over the brand's own contour
+artwork rather than a flat token, so contrast is carried by an explicit
+gradient layer that must stay if the artwork changes. Viewer identity is
+preview data, and the shell labels it as such, so no metric or capability shown
+in the frame may be read as live account state. The topbar search and the
+in-page filters on `/ideas` and `/d/notifications` are distinct controls with
+distinct labels: one navigates to discovery, the others filter a local list.
+
+Revisit when: A session exists and `getDashboardViewer()` can return a real
+viewer, or when the dashboard grows a destination that needs to replace one of
+the five mobile navigation slots.
+
 ## Decision template
 
 Copy this section for a new decision.
