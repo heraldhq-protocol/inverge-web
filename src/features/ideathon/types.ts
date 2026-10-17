@@ -52,7 +52,7 @@ export type Ideathon = {
   status: CompetitionStatus;
   prizeDescription: string;
   /** Reference figure only; never a payout rail. */
-  prizeValue?: MoneyAmount;
+  prizeValue?: MoneyAmount | undefined;
   entries: readonly StandingEntry[];
   updatedAt: string;
 };

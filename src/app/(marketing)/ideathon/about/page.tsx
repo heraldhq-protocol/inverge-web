@@ -5,7 +5,9 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
 
 import { CompetitionInfoPage } from "@/features/ideathon/components/competition-info-page";
-import { previewCompetition } from "@/features/ideathon/content/preview-competition";
+import { competitionFromProgramme } from "@/features/ideathon/content/from-programme";
+import { getPreviewActiveIdeathon } from "@/features/programmes/content/preview-programmes";
+import { formatProgrammeDate } from "@/features/programmes/lib/programme";
 
 export const metadata: Metadata = {
   title: "About the ideathon | Inverge",
@@ -26,11 +28,14 @@ const formatRange = (startsAt: string, endsAt: string) =>
   }).format(new Date(endsAt))}`;
 
 export default function IdeathonAboutPage() {
+  const programme = getPreviewActiveIdeathon();
+  const competition = competitionFromProgramme(programme);
+
   return (
     <CompetitionInfoPage
       eyebrow="About the ideathon"
       title="A monthly round for ideas worth building"
-      intro={`The Inverge ideathon gives early-stage African builders a monthly reason to publish what they are working on and a real audience to learn from. This month's theme is ${previewCompetition.theme.toLowerCase()}: ${previewCompetition.themeSummary.toLowerCase()}`}
+      intro={`The Inverge ideathon gives early-stage African builders a monthly reason to publish what they are working on and a real audience to learn from. This month's theme is ${competition.theme.toLowerCase()}: ${competition.themeSummary.toLowerCase()}`}
       sections={[
         {
           title: "Who can take part",
@@ -47,16 +52,16 @@ export default function IdeathonAboutPage() {
         },
         {
           title: "How the round runs",
-          body: `Entries are open from ${formatRange(previewCompetition.startsAt, previewCompetition.endsAt)}. Standings refresh while the round is open. After entries close, the final order is published and the next month's theme is announced.`,
+          body: `Entries are open from ${formatRange(competition.startsAt, competition.endsAt)}. Standings refresh while the round is open. After entries close, the final order is published and the next month's theme is announced.`,
           bullets: [
-            "Entries open: 1 October 2026",
-            "Entries close: 31 October 2026",
+            `Entries open: ${formatProgrammeDate(programme.schedule.submissionOpensAt)}`,
+            `Entries close: ${formatProgrammeDate(programme.schedule.submissionClosesAt)}`,
             "Next theme announced with the results",
           ],
         },
         {
           title: "What a prize is",
-          body: `${previewCompetition.prizeDescription} A prize is recognition. It is not an investment, a return, or a payment from escrowed funds, and it never changes how an idea is ranked.`,
+          body: `${competition.prizeDescription} A prize is recognition. It is not an investment, a return, or a payment from escrowed funds, and it never changes how an idea is ranked.`,
         },
         {
           title: "Why the theme exists",
@@ -68,7 +73,7 @@ export default function IdeathonAboutPage() {
         title: "This month's schedule",
         body: (
           <>
-            <p>{formatRange(previewCompetition.startsAt, previewCompetition.endsAt)}</p>
+            <p>{formatRange(competition.startsAt, competition.endsAt)}</p>
             <p className="mt-2">
               Standings are preview data until the community loop ships.
             </p>

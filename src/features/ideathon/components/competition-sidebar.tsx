@@ -2,22 +2,28 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import {
   ArrowRight02Icon,
-  Comment01Icon,
+  Calendar03Icon,
   Coins01Icon,
-  Idea01Icon,
+  Comment01Icon,
+  StarAward01Icon,
   TrophyIcon,
-  UserMultiple02Icon,
+  UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import type { ReactNode } from "react";
 
 import { Amount } from "@/components/ui/amount";
+import { NgnEstimate } from "@/components/ui/ngn-estimate";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import type {
   CompetitionCategoryBreakdown,
   CompetitionTotals,
   Ideathon,
 } from "@/features/ideathon/types";
+import type { Programme } from "@/features/programmes/types";
+import {
+  formatProgrammeDate,
+  prizePoolTotal,
+} from "@/features/programmes/lib/programme";
 
 function Stat({
   icon,
@@ -26,7 +32,7 @@ function Stat({
 }: {
   icon: IconSvgElement;
   label: string;
-  value: ReactNode;
+  value: React.ReactNode;
 }) {
   return (
     <div className="flex items-start gap-2.5">
@@ -43,20 +49,24 @@ function Stat({
   );
 }
 
-/**
- * Competition context beside the board. Every figure is an aggregate of the
- * competition's own entries; the prize is described as recognition fulfilled
- * outside the platform, never as a payout.
- */
 export function CompetitionSidebar({
   categories,
   competition,
+  programme,
   totals,
 }: {
   categories: readonly CompetitionCategoryBreakdown[];
   competition: Ideathon;
+  programme: Programme;
   totals: CompetitionTotals;
 }) {
+  const pool = prizePoolTotal(programme.rewards);
+  const cashRewards = programme.rewards.filter((reward) => reward.amount);
+  const deadline =
+    programme.status === "submission_open"
+      ? programme.schedule.submissionClosesAt
+      : programme.schedule.registrationClosesAt;
+
   return (
     <aside aria-label="Competition details" className="space-y-3">
       <section className="rounded-2xl border border-border bg-surface p-4">
@@ -69,7 +79,7 @@ export function CompetitionSidebar({
         </p>
         <div className="mt-4 space-y-3.5">
           <Stat
-            icon={UserMultiple02Icon}
+            icon={UserGroupIcon}
             label="Total supporters"
             value={totals.supporters.toLocaleString("en-US")}
           />
@@ -89,44 +99,103 @@ export function CompetitionSidebar({
           className="mt-4 inline-flex min-h-9 items-center gap-1.5 rounded text-xs font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           How it works
-          <HugeiconsIcon
-            icon={ArrowRight02Icon}
-            size={14}
-            strokeWidth={1.9}
-            aria-hidden="true"
-          />
+          <HugeiconsIcon icon={ArrowRight02Icon} size={14} strokeWidth={1.9} aria-hidden="true" />
         </Link>
       </section>
 
-      <section className="rounded-2xl border border-border bg-surface p-4">
+      <section id="prizes" className="rounded-2xl border border-border bg-surface p-4">
         <div className="flex items-start gap-3">
           <span className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand-soft text-brand-strong">
-            <HugeiconsIcon
-              icon={TrophyIcon}
-              size={18}
-              strokeWidth={1.8}
-              aria-hidden="true"
-            />
+            <HugeiconsIcon icon={TrophyIcon} size={18} strokeWidth={1.8} aria-hidden="true" />
           </span>
           <div className="min-w-0">
-            <Eyebrow className="text-muted">This month&apos;s prize</Eyebrow>
-            <p className="mt-1 text-sm font-bold leading-snug text-ink">
-              {competition.prizeDescription}
+            <Eyebrow className="text-muted">Prize pool</Eyebrow>
+            <p className="mt-1 text-xl font-bold tabular-nums tracking-[-0.03em] text-ink">
+              {pool.atomic === "0" ? "Recognition" : <Amount value={pool} compact />}
+            </p>
+            {pool.atomic === "0" ? null : (
+              <NgnEstimate
+                amount={pool}
+                block
+                className="mt-0.5 text-xs font-medium text-muted"
+                showRate
+              />
+            )}
+            <p className="mt-1 text-[0.6875rem] leading-4 text-muted">
+              {cashRewards.length > 0
+                ? `${cashRewards.length} cash reward${cashRewards.length === 1 ? "" : "s"} plus non-cash recognition. Fulfilled outside the platform.`
+                : competition.prizeDescription}
             </p>
           </div>
         </div>
         <Link
-          href="/ideathon/rules"
+          href="#prizes"
           className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded text-xs font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          View rules
-          <HugeiconsIcon
-            icon={ArrowRight02Icon}
-            size={14}
-            strokeWidth={1.9}
-            aria-hidden="true"
-          />
+          View rewards
+          <HugeiconsIcon icon={ArrowRight02Icon} size={14} strokeWidth={1.9} aria-hidden="true" />
         </Link>
+      </section>
+
+      {programme.sponsors.length > 0 ? (
+        <section className="rounded-2xl border border-border bg-surface p-4">
+          <div className="flex items-center gap-2">
+            <HugeiconsIcon
+              icon={StarAward01Icon}
+              size={15}
+              strokeWidth={1.8}
+              aria-hidden="true"
+              className="text-brand-strong"
+            />
+            <h2 className="text-sm font-bold text-ink">Sponsors</h2>
+          </div>
+          <ul className="mt-2 space-y-2">
+            {programme.sponsors.map((sponsor) => (
+              <li key={sponsor.id} className="rounded-lg bg-canvas px-2.5 py-2">
+                <p className="text-xs font-semibold text-ink">{sponsor.name}</p>
+                <p className="text-[0.625rem] text-muted">
+                  {sponsor.tier} · {sponsor.deliverables.join(", ")}
+                </p>
+              </li>
+            ))}
+          </ul>
+          <p className="mt-2 text-[0.625rem] leading-4 text-muted">
+            A sponsor funds the programme and never affects ranking, validation,
+            or judging.
+          </p>
+        </section>
+      ) : null}
+
+      <section className="rounded-2xl border border-border bg-surface p-4">
+        <div className="flex items-center gap-2">
+          <HugeiconsIcon
+            icon={Calendar03Icon}
+            size={15}
+            strokeWidth={1.8}
+            aria-hidden="true"
+            className="text-brand-strong"
+          />
+          <h2 className="text-sm font-bold text-ink">Key dates</h2>
+        </div>
+        <ul className="mt-2 space-y-1.5 text-[0.6875rem]">
+          <li className="flex justify-between gap-2">
+            <span className="text-muted">Registration closes</span>
+            <span className="text-ink">{formatProgrammeDate(programme.schedule.registrationClosesAt)}</span>
+          </li>
+          <li className="flex justify-between gap-2">
+            <span className="text-muted">Submissions close</span>
+            <span className="text-ink">{formatProgrammeDate(programme.schedule.submissionClosesAt)}</span>
+          </li>
+          <li className="flex justify-between gap-2">
+            <span className="text-muted">Results</span>
+            <span className="text-ink">{formatProgrammeDate(programme.schedule.resultsAt)}</span>
+          </li>
+        </ul>
+        {deadline ? (
+          <p className="mt-2 text-[0.625rem] text-muted">
+            Next: {formatProgrammeDate(deadline, true)}
+          </p>
+        ) : null}
       </section>
 
       <section className="rounded-2xl border border-border bg-surface p-4">
@@ -146,37 +215,18 @@ export function CompetitionSidebar({
             </li>
           ))}
         </ul>
-        <Link
-          href="/ideas"
-          className="mt-2 inline-flex min-h-9 items-center gap-1.5 rounded text-xs font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-        >
-          View all categories
-          <HugeiconsIcon
-            icon={ArrowRight02Icon}
-            size={14}
-            strokeWidth={1.9}
-            aria-hidden="true"
-          />
-        </Link>
       </section>
 
       <section className="rounded-2xl bg-brand-soft p-4">
         <span className="grid size-9 place-items-center rounded-xl bg-brand/12 text-brand-strong">
-          <HugeiconsIcon
-            icon={Idea01Icon}
-            size={18}
-            strokeWidth={1.8}
-            aria-hidden="true"
-          />
+          <HugeiconsIcon icon={UserGroupIcon} size={18} strokeWidth={1.8} aria-hidden="true" />
         </span>
-        <h2 className="mt-3 text-base font-bold tracking-[-0.02em] text-ink">
-          Got an idea?
-        </h2>
+        <h2 className="mt-3 text-base font-bold tracking-[-0.02em] text-ink">Got an idea?</h2>
         <p className="mt-1 text-xs leading-5 text-muted">
           Join the next ideathon and turn your idea into something real.
         </p>
         <Link
-          href="/sign-up"
+          href="/d/ideas/new"
           className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           Start an idea
