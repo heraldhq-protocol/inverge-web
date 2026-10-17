@@ -64,6 +64,31 @@
   background-position: center top;
 }
 
+/*
+ * Product sidebar surface.
+ *
+ * The brand's own forest contour artwork, anchored to the bottom corner and
+ * darkened toward the top so every navigation label keeps its contrast. The
+ * gradient is the contrast layer, not decoration: without it the brighter wave
+ * areas would sit behind white text at roughly 3:1.
+ */
+.product-sidebar-surface {
+  background-color: var(--inverge-contrast);
+  background-image:
+    linear-gradient(
+      180deg,
+      rgb(13 29 21 / 96%) 0%,
+      rgb(13 29 21 / 88%) 45%,
+      rgb(13 29 21 / 62%) 100%
+    ),
+    url("/images/bg/forest-green-contour-waves.png");
+  background-position:
+    center top,
+    right bottom;
+  background-repeat: no-repeat, no-repeat;
+  background-size: auto, cover;
+}
+
 html {
   background: var(--inverge-canvas);
   scroll-behavior: smooth;
