@@ -1,12 +1,13 @@
 import type { ComponentProps, ReactNode } from "react";
 
-export type PillTone = "neutral" | "accent" | "danger" | "promoted";
+export type PillTone = "neutral" | "accent" | "danger" | "promoted" | "warning";
 
 const toneClasses: Record<PillTone, string> = {
   neutral: "bg-ink/[0.06] text-muted",
   accent: "bg-brand/10 text-brand-strong",
   danger: "bg-danger/10 text-danger",
   promoted: "border border-brand/40 bg-surface text-ink",
+  warning: "bg-warning/10 text-warning-strong",
 };
 
 const sizeClasses = {
