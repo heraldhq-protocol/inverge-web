@@ -6,7 +6,7 @@ import { settingsPreviewData } from "@/features/settings/content/preview-data";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
 
 export const metadata: Metadata = {
-  title: "Settings | Inverge",
+  title: "Settings",
   description: "Manage your Inverge profile and account preferences.",
 };
 

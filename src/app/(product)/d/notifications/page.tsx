@@ -8,7 +8,7 @@ import {
 } from "@/features/notifications/types";
 
 export const metadata: Metadata = {
-  title: "Notifications | Inverge",
+  title: "Notifications",
   description: "Review campaign, milestone, and refund updates on Inverge.",
 };
 

@@ -11,12 +11,18 @@ import { MissionTeaserSection } from "@/features/marketing/components/mission-te
 import { StatsSection } from "@/features/marketing/components/stats-section";
 import { TrustStrip } from "@/features/marketing/components/trust-strip";
 import { TwoDoorsSection } from "@/features/marketing/components/two-doors-section";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Inverge — Back bold ideas. Keep delivery accountable.",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Milestone-escrowed crowdfunding and idea validation for African builders. Validate demand, fund curated campaigns, and review delivery with pro-rata escrow refunds.",
-};
+  og: {
+    eyebrow: "Crowdfunding",
+    template: "default",
+  },
+  path: "/",
+  title: "Back bold ideas. Keep delivery accountable.",
+});
 
 export default function HomePage() {
   return (

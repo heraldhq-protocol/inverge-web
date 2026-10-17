@@ -21,7 +21,7 @@ import {
 } from "@/features/analytics/lib/analytics";
 
 export const metadata: Metadata = {
-  title: "Supporters | Idea analytics | Inverge",
+  title: "Supporters | Idea analytics",
   description: "Support growth and the verification mix behind an idea's supporters.",
 };
 

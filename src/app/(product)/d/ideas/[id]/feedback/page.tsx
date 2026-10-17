@@ -7,7 +7,7 @@ import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-deta
 import type { CommunityInvite } from "@/features/feedback/types";
 
 export const metadata: Metadata = {
-  title: "Feedback and community | Inverge",
+  title: "Feedback and community",
   description:
     "Configure the feedback form and optional community invitation for one of your ideas.",
 };

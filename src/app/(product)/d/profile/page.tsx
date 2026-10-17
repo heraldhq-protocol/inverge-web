@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 
 import { ProductPlaceholderPage } from "@/features/app-shell/components/product-placeholder-page";
 
-export const metadata: Metadata = { title: "Profile | Inverge" };
+export const metadata: Metadata = { title: "Profile" };
 
 export default function ProfilePage() {
   return (

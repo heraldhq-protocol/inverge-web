@@ -7,7 +7,7 @@ import {
 } from "@/features/programmes/content/preview-programmes";
 
 export const metadata: Metadata = {
-  title: "Create a programme | Inverge admin",
+  title: "Create a programme admin",
   description:
     "Configure identity, schedule, submissions, prizes, judging, and modules for a new programme.",
 };

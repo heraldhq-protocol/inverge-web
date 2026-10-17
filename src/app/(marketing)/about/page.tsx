@@ -18,12 +18,15 @@ import Image from "next/image";
 import { ButtonLink } from "@/features/marketing/components/button-link";
 import { CallToAction } from "@/features/marketing/components/call-to-action";
 import { Container } from "@/features/marketing/components/container";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "About — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Why Inverge is building a validation-first, milestone-accountable crowdfunding platform for African builders.",
-};
+  og: { eyebrow: "About", template: "marketing" },
+  path: "/about",
+  title: "About",
+});
 
 /* ── Static data ────────────────────────────────────────────── */
 

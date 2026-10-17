@@ -2,18 +2,18 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowRight02Icon,
-  Shield01Icon,
-} from "@hugeicons/core-free-icons";
+import { ArrowRight02Icon, Shield01Icon } from "@hugeicons/core-free-icons";
 
 import { CompetitionInfoPage } from "@/features/ideathon/components/competition-info-page";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Ideathon rules | Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "How Inverge ranks ideathon entries, what counts as support, and what never affects the standings.",
-};
+  og: { eyebrow: "Ideathon", template: "ideathon" },
+  path: "/ideathon/rules",
+  title: "Ideathon rules",
+});
 
 export default function IdeathonRulesPage() {
   return (

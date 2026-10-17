@@ -4,12 +4,15 @@ import Link from "next/link";
 
 import { Container } from "@/features/marketing/components/container";
 import { PageHeader } from "@/features/marketing/components/page-header";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Help centre — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Answers to common questions about Inverge idea validation, campaigns, milestones, contributions, and refunds.",
-};
+  og: { eyebrow: "Help", template: "marketing" },
+  path: "/help",
+  title: "Help centre",
+});
 
 const faqs = [
   [

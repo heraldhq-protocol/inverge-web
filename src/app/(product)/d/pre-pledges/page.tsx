@@ -10,7 +10,7 @@ import {
 } from "@/features/pre-pledges/types";
 
 export const metadata: Metadata = {
-  title: "Pre-pledges | Inverge",
+  title: "Pre-pledges",
   description: "Review and manage your non-binding pre-pledge intentions.",
 };
 

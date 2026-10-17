@@ -4,7 +4,7 @@ import { OnboardingPage } from "@/features/auth/components/onboarding-page";
 import { RoleOnboardingForm } from "@/features/auth/components/role-onboarding-form";
 
 export const metadata: Metadata = {
-  title: "Choose where to start | Inverge",
+  title: "Choose where to start",
   description: "Choose your starting point on Inverge.",
 };
 

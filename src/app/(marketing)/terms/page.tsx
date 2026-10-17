@@ -5,11 +5,14 @@ import {
   type LegalSection,
 } from "@/features/marketing/components/legal-document";
 import { PageHeader } from "@/features/marketing/components/page-header";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Terms preview — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description: "The pre-launch draft terms preview for Inverge.",
-};
+  og: { eyebrow: "Terms", template: "marketing" },
+  path: "/terms",
+  title: "Terms preview",
+});
 
 const sections: LegalSection[] = [
   {

@@ -4,7 +4,7 @@ import { ProgrammeWorkspaceLoader } from "@/features/programmes/components/progr
 import { getPreviewProgramme } from "@/features/programmes/content/preview-programmes";
 
 export const metadata: Metadata = {
-  title: "Programme workspace | Inverge admin",
+  title: "Programme workspace admin",
   description:
     "Manage participants, submissions, judging, rewards, sponsors, and settings for one programme.",
 };

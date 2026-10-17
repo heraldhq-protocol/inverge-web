@@ -14,12 +14,15 @@ import {
   programmeCounts,
 } from "@/features/programmes/lib/programme";
 import { StatePanel } from "@/components/ui/state-panel";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Past ideathons | Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "The archive of completed Inverge programmes, with frozen results and sponsor acknowledgements.",
-};
+  og: { eyebrow: "Ideathon", template: "ideathon" },
+  path: "/ideathon/past",
+  title: "Past ideathons",
+});
 
 export default function PastIdeathonsPage() {
   const archived = previewProgrammes.filter(

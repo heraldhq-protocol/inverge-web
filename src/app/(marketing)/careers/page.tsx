@@ -3,12 +3,15 @@ import Link from "next/link";
 
 import { Container } from "@/features/marketing/components/container";
 import { PageHeader } from "@/features/marketing/components/page-header";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Careers — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Future opportunities to help Inverge build accountable crowdfunding for African builders.",
-};
+  og: { eyebrow: "Careers", template: "marketing" },
+  path: "/careers",
+  title: "Careers",
+});
 
 export default function CareersPage() {
   return (

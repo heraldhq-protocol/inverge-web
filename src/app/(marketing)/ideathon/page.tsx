@@ -10,12 +10,15 @@ import {
   categoryBreakdown,
   competitionTotals,
 } from "@/features/ideathon/lib/standings";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Ideathon standings | Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Community standings for the current Inverge programme, ranked by verified support.",
-};
+  og: { eyebrow: "Ideathon", template: "ideathon" },
+  path: "/ideathon",
+  title: "Ideathon standings",
+});
 
 export default function IdeathonStandingsPage() {
   const programme = getPreviewActiveIdeathon();
@@ -39,7 +42,10 @@ export default function IdeathonStandingsPage() {
         />
       </div>
 
-      <ProgrammePublicSections competition={competition} programme={programme} />
+      <ProgrammePublicSections
+        competition={competition}
+        programme={programme}
+      />
 
       <div className="mt-8">
         <NextIdeathonBanner />

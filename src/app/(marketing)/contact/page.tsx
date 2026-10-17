@@ -4,12 +4,15 @@ import Link from "next/link";
 import { ContactForm } from "@/features/marketing/components/contact-form";
 import { Container } from "@/features/marketing/components/container";
 import { PageHeader } from "@/features/marketing/components/page-header";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Contact — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Contact Inverge about backing, building, support, partnerships, or press.",
-};
+  og: { eyebrow: "Contact", template: "marketing" },
+  path: "/contact",
+  title: "Contact",
+});
 
 const channels = [
   {

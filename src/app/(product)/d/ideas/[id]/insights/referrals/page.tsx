@@ -7,7 +7,7 @@ import { AnalyticsUnavailable } from "@/features/analytics/components/analytics-
 import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
 
 export const metadata: Metadata = {
-  title: "Referrals | Idea analytics | Inverge",
+  title: "Referrals | Idea analytics",
   description: "Referral performance for one idea. Referral tracking is not connected yet.",
 };
 
