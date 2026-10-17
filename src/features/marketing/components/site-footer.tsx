@@ -9,7 +9,8 @@ const groups = [
   {
     label: "Learn",
     links: [
-      ["Explore ideas", "/discover"],
+      ["Explore ideas", "/ideas"],
+      ["Monthly ideathon", "/ideathon"],
       ["How it works", "/#how-it-works"],
       ["Guides", "/guides"],
       ["Help centre", "/help"],

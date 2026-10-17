@@ -1,11 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  atomicToWholeInput,
   formatCompactMoney,
   formatMoney,
+  parseUsdAmount,
   sumMoneyAmounts,
-} from "@/features/home/lib/format-money";
-import type { MoneyAmount } from "@/features/home/types";
+  type MoneyAmount,
+} from "@/lib/money";
 
 const usd = (atomic: string): MoneyAmount => ({
   atomic,
@@ -54,5 +56,39 @@ describe("sumMoneyAmounts", () => {
       currency: "USD",
       decimals: 2,
     });
+  });
+});
+
+describe("parseUsdAmount", () => {
+  it("parses whole dollars to integer cents", () => {
+    expect(parseUsdAmount("500")).toBe("50000");
+  });
+
+  it("parses a two-decimal amount", () => {
+    expect(parseUsdAmount("500.25")).toBe("50025");
+  });
+
+  it("tolerates a currency symbol and whitespace", () => {
+    expect(parseUsdAmount("$500")).toBe("50000");
+    expect(parseUsdAmount(" 500 ")).toBe("50000");
+  });
+
+  it("rejects a non-positive amount", () => {
+    expect(parseUsdAmount("0")).toBeNull();
+    expect(parseUsdAmount("-5")).toBeNull();
+  });
+
+  it("rejects input that is not a money amount", () => {
+    expect(parseUsdAmount("abc")).toBeNull();
+    expect(parseUsdAmount("1.234")).toBeNull();
+    expect(parseUsdAmount("")).toBeNull();
+  });
+});
+
+describe("atomicToWholeInput", () => {
+  it("returns the whole-unit string for an edit field", () => {
+    expect(
+      atomicToWholeInput({ atomic: "25000", currency: "USD", decimals: 2 }),
+    ).toBe("250");
   });
 });

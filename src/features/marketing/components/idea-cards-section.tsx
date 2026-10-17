@@ -6,6 +6,7 @@ import { useState } from "react";
 
 import {
   AlertCircleIcon,
+  ArrowRight02Icon,
   Coins01Icon,
   Idea01Icon,
   Refresh01Icon,
@@ -22,55 +23,69 @@ type IdeasStatus = "ready" | "loading" | "empty" | "error";
 
 const isDevelopment = process.env.NODE_ENV !== "production";
 
-function IdeaCard({ idea }: { idea: PreviewIdea }) {
+function PromotedBadge() {
   return (
-    <article className="group relative flex min-w-[17rem] max-w-[20rem] snap-start flex-col overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-sm transition-shadow hover:shadow-md sm:min-w-0 sm:max-w-none">
-      <div className="relative aspect-16/10 w-full overflow-hidden bg-border/20">
+    <span
+      className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-contrast/90 px-2.5 py-1 text-[11px] font-semibold text-white shadow-sm"
+      title="Paid placement affects visibility only, never validation metrics"
+    >
+      Promoted
+    </span>
+  );
+}
+
+function IdeaStats({ idea }: { idea: PreviewIdea }) {
+  return (
+    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs text-ink">
+      <span className="inline-flex items-center gap-1.5 font-medium">
+        <UserMultiple02Icon
+          size={16}
+          className="text-muted"
+          aria-hidden="true"
+        />
+        {idea.supporters} supporters
+      </span>
+      <span className="inline-flex items-center gap-1.5 font-mono font-bold text-ink">
+        <Coins01Icon size={16} className="text-muted" aria-hidden="true" />
+        {idea.prePledgeTotal} pre-pledges
+      </span>
+    </div>
+  );
+}
+
+/**
+ * The editorial lead.
+ *
+ * One idea is given the room a magazine gives a feature: a full-height image
+ * beside a headline at reading size. The record shown is whatever the preview
+ * fixture holds, so the card carries no claim the fixture does not make.
+ */
+function LeadIdeaCard({ idea }: { idea: PreviewIdea }) {
+  return (
+    <article className="group grid h-full overflow-hidden rounded-3xl border border-border/80 bg-surface shadow-sm transition-shadow hover:shadow-md md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="relative aspect-16/10 w-full overflow-hidden bg-border/20 md:aspect-auto md:min-h-[23rem]">
         <Image
           src={idea.image}
           alt={idea.title}
           fill
-          sizes="(max-width: 640px) 272px, (max-width: 1024px) 50vw, 400px"
-          className="object-cover"
+          sizes="(max-width: 768px) 100vw, 55vw"
+          className="object-cover transition-transform duration-500 group-hover:scale-[1.03] motion-reduce:transform-none"
         />
-        {idea.promoted ? (
-          <span className="absolute right-3 top-3 inline-flex items-center gap-1 rounded-full bg-contrast/90 px-2.5 py-1 text-[11px] font-semibold text-white">
-            Promoted
-          </span>
-        ) : null}
+        {idea.promoted ? <PromotedBadge /> : null}
       </div>
-
-      <div className="flex flex-1 flex-col p-5">
-        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-strong">
+      <div className="flex flex-col justify-center p-6 sm:p-8">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-brand-strong">
           {idea.category}
         </p>
-        <h3 className="mt-1.5 font-bold tracking-tight text-ink">
+        <h3 className="mt-3 text-balance text-2xl font-bold tracking-[-0.035em] text-ink sm:text-3xl">
           {idea.title}
         </h3>
-        <p className="mt-1.5 text-xs leading-relaxed text-muted">
+        <p className="mt-3 text-sm leading-6 text-muted sm:text-base">
           {idea.pitch}
         </p>
-
-        <div className="mt-2 border-t border-border/60 pt-2">
-          <div className="flex flex-wrap items-center justify-between gap-x-2 gap-y-1.5 text-xs text-ink">
-            <span className="inline-flex items-center gap-1.5 font-medium">
-              <UserMultiple02Icon
-                size={16}
-                className="text-muted"
-                aria-hidden="true"
-              />
-              {idea.supporters} supporters
-            </span>
-            <span className="inline-flex items-center gap-1.5 font-mono font-bold text-ink">
-              <Coins01Icon
-                size={16}
-                className="text-muted"
-                aria-hidden="true"
-              />
-              {idea.prePledgeTotal} pre-pledges
-            </span>
-          </div>
-          <p className="mt-3 text-[10px] font-medium text-muted">
+        <div className="mt-6 border-t border-border/60 pt-4">
+          <IdeaStats idea={idea} />
+          <p className="mt-3 text-[11px] text-muted">
             No money moves at this stage.
           </p>
         </div>
@@ -79,13 +94,48 @@ function IdeaCard({ idea }: { idea: PreviewIdea }) {
   );
 }
 
-function IdeaCardSkeleton() {
+/** A supporting idea: the same record at a smaller scale, stacked under the lead. */
+function SupportingIdeaCard({ idea }: { idea: PreviewIdea }) {
   return (
-    <div className="flex min-w-[17rem] max-w-[20rem] snap-start flex-col overflow-hidden rounded-2xl border border-border bg-surface shadow-sm sm:min-w-0 sm:max-w-none">
-      <div className="aspect-16/10 w-full bg-border/50 motion-safe:animate-pulse" />
-      <div className="space-y-3 p-5">
+    <article className="group relative flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border border-border/80 bg-surface shadow-sm transition-shadow hover:shadow-md sm:flex-row">
+      <div className="relative aspect-16/10 w-full shrink-0 overflow-hidden bg-border/20 sm:aspect-auto sm:w-44 lg:w-40">
+        <Image
+          src={idea.image}
+          alt={idea.title}
+          fill
+          sizes="(max-width: 640px) 100vw, 190px"
+          className="object-cover"
+        />
+        {idea.promoted ? <PromotedBadge /> : null}
+      </div>
+      <div className="flex min-w-0 flex-1 flex-col p-5">
+        <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-brand-strong">
+          {idea.category}
+        </p>
+        <h3 className="mt-1.5 text-lg font-bold tracking-[-0.03em] text-ink">
+          {idea.title}
+        </h3>
+        <p className="mt-1.5 line-clamp-2 text-xs leading-relaxed text-muted">
+          {idea.pitch}
+        </p>
+        <div className="mt-auto border-t border-border/60 pt-3">
+          <IdeaStats idea={idea} />
+          <p className="mt-2 text-[10px] text-muted">
+            No money moves at this stage.
+          </p>
+        </div>
+      </div>
+    </article>
+  );
+}
+
+function LeadSkeleton() {
+  return (
+    <div className="flex h-full flex-col overflow-hidden rounded-3xl border border-border bg-surface shadow-sm md:grid md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)]">
+      <div className="aspect-16/10 w-full bg-border/50 motion-safe:animate-pulse md:aspect-auto md:min-h-[23rem]" />
+      <div className="flex flex-col justify-center gap-3 p-6 sm:p-8">
         <div className="h-3 w-1/4 rounded bg-border/60" />
-        <div className="h-5 w-3/4 rounded bg-border/80" />
+        <div className="h-7 w-3/4 rounded bg-border/80" />
         <div className="h-4 w-full rounded bg-border/50" />
         <div className="mt-4 border-t border-border/60 pt-4">
           <div className="flex justify-between">
@@ -98,8 +148,28 @@ function IdeaCardSkeleton() {
   );
 }
 
+function SupportingSkeleton() {
+  return (
+    <div className="flex flex-1 overflow-hidden rounded-2xl border border-border bg-surface shadow-sm sm:flex-row">
+      <div className="aspect-16/10 w-full shrink-0 bg-border/50 motion-safe:animate-pulse sm:aspect-auto sm:w-44 lg:w-40" />
+      <div className="flex flex-1 flex-col gap-2.5 p-5">
+        <div className="h-3 w-1/4 rounded bg-border/60" />
+        <div className="h-5 w-3/4 rounded bg-border/80" />
+        <div className="h-3 w-full rounded bg-border/50" />
+        <div className="mt-auto border-t border-border/60 pt-3">
+          <div className="h-3 w-1/2 rounded bg-border/60" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function IdeaCardsSection() {
   const [status, setStatus] = useState<IdeasStatus>("ready");
+
+  const lead = previewIdeas[0];
+  const supporting = previewIdeas.slice(1);
+  const hasSupporting = supporting.length > 0;
 
   return (
     <section
@@ -158,28 +228,44 @@ export function IdeaCardsSection() {
           </div>
         </div>
 
-        {status === "ready" ? (
-          <>
+        {status === "ready" && lead ? (
+          <div
+            aria-label="Preview ideas"
+            className="grid gap-6 lg:grid-cols-12 lg:gap-7"
+          >
             <div
-              aria-label="Preview ideas"
-              data-reveal-stagger="0.08"
-              className="flex snap-x snap-mandatory gap-5 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 md:grid-cols-3 lg:grid-cols-4"
+              data-reveal
+              className={
+                hasSupporting
+                  ? "min-w-0 lg:col-span-7"
+                  : "min-w-0 lg:col-span-12"
+              }
             >
-              {previewIdeas.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} />
-              ))}
+              <LeadIdeaCard idea={lead} />
             </div>
-            <p className="mt-3 text-xs text-muted sm:hidden">
-              Swipe to see more ideas.
-            </p>
-          </>
+
+            {hasSupporting ? (
+              <div
+                data-reveal-stagger="0.08"
+                className="flex min-w-0 flex-col gap-5 lg:col-span-5"
+              >
+                {supporting.map((idea) => (
+                  <SupportingIdeaCard key={idea.id} idea={idea} />
+                ))}
+              </div>
+            ) : null}
+          </div>
         ) : null}
 
         {status === "loading" ? (
-          <div className="flex gap-5 overflow-x-auto pb-2 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 lg:grid-cols-4">
-            {[1, 2, 3, 4].map((n) => (
-              <IdeaCardSkeleton key={n} />
-            ))}
+          <div className="grid gap-6 lg:grid-cols-12 lg:gap-7">
+            <div className="lg:col-span-7">
+              <LeadSkeleton />
+            </div>
+            <div className="flex flex-col gap-5 lg:col-span-5">
+              <SupportingSkeleton />
+              <SupportingSkeleton />
+            </div>
           </div>
         ) : null}
 
@@ -235,12 +321,22 @@ export function IdeaCardsSection() {
                 onClick={() => setStatus("ready")}
                 className="inline-flex min-h-11 items-center gap-2 rounded-full border border-border bg-surface px-5 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
-                <Refresh01Icon size={16} aria-hidden="true" />
+                <Refresh01Icon size={16} />
                 Try again
               </button>
             </div>
           </div>
         ) : null}
+
+        <div data-reveal className="mt-9 flex justify-center">
+          <Link
+            href="/ideas"
+            className="inline-flex min-h-12 items-center justify-center gap-2 rounded-full border border-ink/80 bg-transparent px-7 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+          >
+            See all ideas
+            <ArrowRight02Icon size={16} aria-hidden="true" />
+          </Link>
+        </div>
       </Container>
     </section>
   );

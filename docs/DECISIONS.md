@@ -19,6 +19,11 @@ choices.
 | D-008 | 2026-09-15 | Accepted | Use Privy for authentication and automatic embedded Solana wallet provisioning. |
 | D-009 | 2026-10-13 | Accepted | Implement marketing motion with one GSAP data-attribute engine mounted in the marketing layout, honoring `prefers-reduced-motion`. |
 | D-010 | 2026-10-16 | Accepted | Denominate all product money in USD; replace `NairaAmount` with `MoneyAmount` (`currency: "USD"`, integer atomic cents). |
+| D-011 | 2026-10-16 | Accepted | Prefix dashboard routes with `/d` (`/d`, `/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`) and redirect the old paths. |
+| D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
+| D-013 | 2026-10-16 | Accepted | Add Tiptap 3.32.0 (`core`, `react`, `starter-kit`, `extension-image`, `extension-placeholder`) for the rich pitch editor and store pitches as ProseMirror JSON typed structurally by `src/lib/rich-text`. |
+| D-014 | 2026-10-16 | Accepted | Split idea routes: public discovery, detail, and topics stay at `/ideas`, `/ideas/[id]`, and `/topics/[slug]`, while creator surfaces live under the `/d` dashboard at `/d/ideas`; `/discover` permanently redirects to `/ideas`. |
+| D-015 | 2026-10-16 | Accepted | Add Outfit as the heading display face (via `next/font`) alongside Geist Sans for body copy and Geist Mono for figures, and unify every surface on one content measure. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -213,6 +218,149 @@ group.
 
 Revisit when: Public creator profiles need their own namespace, or the product
 adopts a different top-level information architecture.
+
+### D-012: Keep the shared money model in `src/lib/money`
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: D-010 established one USD money model that home, pre-pledges, and ideas
+share, but the type and its formatters sat in `features/home`. `ARCHITECTURE.md`
+forbids a feature from exposing its internals to another feature, keeps
+`components/ui` domain-neutral, and points at `src/lib` for cross-cutting pure
+helpers. Both the ideas feature and the new `Amount` primitive need the
+formatters, so the placement contradicted the dependency rule.
+
+Decision: Move `MoneyAmount` and its three formatters to `src/lib/money.ts`.
+Features import money from that module, and `components/ui/amount` reads it
+through the `lib` dependency the architecture permits.
+
+Alternatives: Keep the model in `features/home` and give the `Amount` primitive
+a local formatter (duplicates money formatting and drifts from D-010's single
+model); or keep it in `features/home` and let `Amount` take an already
+formatted string, with `features/ideas` importing `features/home` for formatting
+(forbidden by the dependency rule).
+
+Consequences: Money is importable from a neutral layer by every feature and by
+`components/ui`. This also removes a pre-existing `features/ideas` ->
+`features/home` import. Import paths move from
+`@/features/home/lib/format-money` to `@/lib/money`; behaviour is unchanged.
+
+Revisit when: Money formatting gains a currency or rate source, or a locale
+policy that belongs beside the finance domain rather than in generic `lib`.
+
+### D-013: Add Tiptap 3 for the rich pitch editor
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The create-idea flow needs a rich pitch (headings, lists, links,
+images) whose contents survive an API round-trip and are readable on the idea
+page and in discovery. The platform has no rich-text capability, and the last
+implementation used Tiptap 2, whose peer range excludes the installed React 19.
+
+Decision: Add Tiptap 3.32.0 — `@tiptap/core`, `@tiptap/react`,
+`@tiptap/starter-kit`, `@tiptap/extension-image`, and
+`@tiptap/extension-placeholder` — pinned to one version line, as the editor's
+packages are released together. Configure the Link extension that `starter-kit`
+already bundles through `StarterKit.configure({ link: … })` rather than adding
+`@tiptap/extension-link` separately, and harden it with
+`rel="noopener noreferrer nofollow"`, `target="_blank"`, and `openOnClick: false`.
+Restrict headings to levels 2–3 and reject base64 image sources. Store the
+document as ProseMirror JSON typed structurally in `src/lib/rich-text`, so
+fixtures and the server-side reader never import an editor package; link
+addresses are normalised through that module's `sanitizeUrl`. Initialize with
+`immediatelyRender: false` so the editor stays out of the server render and the
+first client render.
+
+Alternatives: Tiptap 2 (its React peer range rejects React 19); adding
+`@tiptap/extension-link` alongside `starter-kit`'s bundled copy (registers the
+extension twice); storing HTML (requires sanitisation before every render and
+loses structure when re-opened for editing); a Markdown textarea (no structured
+pitch layout and no in-editor affordances).
+
+Consequences: The editor bundle reaches any route that renders
+`RichTextField`, which stays a single Client Component. Pitch documents are JSON,
+so readers walk the document instead of using `dangerouslySetInnerHTML`, and the
+structural type must continue to match the editor's own JSON shape for the
+document to flow both ways without a cast.
+
+Revisit when: Collaboration, version history, or slash commands are needed (they
+bring their own packages), or the editor's React peer range stops accepting the
+installed React.
+
+### D-014: Split idea routes between public `/ideas` and dashboard `/d/ideas`
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The ideas rework adds both public surfaces and creator-only surfaces.
+D-011 had already prefixed dashboard routes with `/d` and, when `/ideas` was a
+dashboard route, redirected `/ideas/:path*` to `/d/ideas/:path*` in
+`next.config.ts`. Public discovery also lives at its own address, and a private
+idea must stay readable by anyone holding its link, which a dashboard-namespaced
+address cannot promise.
+
+Decision: Public idea surfaces stay outside the dashboard — `/ideas` for
+discovery, `/ideas/[id]` for the detail page (link-reachable for public and
+private ideas alike), and `/topics/[slug]` for the topic directory. Creator
+surfaces follow D-011 under `/d`: `/d/ideas` holds the creator's own ideas,
+`/d/ideas/new` the create flow, and `/d/ideas/[id]/insights` the insights page.
+The `/ideas/:path*` → `/d/ideas/:path*` redirect is removed, because config
+redirects are matched before the filesystem and would shadow the public pages;
+`/discover` permanently redirects to `/ideas` in its place, and the site header,
+footer, hero, about page, and their tests point at the new address.
+
+Alternatives: Every idea surface under `/ideas/*` (the plan's literal paths, but
+it puts creator-only pages outside the dashboard namespace D-011 established);
+keeping discovery at `/discover` (least churn, but contradicts the single public
+discovery surface and the detail paths later phases assume).
+
+Consequences: Two addresses now describe different things — `/ideas` is public
+discovery and `/d/ideas` is the creator's own list — so a link to "ideas" is
+ambiguous in prose and must be checked in code. The public pages carry the
+marketing shell rather than `AppShell`.
+
+Revisit when: Ideas gain an authenticated-only public review state, or the
+discovery surface needs the product shell's navigation.
+
+### D-015: Add a heading display face and unify the content measure
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Product and web engineering
+
+Context: The public discovery redesign needs a warmer, more editorial heading
+voice than Geist Sans provides, while body copy and numeric data stay legible in
+the existing faces. Separately, discovery rendered at a wider measure
+(`max-w-[90rem]`) than the marketing shell (`max-w-7xl`), so the sticky header
+and footer did not line up with the page body beneath them.
+
+Decision: Load **Outfit** through `next/font`, expose it as `--font-display`,
+and use it for headings (`h1`–`h4`). Keep Geist Sans for body copy and Geist
+Mono for transaction identifiers, timers, percentages, and financial values.
+Move the page measure into one shared, domain-neutral `Container` primitive
+(`max-w-7xl` with `px-5 sm:px-8 lg:px-12`), and have marketing, discovery, and
+the product shell consume it so header, body, and footer share one width.
+
+Alternatives: Keep Geist Sans for headings (no editorial contrast, but no new
+font); use a serif display face (reads as editorial commentary rather than a
+product surface); leave discovery at the wider measure (header never aligns with
+the body); duplicate the width in each feature (drifts, and both copies must be
+changed together).
+
+Consequences: Marketing and product share one heading hierarchy, and headings
+are set at the element level in `globals.css` so a new section inherits it. The
+marketing `Container` becomes a thin re-export of the shared primitive. Outfit
+adds one font request at build time; the glyphs are limited to the Latin subset.
+The measure narrows the discovery body from 1440px to 1280px, which stays inside
+the intended 1200–1320px range.
+
+Revisit when: The brand adopts a different heading voice, or the product needs a
+second measure (for example a full-bleed campaign page).
 
 ## Decision template
 

@@ -1,5 +1,6 @@
 import { ShieldCheck } from "lucide-react";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 import { StatusBadge } from "@/components/ui/status-badge";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
@@ -24,9 +25,15 @@ const sections = [
   { href: "#account", label: "Account" },
 ] as const;
 
-export function SettingsDashboard({ data }: { data: SettingsData }) {
+export function SettingsDashboard({
+  adminEntry,
+  data,
+}: {
+  adminEntry?: ReactNode;
+  data: SettingsData;
+}) {
   return (
-    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
+    <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
       <ProductSearch action="/d" />
 
       <header className="mt-8 sm:mt-10">
@@ -46,6 +53,8 @@ export function SettingsDashboard({ data }: { data: SettingsData }) {
           controls.
         </p>
       </header>
+
+      {adminEntry}
 
       <nav
         aria-label="Settings sections"

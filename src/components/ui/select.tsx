@@ -1,6 +1,10 @@
 "use client";
 
-import { Check, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  CheckmarkCircle02Icon,
+  ChevronDownIcon,
+} from "@hugeicons/core-free-icons";
 import {
   type KeyboardEvent,
   useCallback,
@@ -28,7 +32,7 @@ type SelectProps = {
   onValueChange?: (value: string) => void;
   options: readonly SelectOption[];
   placeholder?: string;
-  value?: string;
+  value?: string | undefined;
 };
 
 type MenuPosition = {
@@ -244,12 +248,14 @@ export function Select({
         <span className={selectedOption ? "truncate text-ink" : "text-muted"}>
           {selectedOption?.label ?? placeholder}
         </span>
-        <ChevronDown
-          className={`size-4.5 shrink-0 text-muted transition-transform ${
-            isOpen ? "rotate-180" : ""
-          }`}
+        <HugeiconsIcon
+          icon={ChevronDownIcon}
+          size={18}
           strokeWidth={1.8}
           aria-hidden="true"
+          className={`shrink-0 text-muted transition-transform ${
+            isOpen ? "rotate-180" : ""
+          }`}
         />
       </button>
 
@@ -298,12 +304,14 @@ export function Select({
                     }`}
                   >
                     <span>{option.label}</span>
-                    <Check
-                      className={`size-4 text-brand-strong ${
-                        isSelected ? "opacity-100" : "opacity-0"
-                      }`}
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
+                      size={16}
                       strokeWidth={2.2}
                       aria-hidden="true"
+                      className={`text-brand-strong ${
+                        isSelected ? "opacity-100" : "opacity-0"
+                      }`}
                     />
                   </li>
                 );

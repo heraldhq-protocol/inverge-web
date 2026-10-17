@@ -4,7 +4,7 @@ import Link from "next/link";
 import { MetricStrip } from "@/components/ui/metric-strip";
 import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
-import { formatMoney, sumMoneyAmounts } from "@/features/home/lib/format-money";
+import { formatMoney, sumMoneyAmounts } from "@/lib/money";
 import { PrePledgeFilters } from "@/features/pre-pledges/components/pre-pledge-filters";
 import { PrePledgeSection } from "@/features/pre-pledges/components/pre-pledge-section";
 import { filterAndSortPrePledges } from "@/features/pre-pledges/lib/filter-pre-pledges";
@@ -44,7 +44,7 @@ export function PrePledgesDashboard({
   ];
 
   return (
-    <div className="mx-auto w-full max-w-[90rem] px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
+    <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
       <ProductSearch
         action="/d/pre-pledges"
         defaultValue={query}

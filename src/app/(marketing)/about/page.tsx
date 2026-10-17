@@ -508,7 +508,7 @@ export default function AboutPage() {
           body="Explore ideas, support great builders, or start your own idea."
           className="py-16 sm:py-20"
         >
-          <ButtonLink href="/discover" variant="light">
+          <ButtonLink href="/ideas" variant="light">
             Explore ideas
           </ButtonLink>
           <ButtonLink href="/sign-up" variant="light">

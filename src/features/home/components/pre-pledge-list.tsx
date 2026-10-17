@@ -1,4 +1,4 @@
-import { formatMoney } from "@/features/home/lib/format-money";
+import { formatMoney } from "@/lib/money";
 import type { PrePledgeSummary } from "@/features/home/types";
 
 const statusCopy = {

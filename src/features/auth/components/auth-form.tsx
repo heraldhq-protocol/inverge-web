@@ -155,6 +155,13 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
         <ProviderButton provider="Google" onSelect={handleProvider} />
       </div>
 
+      <p
+        aria-live="polite"
+        className="mt-4 min-h-5 text-center text-xs leading-5 text-muted"
+      >
+        {status}
+      </p>
+
       {/* <div className="my-4 flex items-center gap-3" aria-hidden="true">
         <span className="h-px flex-1 bg-border" />
         <span className="text-xs font-medium uppercase tracking-[0.14em] text-muted">

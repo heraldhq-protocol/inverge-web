@@ -1,45 +1,63 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { IdeasDashboard } from "@/features/ideas/components/ideas-dashboard";
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
+import { previewTopics } from "@/features/ideas/content/topics";
 
 afterEach(cleanup);
 
+function renderDashboard(viewer?: "visitor") {
+  return render(
+    viewer ? (
+      <IdeasDashboard
+        data={ideasPreviewData}
+        topics={previewTopics}
+        viewer={viewer}
+      />
+    ) : (
+      <IdeasDashboard data={ideasPreviewData} topics={previewTopics} />
+    ),
+  );
+}
+
 describe("IdeasDashboard", () => {
-  it("filters categories in place without navigation links", () => {
-    render(<IdeasDashboard data={ideasPreviewData} />);
+  it("leads with a real featured idea and filters categories in place", () => {
+    renderDashboard();
 
     expect(
       screen.getByRole("heading", {
-        name: "Find something worth believing in.",
+        name: /Real ideas\. Real people\./,
       }),
     ).toBeInTheDocument();
+    expect(
+      screen.getAllByRole("link", { name: /CampusKonekt/ }).length,
+    ).toBeGreaterThanOrEqual(1);
 
-    const agriculture = screen.getByRole("button", { name: "Agriculture" });
+    const agriculture = screen.getByRole("radio", { name: "Agriculture" });
     fireEvent.click(agriculture);
 
-    expect(agriculture).toHaveAttribute("aria-pressed", "true");
+    expect(agriculture).toBeChecked();
+    const results = within(screen.getByRole("region", { name: "Idea results" }));
     expect(
-      screen.getByRole("heading", { name: "FarmLink ColdBox" }),
+      results.getByRole("heading", { name: "FarmLink ColdBox" }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("heading", { name: "AgroRoute" }),
-    ).toBeInTheDocument();
-    expect(
-      screen.queryByRole("heading", { name: "SunGrid Community Power" }),
+      results.queryByRole("heading", { name: "SunGrid Community Power" }),
     ).not.toBeInTheDocument();
   });
 
   it("supports search, a useful empty state, and recovery", () => {
-    render(<IdeasDashboard data={ideasPreviewData} />);
+    renderDashboard();
 
     const search = screen.getByRole("searchbox", { name: "Search ideas" });
     fireEvent.change(search, { target: { value: "no such project" } });
-
-    expect(
-      screen.getAllByRole("button", { name: "Clear idea search" }),
-    ).toHaveLength(1);
 
     expect(
       screen.getByRole("heading", { name: "Try a broader search" }),
@@ -48,26 +66,44 @@ describe("IdeasDashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Clear all filters" }));
     expect(search).toHaveValue("");
     expect(
-      screen.getByRole("heading", { name: "Featured this week" }),
+      screen.getByRole("heading", { name: /Real ideas\. Real people\./ }),
     ).toBeInTheDocument();
   });
 
-  it("reveals more catalogue results explicitly", () => {
-    render(<IdeasDashboard data={ideasPreviewData} />);
+  it("pages the catalogue without losing the result count", () => {
+    renderDashboard();
+
+    const grid = () =>
+      within(screen.getByRole("region", { name: "Idea results" }));
 
     expect(
-      screen.queryByRole("heading", { name: "NaijaCraft Collective" }),
+      grid().queryByRole("heading", { name: "CareBridge" }),
     ).not.toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: "Show more ideas" }));
+    fireEvent.click(screen.getByRole("button", { name: "Page 2" }));
 
     expect(
-      screen.getByRole("heading", { name: "NaijaCraft Collective" }),
+      grid().getByRole("heading", { name: "CareBridge" }),
     ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Page 2" }),
+    ).toHaveAttribute("aria-current", "page");
+  });
+
+  it("shows the active filter as a removable chip", () => {
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Ghana" }));
+
+    const chip = screen.getByRole("button", { name: /Ghana/ });
+    expect(chip).toBeInTheDocument();
+
+    fireEvent.click(chip);
+    expect(screen.getByRole("radio", { name: "All locations" })).toBeChecked();
   });
 
   it("gives visitors an authenticated participation path", () => {
-    render(<IdeasDashboard data={ideasPreviewData} viewer="visitor" />);
+    renderDashboard("visitor");
 
     expect(
       screen.getByRole("heading", {
@@ -77,5 +113,17 @@ describe("IdeasDashboard", () => {
     expect(
       screen.getByRole("link", { name: "Create account" }),
     ).toHaveAttribute("href", "/sign-up");
+  });
+
+  it("counts only public ideas in the topic directory", () => {
+    renderDashboard();
+
+    const directory = within(
+      screen.getByRole("region", { name: "Browse by topic" }),
+    );
+    const campusLife = directory.getByRole("link", { name: /Campus life/ });
+
+    expect(campusLife).toHaveAttribute("href", "/topics/campus-life");
+    expect(within(campusLife).getByText("3 ideas")).toBeInTheDocument();
   });
 });

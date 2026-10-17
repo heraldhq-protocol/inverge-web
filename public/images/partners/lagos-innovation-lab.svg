@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Lagos Innovation Lab">
+  <rect x="0.75" y="0.75" width="318.5" height="94.5" rx="13.25" fill="#F7FAF8" stroke="#CBD9D1" stroke-width="1.5"/>
+  <rect x="18" y="22" width="52" height="52" rx="26" fill="#123D2E"/>
+  <path d="M34 60V36h5v19h11v5H34z" fill="#FFFFFF"/>
+  <circle cx="55" cy="41" r="4" fill="#2FA37A"/>
+  <text x="86" y="45" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#123D2E">Lagos</text>
+  <text x="86" y="64" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="17" font-weight="700" fill="#123D2E">Innovation Lab</text>
+  <text x="86" y="80" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="8.5" font-weight="600" letter-spacing="2.4" fill="#5C7A6C">BUILDING IN LAGOS</text>
+</svg>

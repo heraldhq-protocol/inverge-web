@@ -1,187 +1,187 @@
-import { MapPin } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowUpRight01Icon,
+  MapPinIcon,
+} from "@hugeicons/core-free-icons";
+import Link from "next/link";
 
-import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatCompactMoney } from "@/features/home/lib/format-money";
+import { Avatar } from "@/components/ui/avatar";
+import { Pill } from "@/components/ui/pill";
+import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import type { DiscoveryIdea } from "@/features/ideas/types";
+import { formatCompactMoney } from "@/lib/money";
 
-function ValidationProgress({ value }: { value: number }) {
-  return (
-    <div>
-      <p className="text-xs font-semibold tabular-nums text-ink">
-        {value}% validated
-      </p>
-      <div
-        className="mt-2 h-1.5 overflow-hidden rounded-full bg-border"
-        role="progressbar"
-        aria-label="Idea validation progress"
-        aria-valuemax={100}
-        aria-valuemin={0}
-        aria-valuenow={value}
+type Stage = "early" | "growing" | "near";
+
+function stageFor(validationPercent: number): Stage {
+  if (validationPercent >= 70) return "near";
+  if (validationPercent >= 50) return "growing";
+  return "early";
+}
+
+const stageCopy: Record<Stage, string> = {
+  early: "Early signal",
+  growing: "Growing support",
+  near: "Near validation",
+};
+
+/**
+ * The single status a card shows.
+ *
+ * Paid placement takes precedence because FR-206a requires it to be visible,
+ * and promotion never sits inside the validation figures. Otherwise the label
+ * describes observed progress toward the FR-204 threshold, not a lifecycle
+ * state the card cannot verify.
+ */
+function CardStatus({ idea }: { idea: DiscoveryIdea }) {
+  if (idea.promoted) {
+    return (
+      <Pill
+        tone="promoted"
+        size="xs"
+        className="bg-surface/95 shadow-sm backdrop-blur"
+        title="Paid placement affects visibility only, never validation metrics"
       >
-        <span
-          className="block h-full rounded-full bg-brand"
-          style={{ width: `${value}%` }}
-        />
+        Promoted
+      </Pill>
+    );
+  }
+
+  const stage = stageFor(idea.validationPercent);
+
+  return (
+    <Pill
+      tone={stage === "near" ? "accent" : "neutral"}
+      size="xs"
+      className="bg-surface/95 shadow-sm backdrop-blur"
+    >
+      {stageCopy[stage]}
+    </Pill>
+  );
+}
+
+function CreatorLine({ idea }: { idea: DiscoveryIdea }) {
+  return (
+    <div className="min-w-0">
+      <div className="flex min-w-0 items-center gap-2">
+        <Avatar name={idea.creator} size={32} />
+        <span className="truncate text-sm font-medium text-ink">
+          {idea.creator}
+        </span>
       </div>
+      <p className="mt-1 flex min-w-0 items-center gap-1 text-xs text-muted">
+        <HugeiconsIcon
+          icon={MapPinIcon}
+          size={14}
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className="shrink-0"
+        />
+        <span className="truncate">{idea.location}</span>
+      </p>
     </div>
   );
 }
 
-function Creator({ idea }: { idea: DiscoveryIdea }) {
+function CardMetrics({ idea }: { idea: DiscoveryIdea }) {
   return (
-    <div className="flex min-w-0 items-center gap-2 text-xs text-ink">
-      <span className="grid size-7 shrink-0 place-items-center rounded-full bg-contrast text-[0.625rem] font-bold text-white">
-        {idea.creatorInitials}
-      </span>
-      <span className="truncate font-medium">{idea.creator}</span>
-    </div>
-  );
-}
-
-function Location({ location }: { location: string }) {
-  return (
-    <span className="inline-flex min-w-0 items-center gap-1.5 text-xs text-muted">
-      <MapPin
-        className="size-3.5 shrink-0"
-        strokeWidth={1.8}
-        aria-hidden="true"
-      />
-      <span className="truncate">{location}</span>
-    </span>
-  );
-}
-
-function IdeaMetrics({ idea }: { idea: DiscoveryIdea }) {
-  return (
-    <dl className="grid grid-cols-2 divide-x divide-border border-t border-border">
-      <div className="px-4 py-3 sm:px-5">
-        <dt className="text-[0.6875rem] text-muted">Supporters</dt>
-        <dd className="mt-0.5 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
+    <dl className="grid grid-cols-3 gap-2 border-t border-border pt-3">
+      <div className="min-w-0">
+        <dd className="truncate text-sm font-semibold tabular-nums text-ink">
           {idea.supporters.toLocaleString("en-US")}
         </dd>
+        <dt className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
+          Supporters
+        </dt>
       </div>
-      <div className="px-4 py-3 sm:px-5">
-        <dt className="text-[0.6875rem] text-muted">Pre-pledged intent</dt>
-        <dd className="mt-0.5 whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
+      <div className="min-w-0">
+        <dd className="truncate text-sm font-semibold tabular-nums text-ink">
           {formatCompactMoney(idea.prePledged)}
         </dd>
+        <dt className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
+          Est. interest
+        </dt>
+      </div>
+      <div className="min-w-0">
+        <dd className="truncate text-sm font-semibold tabular-nums text-ink">
+          {idea.feedbackResponses.toLocaleString("en-US")}
+        </dd>
+        <dt className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
+          Feedback
+        </dt>
       </div>
     </dl>
   );
 }
 
-function PromotedBadge() {
-  return (
-    <span
-      className="rounded-full border border-warning/20 bg-amber-50 px-2.5 py-1 text-[0.6875rem] font-semibold text-warning-strong shadow-sm"
-      title="Paid placement affects visibility only, never validation metrics"
-    >
-      Promoted
-    </span>
-  );
-}
-
 export function IdeaDiscoveryCard({
   idea,
-  variant = "compact",
+  variant = "grid",
+  priority = false,
 }: {
   idea: DiscoveryIdea;
-  variant?: "compact" | "featured" | "lead";
+  /** `featured` and `lead` are legacy aliases for the standard grid card. */
+  variant?: "grid" | "list" | "featured" | "lead";
+  priority?: boolean;
 }) {
-  if (variant === "compact") {
-    return (
-      <article className="grid min-h-44 grid-cols-[7.5rem_minmax(0,1fr)] overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow] hover:border-brand/25 hover:shadow-md sm:grid-cols-[8.75rem_minmax(0,1fr)]">
-        <IdeaArtwork compact variant={idea.artwork} />
-        <div className="flex min-w-0 flex-col p-4">
-          <div className="flex min-w-0 items-start justify-between gap-2">
-            <p className="truncate text-[0.6875rem] font-semibold text-brand-strong">
-              {idea.category}
-            </p>
-            {idea.promoted ? <PromotedBadge /> : null}
-          </div>
-          <h3 className="mt-1 line-clamp-2 text-base font-bold leading-tight tracking-[-0.025em] text-ink">
-            {idea.title}
-          </h3>
-          <p className="mt-1 line-clamp-2 text-xs leading-4 text-muted">
-            {idea.description}
-          </p>
-          <div className="mt-auto pt-3">
-            <div className="flex items-center justify-between gap-3">
-              <span className="text-[0.6875rem] text-muted">
-                {idea.supporters.toLocaleString("en-US")} supporters
-              </span>
-              <Location location={idea.location} />
-            </div>
-            <div className="mt-2 flex items-center gap-3">
-              <span className="shrink-0 text-[0.6875rem] font-semibold tabular-nums text-ink">
-                {idea.validationPercent}%
-              </span>
-              <div
-                className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-border"
-                role="progressbar"
-                aria-label="Idea validation progress"
-                aria-valuemax={100}
-                aria-valuemin={0}
-                aria-valuenow={idea.validationPercent}
-              >
-                <span
-                  className="block h-full rounded-full bg-brand"
-                  style={{ width: `${idea.validationPercent}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-    );
-  }
-
-  const isLead = variant === "lead";
+  const isList = variant === "list";
 
   return (
-    <article
-      className={`overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow] hover:border-brand/25 hover:shadow-md ${
-        isLead
-          ? "md:grid md:grid-cols-[minmax(0,1.08fr)_minmax(16rem,0.92fr)]"
-          : "flex flex-col"
+    <Link
+      href={`/ideas/${idea.id}`}
+      className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg hover:shadow-ink/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:hover:translate-y-0 ${
+        isList ? "sm:grid sm:grid-cols-[12rem_minmax(0,1fr)] sm:flex-row" : ""
       }`}
     >
-      <div className="relative min-h-0 md:row-span-2 md:[&>div]:h-full">
-        <IdeaArtwork featured={isLead} variant={idea.artwork} />
-        {idea.promoted ? (
-          <div className="absolute right-3 top-3">
-            <PromotedBadge />
-          </div>
-        ) : null}
-      </div>
-      <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <p className="text-xs font-semibold text-brand-strong">
-            {idea.category}
-          </p>
-          <Location location={idea.location} />
+      <div
+        className={`relative shrink-0 overflow-hidden bg-surface-muted ${
+          isList
+            ? "aspect-[16/10] sm:aspect-auto sm:h-full sm:min-h-44"
+            : "aspect-[16/10]"
+        }`}
+      >
+        <IdeaCover
+          artwork={idea.artwork}
+          cover={idea.cover}
+          alt={`${idea.title}, ${idea.category}`}
+          priority={priority}
+          sizes={
+            isList
+              ? "(min-width: 640px) 192px, 100vw"
+              : "(min-width: 1280px) 360px, (min-width: 768px) 45vw, 100vw"
+          }
+          className="transition-transform duration-500 group-hover:scale-[1.02] motion-reduce:group-hover:scale-100"
+        />
+        <div className="absolute left-3 top-3">
+          <CardStatus idea={idea} />
         </div>
-        <h3
-          className={`mt-1 font-bold tracking-[-0.035em] text-ink ${
-            isLead ? "text-xl sm:text-2xl" : "text-lg sm:text-xl"
-          }`}
+        <span
+          aria-hidden="true"
+          className="absolute bottom-3 right-3 grid size-8 place-items-center rounded-full bg-surface/95 text-ink shadow-sm transition-colors group-hover:bg-brand group-hover:text-white"
         >
+          <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} strokeWidth={1.9} />
+        </span>
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
+        <p className="truncate text-xs font-medium text-muted">
+          {idea.category}
+        </p>
+        <h3 className="mt-1 line-clamp-2 text-lg font-bold leading-snug tracking-[-0.03em] text-ink">
           {idea.title}
         </h3>
-        <p className="mt-1.5 line-clamp-3 text-sm leading-5 text-muted">
+        <p className="mt-1.5 line-clamp-2 text-sm leading-5 text-muted">
           {idea.description}
         </p>
 
         <div className="mt-4">
-          <Creator idea={idea} />
+          <CreatorLine idea={idea} />
         </div>
-        <div className="mt-4">
-          <ValidationProgress value={idea.validationPercent} />
+
+        <div className="mt-auto pt-4">
+          <CardMetrics idea={idea} />
         </div>
       </div>
-      <div className={isLead ? "md:col-start-2" : ""}>
-        <IdeaMetrics idea={idea} />
-      </div>
-    </article>
+    </Link>
   );
 }

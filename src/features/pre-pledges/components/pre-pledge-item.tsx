@@ -1,7 +1,7 @@
 import Link from "next/link";
 
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
-import { formatMoney } from "@/features/home/lib/format-money";
+import { formatMoney } from "@/lib/money";
 import { PrePledgeStatusLabel } from "@/features/pre-pledges/components/pre-pledge-status";
 import type { PrePledgeRecord } from "@/features/pre-pledges/types";
 

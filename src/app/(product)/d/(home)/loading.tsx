@@ -5,7 +5,7 @@ function Skeleton({ className }: { className: string }) {
 export default function HomeLoading() {
   return (
     <div
-      className="mx-auto w-full max-w-[90rem] animate-none px-4 py-5 motion-safe:animate-pulse sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10"
+      className="mx-auto w-full max-w-7xl animate-none px-4 py-5 motion-safe:animate-pulse sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10"
       aria-label="Loading your Inverge home"
       role="status"
     >
