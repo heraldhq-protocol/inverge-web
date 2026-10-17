@@ -20,7 +20,7 @@ import { summariseFeedback } from "@/features/analytics/lib/feedback-summary";
 import { formatCompactMoney, formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
-  title: "Interest and feedback | Idea analytics | Inverge",
+  title: "Interest and feedback | Idea analytics",
   description:
     "Estimated funding interest and structured feedback for one idea, with observed data kept separate from interpretation.",
 };

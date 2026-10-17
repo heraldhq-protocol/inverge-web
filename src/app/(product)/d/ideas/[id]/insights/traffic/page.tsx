@@ -7,7 +7,7 @@ import { AnalyticsUnavailable } from "@/features/analytics/components/analytics-
 import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
 
 export const metadata: Metadata = {
-  title: "Traffic | Idea analytics | Inverge",
+  title: "Traffic | Idea analytics",
   description: "Traffic analytics for one idea. View tracking is not connected yet.",
 };
 

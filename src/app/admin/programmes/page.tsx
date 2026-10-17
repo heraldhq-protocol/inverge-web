@@ -4,7 +4,7 @@ import { ProgrammeDashboard } from "@/features/programmes/components/programme-d
 import { previewProgrammes } from "@/features/programmes/content/preview-programmes";
 
 export const metadata: Metadata = {
-  title: "Programmes | Inverge admin",
+  title: "Programmes admin",
   description: "Run ideathons, challenges, showcases, and workshops.",
 };
 

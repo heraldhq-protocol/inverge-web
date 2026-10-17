@@ -8,12 +8,15 @@ import { CompetitionInfoPage } from "@/features/ideathon/components/competition-
 import { competitionFromProgramme } from "@/features/ideathon/content/from-programme";
 import { getPreviewActiveIdeathon } from "@/features/programmes/content/preview-programmes";
 import { formatProgrammeDate } from "@/features/programmes/lib/programme";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "About the ideathon | Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "How the Inverge monthly ideathon works: the theme, who can take part, and what participants get from entering.",
-};
+  og: { eyebrow: "Ideathon", template: "ideathon" },
+  path: "/ideathon/about",
+  title: "About the ideathon",
+});
 
 const formatRange = (startsAt: string, endsAt: string) =>
   `${new Intl.DateTimeFormat("en-GB", {

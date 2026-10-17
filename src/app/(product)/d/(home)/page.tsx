@@ -8,7 +8,7 @@ import {
 } from "@/features/home/discovery-categories";
 
 export const metadata: Metadata = {
-  title: "Home | Inverge",
+  title: "Home",
   description: "Discover ideas and continue your activity on Inverge.",
 };
 

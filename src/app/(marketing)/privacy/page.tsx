@@ -5,11 +5,14 @@ import {
   type LegalSection,
 } from "@/features/marketing/components/legal-document";
 import { PageHeader } from "@/features/marketing/components/page-header";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Privacy notice — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description: "The pre-launch draft privacy notice for Inverge.",
-};
+  og: { eyebrow: "Privacy", template: "marketing" },
+  path: "/privacy",
+  title: "Privacy notice",
+});
 
 const sections: LegalSection[] = [
   {

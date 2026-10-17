@@ -12,7 +12,7 @@ import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
 
 export const metadata: Metadata = {
-  title: "Idea analytics | Inverge",
+  title: "Idea analytics",
   description:
     "Private analytics for your published ideas: support, estimated interest, feedback, and next steps.",
 };

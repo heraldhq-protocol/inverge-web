@@ -4,7 +4,7 @@ import { AdminAccessDenied, AdminShell } from "@/features/programmes/components/
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
 
 export const metadata: Metadata = {
-  title: "Programme administration | Inverge",
+  title: "Programme administration",
   description:
     "Create, schedule, and run Inverge ideathons, sponsor challenges, showcases, and workshops.",
   robots: { follow: false, index: false },

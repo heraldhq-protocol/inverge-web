@@ -36,7 +36,7 @@ import { summariseFeedback } from "@/features/analytics/lib/feedback-summary";
 import { formatCompactMoney, formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
-  title: "Idea analytics overview | Inverge",
+  title: "Idea analytics overview",
   description:
     "Support growth, estimated interest, feedback, and recent activity for one idea.",
 };

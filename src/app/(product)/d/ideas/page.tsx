@@ -6,7 +6,7 @@ import { previewTopics } from "@/features/ideas/content/topics";
 import { parseIdeaFilters } from "@/features/ideas/lib/filters";
 
 export const metadata: Metadata = {
-  title: "Discover ideas | Inverge",
+  title: "Discover ideas",
   description:
     "Explore early-stage ideas gathering support, feedback, and pre-pledge intent on Inverge.",
 };

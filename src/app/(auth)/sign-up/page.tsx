@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { AuthPage } from "@/features/auth/components/auth-page";
 
 export const metadata: Metadata = {
-  title: "Create your account | Inverge",
+  title: "Create your account",
   description:
     "Create an Inverge account to discover ideas, support African builders, and follow their progress.",
 };

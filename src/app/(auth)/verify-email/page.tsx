@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { EmailVerificationPage } from "@/features/auth/components/email-verification-page";
 
 export const metadata: Metadata = {
-  title: "Verify your email | Inverge",
+  title: "Verify your email",
   description: "Enter the verification code sent to your email address.",
 };
 

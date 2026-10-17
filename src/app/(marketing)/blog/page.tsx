@@ -6,12 +6,15 @@ import { Container } from "@/features/marketing/components/container";
 import { JournalCover } from "@/features/marketing/components/journal-cover";
 import { PageHeader } from "@/features/marketing/components/page-header";
 import { journalEntries } from "@/features/marketing/content/editorial";
+import { buildPageMetadata } from "@/lib/seo/metadata";
 
-export const metadata: Metadata = {
-  title: "Journal — Inverge",
+export const metadata: Metadata = buildPageMetadata({
   description:
     "Notes on idea validation, accountable crowdfunding, milestone delivery, and backing African builders.",
-};
+  og: { eyebrow: "Journal", template: "marketing" },
+  path: "/blog",
+  title: "Journal",
+});
 
 export default function BlogPage() {
   return (
