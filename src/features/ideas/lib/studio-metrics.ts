@@ -72,7 +72,7 @@ export function recommendCreatorActions(
       description: `${drafts.length === 1 ? drafts[0]?.title : `${drafts.length} drafts`} ${
         drafts.length === 1 ? "is" : "are"
       } still private and cannot be found in discovery.`,
-      href: "/d/ideas",
+      href: "/d/creator/ideas",
       label: "Review drafts",
       title: "Finish a draft",
     });
@@ -83,7 +83,7 @@ export function recommendCreatorActions(
     steps.push({
       description:
         "These ideas met the validation threshold. Review the signals before deciding whether to take one further.",
-      href: "/d/ideas",
+      href: "/d/creator/ideas",
       label: "Check readiness",
       title: "A validated idea is ready for review",
     });
@@ -94,7 +94,7 @@ export function recommendCreatorActions(
     steps.push({
       description:
         "Unlisted ideas are reachable by link only. Listing one adds it to discovery, where supporters can find it.",
-      href: "/d/ideas",
+      href: "/d/creator/ideas",
       label: "See unlisted ideas",
       title: "Make an idea discoverable",
     });

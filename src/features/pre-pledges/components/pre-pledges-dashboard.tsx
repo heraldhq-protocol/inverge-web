@@ -74,7 +74,7 @@ export function PrePledgesDashboard({
             </p>
           </div>
           <Link
-            href="/d/ideas"
+            href="/d/creator/ideas"
             className="inline-flex min-h-11 items-center gap-1.5 rounded-lg px-1 text-sm font-semibold text-brand-strong transition-colors hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Explore ideas

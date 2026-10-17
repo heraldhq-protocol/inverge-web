@@ -183,7 +183,7 @@ export function HomeDashboard({
                 description="Published ideas appear here once they are listed for discovery."
                 action={
                   <Link
-                    href="/d/ideas/new"
+                    href="/d/creator/ideas/new"
                     className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   >
                     Start an idea

@@ -83,7 +83,7 @@ export default function HomePage() {
     },
     {
       description: "Publish and validate",
-      href: "/d/ideas/new",
+      href: "/d/creator/ideas/new",
       icon: "idea",
       label: "Start an idea",
     },

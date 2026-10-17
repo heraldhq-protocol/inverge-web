@@ -22,8 +22,10 @@ choices.
 | D-011 | 2026-10-16 | Accepted | Prefix dashboard routes with `/d` (`/d`, `/d/ideas`, `/d/pre-pledges`, `/d/notifications`, `/d/profile`, `/d/settings`) and redirect the old paths. |
 | D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
 | D-013 | 2026-10-16 | Accepted | Add Tiptap 3.32.0 (`core`, `react`, `starter-kit`, `extension-image`, `extension-placeholder`) for the rich pitch editor and store pitches as ProseMirror JSON typed structurally by `src/lib/rich-text`. |
-| D-014 | 2026-10-16 | Accepted | Split idea routes: public discovery, detail, and topics stay at `/ideas`, `/ideas/[id]`, and `/topics/[slug]`, while creator surfaces live under the `/d` dashboard at `/d/ideas`; `/discover` permanently redirects to `/ideas`. |
+| D-014 | 2026-10-16 | Accepted (creator half superseded by D-017) | Split idea routes: public discovery, detail, and topics stay at `/ideas`, `/ideas/[id]`, and `/topics/[slug]`, while creator surfaces live under the `/d` dashboard at `/d/ideas`; `/discover` permanently redirects to `/ideas`. |
 | D-015 | 2026-10-16 | Accepted | Add Outfit as the heading display face (via `next/font`) alongside Geist Sans for body copy and Geist Mono for figures, and unify every surface on one content measure. |
+| D-016 | 2026-10-17 | Accepted | Render every `/d` route inside one shared `AppShell` assembled by the `(product)` layout from a single `getDashboardViewer()` seam. |
+| D-017 | 2026-10-17 | Accepted | Move every creator surface from `/d/ideas*` to `/d/creator/*` (overview, list, create, per-idea workspace, feedback setup, insights, analytics home, feedback inbox) with redirects from the old paths. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -325,7 +327,10 @@ ambiguous in prose and must be checked in code. The public pages carry the
 marketing shell rather than `AppShell`.
 
 Revisit when: Ideas gain an authenticated-only public review state, or the
-discovery surface needs the product shell's navigation.
+discovery surface needs the product shell's navigation. The creator-surface
+half of this decision was superseded by D-017: creator surfaces moved from
+`/d/ideas*` to `/d/creator/*`. The public half (`/ideas`, `/ideas/[id]`,
+`/topics/[slug]`) stands unchanged.
 
 ### D-015: Add a heading display face and unify the content measure
 
@@ -400,6 +405,53 @@ distinct labels: one navigates to discovery, the others filter a local list.
 Revisit when: A session exists and `getDashboardViewer()` can return a real
 viewer, or when the dashboard grows a destination that needs to replace one of
 the five mobile navigation slots.
+
+### D-017: Move every creator surface under `/d/creator`
+
+- Date: 2026-10-17
+- Status: Accepted
+- Owner: Web engineering
+
+Context: D-014 placed the creator's idea surfaces directly at `/d/ideas*`
+while the dashboard rework (D-016) grouped every other destination under a
+namespace (`/d/notifications`, `/d/pre-pledges`, `/d/profile`). "Ideas" alone
+became the one unnamespaced area of `/d`, and the two surfaces the studio still
+lacked — a per-idea workspace and a cross-idea feedback inbox — needed a home
+that does not collide with the public `/ideas` address in prose or in code.
+
+Decision: Every creator surface moves under `/d/creator`: the studio overview
+at `/d/creator`, the creator's own list at `/d/creator/ideas`, the create flow
+at `/d/creator/ideas/new`, one workspace per idea at `/d/creator/ideas/[id]`,
+feedback setup at `/d/creator/ideas/[id]/feedback`, per-idea insights at
+`/d/creator/ideas/[id]/insights`, the analytics home at `/d/creator/analytics`
+(was `/d/ideas/insights`), and the cross-idea feedback inbox at
+`/d/creator/feedback`. `next.config.ts` 308-redirects the old paths
+(`/d/ideas`, `/d/ideas/new`, `/d/ideas/insights` → `/d/creator/analytics`, and
+a `/d/ideas/:path*` catch-all, exact rules before the wildcard) so existing
+links and form drafts survive the move. The workspace resolves its `[id]`
+against the account's own idea list and 404s anything else, and the inbox is
+read-only: responses stay anonymous and reply state is absent until a reply
+surface ships with the feedback API.
+
+Alternatives: Keep the flat `/d/ideas*` paths (least churn, but the studio
+keeps growing under an unnamespaced address and the new workspace still needs
+a route); move only the new surfaces and leave the old ones in place (two
+addresses for the same pages, which D-014 already showed is the expensive
+option); drop redirects to keep `next.config.ts` clean (breaks every existing
+link, including saved form drafts that round-trip through `/d/ideas/new`).
+
+Consequences: A single `/d/creator` prefix now owns every creator surface, so
+sidebar, mobile bottom navigation, and in-page links highlight exclusively —
+one route family owns each tab. Public idea pages stay at `/ideas/[id]` per
+D-014's public half, so the workspace links out to the public page rather than
+rendering it. Only routes that resolve for a given idea render as links: a
+draft that was never published has no public page or feedback setup, and only
+the idea with an analytics dataset gets analytics. The redirect table is
+transitional and should be deleted once no reachable link uses the old paths.
+
+Revisit when: Auth lands and the workspace resolves a real account's idea list,
+or when creator surfaces outgrow the single-level `/d/creator` grouping (for
+example campaigns or audience tools arriving with their own data models).
 
 ## Decision template
 

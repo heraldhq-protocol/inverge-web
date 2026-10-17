@@ -41,7 +41,7 @@ export default function IdeaAnalyticsIndexPage() {
         <ul className="grid gap-4 md:grid-cols-2">
           <li>
             <Link
-              href={`/d/ideas/${idea.id}/insights`}
+              href={`/d/creator/ideas/${idea.id}/insights`}
               className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow] hover:border-brand/30 hover:shadow-lg hover:shadow-ink/[0.05] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               <div className="relative aspect-[16/9] bg-surface-muted">

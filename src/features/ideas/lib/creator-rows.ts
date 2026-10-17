@@ -1,3 +1,5 @@
+import type { PillTone } from "@/components/ui/pill";
+
 import type { MyIdea } from "@/features/ideas/types";
 
 /**
@@ -36,10 +38,10 @@ export function buildCreatorIdeaRows(
     return {
       ...idea,
       analyticsHref: analytics.has(idea.id)
-        ? `/d/ideas/${idea.id}/insights`
+        ? `/d/creator/ideas/${idea.id}/insights`
         : null,
       detailHref: detailed ? `/ideas/${idea.id}` : null,
-      feedbackHref: detailed ? `/d/ideas/${idea.id}/feedback` : null,
+      feedbackHref: detailed ? `/d/creator/ideas/${idea.id}/feedback` : null,
       feedbackResponses: feedbackCounts[idea.id] ?? 0,
     };
   });
@@ -53,6 +55,25 @@ export const ideaStatusLabel: Readonly<Record<MyIdea["status"], string>> = {
   "threshold-met": "Threshold met",
   validating: "Validating",
 };
+
+/** Badge tone for a lifecycle state, shared by every creator surface. */
+export function ideaStatusTone(status: MyIdea["status"]): PillTone {
+  if (status === "threshold-met") return "accent";
+  if (status === "draft" || status === "archived") return "neutral";
+  return "warning";
+}
+
+/** A readable update date; null when the timestamp cannot be parsed. */
+export function ideaUpdatedLabel(iso: string): string | null {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  }).format(date);
+}
 
 export function ideaVisibilityLabel(idea: MyIdea): string {
   if (idea.visibility === "public") return "Listed in discovery";

@@ -64,7 +64,7 @@ export function sidebarGroups(unreadCount: number): readonly NavGroup[] {
           icon: Analytics01Icon,
           label: "Creator Studio",
         },
-        { href: "/d/ideas", icon: Idea01Icon, label: "My ideas" },
+        { href: "/d/creator/ideas", icon: Idea01Icon, label: "My ideas" },
         { href: "/d/ideathons", icon: TrophyIcon, label: "Ideathons" },
         { href: "/guides", icon: BookOpen01Icon, label: "Guides & journal" },
       ],
@@ -172,7 +172,7 @@ export function DesktopNavigation({
 const mobileItems = [
   { href: "/d", icon: Home01Icon, label: "Home" },
   { href: "/d/discover", icon: Compass01Icon, label: "Discover" },
-  { href: "/d/ideas/new", icon: PlusSignIcon, label: "Create" },
+  { href: "/d/creator/ideas/new", icon: PlusSignIcon, label: "Create" },
   { href: "/d/creator", icon: Analytics01Icon, label: "Studio" },
   {
     href: "/d/notifications",

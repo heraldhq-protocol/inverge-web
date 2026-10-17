@@ -12,30 +12,12 @@ import { Pill } from "@/components/ui/pill";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import {
   ideaStatusLabel,
+  ideaStatusTone,
+  ideaUpdatedLabel,
   ideaVisibilityLabel,
   type CreatorIdeaRow,
 } from "@/features/ideas/lib/creator-rows";
 import { formatCompactMoney } from "@/lib/money";
-
-function statusTone(
-  status: CreatorIdeaRow["status"],
-): "accent" | "neutral" | "warning" {
-  if (status === "threshold-met") return "accent";
-  if (status === "draft") return "neutral";
-  if (status === "archived") return "neutral";
-  return "warning";
-}
-
-function updatedLabel(iso: string): string | null {
-  const date = new Date(iso);
-  if (Number.isNaN(date.getTime())) return null;
-
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  }).format(date);
-}
 
 function IdeaTitle({ row }: { row: CreatorIdeaRow }) {
   if (!row.detailHref) {
@@ -109,7 +91,7 @@ function RowActions({ row }: { row: CreatorIdeaRow }) {
 }
 
 export function CreatorIdeaCard({ row }: { row: CreatorIdeaRow }) {
-  const updated = updatedLabel(row.updatedAt);
+  const updated = ideaUpdatedLabel(row.updatedAt);
 
   return (
     <li className="rounded-2xl border border-border bg-surface p-3 transition-colors hover:border-brand/25 sm:p-4">
@@ -125,7 +107,7 @@ export function CreatorIdeaCard({ row }: { row: CreatorIdeaRow }) {
 
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <Pill tone={statusTone(row.status)} size="xs">
+            <Pill tone={ideaStatusTone(row.status)} size="xs">
               {ideaStatusLabel[row.status]}
             </Pill>
             <span className="text-xs text-muted">

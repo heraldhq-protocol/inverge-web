@@ -46,7 +46,7 @@ export function CreatorCallout({
       </p>
 
       <Link
-        href={isContinuing ? "/d/creator" : "/d/ideas/new"}
+        href={isContinuing ? "/d/creator" : "/d/creator/ideas/new"}
         className="mt-4 inline-flex min-h-11 items-center gap-2 rounded-xl bg-white px-4 text-sm font-semibold text-contrast transition-colors hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
       >
         {isContinuing ? "Open Creator Studio" : "Start an idea"}

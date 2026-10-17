@@ -13,11 +13,32 @@ const config: NextConfig = {
   async redirects() {
     return [
       { source: "/home", destination: "/d", permanent: true },
-      // Public idea surfaces live at `/ideas` and the dashboard's own at
-      // `/d/ideas` (D-014), so `/ideas` must never be redirected into the
-      // dashboard namespace — config redirects are matched before the
+      // Public idea surfaces live at `/ideas` (D-014) and the creator's own
+      // under `/d/creator/ideas` (D-017), so `/ideas` must never be redirected
+      // into the dashboard namespace - config redirects are matched before the
       // filesystem and would shadow the public pages.
       { source: "/discover", destination: "/ideas", permanent: true },
+      // Creator Studio owns every creator route (D-017). The old `/d/ideas`
+      // tree was live long enough to be bookmarked, so each path 308s to its
+      // new home: creation moves under `/d/creator/ideas`, the analytics home
+      // becomes `/d/creator/analytics`, and everything else follows the idea
+      // tree. Exact sources are listed before the catch-all.
+      {
+        source: "/d/ideas/new",
+        destination: "/d/creator/ideas/new",
+        permanent: true,
+      },
+      {
+        source: "/d/ideas/insights",
+        destination: "/d/creator/analytics",
+        permanent: true,
+      },
+      { source: "/d/ideas", destination: "/d/creator/ideas", permanent: true },
+      {
+        source: "/d/ideas/:path*",
+        destination: "/d/creator/ideas/:path*",
+        permanent: true,
+      },
       {
         source: "/pre-pledges/:path*",
         destination: "/d/pre-pledges/:path*",

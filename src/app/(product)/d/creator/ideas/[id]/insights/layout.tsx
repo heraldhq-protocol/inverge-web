@@ -42,7 +42,7 @@ export default async function AnalyticsLayout({
   const { id } = await params;
   if (id !== previewAnalytics.idea.id) notFound();
 
-  const basePath = `/d/ideas/${id}/insights`;
+  const basePath = `/d/creator/ideas/${id}/insights`;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">

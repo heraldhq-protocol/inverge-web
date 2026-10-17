@@ -1,10 +1,11 @@
 /**
  * Route → navigation-section matching for the product shell.
  *
- * Kept as a pure function because the rules are genuinely subtle: `/d/ideas`
- * owns creation and feedback configuration, `/d/ideas/[id]/insights` belongs to
- * Creator Studio, and the dashboard root prefixes every other dashboard route.
- * A prefix test alone would light up two items at once.
+ * Kept as a pure function because the rules are genuinely subtle: everything a
+ * creator owns lives under `/d/creator` (D-017), but the sidebar shows both
+ * "Creator Studio" and "My ideas", and per-idea analytics belong to the Studio
+ * highlight rather than to the list. A prefix test alone would light up two
+ * items at once.
  */
 export type NavigationHref = string;
 
@@ -16,19 +17,27 @@ export function isCurrentNavigationHref(
   // The dashboard root is a prefix of everything, so it matches exactly.
   if (href === "/d") return pathname === "/d";
 
-  // Creator Studio owns the analytics workspace, which is nested under the
-  // authoring route for URL stability (the API scopes insights by idea id).
-  if (href === "/d/creator") {
+  // My ideas owns creation, the per-idea workspace, and feedback setup - every
+  // idea-authored route except analytics.
+  if (href === "/d/creator/ideas") {
+    if (pathname.includes("/insights")) return false;
     return (
-      pathname === "/d/creator" ||
-      pathname.startsWith("/d/creator/") ||
-      pathname.includes("/insights")
+      pathname === "/d/creator/ideas" ||
+      pathname.startsWith("/d/creator/ideas/")
     );
   }
 
-  if (href === "/d/ideas") {
-    if (pathname.includes("/insights")) return false;
-    return pathname === "/d/ideas" || pathname.startsWith("/d/ideas/");
+  // Creator Studio owns its overview, the feedback inbox, the analytics home,
+  // and the per-idea analytics workspace, but not the idea list, which has its
+  // own sidebar item.
+  if (href === "/d/creator") {
+    if (pathname === "/d/creator" || pathname.includes("/insights")) {
+      return true;
+    }
+    return (
+      pathname.startsWith("/d/creator/") &&
+      !pathname.startsWith("/d/creator/ideas")
+    );
   }
 
   return pathname === href || pathname.startsWith(`${href}/`);
@@ -44,12 +53,12 @@ export function isCurrentNavigationHref(
 export const MOBILE_NAV_HREFS = [
   "/d",
   "/d/discover",
-  "/d/ideas/new",
+  "/d/creator/ideas/new",
   "/d/creator",
   "/d/notifications",
 ] as const satisfies readonly string[];
 
 /** Creation is a destination, but its section highlight belongs to "My ideas". */
 export function mobileSectionHref(href: string): string {
-  return href === "/d/ideas/new" ? "/d/ideas" : href;
+  return href === "/d/creator/ideas/new" ? "/d/creator/ideas" : href;
 }

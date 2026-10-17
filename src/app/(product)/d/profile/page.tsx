@@ -93,7 +93,7 @@ export default function ProfilePage() {
             {publicIdeas.map((idea) => (
               <li key={idea.id}>
                 <Link
-                  href={idea.detailHref ?? "/d/ideas"}
+                  href={idea.detailHref ?? "/d/creator/ideas"}
                   className="flex items-center gap-3 px-4 py-3 transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
                 >
                   <span className="min-w-0 flex-1">
@@ -127,7 +127,7 @@ export default function ProfilePage() {
               and follow it.
             </p>
             <Link
-              href="/d/ideas/new"
+              href="/d/creator/ideas/new"
               className="mt-3 inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Start an idea

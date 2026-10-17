@@ -30,7 +30,7 @@ export default async function DiscoverPage({ searchParams }: PageProps) {
     <IdeasDashboard
       data={ideasPreviewData}
       initialState={parseIdeaFilters(params)}
-      primaryAction={{ href: "/d/ideas/new", label: "Create an idea" }}
+      primaryAction={{ href: "/d/creator/ideas/new", label: "Create an idea" }}
       topics={previewTopics}
     />
   );

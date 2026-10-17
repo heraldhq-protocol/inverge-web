@@ -16,7 +16,7 @@ export const metadata: Metadata = {
 };
 
 /**
- * The creator's own list (D-014). `/d/ideas` is not discovery — public
+ * The creator's own list (D-014). `/d/creator/ideas` is not discovery — public
  * discovery lives at `/d/discover` and `/ideas`.
  */
 export default function MyIdeasPage() {
@@ -38,7 +38,7 @@ export default function MyIdeasPage() {
           </p>
         </div>
         <Link
-          href="/d/ideas/new"
+          href="/d/creator/ideas/new"
           className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <HugeiconsIcon
@@ -81,7 +81,7 @@ export default function MyIdeasPage() {
           rows={rows}
           emptyAction={
             <Link
-              href="/d/ideas/new"
+              href="/d/creator/ideas/new"
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Start an idea

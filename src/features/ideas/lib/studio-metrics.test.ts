@@ -110,7 +110,7 @@ describe("buildCreatorIdeaRows", () => {
     expect(row).toMatchObject({
       analyticsHref: null,
       detailHref: "/ideas/with-detail",
-      feedbackHref: "/d/ideas/with-detail/feedback",
+      feedbackHref: "/d/creator/ideas/with-detail/feedback",
       feedbackResponses: 4,
     });
   });
@@ -131,7 +131,7 @@ describe("buildCreatorIdeaRows", () => {
   it("links analytics only for ideas with a dataset", () => {
     const [row] = buildCreatorIdeaRows([myIdea("with-analytics")], options);
 
-    expect(row?.analyticsHref).toBe("/d/ideas/with-analytics/insights");
+    expect(row?.analyticsHref).toBe("/d/creator/ideas/with-analytics/insights");
   });
 });
 

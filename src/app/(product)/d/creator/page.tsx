@@ -50,7 +50,7 @@ export default function CreatorStudioPage() {
           </p>
         </div>
         <Link
-          href="/d/ideas/new"
+          href="/d/creator/ideas/new"
           className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <HugeiconsIcon
@@ -138,14 +138,14 @@ export default function CreatorStudioPage() {
         <SectionHeading
           title="Your ideas"
           description="Drafts stay private until you list them."
-          actionHref="/d/ideas"
+          actionHref="/d/creator/ideas"
           actionLabel="View all ideas"
         />
         <CreatorIdeaList
           rows={recent}
           emptyAction={
             <Link
-              href="/d/ideas/new"
+              href="/d/creator/ideas/new"
               className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Start an idea
@@ -180,7 +180,7 @@ export default function CreatorStudioPage() {
                   {feedbackIdea.title}. Review the form and its questions.
                 </p>
                 <Link
-                  href={feedbackIdea.feedbackHref ?? "/d/ideas"}
+                  href={feedbackIdea.feedbackHref ?? "/d/creator/ideas"}
                   className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
                   Open feedback setup
@@ -210,7 +210,7 @@ export default function CreatorStudioPage() {
               idea. Basic analytics stay available without a paid plan.
             </p>
             <Link
-              href="/d/ideas/insights"
+              href="/d/creator/analytics"
               className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Open analytics

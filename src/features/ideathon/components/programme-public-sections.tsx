@@ -416,7 +416,7 @@ export function ProgrammePublicSections({
       >
         <div className="flex flex-wrap gap-2">
           <Link
-            href="/d/ideas/new"
+            href="/d/creator/ideas/new"
             className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Start an idea

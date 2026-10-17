@@ -66,7 +66,7 @@ export function ProductSidebar({
       </div>
 
       <Link
-        href="/d/ideas/new"
+        href="/d/creator/ideas/new"
         aria-label={collapsed ? "Start an idea" : undefined}
         title={collapsed ? "Start an idea" : undefined}
         className={`mt-6 inline-flex min-h-11 items-center justify-center overflow-hidden rounded-xl bg-brand text-sm font-semibold text-white transition-[padding,gap,background-color] duration-200 hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand ${

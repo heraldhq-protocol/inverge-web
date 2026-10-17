@@ -248,7 +248,7 @@ export default function AdminPaymentsPage() {
               exportable reports. Basic analytics remain free.
             </p>
             <Link
-              href="/d/ideas/skill-circle/insights"
+              href="/d/creator/ideas/skill-circle/insights"
               className="mt-2 inline-flex text-[0.625rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
             >
               View creator analytics

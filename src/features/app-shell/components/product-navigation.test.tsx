@@ -47,7 +47,7 @@ describe("DesktopNavigation", () => {
   });
 
   it("keeps My ideas current across the authoring routes", () => {
-    route.pathname = "/d/ideas/skill-circle/feedback";
+    route.pathname = "/d/creator/ideas/skill-circle/feedback";
 
     render(<DesktopNavigation collapsed={false} unreadCount={0} />);
 
@@ -61,7 +61,7 @@ describe("DesktopNavigation", () => {
   });
 
   it("gives the analytics workspace to Creator Studio", () => {
-    route.pathname = "/d/ideas/skill-circle/insights/supporters";
+    route.pathname = "/d/creator/ideas/skill-circle/insights/supporters";
 
     render(<DesktopNavigation collapsed={false} unreadCount={0} />);
 
@@ -115,7 +115,7 @@ describe("MobileNavigation", () => {
   });
 
   it("keeps My ideas highlighted while creating an idea", () => {
-    route.pathname = "/d/ideas/new";
+    route.pathname = "/d/creator/ideas/new";
 
     render(<MobileNavigation unreadCount={0} />);
 
