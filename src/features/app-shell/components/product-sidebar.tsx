@@ -1,4 +1,10 @@
-import { ChevronDown, PanelLeftClose, PanelLeftOpen, Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ChevronDownIcon,
+  PanelLeftCloseIcon,
+  PanelLeftOpenIcon,
+  PlusSignIcon,
+} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/shared/brand-mark";
@@ -36,14 +42,16 @@ export function ProductSidebar({
           className="grid size-11 shrink-0 place-items-center rounded-xl text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           {collapsed ? (
-            <PanelLeftOpen
-              className="size-5"
+            <HugeiconsIcon
+              icon={PanelLeftOpenIcon}
+              size={20}
               strokeWidth={1.8}
               aria-hidden="true"
             />
           ) : (
-            <PanelLeftClose
-              className="size-5"
+            <HugeiconsIcon
+              icon={PanelLeftCloseIcon}
+              size={20}
               strokeWidth={1.8}
               aria-hidden="true"
             />
@@ -56,14 +64,20 @@ export function ProductSidebar({
       </div>
 
       <Link
-        href="/d/ideas"
+        href="/d/ideas/new"
         aria-label={collapsed ? "Start an idea" : undefined}
         title={collapsed ? "Start an idea" : undefined}
         className={`mt-8 inline-flex min-h-12 items-center justify-center overflow-hidden rounded-xl border border-brand bg-transparent text-sm font-semibold text-white transition-[padding,gap,background-color,color] duration-300 hover:bg-brand hover:text-white focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand ${
           collapsed ? "gap-0 px-0" : "gap-2 px-4"
         }`}
       >
-        <Plus className="size-4.5 shrink-0" aria-hidden="true" />
+        <HugeiconsIcon
+          icon={PlusSignIcon}
+          size={18}
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className="shrink-0"
+        />
         <span
           className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
             collapsed
@@ -100,11 +114,14 @@ export function ProductSidebar({
             @amaraokonkwo
           </span>
         </span>
-        <ChevronDown
-          className={`size-4 shrink-0 text-white/52 transition-[width,opacity] duration-200 ${
+        <HugeiconsIcon
+          icon={ChevronDownIcon}
+          size={16}
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className={`shrink-0 text-white/52 transition-[width,opacity] duration-200 ${
             collapsed ? "w-0 opacity-0" : "opacity-100"
           }`}
-          aria-hidden="true"
         />
       </Link>
     </aside>

@@ -1,4 +1,5 @@
-import { Bell } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Notification01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { BrandMark } from "@/components/shared/brand-mark";
@@ -14,7 +15,12 @@ export function ProductHeader() {
             aria-label="Notifications"
             className="grid size-11 place-items-center rounded-full text-ink transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand"
           >
-            <Bell className="size-5" strokeWidth={1.8} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Notification01Icon}
+              size={20}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
           </Link>
           <Link
             href="/d/profile"

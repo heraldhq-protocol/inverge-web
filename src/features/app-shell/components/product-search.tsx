@@ -1,4 +1,5 @@
-import { Search } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import { Search01Icon } from "@hugeicons/core-free-icons";
 
 type HiddenField = {
   name: string;
@@ -27,9 +28,12 @@ export function ProductSearch({
         <input key={name} type="hidden" name={name} value={value} />
       ))}
       <div className="relative min-w-0 flex-1">
-        <Search
-          className="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-muted"
+        <HugeiconsIcon
+          icon={Search01Icon}
+          size={20}
+          strokeWidth={1.8}
           aria-hidden="true"
+          className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-muted"
         />
         <input
           id="product-search"
@@ -45,7 +49,13 @@ export function ProductSearch({
         className="inline-flex min-h-12 items-center justify-center rounded-xl bg-contrast px-5 text-sm font-semibold text-white transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         <span className="hidden sm:inline">Search</span>
-        <Search className="size-5 sm:hidden" aria-hidden="true" />
+        <HugeiconsIcon
+          icon={Search01Icon}
+          size={20}
+          strokeWidth={1.8}
+          aria-hidden="true"
+          className="sm:hidden"
+        />
       </button>
     </form>
   );

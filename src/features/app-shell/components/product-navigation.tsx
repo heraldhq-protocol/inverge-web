@@ -1,28 +1,37 @@
 "use client";
 
+import { HugeiconsIcon } from "@hugeicons/react";
+import type { IconSvgElement } from "@hugeicons/react";
 import {
-  Bell,
-  Bookmark,
-  Home,
-  Lightbulb,
-  Settings,
-  UserRound,
-} from "lucide-react";
+  Analytics01Icon,
+  Bookmark01Icon,
+  Home01Icon,
+  Idea01Icon,
+  Notification01Icon,
+  Settings01Icon,
+  UserIcon,
+} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const DASHBOARD_HOME = "/d";
+const ANALYTICS_INDEX = "/d/ideas/insights";
 
-const primaryItems = [
-  { href: DASHBOARD_HOME, label: "Home", icon: Home },
-  { href: "/d/ideas", label: "Ideas", icon: Lightbulb },
-  { href: "/d/pre-pledges", label: "Pre-pledges", icon: Bookmark },
-  { href: "/d/notifications", label: "Notifications", icon: Bell },
-] as const;
+const primaryItems: readonly {
+  href: string;
+  label: string;
+  icon: IconSvgElement;
+}[] = [
+  { href: DASHBOARD_HOME, label: "Home", icon: Home01Icon },
+  { href: "/d/ideas", label: "Ideas", icon: Idea01Icon },
+  { href: ANALYTICS_INDEX, label: "Analytics", icon: Analytics01Icon },
+  { href: "/d/pre-pledges", label: "Pre-pledges", icon: Bookmark01Icon },
+  { href: "/d/notifications", label: "Notifications", icon: Notification01Icon },
+];
 
 const mobileItems = [
   ...primaryItems,
-  { href: "/d/profile", label: "Profile", icon: UserRound },
+  { href: "/d/profile", label: "Profile", icon: UserIcon },
 ] as const;
 
 function isCurrentPath(pathname: string, href: string) {
@@ -30,7 +39,17 @@ function isCurrentPath(pathname: string, href: string) {
 
   // The dashboard root prefixes every other product route, so it must match
   // exactly; nested sections stay highlighted across their child routes.
-  return href !== DASHBOARD_HOME && pathname.startsWith(`${href}/`);
+  if (href === DASHBOARD_HOME) return false;
+  if (href === "/d/ideas") {
+    return (
+      pathname.startsWith("/d/ideas/") &&
+      !pathname.includes("/insights")
+    );
+  }
+  if (href === ANALYTICS_INDEX) {
+    return pathname === ANALYTICS_INDEX || /\/insights(\/|$)/.test(pathname);
+  }
+  return pathname.startsWith(`${href}/`);
 }
 
 export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
@@ -38,7 +57,7 @@ export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
 
   return (
     <nav aria-label="Product navigation" className="space-y-1.5">
-      {primaryItems.map(({ href, label, icon: Icon }) => {
+      {primaryItems.map(({ href, label, icon }) => {
         const isCurrent = isCurrentPath(pathname, href);
 
         return (
@@ -55,10 +74,12 @@ export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
                 : "text-white/74 hover:bg-white/[0.06] hover:text-white"
             }`}
           >
-            <Icon
-              className="size-5 shrink-0"
+            <HugeiconsIcon
+              icon={icon}
+              size={20}
               strokeWidth={1.8}
               aria-hidden="true"
+              className="shrink-0"
             />
             <span
               className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
@@ -85,10 +106,12 @@ export function DesktopNavigation({ collapsed }: { collapsed: boolean }) {
             : "text-white/74 hover:bg-white/[0.06] hover:text-white"
         }`}
       >
-        <Settings
-          className="size-5 shrink-0"
+        <HugeiconsIcon
+          icon={Settings01Icon}
+          size={20}
           strokeWidth={1.8}
           aria-hidden="true"
+          className="shrink-0"
         />
         <span
           className={`overflow-hidden whitespace-nowrap transition-[max-width,opacity,transform] duration-200 ${
@@ -112,8 +135,8 @@ export function MobileNavigation() {
       aria-label="Mobile product navigation"
       className="fixed inset-x-0 bottom-0 z-40 border-t border-border bg-surface/95 px-1 pb-[max(0.5rem,env(safe-area-inset-bottom))] pt-2 shadow-[0_-10px_30px_rgba(13,29,21,0.08)] backdrop-blur lg:hidden"
     >
-      <ul className="mx-auto grid h-14 max-w-2xl grid-cols-5">
-        {mobileItems.map(({ href, label, icon: Icon }) => {
+      <ul className="mx-auto grid h-14 max-w-2xl grid-cols-6">
+        {mobileItems.map(({ href, label, icon }) => {
           const isCurrent = isCurrentPath(pathname, href);
 
           return (
@@ -121,15 +144,16 @@ export function MobileNavigation() {
               <Link
                 href={href}
                 aria-current={isCurrent ? "page" : undefined}
-                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-[0.625rem] font-semibold leading-none transition-colors focus-visible:outline-2 focus-visible:outline-brand sm:text-[0.6875rem] ${
+                className={`relative flex h-14 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-0.5 text-[0.5625rem] font-semibold leading-none transition-colors focus-visible:outline-2 focus-visible:outline-brand sm:text-[0.625rem] ${
                   isCurrent ? "text-brand-strong" : "text-muted"
                 }`}
               >
                 {isCurrent ? (
-                  <span className="absolute -top-2 h-0.5 w-9 rounded-full bg-brand" />
+                  <span className="absolute -top-2 h-0.5 w-8 rounded-full bg-brand" />
                 ) : null}
-                <Icon
-                  className="size-5 sm:size-[1.375rem]"
+                <HugeiconsIcon
+                  icon={icon}
+                  size={20}
                   strokeWidth={isCurrent ? 2.2 : 1.7}
                   aria-hidden="true"
                 />

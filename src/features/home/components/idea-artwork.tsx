@@ -38,10 +38,13 @@ const artwork = {
 export function IdeaArtwork({
   compact = false,
   featured = false,
+  fill = false,
   variant,
 }: {
   compact?: boolean;
   featured?: boolean;
+  /** Fill the parent's frame instead of imposing an aspect ratio. */
+  fill?: boolean;
   variant: IdeaArtworkVariant;
 }) {
   const { Icon, background, accent } = artwork[variant];
@@ -50,11 +53,13 @@ export function IdeaArtwork({
     <div
       aria-hidden="true"
       className={`relative isolate min-w-0 overflow-hidden bg-gradient-to-br ${background} ${
-        compact
-          ? "h-full min-h-28"
-          : featured
-            ? "aspect-[16/9] min-h-52 md:min-h-0 md:aspect-auto"
-            : "aspect-[16/9] min-h-40"
+        fill
+          ? "h-full w-full"
+          : compact
+            ? "h-full min-h-28"
+            : featured
+              ? "aspect-[16/9] min-h-52 md:min-h-0 md:aspect-auto"
+              : "aspect-[16/9] min-h-40"
       }`}
     >
       <span

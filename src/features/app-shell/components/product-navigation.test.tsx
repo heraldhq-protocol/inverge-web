@@ -73,6 +73,20 @@ describe("DesktopNavigation", () => {
       "aria-current",
     );
   });
+
+  it("marks analytics current inside an idea's analytics workspace", () => {
+    route.pathname = "/d/ideas/skill-circle/insights/supporters";
+
+    render(<DesktopNavigation collapsed={false} />);
+
+    expect(screen.getByRole("link", { name: "Analytics" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
+    expect(screen.getByRole("link", { name: "Ideas" })).not.toHaveAttribute(
+      "aria-current",
+    );
+  });
 });
 
 describe("MobileNavigation", () => {
