@@ -1,10 +1,11 @@
 "use client";
 
+import { Container } from "@/components/ui/container";
 import { StatePanel } from "@/components/ui/state-panel";
 
 export function IdeasError({ reset }: { reset: () => void }) {
   return (
-    <div className="mx-auto w-full max-w-[90rem] px-4 py-10 sm:px-6 lg:px-8 xl:px-10">
+    <Container className="py-10">
       <StatePanel
         variant="error"
         eyebrow="Ideas unavailable"
@@ -20,6 +21,6 @@ export function IdeasError({ reset }: { reset: () => void }) {
           </button>
         }
       />
-    </div>
+    </Container>
   );
 }
