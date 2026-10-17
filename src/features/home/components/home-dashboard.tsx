@@ -1,227 +1,244 @@
-import { ArrowRight, Plus } from "lucide-react";
+import { HugeiconsIcon } from "@hugeicons/react";
+import {
+  ArrowRight02Icon,
+  CheckmarkCircle02Icon,
+} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
-import { MetricStrip } from "@/components/ui/metric-strip";
-import { StatePanel } from "@/components/ui/state-panel";
-import { ProductSearch } from "@/features/app-shell/components/product-search";
-import { IdeaCard } from "@/features/home/components/idea-card";
-import { PrePledgeList } from "@/features/home/components/pre-pledge-list";
 import { SectionHeading } from "@/components/ui/section-heading";
-import {
-  discoveryCategories,
-  type DiscoveryCategory,
-} from "@/features/home/discovery-categories";
-import type { HomeDashboardData, IdeaSummary } from "@/features/home/types";
+import { StatePanel } from "@/components/ui/state-panel";
+import { ActivityPanel } from "@/features/home/components/activity-panel";
+import { CreatorCallout } from "@/features/home/components/creator-callout";
+import { FeaturedIdeaBanner } from "@/features/home/components/featured-idea-banner";
+import { IdeathonRailCard } from "@/features/home/components/ideathon-rail-card";
+import { QuickActionGrid } from "@/features/home/components/quick-actions";
+import { RecommendedIdeas } from "@/features/home/components/recommended-ideas";
+import type { DashboardModules } from "@/features/home/lib/dashboard-modules";
+import type {
+  ActivityItem,
+  CreatorSnapshot,
+  HomeIdeathon,
+  QuickAction,
+} from "@/features/home/types";
+import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";
+import type { DiscoveryIdea } from "@/features/ideas/types";
 
-function matchesQuery(idea: IdeaSummary, query: string) {
-  const normalizedQuery = query.trim().toLocaleLowerCase();
+const firstSteps = [
+  {
+    title: "Find an idea worth backing",
+    body: "Discover what African builders are working on, then support, follow, or save what matters to you.",
+  },
+  {
+    title: "Tell a creator what you think",
+    body: "Structured feedback is the strongest validation signal. Answer the questions a creator asked.",
+  },
+  {
+    title: "Grow your own idea",
+    body: "Publish an idea, invite feedback, and track how support builds. Funding stays optional.",
+  },
+] as const;
 
-  if (!normalizedQuery) return true;
-
-  return [idea.title, idea.category, idea.creator, idea.description].some(
-    (value) => value.toLocaleLowerCase().includes(normalizedQuery),
+function FirstSteps() {
+  return (
+    <section
+      aria-labelledby="first-steps-heading"
+      className="rounded-2xl border border-border bg-surface p-5 sm:p-6"
+    >
+      <h2
+        id="first-steps-heading"
+        className="text-base font-bold tracking-[-0.02em] text-ink"
+      >
+        New here? Start with one of these
+      </h2>
+      <ol className="mt-4 grid gap-4 sm:grid-cols-3">
+        {firstSteps.map((step, index) => (
+          <li key={step.title}>
+            <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-[0.12em] text-brand-strong">
+              <span className="grid size-6 place-items-center rounded-full bg-brand-soft text-[0.6875rem] tabular-nums">
+                {index + 1}
+              </span>
+              Step {index + 1}
+            </p>
+            <p className="mt-2 text-sm font-semibold text-ink">{step.title}</p>
+            <p className="mt-1 text-xs leading-5 text-muted">{step.body}</p>
+          </li>
+        ))}
+      </ol>
+    </section>
   );
 }
 
 export function HomeDashboard({
-  data,
-  query = "",
-  selectedCategory = "technology",
+  actions,
+  activity,
+  creatorSnapshot,
+  featured,
+  greeting,
+  ideathon,
+  isNewViewer,
+  modules,
+  recommended,
+  trending,
+  viewerName,
 }: {
-  data: HomeDashboardData;
-  query?: string;
-  selectedCategory?: DiscoveryCategory;
+  actions: readonly QuickAction[];
+  activity: readonly ActivityItem[];
+  creatorSnapshot: CreatorSnapshot;
+  featured: DiscoveryIdea | undefined;
+  greeting: string;
+  ideathon: HomeIdeathon | null;
+  isNewViewer: boolean;
+  modules: DashboardModules;
+  recommended: readonly DiscoveryIdea[];
+  trending: readonly DiscoveryIdea[];
+  viewerName: string | null;
 }) {
-  const searchResults = [...data.featuredIdeas, ...data.discoverIdeas].filter(
-    (idea) => matchesQuery(idea, query),
-  );
-  const hasSearch = query.trim().length > 0;
-  const leadIdea = data.featuredIdeas[0];
-  const visibleDiscoverIdeas = data.discoverIdeas.filter(
-    (idea) => idea.discoveryCategory === selectedCategory,
-  );
+  const salutation = viewerName?.trim()
+    ? `${greeting}, ${viewerName.trim().split(/\s+/)[0]}.`
+    : `${greeting}.`;
 
   return (
-    <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
-      <ProductSearch action="/d" defaultValue={query} />
-
-      <header className="mt-8 border-b border-border pb-7 sm:mt-10">
-        <div className="flex flex-wrap items-start justify-between gap-5">
-          <div>
-            <div className="flex items-center gap-3">
-              <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-strong">
+    <div className="mx-auto w-full max-w-[92rem] px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
+      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_18rem] xl:gap-7">
+        <div className="min-w-0 space-y-5 sm:space-y-6">
+          <header>
+            <div className="flex flex-wrap items-center gap-2.5">
+              <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
                 Home
               </p>
               <span
-                className="text-xs text-muted"
-                title="Dashboard figures are sample data"
+                className="rounded-full border border-border bg-surface px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-muted"
+                title="This dashboard renders preview content until account sessions are connected"
               >
-                Sample data
+                Preview data
               </span>
             </div>
-            <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
-              Good to see you, {data.user.firstName}.
+            <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
+              {salutation}
             </h1>
-            <p className="mt-1.5 text-sm leading-6 text-muted sm:text-base">
-              Discover what&apos;s gaining momentum and pick up where you left
-              off.
+            <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted sm:text-[0.9375rem]">
+              Great ideas grow with great people. Explore, support, and be part
+              of what&apos;s next.
             </p>
-          </div>
-          <Link
-            href="/d/ideas"
-            className="inline-flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-brand/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand lg:hidden"
-          >
-            <Plus className="size-4 text-brand-strong" aria-hidden="true" />
-            Start an idea
-          </Link>
-        </div>
+          </header>
 
-        <MetricStrip
-          className="mt-7 max-w-2xl"
-          items={[
-            { value: data.stats.ideasSupported, label: "Ideas supported" },
-            {
-              value: data.stats.activePrePledges,
-              label: "Active pre-pledges",
-            },
-            {
-              value: data.stats.feedbackResponses,
-              label: "Feedback responses",
-            },
-          ]}
-        />
-      </header>
-
-      {hasSearch ? (
-        <section className="py-7 sm:py-9">
-          <SectionHeading
-            title={`Results for “${query.trim()}”`}
-            description={`${searchResults.length} matching ${searchResults.length === 1 ? "idea" : "ideas"}`}
-            actionHref="/d/ideas"
-            actionLabel="Browse all ideas"
-          />
-          {searchResults.length > 0 ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {searchResults.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} />
-              ))}
-            </div>
+          {featured ? (
+            <FeaturedIdeaBanner idea={featured} />
           ) : (
             <StatePanel
               variant="empty"
-              eyebrow="No matches"
-              title="Try a broader search"
-              description="Search by an idea name, creator, category, or the problem being solved."
+              eyebrow="Nothing featured yet"
+              title="New ideas will appear here"
+              description="Once creators publish ideas for validation, a featured idea will be selected from the public catalogue."
               action={
                 <Link
-                  href="/d"
+                  href="/d/discover"
                   className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
-                  Clear search
+                  Browse ideas
                 </Link>
               }
             />
           )}
-        </section>
-      ) : (
-        <>
-          <section className="py-7 sm:py-8">
+
+          <QuickActionGrid actions={actions} />
+
+          {isNewViewer ? <FirstSteps /> : null}
+
+          <section aria-labelledby="momentum-heading">
             <SectionHeading
               title="Ideas gaining momentum"
-              description="Early ideas attracting meaningful support from the community."
-              actionHref="/d/ideas"
+              description="Public ideas attracting support and feedback from the community."
+              actionHref="/d/discover"
               actionLabel="Explore all ideas"
             />
 
-            {leadIdea ? (
-              <div className="grid items-start gap-4 xl:grid-cols-2">
-                <div className="min-w-0">
-                  <IdeaCard idea={leadIdea} variant="featured" />
-                </div>
-                <div className="-mx-4 flex snap-x items-stretch gap-4 overflow-x-auto px-4 pb-2 sm:-mx-6 sm:px-6 xl:mx-0 xl:grid xl:grid-cols-2 xl:overflow-visible xl:px-0 xl:pb-0">
-                  {data.featuredIdeas.slice(1).map((idea) => (
-                    <div
-                      key={idea.id}
-                      className="w-[82vw] max-w-sm shrink-0 snap-start xl:h-full xl:w-auto xl:max-w-none"
-                    >
-                      <IdeaCard idea={idea} />
-                    </div>
+            {trending.length > 0 ? (
+              <>
+                <ul className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                  {trending.map((idea) => (
+                    <li key={idea.id} className="grid">
+                      <IdeaDiscoveryCard idea={idea} />
+                    </li>
                   ))}
-                </div>
-              </div>
+                </ul>
+                <Link
+                  href="/d/discover"
+                  className="mt-4 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand-strong sm:hidden"
+                >
+                  Explore all ideas
+                  <HugeiconsIcon
+                    icon={ArrowRight02Icon}
+                    size={16}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                </Link>
+              </>
             ) : (
               <StatePanel
                 variant="empty"
-                eyebrow="Nothing featured yet"
-                title="New ideas will appear here"
-                description="Once creators publish ideas for validation, the strongest early signals will be highlighted here."
-              />
-            )}
-          </section>
-
-          <section className="pb-7 pt-1 sm:pb-8">
-            <SectionHeading
-              title="Your pre-pledges"
-              description="Amounts you may back if these ideas become campaigns. No money has moved yet."
-              actionHref="/d/pre-pledges"
-              actionLabel="View all"
-            />
-            {data.prePledges.length > 0 ? (
-              <PrePledgeList items={data.prePledges} />
-            ) : (
-              <StatePanel
-                variant="empty"
-                eyebrow="No pre-pledges yet"
-                title="Save your backing intent for later"
-                description="Explore ideas and record what you may contribute if a validated idea becomes a campaign. No funds move at this stage."
-              />
-            )}
-          </section>
-
-          <section className="border-t border-border pt-7 sm:pt-8">
-            <SectionHeading
-              title="Continue discovering"
-              actionHref="/d/ideas"
-              actionLabel="Browse all categories"
-            />
-            <ul
-              aria-label="Popular idea categories"
-              className="-mx-4 mb-5 flex gap-5 overflow-x-auto border-b border-border px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0"
-            >
-              {discoveryCategories.map((category) => (
-                <li key={category.value} className="shrink-0">
+                eyebrow="No public ideas yet"
+                title="Be the first to publish"
+                description="Published ideas appear here once they are listed for discovery."
+                action={
                   <Link
-                    href={`/d?category=${category.value}`}
-                    scroll={false}
-                    aria-current={
-                      category.value === selectedCategory ? "page" : undefined
-                    }
-                    className={`block min-h-11 border-b-2 px-1 pb-3 pt-2 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-                      category.value === selectedCategory
-                        ? "border-brand font-semibold text-brand-strong"
-                        : "border-transparent text-muted hover:text-ink"
-                    }`}
+                    href="/d/ideas/new"
+                    className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   >
-                    {category.label}
+                    Start an idea
                   </Link>
-                </li>
-              ))}
-            </ul>
-            <div className="grid gap-4 md:grid-cols-2">
-              {visibleDiscoverIdeas.map((idea) => (
-                <IdeaCard key={idea.id} idea={idea} variant="compact" />
-              ))}
-            </div>
-            <Link
-              href="/d/ideas"
-              className="mt-5 inline-flex min-h-11 items-center gap-1.5 text-sm font-semibold text-brand-strong sm:hidden"
-            >
-              Browse all ideas
-              <ArrowRight className="size-4" aria-hidden="true" />
-            </Link>
+                }
+              />
+            )}
           </section>
-        </>
-      )}
+        </div>
+
+        <aside
+          aria-label="Your activity and suggestions"
+          className="min-w-0 space-y-4 xl:sticky xl:top-20 xl:self-start"
+        >
+          <ActivityPanel items={activity} />
+
+          {modules.creatorCallout !== "hidden" ? (
+            <CreatorCallout
+              mode={modules.creatorCallout}
+              snapshot={creatorSnapshot}
+            />
+          ) : null}
+
+          <RecommendedIdeas ideas={recommended} />
+
+          {ideathon && modules.ideathons !== "hidden" ? (
+            <IdeathonRailCard ideathon={ideathon} />
+          ) : null}
+
+          {modules.organizerEntry ? (
+            <section className="rounded-2xl border border-border bg-surface p-4">
+              <p className="flex items-center gap-2 text-xs font-semibold text-ink">
+                <HugeiconsIcon
+                  icon={CheckmarkCircle02Icon}
+                  size={16}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                  className="text-brand-strong"
+                />
+                Programme administration
+              </p>
+              <p className="mt-1 text-xs leading-5 text-muted">
+                Your account can run ideathons. Organiser tools are kept out of
+                the community dashboard.
+              </p>
+              <Link
+                href="/admin/programmes"
+                className="mt-2 inline-flex min-h-10 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                Open programme workspace
+              </Link>
+            </section>
+          ) : null}
+        </aside>
+      </div>
     </div>
   );
 }

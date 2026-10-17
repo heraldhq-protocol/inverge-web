@@ -1,4 +1,4 @@
-import type { HomeDashboardData, IdeaSummary } from "@/features/home/types";
+import type { IdeaSummary } from "@/features/home/types";
 
 export const previewIdeas = {
   campusKonekt: {
@@ -212,48 +212,3 @@ export const previewIdeas = {
     validationPercent: 62,
   },
 } satisfies Record<string, IdeaSummary>;
-
-export const homePreviewData: HomeDashboardData = {
-  user: { firstName: "Amara" },
-  stats: {
-    ideasSupported: 4,
-    activePrePledges: 3,
-    feedbackResponses: 2,
-  },
-  featuredIdeas: [
-    previewIdeas.campusKonekt,
-    previewIdeas.sunGrid,
-    previewIdeas.farmLink,
-  ],
-  prePledges: [
-    {
-      idea: previewIdeas.campusKonekt,
-      intent: { atomic: "5000000", currency: "USD", decimals: 2 },
-      status: "waiting",
-    },
-    {
-      idea: previewIdeas.sunGrid,
-      intent: { atomic: "3000000", currency: "USD", decimals: 2 },
-      status: "gathering",
-    },
-    {
-      idea: previewIdeas.farmLink,
-      intent: { atomic: "2000000", currency: "USD", decimals: 2 },
-      status: "gathering",
-    },
-  ],
-  discoverIdeas: [
-    previewIdeas.studyMate,
-    previewIdeas.zippyCampus,
-    previewIdeas.cropCircle,
-    previewIdeas.agroRoute,
-    previewIdeas.ecoCharge,
-    previewIdeas.solarChill,
-    previewIdeas.naijaCraft,
-    previewIdeas.storyFoundry,
-    previewIdeas.skillCircle,
-    previewIdeas.careBridge,
-    previewIdeas.marketBasket,
-    previewIdeas.kitchenCollective,
-  ],
-};
