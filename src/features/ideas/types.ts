@@ -1,7 +1,12 @@
 import type { DiscoveryCategory } from "@/features/home/discovery-categories";
 import type { IdeaArtworkVariant, IdeaSummary } from "@/features/home/types";
+import type {
+  CommunityInvite,
+  CreatorFollow,
+  FeedbackForm,
+  IdeaGoals,
+} from "@/features/feedback/types";
 import type { MoneyAmount } from "@/lib/money";
-import type { TiptapDoc } from "@/lib/rich-text";
 
 export type IdeaRegion = "ghana" | "nigeria" | "senegal";
 
@@ -26,6 +31,10 @@ export type IdeaStatus =
 export type IdeaScope = "all" | "public";
 
 export type DiscoveryIdea = IdeaSummary & {
+  /** Editorial cover, or `null` for the deterministic artwork fallback. */
+  cover?: string | null;
+  /** FR-203: count of structured survey responses. Volume, never a score. */
+  feedbackResponses: number;
   location: string;
   promoted?: boolean;
   publishedOrder: number;
@@ -48,13 +57,83 @@ export type IdeaGateThresholds = {
   minSupporters: number;
 };
 
+/** FR-270: one dated roadmap step. Status is never inferred from a passed date. */
+export type RoadmapStep = {
+  /** ISO date (or period label). */
+  date: string;
+  description: string;
+};
+
+/** One line of the indicative ask breakdown; sums to `askAmount`. */
+export type AskBreakdownItem = {
+  label: string;
+  amount: MoneyAmount;
+};
+
 export type IdeaDetail = DiscoveryIdea & {
   /** Unsplash address, or `null` to fall back to the gradient cover. */
   cover: string | null;
   gate: IdeaGateThresholds;
   publishedAt: string;
-  story: TiptapDoc;
+  /** What the creator is asking for. Optional; older records may omit it. */
+  goals?: IdeaGoals | undefined;
+  /** The creator-configured feedback form. Absent or disabled means no form. */
+  feedbackForm?: FeedbackForm | undefined;
+  /** Optional post-feedback / on-page community invitation. */
+  community?: CommunityInvite | undefined;
+  /** Public follow projection for this creator. */
+  creatorFollow?: CreatorFollow | undefined;
+  /** Funding intent fields, shown only when the funding goal is enabled. */
+  fundingIntent?:
+    | {
+        estimatedAsk: MoneyAmount;
+        useOfFunds: readonly { label: string; amount: MoneyAmount }[];
+        nextStep: string;
+      }
+    | undefined;
+  /**
+   * FR-270 structured pitch. Field names mirror `CreateIdeaDto` in
+   * `inverge-api`, so swapping preview fixtures for the API payload is a
+   * rename-free change.
+   */
+  problem: string;
+  targetUser: string;
+  currentAlternative: string;
+  solution: string;
+  roadmapSteps: readonly RoadmapStep[];
+  askBreakdown: readonly AskBreakdownItem[];
+  askAmount: MoneyAmount;
+  /** P2 coaching context (risks & challenges); rendered only when present. */
+  risks?: string;
+  /** FR-203: average survey rating 0–5, shown as feedback, never as demand. */
+  feedbackScore: number;
+
+  // Quality and accountability signals. All optional so the fixture only
+  // declares what it actually holds, and every section renders conditionally.
+  /** KYC-verified creator identity; drives the verification badge. */
+  creatorVerified?: boolean;
+  /** Past work — the credibility block a supporter uses to judge the ask. */
+  creatorBio?: string;
+  /** Share of feedback the creator has responded to, 0–1. */
+  responseRate?: number;
+  /** "Changed after feedback" log, newest first. */
+  changes?: readonly { date: string; description: string }[];
+  /** A demo, mockup, or prototype link. */
+  demoUrl?: string;
+  /** How many supporters passed verification (never exceeds `supporters`). */
+  verifiedSupporters?: number;
+  /** Where supporters are, e.g. local vs. diaspora. */
+  supportersByRegion?: readonly { label: string; count: number }[];
 };
+
+/**
+ * The detail-only fields, split out from `IdeaDetail` so a fixture can keep the
+ * pitch next to the summaries it belongs to without repeating every field.
+ */
+export type IdeaDetailRecord = Omit<
+  IdeaDetail,
+  Exclude<keyof DiscoveryIdea, "cover">
+>;
 
 export type IdeaComment = {
   author: string;
@@ -74,7 +153,7 @@ export type IdeaUpdate = {
 
 export type SurveyQuestion = {
   id: string;
-  kind: "free-text" | "multi-choice" | "single-choice";
+  kind: "free-text" | "multi-choice" | "rating" | "single-choice";
   options: string[];
   prompt: string;
   required: boolean;
