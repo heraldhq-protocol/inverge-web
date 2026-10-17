@@ -14,12 +14,13 @@ describe("HomePage", () => {
       }),
     ).toBeInTheDocument();
 
-    expect(
-      screen.getByRole("link", { name: /Explore ideas/i }),
-    ).toHaveAttribute("href", "/ideas");
+    // The hero renders desktop and mobile variants of the primary action.
+    for (const link of screen.getAllByRole("link", { name: /Explore ideas/i })) {
+      expect(link).toHaveAttribute("href", "/ideas");
+    }
 
-    expect(
-      screen.getByRole("link", { name: /Start an idea/i }),
-    ).toHaveAttribute("href", "/sign-up");
+    for (const link of screen.getAllByRole("link", { name: /Start an idea/i })) {
+      expect(link).toHaveAttribute("href", "/sign-up");
+    }
   });
 });

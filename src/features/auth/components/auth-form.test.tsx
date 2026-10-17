@@ -20,99 +20,37 @@ afterEach(() => {
 });
 
 describe("AuthForm", () => {
-  it("keeps account creation lean and offers provider options", () => {
+  it("offers provider options while email sign-in waits on the Privy integration", () => {
     render(<AuthForm mode="sign-up" />);
 
-    expect(screen.queryByLabelText("First name")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Last name")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Email address")).toBeInTheDocument();
-    expect(screen.getByLabelText("Password")).toHaveAttribute(
-      "autocomplete",
-      "new-password",
-    );
-    expect(screen.getByLabelText("Confirm password")).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Continue with Privy" }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "Continue with Google" }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Sign in" })).toHaveAttribute(
-      "href",
-      "/sign-in",
-    );
+
+    // The email form stays out of the DOM until Privy is wired up, so no
+    // credential fields can be mistaken for a working sign-up path.
+    expect(screen.queryByLabelText("Email address")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Password")).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Create account" }),
+    ).not.toBeInTheDocument();
   });
 
-  it("reports mismatched passwords without submitting credentials", () => {
+  it("explains that a provider is not yet connected instead of failing silently", () => {
     render(<AuthForm mode="sign-up" />);
 
-    fireEvent.change(screen.getByLabelText("Password"), {
-      target: { value: "secure-pass" },
-    });
-    fireEvent.change(screen.getByLabelText("Confirm password"), {
-      target: { value: "different-pass" },
-    });
-
-    const form = screen
-      .getByRole("button", { name: "Create account" })
-      .closest("form");
-
-    if (!form) {
-      throw new Error("Expected the account creation button to be in a form.");
-    }
-
-    fireEvent.submit(form);
+    fireEvent.click(screen.getByRole("button", { name: "Continue with Privy" }));
 
     expect(routerPush).not.toHaveBeenCalled();
     expect(
       screen.getByText(
-        "Your passwords do not match. Please check them and try again.",
+        "Privy authentication will be connected in the integration step.",
       ),
     ).toBeInTheDocument();
   });
-
-  it("uses the reduced field set for sign in", () => {
-    render(<AuthForm mode="sign-in" />);
-
-    expect(screen.queryByLabelText("First name")).not.toBeInTheDocument();
-    expect(screen.queryByLabelText("Confirm password")).not.toBeInTheDocument();
-    expect(screen.getByLabelText("Password")).toHaveAttribute(
-      "autocomplete",
-      "current-password",
-    );
-    expect(
-      screen.getByRole("link", { name: "Create an account" }),
-    ).toHaveAttribute("href", "/sign-up");
-  });
-
-  it.each(["sign-up", "sign-in"] as const)(
-    "routes a valid %s email form to its verification flow",
-    (mode) => {
-      render(<AuthForm mode={mode} />);
-
-      if (mode === "sign-up") {
-        fireEvent.change(screen.getByLabelText("Password"), {
-          target: { value: "secure-pass" },
-        });
-        fireEvent.change(screen.getByLabelText("Confirm password"), {
-          target: { value: "secure-pass" },
-        });
-      }
-
-      const buttonName = mode === "sign-up" ? "Create account" : "Sign in";
-      const form = screen
-        .getByRole("button", { name: buttonName })
-        .closest("form");
-
-      if (!form) {
-        throw new Error(`Expected the ${mode} button to be in a form.`);
-      }
-
-      fireEvent.submit(form);
-
-      expect(routerPush).toHaveBeenCalledWith(`/verify-email?flow=${mode}`);
-    },
-  );
 });
 
 describe("EmailVerificationForm", () => {
