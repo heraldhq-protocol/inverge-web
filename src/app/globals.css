@@ -3,11 +3,16 @@
 :root {
   --inverge-brand: #1fa85c;
   --inverge-brand-strong: #116b3a;
+  --inverge-brand-soft: #eaf7ef;
+  --inverge-brand-tint: #f3faf6;
   --inverge-canvas: #fbf9f5;
   --inverge-surface: #ffffff;
+  --inverge-surface-muted: #f7f4ef;
   --inverge-ink: #1f1f1e;
+  --inverge-ink-soft: #4b4b48;
   --inverge-muted: #71716e;
   --inverge-border: #eae6e1;
+  --inverge-border-strong: #ded8cf;
   --inverge-contrast: #0d1d15;
   --inverge-danger: #d94a38;
   --inverge-warning: #d97706;
@@ -19,11 +24,16 @@
 @theme inline {
   --color-brand: var(--inverge-brand);
   --color-brand-strong: var(--inverge-brand-strong);
+  --color-brand-soft: var(--inverge-brand-soft);
+  --color-brand-tint: var(--inverge-brand-tint);
   --color-canvas: var(--inverge-canvas);
   --color-surface: var(--inverge-surface);
+  --color-surface-muted: var(--inverge-surface-muted);
   --color-ink: var(--inverge-ink);
+  --color-ink-soft: var(--inverge-ink-soft);
   --color-muted: var(--inverge-muted);
   --color-border: var(--inverge-border);
+  --color-border-strong: var(--inverge-border-strong);
   --color-contrast: var(--inverge-contrast);
   --color-danger: var(--inverge-danger);
   --color-warning: var(--inverge-warning);
@@ -32,6 +42,7 @@
   --color-success: var(--inverge-success);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+  --font-display: var(--font-outfit);
 }
 
 * {
@@ -60,6 +71,17 @@ html {
 
 body {
   margin: 0;
+}
+
+/*
+ * Headings carry the display face (D-015); body copy stays on Geist Sans.
+ * Applied at the element level so every surface shares one type hierarchy.
+ */
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-outfit);
 }
 
 input[type="search"]::-webkit-search-cancel-button,

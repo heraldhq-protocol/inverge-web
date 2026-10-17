@@ -23,6 +23,7 @@ choices.
 | D-012 | 2026-10-16 | Accepted | Move the shared USD money model from `features/home` to `src/lib/money` so every feature and `components/ui` can use it. |
 | D-013 | 2026-10-16 | Accepted | Add Tiptap 3.32.0 (`core`, `react`, `starter-kit`, `extension-image`, `extension-placeholder`) for the rich pitch editor and store pitches as ProseMirror JSON typed structurally by `src/lib/rich-text`. |
 | D-014 | 2026-10-16 | Accepted | Split idea routes: public discovery, detail, and topics stay at `/ideas`, `/ideas/[id]`, and `/topics/[slug]`, while creator surfaces live under the `/d` dashboard at `/d/ideas`; `/discover` permanently redirects to `/ideas`. |
+| D-015 | 2026-10-16 | Accepted | Add Outfit as the heading display face (via `next/font`) alongside Geist Sans for body copy and Geist Mono for figures, and unify every surface on one content measure. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -325,6 +326,41 @@ marketing shell rather than `AppShell`.
 
 Revisit when: Ideas gain an authenticated-only public review state, or the
 discovery surface needs the product shell's navigation.
+
+### D-015: Add a heading display face and unify the content measure
+
+- Date: 2026-10-16
+- Status: Accepted
+- Owner: Product and web engineering
+
+Context: The public discovery redesign needs a warmer, more editorial heading
+voice than Geist Sans provides, while body copy and numeric data stay legible in
+the existing faces. Separately, discovery rendered at a wider measure
+(`max-w-[90rem]`) than the marketing shell (`max-w-7xl`), so the sticky header
+and footer did not line up with the page body beneath them.
+
+Decision: Load **Outfit** through `next/font`, expose it as `--font-display`,
+and use it for headings (`h1`–`h4`). Keep Geist Sans for body copy and Geist
+Mono for transaction identifiers, timers, percentages, and financial values.
+Move the page measure into one shared, domain-neutral `Container` primitive
+(`max-w-7xl` with `px-5 sm:px-8 lg:px-12`), and have marketing, discovery, and
+the product shell consume it so header, body, and footer share one width.
+
+Alternatives: Keep Geist Sans for headings (no editorial contrast, but no new
+font); use a serif display face (reads as editorial commentary rather than a
+product surface); leave discovery at the wider measure (header never aligns with
+the body); duplicate the width in each feature (drifts, and both copies must be
+changed together).
+
+Consequences: Marketing and product share one heading hierarchy, and headings
+are set at the element level in `globals.css` so a new section inherits it. The
+marketing `Container` becomes a thin re-export of the shared primitive. Outfit
+adds one font request at build time; the glyphs are limited to the Latin subset.
+The measure narrows the discovery body from 1440px to 1280px, which stays inside
+the intended 1200–1320px range.
+
+Revisit when: The brand adopts a different heading voice, or the product needs a
+second measure (for example a full-bleed campaign page).
 
 ## Decision template
 

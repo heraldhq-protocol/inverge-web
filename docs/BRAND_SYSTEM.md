@@ -71,10 +71,11 @@ contrast surface. Exact values remain editable, but token roles are stable:
 
 ## Typography and numeric data
 
-- Use Geist Sans as the working UI and heading face and Geist Mono for transaction
-  identifiers, timers, percentages, and financial values.
+- Use **Outfit** for headings (`h1`–`h4`), **Geist Sans** for body copy and UI
+  text, and **Geist Mono** for transaction identifiers, timers, percentages, and
+  financial values.
 - Load fonts once through `next/font`; expose font variables through the token
-  layer.
+  layer (`--font-display`, `--font-sans`, `--font-mono`).
 - Use tabular numerals for changing or aligned numeric data.
 - Constrain long-form campaign stories and updates to roughly `65ch`–`75ch`.
 - Product hierarchy should come from type, spacing, and weight—not excessive
