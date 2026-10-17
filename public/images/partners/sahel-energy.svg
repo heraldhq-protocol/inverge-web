@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 96" role="img" aria-label="Sahel Energy">
+  <rect width="320" height="96" rx="14" fill="#0E3B2E"/>
+  <rect x="18" y="22" width="52" height="52" rx="12" fill="#2FA37A"/>
+  <path d="M44 34l12 26h-7l-2.4-5.6H41.4L39 60h-7l12-26zm0 14.4l-3.2-7.4-3.2 7.4z" fill="#0E3B2E"/>
+  <text x="86" y="49" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="24" font-weight="700" letter-spacing="1.5" fill="#FFFFFF">SAHEL</text>
+  <text x="86" y="70" font-family="system-ui, -apple-system, Segoe UI, sans-serif" font-size="13" font-weight="600" letter-spacing="4.5" fill="#8FD6BB">ENERGY</text>
+</svg>
