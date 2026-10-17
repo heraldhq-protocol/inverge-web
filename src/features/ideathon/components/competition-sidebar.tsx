@@ -226,7 +226,7 @@ export function CompetitionSidebar({
           Join the next ideathon and turn your idea into something real.
         </p>
         <Link
-          href="/d/ideas/new"
+          href="/d/creator/ideas/new"
           className="mt-3 inline-flex min-h-10 items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           Start an idea

@@ -383,7 +383,7 @@ export function IdeaBuilder() {
               Keep editing
             </Button>
             <Link
-              href="/d/ideas"
+              href="/d/creator/ideas"
               className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:border-brand/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Back to my ideas
@@ -399,7 +399,7 @@ export function IdeaBuilder() {
       <nav aria-label="Breadcrumb" className="text-xs text-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
-            <Link href="/d/ideas" className="font-medium hover:text-ink">
+            <Link href="/d/creator/ideas" className="font-medium hover:text-ink">
               My ideas
             </Link>
           </li>

@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 
 import { AppShell } from "@/features/app-shell/components/app-shell";
+import { getDashboardViewer } from "@/features/app-shell/server/viewer";
+import type { ShellData } from "@/features/app-shell/types";
+import { notificationsPreviewData } from "@/features/notifications/content/preview-data";
+import { shellNotifications } from "@/features/notifications/lib/shell-summary";
 import { PRIVATE_ROBOTS } from "@/lib/seo/metadata";
 
 /**
@@ -15,5 +19,14 @@ export default function ProductLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return <AppShell>{children}</AppShell>;
+  const viewer = getDashboardViewer();
+  const notifications = shellNotifications(notificationsPreviewData, 4);
+
+  const shell: ShellData = {
+    notifications: notifications.items,
+    unreadCount: notifications.unreadCount,
+    viewer,
+  };
+
+  return <AppShell data={shell}>{children}</AppShell>;
 }

@@ -1,9 +1,8 @@
 import type { MyIdea } from "@/features/ideas/types";
 
-const COVER_STUDIO =
-  "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&h=800&fit=crop";
-const COVER_TEAM =
-  "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=900&fit=crop";
+/** Local covers; `null` falls back to the deterministic artwork. */
+const COVER_STUDIO = "/images/ideas/studio.jpg";
+const COVER_TEAM = "/images/ideas/team.jpg";
 
 /**
  * What the signed-in preview account (Amara) has created.

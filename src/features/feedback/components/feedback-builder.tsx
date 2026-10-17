@@ -637,7 +637,7 @@ export function FeedbackBuilder({
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
             <Link
-              href="/d/ideas"
+              href="/d/creator/ideas"
               className="rounded font-medium hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               My ideas
@@ -914,7 +914,7 @@ export function FeedbackBuilder({
 
       <div className="sticky bottom-0 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur">
         <Link
-          href="/d/ideas"
+          href="/d/creator/ideas"
           className="inline-flex min-h-10 items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           <HugeiconsIcon

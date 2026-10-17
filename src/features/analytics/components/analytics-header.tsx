@@ -61,7 +61,7 @@ export function AnalyticsHeader({ idea }: { idea: IdeaDetail }) {
           <li aria-hidden="true">/</li>
           <li>
             <Link
-              href="/d/ideas"
+              href="/d/creator/ideas"
               className="rounded font-medium hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               My ideas
@@ -106,7 +106,7 @@ export function AnalyticsHeader({ idea }: { idea: IdeaDetail }) {
             />
           </Link>
           <Link
-            href={`/d/ideas/${idea.id}/feedback`}
+            href={`/d/creator/ideas/${idea.id}/feedback`}
             className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold text-brand-strong transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Feedback settings

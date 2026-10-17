@@ -1,42 +1,32 @@
 /**
  * Editorial covers for preview ideas.
  *
+ * Vendored locally on purpose. These fixtures used to hotlink Unsplash photo
+ * URLs; two of those ids had already rotted to 404 and every card depended on a
+ * third party at render time. The files under `public/images/ideas/` keep
+ * discovery deterministic and offline-capable, and `public/images/README.md`
+ * records their provenance.
+ *
  * Preview-only. The API's `coverImageUrl` field (web UI gap item 3) is not
  * populated yet, so discovery and detail fall back to the deterministic
- * artwork component whenever an idea has no cover. Keeping the map in one file
- * means the same idea shows the same image on every surface.
+ * artwork component whenever an idea has no cover.
  */
 export const previewIdeaCovers: Readonly<Record<string, string>> = {
-  "campus-konekt":
-    "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=800&fit=crop&q=80",
-  "sungrid-community-power":
-    "https://images.unsplash.com/photo-1509391366360-2e959784a276?w=1200&h=800&fit=crop&q=80",
-  "farmlink-coldbox":
-    "https://images.unsplash.com/photo-1625246333195-78d9c38ad449?w=1200&h=800&fit=crop&q=80",
-  "studymate-ng":
-    "https://images.unsplash.com/photo-1523240795612-9a054b0db644?w=1200&h=800&fit=crop&q=80",
-  "zippy-campus":
-    "https://images.unsplash.com/photo-1526367790999-0150786686a2?w=1200&h=800&fit=crop&q=80",
-  "crop-circle":
-    "https://images.unsplash.com/photo-1500937386664-56d1dfef3854?w=1200&h=800&fit=crop&q=80",
-  agroroute:
-    "https://images.unsplash.com/photo-1592982537447-7440770cbfc9?w=1200&h=800&fit=crop&q=80",
-  "ecocharge-kiosks":
-    "https://images.unsplash.com/photo-1473341304170-971dccb5ac1e?w=1200&h=800&fit=crop&q=80",
-  solarchill:
-    "https://images.unsplash.com/photo-1508514177221-188b1cf16e9d?w=1200&h=800&fit=crop&q=80",
-  "naijacraft-collective":
-    "https://images.unsplash.com/photo-1590736969955-71cc94901144?w=1200&h=800&fit=crop&q=80",
-  "story-foundry":
-    "https://images.unsplash.com/photo-1492724441997-5dc865305da7?w=1200&h=800&fit=crop&q=80",
-  "skill-circle":
-    "https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200&h=800&fit=crop&q=80",
-  "care-bridge":
-    "https://images.unsplash.com/photo-1573497019940-1c28c88b4f3e?w=1200&h=800&fit=crop&q=80",
-  "market-basket":
-    "https://images.unsplash.com/photo-1542838132-92c53300491e?w=1200&h=800&fit=crop&q=80",
-  "kitchen-collective":
-    "https://images.unsplash.com/photo-1556910103-1c02745aae4d?w=1200&h=800&fit=crop&q=80",
+  "campus-konekt": "/images/ideas/campus-konekt.jpg",
+  "sungrid-community-power": "/images/ideas/sungrid-community-power.jpg",
+  "farmlink-coldbox": "/images/ideas/farmlink-coldbox.jpg",
+  "studymate-ng": "/images/ideas/studymate-ng.jpg",
+  "zippy-campus": "/images/ideas/zippy-campus.jpg",
+  "crop-circle": "/images/ideas/crop-circle.jpg",
+  agroroute: "/images/ideas/agroroute.jpg",
+  "ecocharge-kiosks": "/images/ideas/ecocharge-kiosks.jpg",
+  solarchill: "/images/ideas/solarchill.jpg",
+  "naijacraft-collective": "/images/ideas/naijacraft-collective.jpg",
+  "story-foundry": "/images/ideas/story-foundry.jpg",
+  "skill-circle": "/images/ideas/skill-circle.jpg",
+  "care-bridge": "/images/ideas/care-bridge.jpg",
+  "market-basket": "/images/ideas/market-basket.jpg",
+  "kitchen-collective": "/images/ideas/kitchen-collective.jpg",
 };
 
 export function previewCoverFor(ideaId: string): string | null {

@@ -37,7 +37,11 @@ const fullQuestions: FeedbackQuestion[] = [
       { id: "solved", label: "Already solved elsewhere" },
     ],
   }),
-  question("trust", "Would you trust this service with your details?", "boolean"),
+  question(
+    "trust",
+    "Would you trust this service with your details?",
+    "boolean",
+  ),
   question(
     "confidence",
     "How confident are you that this would work in practice?",
@@ -70,15 +74,20 @@ const analyticsQuestions: FeedbackQuestion[] = [
   question("skill-promise", "How promising is this idea?", "rating", {
     required: true,
   }),
-  question("skill-interest", "Would you take part in a session?", "single-choice", {
-    required: true,
-    options: [
-      { id: "teach", label: "I would teach a skill" },
-      { id: "learn", label: "I would learn a skill" },
-      { id: "both", label: "Both" },
-      { id: "no", label: "Not for me" },
-    ],
-  }),
+  question(
+    "skill-interest",
+    "Would you take part in a session?",
+    "single-choice",
+    {
+      required: true,
+      options: [
+        { id: "teach", label: "I would teach a skill" },
+        { id: "learn", label: "I would learn a skill" },
+        { id: "both", label: "Both" },
+        { id: "no", label: "Not for me" },
+      ],
+    },
+  ),
   question("skill-blockers", "What concerns you?", "multi-choice", {
     options: [
       { id: "safety", label: "Safety and trust" },
@@ -132,7 +141,9 @@ export const previewFeedbackForms: Readonly<Record<string, FeedbackForm>> = {
   },
 };
 
-export function getPreviewFeedbackForm(ideaId: string): FeedbackForm | undefined {
+export function getPreviewFeedbackForm(
+  ideaId: string,
+): FeedbackForm | undefined {
   return previewFeedbackForms[ideaId];
 }
 
@@ -167,7 +178,9 @@ function invite(
   };
 }
 
-export const previewCommunityInvites: Readonly<Record<string, CommunityInvite>> = {
+export const previewCommunityInvites: Readonly<
+  Record<string, CommunityInvite>
+> = {
   "campus-konekt": invite(
     [
       {
@@ -225,15 +238,29 @@ export const previewCreatorFollows: Readonly<Record<string, string>> = {
 };
 
 /**
- * Sample submissions for analytics. They are attributed to the form version
- * they answered, so editing a form does not reinterpret an old answer.
+ * A recorded response, with the date it arrived.
+ *
+ * Respondents stay anonymous: nothing here identifies who submitted it,
+ * because feedback visibility is the respondent's choice, not the creator's.
+ */
+export type PreviewFeedbackSubmission = {
+  answers: FeedbackAnswers;
+  formVersion: number;
+  submittedAt: string;
+};
+
+/**
+ * Sample submissions for analytics and the creator's feedback inbox. They are
+ * attributed to the form version they answered, so editing a form does not
+ * reinterpret an old answer, and listed newest first.
  */
 export const previewFeedbackSubmissions: Readonly<
-  Record<string, readonly { answers: FeedbackAnswers; formVersion: number }[]>
+  Record<string, readonly PreviewFeedbackSubmission[]>
 > = {
   "skill-circle": [
     {
       formVersion: 3,
+      submittedAt: "2026-10-16T08:12:00.000Z",
       answers: {
         "skill-blockers": ["quality"],
         "skill-interest": "learn",
@@ -244,6 +271,7 @@ export const previewFeedbackSubmissions: Readonly<
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-15T18:40:00.000Z",
       answers: {
         "skill-blockers": ["safety", "time"],
         "skill-interest": "teach",
@@ -254,15 +282,18 @@ export const previewFeedbackSubmissions: Readonly<
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-13T12:05:00.000Z",
       answers: {
         "skill-blockers": ["none"],
         "skill-interest": "both",
-        "skill-notes": "This already happens informally. A board would make it easier to find.",
+        "skill-notes":
+          "This already happens informally. A board would make it easier to find.",
         "skill-promise": 4,
       },
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-11T09:31:00.000Z",
       answers: {
         "skill-blockers": ["time"],
         "skill-interest": "learn",
@@ -272,42 +303,51 @@ export const previewFeedbackSubmissions: Readonly<
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-08T16:22:00.000Z",
       answers: {
         "skill-blockers": ["none"],
         "skill-interest": "teach",
-        "skill-notes": "I can teach bike repair. A simple calendar would be enough.",
+        "skill-notes":
+          "I can teach bike repair. A simple calendar would be enough.",
         "skill-promise": 5,
       },
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-05T10:47:00.000Z",
       answers: {
         "skill-blockers": ["quality"],
         "skill-interest": "learn",
-        "skill-notes": "A short description of each teacher's experience would help.",
+        "skill-notes":
+          "A short description of each teacher's experience would help.",
         "skill-promise": 5,
       },
     },
     {
       formVersion: 3,
+      submittedAt: "2026-10-01T14:16:00.000Z",
       answers: {
         "skill-blockers": ["safety"],
         "skill-interest": "both",
-        "skill-notes": "Meeting in a public space for the first session would make me feel safer.",
+        "skill-notes":
+          "Meeting in a public space for the first session would make me feel safer.",
         "skill-promise": 3,
       },
     },
     {
       formVersion: 3,
+      submittedAt: "2026-09-27T08:55:00.000Z",
       answers: {
         "skill-blockers": ["time", "safety"],
         "skill-interest": "learn",
-        "skill-notes": "Weekend sessions, and a way to see who else is attending.",
+        "skill-notes":
+          "Weekend sessions, and a way to see who else is attending.",
         "skill-promise": 2,
       },
     },
     {
       formVersion: 3,
+      submittedAt: "2026-09-22T17:03:00.000Z",
       answers: {
         "skill-blockers": ["none"],
         "skill-interest": "teach",
@@ -319,6 +359,7 @@ export const previewFeedbackSubmissions: Readonly<
   "campus-konekt": [
     {
       formVersion: 2,
+      submittedAt: "2026-10-12T11:26:00.000Z",
       answers: {
         blockers: ["trust"],
         confidence: 4,
@@ -326,11 +367,13 @@ export const previewFeedbackSubmissions: Readonly<
         promise: 5,
         role: "Student",
         trust: true,
-        advice: "Verification is the part that matters. A dead listing is worse than none.",
+        advice:
+          "Verification is the part that matters. A dead listing is worse than none.",
       },
     },
     {
       formVersion: 2,
+      submittedAt: "2026-09-29T09:44:00.000Z",
       answers: {
         blockers: ["solved"],
         confidence: 3,

@@ -128,7 +128,7 @@ export function AnalyticsQuickActions({ ideaId }: { ideaId: string }) {
         </li>
         <li>
           <Link
-            href="/d/ideas"
+            href="/d/creator/ideas"
             className="flex min-h-10 items-center gap-2.5 rounded-lg px-1.5 text-sm text-ink-soft transition-colors hover:bg-canvas hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             <HugeiconsIcon

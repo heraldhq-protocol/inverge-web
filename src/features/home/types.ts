@@ -18,22 +18,45 @@ export type IdeaSummary = {
   validationPercent: number;
 };
 
-export type PrePledgeSummary = {
-  idea: IdeaSummary;
-  intent: MoneyAmount;
-  status: "gathering" | "waiting";
+/**
+ * One row in the home dashboard's activity rail.
+ *
+ * `kind` selects the icon and nothing else: the copy is authored upstream by the
+ * notification record, never paraphrased here, so the rail cannot claim an event
+ * the notification centre does not hold.
+ */
+export type ActivityKind =
+  "campaign" | "feedback" | "follower" | "milestone" | "refund";
+
+export type ActivityItem = {
+  kind: ActivityKind;
+  description: string;
+  href: string;
+  id: string;
+  timeLabel: string;
+  title: string;
 };
 
-export type HomeDashboardData = {
-  discoverIdeas: IdeaSummary[];
-  featuredIdeas: IdeaSummary[];
-  prePledges: PrePledgeSummary[];
-  stats: {
-    activePrePledges: number;
-    feedbackResponses: number;
-    ideasSupported: number;
-  };
-  user: {
-    firstName: string;
-  };
+/** What the viewer owns, for the creator callout. Counts are never estimates. */
+export type CreatorSnapshot = {
+  draftCount: number;
+  feedbackReceived: number;
+  ownedIdeaCount: number;
+  publishedCount: number;
+};
+
+/** The active programme, reduced to what a card can honestly show. */
+export type HomeIdeathon = {
+  closesLabel: string | null;
+  href: string;
+  statusLabel: string;
+  theme: string;
+  title: string;
+};
+
+export type QuickAction = {
+  description: string;
+  href: string;
+  icon: "compass" | "feedback" | "idea" | "trophy";
+  label: string;
 };

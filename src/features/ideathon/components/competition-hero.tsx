@@ -34,8 +34,8 @@ function formatRange(startsAt: string, endsAt: string): string {
 }
 
 function ctaHref(programme: Programme, label: string): string {
-  if (label === "Submit your idea") return "/d/ideas/new";
-  if (label === "Register") return `/sign-up?next=${encodeURIComponent("/d/ideas/new")}`;
+  if (label === "Submit your idea") return "/d/creator/ideas/new";
+  if (label === "Register") return `/sign-up?next=${encodeURIComponent("/d/creator/ideas/new")}`;
   if (label === "See results" || label === "Results under review") return "#results";
   if (label === "View leaderboard") return "#standings";
   if (label === "View archive") return "/ideathon/past";
