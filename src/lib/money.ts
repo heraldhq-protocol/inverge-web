@@ -48,3 +48,26 @@ export function sumMoneyAmounts(amounts: readonly MoneyAmount[]): MoneyAmount {
     decimals: 2,
   };
 }
+
+/**
+ * Parse a user-entered whole-currency decimal ("500", "500.00") into integer
+ * atomic units, or `null` when it is not a positive amount. String/BigInt math
+ * only — never floating point.
+ */
+export function parseUsdAmount(input: string): string | null {
+  const trimmed = input.trim();
+  if (trimmed.includes("-")) return null;
+
+  const cleaned = trimmed.replace(/[^0-9.]/g, "");
+  if (!/^\d+(\.\d{1,2})?$/.test(cleaned)) return null;
+
+  const [whole = "0", frac = ""] = cleaned.split(".");
+  const atomic = BigInt(whole) * 100n + BigInt((frac + "00").slice(0, 2));
+  if (atomic <= 0n) return null;
+  return atomic.toString();
+}
+
+/** A whole-unit string for an edit input, e.g. "25000" for $250.00. */
+export function atomicToWholeInput(amount: MoneyAmount): string {
+  return (BigInt(amount.atomic) / 10n ** BigInt(amount.decimals)).toString();
+}
