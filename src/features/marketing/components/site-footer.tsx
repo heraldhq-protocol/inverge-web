@@ -10,6 +10,7 @@ const groups = [
     label: "Learn",
     links: [
       ["Explore ideas", "/ideas"],
+      ["Explore campaigns", "/campaigns"],
       ["Monthly ideathon", "/ideathon"],
       ["How it works", "/#how-it-works"],
       ["Guides", "/guides"],

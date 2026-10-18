@@ -1,4 +1,5 @@
 import Image from "next/image";
+import type { ReactNode } from "react";
 
 export type CoverRatio = "band" | "thumbnail";
 
@@ -24,6 +25,22 @@ function surfaceFor(seed: string): string {
     hash = (hash * 31 + seed.charCodeAt(i)) % 9973;
   }
   return SURFACES[hash % SURFACES.length] ?? DEFAULT_SURFACE;
+}
+
+/**
+ * The small caption chip laid over the artwork.
+ *
+ * Shared so a cover and the campaign media carousel place an identical chip, and
+ * so the class list has one owner. It is decorative, so it never intercepts a
+ * click meant for the artwork or a control beneath it, and `z-10` keeps it above
+ * both.
+ */
+export function CoverBadge({ children }: { children: ReactNode }) {
+  return (
+    <span className="pointer-events-none absolute left-3 top-3 z-10 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-white">
+      {children}
+    </span>
+  );
 }
 
 /**
@@ -72,9 +89,7 @@ export function Cover({
           }
           className="object-cover"
         />
-        <span className="absolute left-3 top-3 rounded-full bg-ink/60 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.15em] text-white">
-          {label}
-        </span>
+        <CoverBadge>{label}</CoverBadge>
       </div>
     );
   }

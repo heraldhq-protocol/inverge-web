@@ -28,15 +28,16 @@ export function isCurrentNavigationHref(
   }
 
   // Creator Studio owns its overview, the feedback inbox, the analytics home,
-  // and the per-idea analytics workspace, but not the idea list, which has its
-  // own sidebar item.
+  // and the per-idea analytics workspace, but not the idea list or the campaign
+  // list, which each carry their own sidebar item.
   if (href === "/d/creator") {
     if (pathname === "/d/creator" || pathname.includes("/insights")) {
       return true;
     }
     return (
       pathname.startsWith("/d/creator/") &&
-      !pathname.startsWith("/d/creator/ideas")
+      !pathname.startsWith("/d/creator/ideas") &&
+      !pathname.startsWith("/d/creator/campaigns")
     );
   }
 

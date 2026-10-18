@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { allPublicCampaigns } from "@/features/campaigns/server/campaigns";
 import { previewTopics } from "@/features/ideas/content/topics";
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
 import { allPublicIdeas } from "@/features/ideas/lib/catalog";
@@ -19,6 +20,7 @@ type SitemapEntry = {
 const STATIC_ROUTES: readonly SitemapEntry[] = [
   { path: "/", changeFrequency: "daily", priority: 1 },
   { path: "/ideas", changeFrequency: "daily", priority: 0.9 },
+  { path: "/campaigns", changeFrequency: "daily", priority: 0.9 },
   { path: "/ideathon", changeFrequency: "weekly", priority: 0.8 },
   { path: "/ideathon/about", changeFrequency: "monthly", priority: 0.5 },
   { path: "/ideathon/rules", changeFrequency: "monthly", priority: 0.5 },
@@ -89,6 +91,33 @@ export default function sitemap(): MetadataRoute.Sitemap {
       changeFrequency: "monthly",
       priority: 0.6,
       url: absoluteUrl(`/blog/${entry.slug}`),
+    });
+  }
+
+  // A campaign is listed only while it is publicly readable, using the same
+  // check its detail page applies, so a sitemap entry and a reachable page can
+  // never disagree.
+  const publicCampaigns = allPublicCampaigns();
+
+  for (const campaign of publicCampaigns) {
+    entries.push({
+      changeFrequency: "weekly",
+      priority: 0.8,
+      url: absoluteUrl(`/campaigns/${campaign.slug}`),
+    });
+  }
+
+  // A category with no public campaign would be an empty landing page, so it is
+  // withheld rather than published with a count that says nothing.
+  const populatedCategories = new Set(
+    publicCampaigns.map((campaign) => campaign.category),
+  );
+
+  for (const category of populatedCategories) {
+    entries.push({
+      changeFrequency: "weekly",
+      priority: 0.6,
+      url: absoluteUrl(`/campaigns/categories/${category}`),
     });
   }
 
