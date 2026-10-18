@@ -26,6 +26,9 @@ choices.
 | D-015 | 2026-10-16 | Accepted | Add Outfit as the heading display face (via `next/font`) alongside Geist Sans for body copy and Geist Mono for figures, and unify every surface on one content measure. |
 | D-016 | 2026-10-17 | Accepted | Render every `/d` route inside one shared `AppShell` assembled by the `(product)` layout from a single `getDashboardViewer()` seam. |
 | D-017 | 2026-10-17 | Accepted | Move every creator surface from `/d/ideas*` to `/d/creator/*` (overview, list, create, per-idea workspace, feedback setup, insights, analytics home, feedback inbox) with redirects from the old paths. |
+| D-018 | 2026-10-18 | Accepted | Build the campaign experience as one preview feature (`src/features/campaigns`) whose only data seam knows the data is preview: no wallet, no chain, no fabricated transaction, and every fixture carries `demo: true`. |
+| D-019 | 2026-10-18 | Accepted | Campaign media is a creator-supplied link, never an upload in this build: a video is preferred at the top but optional, hosted players are addressed by a parsed id rather than by the creator's string, and no fixture ships a video. |
+| D-020 | 2026-10-18 | Accepted (widens FR-503a, SRS to be reconciled) | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -452,6 +455,133 @@ transitional and should be deleted once no reachable link uses the old paths.
 Revisit when: Auth lands and the workspace resolves a real account's idea list,
 or when creator surfaces outgrow the single-level `/d/creator` grouping (for
 example campaigns or audience tools arriving with their own data models).
+
+### D-018: Build the campaign experience against a single preview seam
+
+- Date: 2026-10-18
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The campaign surfaces (discovery, detail, contribution preview, backer
+history, milestone accountability, creator workspace) are required for the
+Phase 0 demo, but the wallet, the escrow program, the indexer, and the campaign
+API do not exist in this repository yet. A campaign UI is the most dangerous
+surface to populate with plausible-looking placeholders, because a fabricated
+progress figure or transaction reference reads as a claim that money moved.
+
+Decision: The whole experience lives in one feature module,
+`src/features/campaigns`, and the only module that knows the data is preview is
+`server/`. Routes are marketing (`/campaigns`, `/campaigns/[slug]`,
+`/campaigns/[slug]/back`, `/campaigns/categories/[slug]`) and product
+(`/d/backing*`, `/d/creator/campaigns*`). Every fixture carries `demo: true`;
+every `TransactionRef` is `null` and every fiat leg is `null`, so a receipt says
+"None recorded" rather than showing an explorer link that would not resolve.
+Money is `MoneyAmount` in USDC-at-1:1 with no invented conversion, every share
+is integer basis points, and escrow terms are per-campaign `EscrowTerms` rather
+than platform constants baked into a sentence. Unimplemented steps are blocked
+with the reason they are blocked — the fiat on-ramp waits for a live quote, and
+a campaign cannot be submitted until identity verification and the application
+fee exist — instead of showing a success screen.
+
+Alternatives: Populate the surfaces from a mock API layer (hides the preview
+boundary behind a network seam and invites a real fetch later that silently
+changes behaviour); build the campaign API first (out of scope for this
+repository, which is the web client per D-003); render the surfaces with empty
+states only (honest, but the demo cannot show the accountability story the
+product is being judged on).
+
+Consequences: Any future campaign work has one seam to replace, and the demo
+cannot be mistaken for a live financial system because the fixtures themselves
+say so. The cost is that campaign UI cannot be exercised end to end until the
+API exists, so the preview data must be kept consistent by hand — the fixture
+totals (use-of-funds, milestone tranches, the first-tranche band) are asserted
+by test for that reason.
+
+Revisit when: The campaign API and escrow indexing land, or when a wallet makes
+an on-chain state readable, at which point `server/` is replaced rather than
+extended.
+
+### D-019: Campaign media is a link, and a video is preferred but optional
+
+- Date: 2026-10-18
+- Status: Accepted
+- Owner: Web engineering
+
+Context: Campaign media was requested as a hero that prefers a video but allows
+photos, may hold several items as a carousel, and lets a creator attach images
+and link videos inside the story. This build has no file storage and vendors no
+video asset, so an upload control could only ever fail, and a fixture carrying a
+clip would mean either committing invented footage or depending on a third-party
+host at render time — both of which the image fixtures already refuse to do.
+
+Decision: `CampaignMedia` is an image or a video. A video's `VideoSource` is an
+`upload` path, a `direct` file link, or a YouTube or Vimeo id; an embed URL is
+built from the parsed id, never from the creator's string, so no input can reach
+an `<iframe>` or a `javascript:` target. Images accept an https URL or a
+same-origin path, and a remote URL is served directly because the image
+optimiser refuses unconfigured hosts. The hero is a
+`CampaignMediaCarousel`: the controls are real buttons rather than a container
+key handler, only the active item is mounted, and a hosted video requests
+nothing from its host until a backer presses play. The creator's Media wizard
+step edits an ordered link list with reorder and a poster marker, its upload
+control is disabled with the reason, and the step is optional because an
+image-less campaign falls back to its cover. No fixture ships a video.
+
+Alternatives: Support uploads by committing a sample clip (fabricated media, and
+a binary blob in a fixture set that is otherwise provenance-documented); embed a
+public sample video from someone else's CDN (breaks the rule that a preview does
+not depend on a third party at render time); render a labelled "video
+unavailable" slot (proves the layout, demonstrates nothing).
+
+Consequences: The video path is real and is exercised by unit tests and by the
+wizard, where a creator can paste a genuine link and preview it, but the demo
+hero shows photographs until a real clip is dropped in. That is a deliberate
+limitation to state plainly rather than a gap to paper over.
+
+Revisit when: File storage exists, or a real campaign supplies footage, at which
+point `upload` becomes reachable and the fixtures can carry one clip.
+
+### D-020: The success fee is Inverge's, and the first tranche is a band
+
+- Date: 2026-10-18
+- Status: Accepted (widens FR-503a; the SRS needs reconciling)
+- Owner: Product owner and web engineering
+
+Context: The creator wizard exposed the success fee as an editable percentage
+and the first tranche as a free numeric field with a 25% ceiling. Both are
+Inverge's parameters rather than a creator's: FR-505 fixes the All-or-Nothing
+success fee at 5% of each released tranche, and FR-503a sizes the working-capital
+tranche to milestone one's budget within a published band. Letting a creator type
+either one invites a draft that does not match what the platform would apply.
+
+Decision: The wizard shows the success fee read-only, named as the platform's
+fee, at the rate the campaign was approved at or the current platform rate for a
+new draft. The first tranche is a select of one-percent steps between 15% and
+25%, still constrained to milestone one's own share, and the platform parameters
+live once in `lib/escrow.ts` (`PLATFORM_SUCCESS_FEE_BPS`,
+`WORKING_CAPITAL_MIN_BPS`, `WORKING_CAPITAL_MAX_BPS`) which the fixtures import
+rather than repeating. The published per-campaign `EscrowTerms` remain the only
+source the accountability copy reads, so display still quotes the campaign's own
+terms rather than the platform default.
+
+Note the divergence: FR-503a states a cap of 20-25%, and the product owner has
+directed a 15-25% band. This entry records that choice rather than silently
+widening the SRS; `docs/Inverge_PRD_SRS_v1.2.md` should be updated to match, or
+this decision superseded, before the band is treated as settled.
+
+Alternatives: Keep both fields editable (a creator could publish terms the
+platform would not honour); hard-code 5% in the display path (contradicts the
+rule that a page quotes the campaign's published terms); offer a free numeric
+input bounded by validation (accepts 15.4%, and puts the floor in a message
+rather than in the control).
+
+Consequences: A creator cannot publish a rate the platform would not apply, and
+the one-percent steps make the allowed band obvious before submission. The band
+is now a platform setting with two sources of truth until the SRS is updated,
+which is why the divergence is recorded here.
+
+Revisit when: The SRS is reconciled, the settings API can supply these
+parameters, or a campaign type needs a different fee or band.
 
 ## Decision template
 

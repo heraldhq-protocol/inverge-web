@@ -39,17 +39,34 @@ Ground rules that shape this list:
 | `/d/profile` | Profile | Real. Identity preview plus the creator's public surface |
 | `/d/settings` | Settings | Real form, surfaces programme-admin access when present |
 
+### Campaign surfaces
+
+Added with the campaign experience (D-018) on `feat/campaign-experience`. Both
+areas are preview data behind `src/features/campaigns/server/`; no route below
+moves money.
+
+| Route | Page | State |
+| --- | --- | --- |
+| `/d/backing` | Backing history | Real list from the viewer's own contributions, filtered from the URL, with per-contribution state |
+| `/d/backing/[contributionId]` | Contribution receipt | Real, preview-labelled. States payment, contribution, and refund separately; transaction references are `null` and read "None recorded" |
+| `/d/creator/campaigns` | Creator's campaigns | List of owned campaigns with phase and next action |
+| `/d/creator/campaigns/new` | Campaign wizard | Six steps (basics, media, funding, milestones, terms, review). Submitting is blocked until KYC and the application fee exist |
+| `/d/creator/campaigns/[campaignId]` | Campaign workspace | Real. Phase, story, funding, and milestone summary; edit and milestone entry points |
+| `/d/creator/campaigns/[campaignId]/edit` | Campaign wizard (edit) | Same wizard loaded from the campaign's own published terms |
+| `/d/creator/campaigns/[campaignId]/milestones` | Milestone worklist | Real. Every milestone with its state and the reason it is closed; claiming never moves money |
+
 Loading/error boundaries exist at `d/`, `d/(home)`, `d/creator`,
 `d/creator/ideas/[id]/insights`, `d/notifications`, `d/pre-pledges`,
 `d/settings`. `/d/discover`, `/d/creator/ideas`, `/d/ideathons`, `/d/profile`,
-and `/d/creator/ideas/[id]/feedback` inherit the `d/` fallbacks only and have
-no local skeleton yet.
+`/d/creator/ideas/[id]/feedback`, `/d/backing`, and `/d/creator/campaigns`
+inherit the `d/` fallbacks only and have no local skeleton yet.
 
 ## 2. Reachable from the dashboard, outside `/d`
 
 | Route | Why it is linked |
 | --- | --- |
 | `/ideas`, `/ideas/[id]`, `/topics/[slug]` | Public discovery and detail, linked from the featured band and idea cards |
+| `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/back`, `/campaigns/categories/[slug]` | Public campaign discovery, detail, contribution preview, and category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
 | `/guides`, `/guides/[slug]` | Sidebar item "Guides & journal" |
 | `/ideathon`, `/ideathon/about`, `/ideathon/past`, `/ideathon/rules` | Public ideathon standings |
 | `/admin`, `/admin/audit`, `/admin/payments`, `/admin/programmes`, `/admin/programmes/new`, `/admin/programmes/[id]` | Organiser workspace, linked from the home rail only when the viewer has the capability |
@@ -66,8 +83,8 @@ no local skeleton yet.
 | Feedback inbox | `/d/creator/feedback` | ✅ Shipped read-only (D-017). Reply state arrives with the feedback API |
 | Analytics | `/d/creator/analytics`, `/d/creator/ideas/[id]/insights` | ✅ Strongest area |
 | Audience | — | ❌ Missing. No follower or relationship data model exists |
-| Milestones | — | ❌ Missing. No web surface; the concept is PRD 3.6 and is funded later |
-| Campaigns | — | ❌ Missing. No web surface; PRD 5.2/3.3, admin holds only payments and audit |
+| Milestones | `/d/creator/campaigns/[campaignId]/milestones` | ✅ Shipped as a surface (D-018). Preview data; claiming never moves money |
+| Campaigns | `/d/creator/campaigns`, `/d/creator/campaigns/new`, `/d/creator/campaigns/[campaignId]` | ✅ Shipped as a surface (D-018). List, six-step wizard, workspace. Preview data; submission is blocked until KYC and the application fee exist |
 
 Sections that exist in the repo but are absent from the proposed IA: pre-pledges,
 ideathons, discover, notifications, profile, settings. They stay in the main
@@ -81,9 +98,11 @@ sidebar, not in the Studio bar.
 2. **Studio route map — settled (D-017).** All creator surfaces moved under
    `/d/creator/*` with redirects from `/d/ideas*`. `isCurrentNavigationHref`
    and both tab bars agree on the new map.
-3. **Seven tabs, three real.** A tab appears only when its page ships.
-   Audience, Milestones, and Campaigns have no data model, so they cannot be
-   honestly stubbed — they arrive with their models, not before.
+3. **Seven tabs, six real.** A tab appears only when its page ships. Audience is
+   the last one without a data model, so it cannot be honestly stubbed; it
+   arrives with the model, not before. Campaigns and Milestones were on the same
+   hold and now ship as clearly labelled preview surfaces (D-018) rather than as
+   live data.
 4. **No fabricated numbers.** "People reached" and "Active milestones" are shown
    as `—` in the proposal for the same reason the analytics traffic tab shows an
    empty state: no tracking exists. Keep that discipline.
@@ -97,5 +116,7 @@ sidebar, not in the Studio bar.
 2. Local `loading.tsx`/`error.tsx` for `/d/discover`, `/d/creator/ideas`,
    `/d/ideathons`, `/d/profile`.
 3. Reply state in the feedback inbox, when the feedback API exists.
-4. Hold Audience, Milestones, and Campaigns until their data models exist, and
-   record that hold in `docs/DECISIONS.md` when it is agreed.
+4. Hold Audience until its relationship model exists, and record that hold in
+   `docs/DECISIONS.md` when it is agreed. Campaigns and Milestones now have
+   preview surfaces (D-018); the next step for them is the campaign API, not
+   more UI.

@@ -19,6 +19,13 @@ New idea records must not depend on these files; the API's `coverImageUrl` is
 the production source. Replacing a cover is a one-file change plus the matching
 entry in `src/features/ideas/content/preview-covers.ts`.
 
+Campaign fixtures share this same set of photographs: `preview-campaigns.ts`
+composes a hero gallery and a story gallery for two campaigns out of the covers
+above, so a campaign gallery is sample content rather than a claim about a real
+project. Campaigns that attach none fall back to a single cover, and then to
+generated artwork. No video is vendored and no campaign fixture carries one, so a
+campaign's video path is exercised only by a link a creator pastes in the wizard.
+
 | File                          | Unsplash photo id                  |
 | ----------------------------- | ---------------------------------- |
 | `agroroute.jpg`               | `photo-1592982537447-7440770cbfc9` |
