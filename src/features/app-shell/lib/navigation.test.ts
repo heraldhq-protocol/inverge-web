@@ -61,6 +61,32 @@ describe("isCurrentNavigationHref", () => {
     );
   });
 
+  it("gives the campaign list its own highlight, not Creator Studio's", () => {
+    expect(
+      isCurrentNavigationHref("/d/creator/campaigns", "/d/creator/campaigns"),
+    ).toBe(true);
+    expect(
+      isCurrentNavigationHref(
+        "/d/creator/campaigns/solar-mini-grid/new",
+        "/d/creator/campaigns",
+      ),
+    ).toBe(true);
+    expect(isCurrentNavigationHref("/d/creator/campaigns", "/d/creator")).toBe(
+      false,
+    );
+    expect(
+      isCurrentNavigationHref("/d/creator/campaigns", "/d/creator/ideas"),
+    ).toBe(false);
+  });
+
+  it("keeps a backing record with the backing history", () => {
+    expect(isCurrentNavigationHref("/d/backing", "/d/backing")).toBe(true);
+    expect(
+      isCurrentNavigationHref("/d/backing/contribution-1", "/d/backing"),
+    ).toBe(true);
+    expect(isCurrentNavigationHref("/d/backing", "/d/pre-pledges")).toBe(false);
+  });
+
   it("does not treat discovery as a creator route", () => {
     expect(isCurrentNavigationHref("/d/discover", "/d/discover")).toBe(true);
     expect(isCurrentNavigationHref("/d/discover", "/d/creator")).toBe(false);

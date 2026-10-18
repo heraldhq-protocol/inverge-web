@@ -3,6 +3,7 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight02Icon,
+  HandCoinsIcon,
   HelpCircleIcon,
   Notification01Icon,
   Search01Icon,
@@ -143,6 +144,16 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
             </p>
           </div>
           <div className="py-1">
+            <MenuItem href="/d/backing">
+              <HugeiconsIcon
+                icon={HandCoinsIcon}
+                size={18}
+                strokeWidth={1.7}
+                aria-hidden="true"
+                className="text-muted"
+              />
+              Campaigns you back
+            </MenuItem>
             <MenuItem href="/d/profile">
               <HugeiconsIcon
                 icon={UserCircleIcon}
