@@ -10,20 +10,29 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { Cancel01Icon, Menu01Icon } from "@/components/ui/hugeicons";
 import { Container } from "@/features/marketing/components/container";
 
+/**
+ * Primary navigation.
+ *
+ * Kept to the destinations that need top-level prominence: the two discovery
+ * surfaces, the ideathon, and the two editorial sections. "How it works" is
+ * deliberately absent — it is an anchor on the home page and is linked from the
+ * footer, so a header slot would crowd the bar without adding a destination.
+ * Journal, About, Careers, and the legal pages are footer-only for the same
+ * reason.
+ *
+ * The links appear at `md`, but the search field and both account calls to
+ * action do not fit beside them until `lg`. Below `lg` they stay in the panel
+ * so no action is unreachable at a tablet width.
+ */
 const navigation = [
   { href: "/ideas", label: "Discover" },
+  { href: "/campaigns", label: "Campaigns" },
   { href: "/ideathon", label: "Ideathon" },
-  { href: "/#how-it-works", label: "How it works" },
-  { href: "/about", label: "About" },
   { href: "/guides", label: "Guides" },
-  { href: "/blog", label: "Journal" },
+  { href: "/about", label: "About" },
 ] as const;
 
 function isCurrentPath(pathname: string, href: string): boolean {
-  if (href.startsWith("/#")) return false;
-  if (href === "/ideas") {
-    return pathname === "/ideas" || pathname.startsWith("/ideas/");
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -168,7 +177,7 @@ export function SiteHeader() {
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-navigation"
             aria-label={mobileMenuOpen ? "Close menu" : "Open menu"}
-            className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-surface text-ink transition-colors hover:bg-border/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:hidden"
+            className="flex min-h-11 min-w-11 items-center justify-center rounded-full border border-border bg-surface text-ink transition-colors hover:bg-border/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink lg:hidden"
           >
             {mobileMenuOpen ? (
               <Cancel01Icon size={20} className="text-ink" />
@@ -176,12 +185,6 @@ export function SiteHeader() {
               <Menu01Icon size={20} className="text-ink" />
             )}
           </button>
-          <Link
-            href="/sign-up"
-            className="hidden min-h-11 items-center justify-center rounded-full bg-contrast px-4 text-sm font-semibold text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink md:inline-flex lg:hidden"
-          >
-            Start building
-          </Link>
         </div>
       </Container>
 
@@ -189,7 +192,7 @@ export function SiteHeader() {
         <div
           ref={panelRef}
           id="mobile-navigation"
-          className="border-b border-border bg-surface px-6 py-6 shadow-xl md:hidden"
+          className="border-b border-border bg-surface px-6 py-6 shadow-xl lg:hidden"
         >
           <nav aria-label="Mobile navigation" className="flex flex-col gap-1">
             <div className="pb-3">
