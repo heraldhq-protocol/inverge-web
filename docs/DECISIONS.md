@@ -32,8 +32,12 @@ choices.
 | D-021 | 2026-10-19 | Accepted | The campaign detail page is tabbed, not one scroll: tab state lives in `?tab=`, the panel is chosen on the server, and the desktop rail repeats the most-scanned cards. |
 | D-022 | 2026-10-19 | Accepted | The creator's story is a closed, typed block vocabulary rendered as data; the schema has no `html` member and the page never injects creator markup. |
 | D-023 | 2026-10-19 | Accepted | Saved campaigns live in this browser behind a `SavedCampaignsStore` boundary and every surface says so; no surface may claim account synchronisation. |
-| D-024 | 2026-10-19 | Accepted | A reward tier declares a fulfilment type and, for anything posted, the creator's own destinations and terms. Shipping is display-only: Inverge quotes no postage, collects no address, and no fixture ships reward artwork. |
+| D-024 | 2026-10-19 | Superseded in part by D-026 and D-027 | A reward tier declares a fulfilment type, so a digital reward can never render a shipping line. The "shipping is display-only" clause is superseded: a creator now declares priced rules, and postage is a separate fulfilment charge (D-027). |
 | D-025 | 2026-10-19 | Accepted | The backing flow is one route with step-id state and a conditional delivery step; its quote never invents a figure and it ends at a labelled provider-absent handoff rather than a success screen. |
+| D-026 | 2026-10-19 | Accepted | A destination is an ISO 3166-1 alpha-2 code chosen from a searchable combobox, with names taken from the platform's own CLDR data; no surface holds its own country names and no destination is free text. |
+| D-027 | 2026-10-19 | Accepted | A creator declares ordered shipping rules over named zones, each with a free, flat, deferred, or unavailable rate; the first matching rule wins. Postage is a separate fulfilment charge in the total due, never part of the escrowed contribution, and no postage is charged in this build. |
+| D-028 | 2026-10-19 | Accepted | A reward carries what it includes, the variant groups the creator requires, optional add-ons that may or may not add a parcel, and an optional per-backer quantity limit; a digital add-on can never be marked as affecting shipping. |
+| D-029 | 2026-10-19 | Accepted | Both payment routes are always offered — USDC from the backer's own wallet, and card or bank transfer through a licensed provider — and the backer's country never changes the contribution asset. The provider route is blocked and explained until a live quote exists. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -709,29 +713,39 @@ will satisfy.
 Revisit when: Sign-in exists and a saved-campaigns resource is available, at
 which point the local store becomes a cache or is dropped.
 
-### D-024: A reward declares its fulfilment and its shipping, and neither is priced
+### D-024: A reward declares its fulfilment, so a digital reward never shows shipping
 
 - Date: 2026-10-19
-- Status: Accepted
+- Status: Superseded in part by D-026 and D-027
 - Owner: Product owner and web engineering
 
 Context: Rewards had no way to say whether they were digital, posted, or both,
 and posting a physical reward needs to tell a backer where it can go. Shipping
 cost is the trap: Inverge has no carrier integration and no rate source, so any
-number shown would be invented, and a shipping figure folded into the
-contribution total would misstate what the escrow holds.
+number Inverge itself calculated would be invented, and a shipping figure folded
+into the contribution total would misstate what the escrow holds.
 
 Decision: `SupportTier` gains `fulfilment: RewardFulfilment | null`
-(`digital` | `physical` | `mixed`) and `shipping: RewardShipping | null`, where
-`RewardShipping` is the creator's own list of destinations plus optional free-text
-terms. `shipping` is non-null only for a physical or mixed reward, so a digital
-reward can never render a shipping line. Shipping is display-only: the campaign
-page, the rail, the creator wizard preview, and the backing flow all render it
-through one `RewardFulfilmentLine`, which shows the fulfilment pills and the
-creator's destinations and terms and never a price. The creator's destinations
-are typed one-per-line in the wizard and parsed by `parseShippingRegions`. No
+(`digital` | `physical` | `mixed`) and `shipping: RewardShipping | null`, and
+`shipping` is non-null only for a reward that actually posts — itself, or because
+one of its add-ons does. Every surface renders the fulfilment pills through one
+`RewardFulfilmentLine`, so a digital reward can never show a shipping line. No
 address is collected anywhere in this build, because there is nowhere to send it
 and no fulfilment process to receive it.
+
+Superseded in part: this decision first said shipping was display-only and
+Inverge quoted no postage at all. D-026 replaced free-text destinations with
+country codes, D-027 replaced the bare destination list with ordered rules and
+creator-declared rates, and D-028 made a reward's extra items able to add a
+parcel. The surviving rules are the ones above: the fulfilment type decides
+whether shipping exists, one component renders it, and no address is collected.
+The record below is kept as it was written, with the price and
+`parseShippingRegions` clauses now owned by D-026 and D-027.
+
+Original text: `RewardShipping` was the creator's own list of destinations plus
+optional free-text terms, destinations were typed one-per-line and parsed by
+`parseShippingRegions`, and the fulfilment line showed destinations and terms and
+never a price.
 
 Alternatives: A single boolean "physical" (cannot express a reward that is both,
 which the campaign fixtures already need); collect a shipping address in the
@@ -740,13 +754,13 @@ and no retention policy — a privacy liability that looks like a feature); show
 shipping estimate (a number with no source); bill shipping inside the
 contribution (misstates the escrow and the refund).
 
-Consequences: A backer sees where a reward can be posted and that Inverge does
-not quote postage, and the contribution total never includes a shipping figure.
-Address collection, rate quoting, and a fulfilment handoff are all still missing
-and are stated as such. No fixture ships reward artwork: the repository has no
-authentic reward photography, and D-019's rule against stock substitution
-applies, so the image path is exercised by the wizard and its tests instead. See
-D-025 for the flow the delivery step sits inside.
+Consequences: A backer sees where a reward can be posted and who set the rate,
+and the escrowed contribution never includes a shipping figure. Address
+collection and a fulfilment handoff are still missing and are stated as such. The
+reward artwork path is exercised by the wizard and its tests: the repository has
+no authentic reward photography, and D-019's rule against stock substitution
+applies, so the one reward image in the fixtures is a vendored placeholder that
+the fixture comments name as such.
 
 Revisit when: A carrier or fulfilment provider is chosen, at which point shipping
 becomes a quoted amount and address collection becomes a consented, retained
@@ -798,6 +812,186 @@ component tests, including the rule that no figure is attached to shipping.
 Revisit when: A payment provider and a quote service are integrated, at which
 point the handoff panel is replaced by the provider's own step and the
 `handoffStates` names map onto real states.
+
+### D-026: A destination is a country code, chosen from a searchable combobox
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The first shipping model took destinations as free text ("Nigeria",
+"Ghana"). Free text cannot be matched against a rule, cannot be validated, cannot
+be switched to a new market, and invites a typo to silently become a destination
+that matches nothing. It also quietly made the product Nigeria-centred: a list of
+hand-typed names is a list of the countries someone happened to think of.
+
+Decision: A destination is a `CountryCode` — an ISO 3166-1 alpha-2 string — and
+the only picker is `CountrySelect`, a combobox whose text input *is* the control
+(ARIA's pattern for a long list) with `role="listbox"` options, a live
+`aria-activedescendant`, and Arrow/Home/End/Enter/Escape/Tab handling. The codes
+are written out in `src/lib/countries.ts` because the alternative — asking the
+platform whether every two-letter combination is a region — also returns
+withdrawn codes (`AN`), CLDR aggregates (`EU`, `QO`), and private-use codes
+(`ZZ`). The *names* come from `Intl.DisplayNames` at runtime, so no surface holds
+a country name of its own and a name is never a stale transliteration. A test
+fails if a written code is not a region CLDR knows, which is what makes a
+hand-written list safe. Search folds diacritics, so "cote" finds Côte d'Ivoire,
+and ranks a code match first, so "gb" finds the United Kingdom.
+
+Alternatives: Keep free text and normalise it later (the normalisation table
+would be the country list, arrived at later and worse); extend the shared
+`Select` (it is a short pick-list that opens a menu; 249 countries need a typing
+filter, and the two controls have different reasons to change); take the list
+from a dependency (a new dependency for data the platform already ships, and one
+more thing to keep current).
+
+Consequences: Destinations are comparable, so a creator's rule, a wizard zone,
+and a backer's choice all speak the same language, and an unsupported destination
+can be shown and blocked rather than mis-priced. The picker is a second
+combobox-like control beside `Select`; the duplication is deliberate and each is
+pinned by its own tests. `CountryCode` is `string` rather than a union, so a
+value can still be unvalidated at a boundary — `normaliseCountryCode` is that
+boundary, and a URL or a stored draft must pass through it.
+
+Revisit when: A destination needs sub-national precision (a state, a region, a
+postcode area), at which point the model needs a second level rather than a
+longer list.
+
+### D-027: A creator writes ordered shipping rules; postage is a separate charge
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: "Where can this go?" and "what does it cost?" are two questions, and
+the first version answered neither: a plain list of destinations said nothing
+about price, and a worldwide list could not express "everywhere except Brazil".
+The creator is also the only party who knows their own postage — they have the
+supplier quote and the courier account — while Inverge has no carrier integration
+and no rate source, so a figure Inverge calculated would be invented.
+
+Decision: `RewardShipping` holds the origin country, optional named `zones`
+(a name plus member countries), an ordered `rules` list, optional terms, and an
+optional customs note. Each rule is a `coverage` (`worldwide` | `zone` | `country`
+| `origin`) plus a `rate`: `free`, `flat` with an amount and a `unit` or `order`
+basis, `deferred` with a note, or `unavailable` with a note. The **first matching
+rule wins**, which is the only arrangement in which "everywhere" plus an
+exclusion can mean what a creator intends, so a rule placed below a
+`worldwide` rule is reported as an error rather than accepted. The wizard
+validates coverage, names the gap when no rule reaches the rest of the world
+without listing what is missing, and refuses to publish a reward whose policy is
+not usable.
+
+Postage is a **fulfilment charge**, not part of the contribution: the escrowed
+and refundable amount stays reward + add-ons + additional support, and the total
+due adds postage on top. In this build no postage is charged at all, because
+there is no provider to charge it through; the flow shows what the creator
+declares and says where the money would go. A rate that has not been quoted
+renders as pending with the creator's own reason, never as a number, and a rate
+that could not be calculated is never silently downgraded to "deferred".
+
+Alternatives: One flat worldwide price (cannot express an exclusion or a
+different real cost per region); weight-based rates (no weight is captured on a
+reward or an add-on, so the basis would have to be invented); provider-calculated
+rates (no provider); lanes with a per-country table maintained by Inverge (Inverge
+cannot know a creator's courier prices, and a central table would be wrong for
+every creator who negotiated something else).
+
+Consequences: A backer sees the creator's own rules, in the creator's own order,
+with the destination they chose resolved against them; a refused destination is
+shown as refused and blocks the step; a destination the policy never covered is
+shown as a gap in the policy. Two rate models are **not** implemented and are
+known gaps: weight-based pricing and provider-calculated (live carrier) pricing.
+Customs and duty are described but never calculated, collected, or remitted.
+
+Revisit when: A carrier integration exists, at which point a rule can gain a
+quoted rate model beside the declared ones rather than replacing them.
+
+### D-028: A reward declares what it includes, its options, and its limit
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: A reward price and a paragraph of prose left the backer to guess what
+they were actually getting, and left the creator no way to express a real
+constraint: a colour that must be chosen before a kit can be boxed, an optional
+printed guide that travels in its own parcel, a reward the creator can only make
+four of.
+
+Decision: `SupportTier` gains four required members. `includes: string[]` is what
+the backer receives, listed one per line in the wizard and rendered as a list on
+the reward card and in the reward step. `variants: RewardVariantGroup[]` is what
+the creator must ask before fulfilment; every group is required (there is no
+optional variant, because a fulfilment choice cannot be left to the packer).
+`addOns: RewardAddOn[]` are extra items with their own price and their own
+`affectsShipping`, and a digital add-on must not claim to affect shipping — an
+add-on that affects shipping makes the reward post even when the reward itself is
+digital. `quantityLimit: number | null` is how many of this reward one backer may
+take; `null` means a single unit, and the quantity control appears only when the
+limit is above one. The fields are required, not optional, so every construction
+site has to decide.
+
+Alternatives: Free-text contents (unlistable and unvalidated); make variants
+optional (the creator would have no way to say "this must be answered");
+per-add-on quantity (real, but it multiplies the inventory question and no
+inventory count exists to spend it against); fold add-ons into the reward price
+(loses the choice, which is the point); an `includes` string rendered as
+markup (D-022's rule).
+
+Consequences: A reward card and the reward step both say what is in the reward,
+what still needs choosing, what can be added, and what the limit is — with the
+same component, so a card and the flow cannot drift. Inventory is *not* tracked:
+a quantity limit is a per-backer cap, not a remaining-stock count, and no surface
+claims otherwise. Add-ons and variants are preserved through the creator draft
+but are **not** authored in the wizard yet; only origin, zones, rules, terms,
+customs, includes, and the quantity limit are editable.
+
+Revisit when: Inventory has a real count, at which point a limit becomes an
+availability and the card must say when something has run out.
+
+### D-029: Both payment routes are always offered, and the country changes nothing
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: An international backer paying by card would otherwise be told that
+their country is not supported, or worse, be quietly moved onto a naira rail
+because of where they are. And a card backer cannot review their true cost,
+because the amount that settles depends on a conversion the platform cannot
+compute without a licensed provider's quote.
+
+Decision: `routeAvailability` always returns two routes. Paying in USDC from the
+backer's own wallet needs no conversion and no rate, so it is available and its
+total is exactly the figure above. Paying by card or bank transfer is labelled
+"Card or bank transfer" — never by the asset it settles into — and is blocked
+with a stated reason until a licensed on-ramp provider and a live quote are
+connected; where a campaign also settles in cNGN, that only changes the route's
+description. Neither route requires the campaign to support a particular
+settlement asset for the *backer*: a campaign's
+`supportedSettlementAssets` changes which asset the provider settles into, not
+whether the backer may pay by card. On the blocked route the quote's fiat lines
+(charge currency, exchange rate, provider fee, amount that settles) read "Not
+available" and are marked unknown rather than carrying an invented rate, and the
+backer's destination never changes the contribution asset.
+
+Alternatives: Offer only the wallet route (hides a route the product intends to
+have, and reads as "no cards"); hide the card route until a provider exists
+(keeps the page tidy but tells an international backer nothing about how they
+will pay); choose a route from the backer's country (a geography heuristic
+deciding how someone's money moves); show an indicative rate (a fabricated
+number attached to someone's money).
+
+Consequences: The flow is usable end-to-end on the wallet route and honest on
+the other. No provider is connected, so no card payment can be made in this
+build: the route is visible, explained, and disabled, and the final step is the
+labelled handoff panel rather than a success screen. Nothing here is a
+confirmation: a redirect or a client callback would not be one either.
+
+Revisit when: A licensed on-ramp provider is contracted and can quote a live
+rate, at which point the blocked route becomes available and its quote lines
+carry the provider's own figures.
 
 ## Decision template
 
