@@ -1,14 +1,9 @@
 "use client";
 
-import { Eye, EyeOff } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { type FormEvent, useState } from "react";
+import { useState } from "react";
 
-import { inputClass } from "@/components/ui/input";
 import type { AuthMode } from "@/features/auth/types";
-
-const fieldClass = inputClass;
 
 function GoogleIcon() {
   return (
@@ -73,79 +68,14 @@ function ProviderButton({
   );
 }
 
-function PasswordField({
-  id,
-  label,
-  name,
-  autoComplete,
-  describedBy,
-}: {
-  id: string;
-  label: string;
-  name: string;
-  autoComplete: "current-password" | "new-password";
-  describedBy?: string;
-}) {
-  const [isVisible, setIsVisible] = useState(false);
-
-  return (
-    <div className="space-y-1.5">
-      <label htmlFor={id} className="block text-sm font-semibold text-ink">
-        {label}
-      </label>
-      <div className="relative">
-        <input
-          id={id}
-          name={name}
-          type={isVisible ? "text" : "password"}
-          required
-          autoComplete={autoComplete}
-          aria-describedby={describedBy}
-          className={`${fieldClass} pr-12`}
-        />
-        <button
-          type="button"
-          onClick={() => setIsVisible((current) => !current)}
-          className="absolute inset-y-0 right-1 inline-flex min-w-11 items-center justify-center rounded-lg text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-brand"
-          aria-label={`${isVisible ? "Hide" : "Show"} ${label.toLowerCase()}`}
-        >
-          {isVisible ? (
-            <EyeOff className="size-4.5" aria-hidden="true" />
-          ) : (
-            <Eye className="size-4.5" aria-hidden="true" />
-          )}
-        </button>
-      </div>
-    </div>
-  );
-}
-
 export function AuthForm({ mode }: { mode: AuthMode }) {
   const isSignUp = mode === "sign-up";
-  const router = useRouter();
   const [status, setStatus] = useState("");
 
   function handleProvider(provider: "Privy" | "Google") {
     setStatus(
       `${provider} authentication will be connected in the integration step.`,
     );
-  }
-
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-
-    if (isSignUp) {
-      const data = new FormData(event.currentTarget);
-      if (data.get("password") !== data.get("confirmPassword")) {
-        setStatus(
-          "Your passwords do not match. Please check them and try again.",
-        );
-        return;
-      }
-    }
-
-    setStatus("");
-    router.push(`/verify-email?flow=${mode}`);
   }
 
   return (
@@ -161,84 +91,6 @@ export function AuthForm({ mode }: { mode: AuthMode }) {
       >
         {status}
       </p>
-
-      {/* <div className="my-4 flex items-center gap-3" aria-hidden="true">
-        <span className="h-px flex-1 bg-border" />
-        <span className="text-xs font-medium uppercase tracking-[0.14em] text-muted">
-          or continue with email
-        </span>
-        <span className="h-px flex-1 bg-border" />
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-3.5 sm:space-y-4">
-        <div className="space-y-1.5">
-          <label
-            htmlFor="email"
-            className="block text-sm font-semibold text-ink"
-          >
-            Email address
-          </label>
-          <input
-            id="email"
-            name="email"
-            type="email"
-            required
-            autoComplete="email"
-            inputMode="email"
-            placeholder="you@example.com"
-            className={fieldClass}
-          />
-        </div>
-
-        <PasswordField
-          id="password"
-          name="password"
-          label="Password"
-          autoComplete={isSignUp ? "new-password" : "current-password"}
-          {...(isSignUp ? { describedBy: "password-hint" } : {})}
-        />
-
-        {isSignUp ? (
-          <>
-            <p
-              id="password-hint"
-              className="-mt-2 text-xs leading-normal text-muted"
-            >
-              Use a strong password that you do not use elsewhere.
-            </p>
-            <PasswordField
-              id="confirm-password"
-              name="confirmPassword"
-              label="Confirm password"
-              autoComplete="new-password"
-            />
-          </>
-        ) : null}
-
-        <button
-          type="submit"
-          className="inline-flex min-h-11 w-full items-center justify-center rounded-xl bg-brand px-6 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand sm:min-h-12"
-        >
-          {isSignUp ? "Create account" : "Sign in"}
-        </button>
-
-        <p
-          aria-live="polite"
-          className="min-h-5 text-center text-xs leading-5 text-muted"
-        >
-          {status}
-        </p>
-      </form> */}
-
-      {/* <p className="mt-3.5 text-center text-sm text-muted sm:mt-4">
-        {isSignUp ? "Already have an account?" : "New to Inverge?"}{" "}
-        <Link
-          href={isSignUp ? "/sign-in" : "/sign-up"}
-          className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
-        >
-          {isSignUp ? "Sign in" : "Create an account"}
-        </Link>
-      </p> */}
 
       {isSignUp ? (
         <p className="mt-4 text-center text-xs leading-5 text-muted sm:mt-5">

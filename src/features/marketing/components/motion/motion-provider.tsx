@@ -4,8 +4,12 @@ import { ScrollTrigger } from "gsap/ScrollTrigger";
 import { usePathname } from "next/navigation";
 import { useRef } from "react";
 
-import { DURATIONS, EASINGS, STAGGER_STEP } from "@/features/marketing/motion/tokens";
-import { gsap, useGsap } from "@/features/marketing/motion/use-gsap";
+import {
+  DURATIONS,
+  EASINGS,
+  STAGGER_STEP,
+} from "@/features/marketing/motion/tokens";
+import { useGsap } from "@/features/marketing/motion/use-gsap";
 
 const REVEAL_FROM = {
   up: { y: 24 },
@@ -61,18 +65,18 @@ export function MotionProvider({ children }: { children: React.ReactNode }) {
         if (hero) {
           const items = hero.querySelectorAll<HTMLElement>("[data-hero-item]");
           if (items.length > 0) {
-        g.fromTo(
-          items,
-          { autoAlpha: 0, y: 20 },
-          {
-            autoAlpha: 1,
-            y: 0,
-            duration: DURATIONS.base,
-            ease: EASINGS.standard,
-            stagger: STAGGER_STEP,
-            delay: 0.05,
-          },
-        );
+            g.fromTo(
+              items,
+              { autoAlpha: 0, y: 20 },
+              {
+                autoAlpha: 1,
+                y: 0,
+                duration: DURATIONS.base,
+                ease: EASINGS.standard,
+                stagger: STAGGER_STEP,
+                delay: 0.05,
+              },
+            );
           }
         }
 

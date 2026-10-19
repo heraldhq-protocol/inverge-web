@@ -84,29 +84,6 @@ const roadmapSteps = [
   { label: "Wider rollout", status: "Next" as const },
 ] as const;
 
-const team = [
-  {
-    name: "Adebayo Yusuf",
-    role: "Product",
-    bio: "Builds useful products for real people.",
-  },
-  {
-    name: "Funmi Oladipo",
-    role: "Operations",
-    bio: "Keeps the gears moving.",
-  },
-  {
-    name: "Chinedu Okafor",
-    role: "Engineering",
-    bio: "Turns ideas into reliable systems.",
-  },
-  {
-    name: "Zainab Lawal",
-    role: "Community",
-    bio: "Connects builders and backers.",
-  },
-] as const;
-
 /* ── Component ──────────────────────────────────────────────── */
 
 export default function AboutPage() {

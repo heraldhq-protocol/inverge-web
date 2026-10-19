@@ -35,7 +35,7 @@ export function Reveal({
   const ref = useRef<HTMLDivElement>(null);
   const isReducedMotion = useReducedMotion();
 
-  useGsap(({ gsap: g, ctx }) => {
+  useGsap(({ gsap: g }) => {
     if (!ref.current) {
       return;
     }
@@ -65,7 +65,6 @@ export function Reveal({
       },
     );
   });
-
 
   return (
     <div ref={ref} className={className}>
