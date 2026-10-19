@@ -5,7 +5,10 @@ import { CampaignBackPage } from "@/features/campaigns/components/campaign-back-
 import { getCampaignDetailView } from "@/features/campaigns/server/campaigns";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-type PageProps = { params: Promise<{ slug: string }> };
+type PageProps = {
+  params: Promise<{ slug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({
   params,
@@ -29,10 +32,19 @@ export async function generateMetadata({
  * public-phase check that gates the detail page gates this one, so a campaign
  * that has closed cannot be linked into a contribution.
  */
-export default async function CampaignBackRoute({ params }: PageProps) {
+export default async function CampaignBackRoute({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
+  const { tier } = await searchParams;
   const view = getCampaignDetailView(slug);
   if (!view) notFound();
 
-  return <CampaignBackPage campaign={view.campaign} />;
+  return (
+    <CampaignBackPage
+      campaign={view.campaign}
+      initialTierId={typeof tier === "string" ? tier : null}
+    />
+  );
 }
