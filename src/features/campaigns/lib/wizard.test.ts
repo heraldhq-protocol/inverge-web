@@ -6,12 +6,16 @@ import {
   campaignWizardSteps,
   createDraftMedia,
   createDraftMilestone,
+  createDraftTier,
   draftFromCampaign,
   emptyCampaignDraft,
+  parseShippingRegions,
   toCampaignMedia,
+  toSupportTiers,
   validateCampaignStep,
   type CampaignDraft,
   type DraftMedia,
+  type DraftSupportTier,
 } from "@/features/campaigns/lib/wizard";
 
 function draftWith(media: Partial<CampaignDraft>): CampaignDraft {
@@ -31,12 +35,13 @@ function heroItem(overrides: Partial<DraftMedia> = {}): DraftMedia {
 }
 
 describe("campaignWizardSteps", () => {
-  it("places Media directly after the campaign basics", () => {
+  it("places Media after the basics and rewards after the plan", () => {
     expect(campaignWizardSteps.map((step) => step.id)).toEqual([
       "basics",
       "media",
       "funding",
       "milestones",
+      "rewards",
       "terms",
       "review",
     ]);
@@ -301,5 +306,216 @@ describe("draftFromCampaign", () => {
       kind: "video",
       source: { kind: "direct", src: "https://cdn.example.com/clip.mp4" },
     });
+  });
+
+  it("round-trips the reward tiers, including type and destinations", () => {
+    const campaign = findPreviewCampaignById("campaign-sungrid");
+    if (!campaign) throw new Error("Expected the sungrid fixture");
+
+    const reloaded = toSupportTiers(draftFromCampaign(campaign).supportTiers);
+
+    expect(reloaded).toEqual(campaign.supportTiers);
+  });
+});
+
+function reward(overrides: Partial<DraftSupportTier> = {}): DraftSupportTier {
+  return { ...createDraftTier(), ...overrides };
+}
+
+describe("createDraftTier", () => {
+  it("starts blank, with no type chosen, and gives every reward its own id", () => {
+    const first = createDraftTier();
+    const second = createDraftTier();
+
+    expect(first).toMatchObject({
+      description: "",
+      estimatedDelivery: "",
+      fulfilment: "",
+      imageInput: "",
+      minimumInput: "",
+      shippingRegionsInput: "",
+      shippingTerms: "",
+      title: "",
+    });
+    expect(first.id).not.toBe(second.id);
+  });
+});
+
+describe("validateCampaignStep for rewards", () => {
+  it("accepts a campaign that offers no rewards, because tiers are optional", () => {
+    expect(validateCampaignStep(emptyCampaignDraft, "rewards")).toEqual([]);
+  });
+
+  it("accepts a described digital reward with no destination", () => {
+    const draft = draftWith({
+      supportTiers: [
+        reward({
+          description: "A thank-you message and access to updates.",
+          fulfilment: "digital",
+          minimumInput: "10",
+          title: "Supporter",
+        }),
+      ],
+    });
+
+    expect(validateCampaignStep(draft, "rewards")).toEqual([]);
+  });
+
+  it("requires a destination for a physical reward, and accepts one once given", () => {
+    const printed = reward({
+      description: "A printed project report posted to you.",
+      fulfilment: "physical",
+      minimumInput: "20",
+      title: "Printed report",
+    });
+
+    const missing = validateCampaignStep(
+      draftWith({ supportTiers: [printed] }),
+      "rewards",
+    );
+
+    expect(missing).toHaveLength(1);
+    expect(missing[0]?.field).toBe(`supportTiers.${printed.id}.shipping`);
+    expect(missing[0]?.message).toContain("one per line");
+
+    const complete = validateCampaignStep(
+      draftWith({
+        supportTiers: [{ ...printed, shippingRegionsInput: "Nigeria\nGhana" }],
+      }),
+      "rewards",
+    );
+
+    expect(complete).toEqual([]);
+  });
+
+  it("requires a destination for a mixed reward too, because part of it ships", () => {
+    const issues = validateCampaignStep(
+      draftWith({
+        supportTiers: [
+          reward({
+            description: "A download plus a printed poster.",
+            fulfilment: "mixed",
+            minimumInput: "35",
+            title: "Poster and download",
+          }),
+        ],
+      }),
+      "rewards",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("ships");
+  });
+
+  it("reports a missing title, amount, description and type against the field that needs it", () => {
+    const blank = reward();
+    const issues = validateCampaignStep(
+      draftWith({ supportTiers: [blank] }),
+      "rewards",
+    );
+
+    expect(issues.map((issue) => issue.field)).toEqual([
+      `supportTiers.${blank.id}`,
+      `supportTiers.${blank.id}.minimum`,
+      `supportTiers.${blank.id}.description`,
+      `supportTiers.${blank.id}.type`,
+    ]);
+  });
+
+  it("refuses a reward image that is not a usable source", () => {
+    const issues = validateCampaignStep(
+      draftWith({
+        supportTiers: [
+          reward({
+            description: "A thank-you message.",
+            fulfilment: "digital",
+            imageInput: "javascript:alert(1)",
+            minimumInput: "10",
+            title: "Supporter",
+          }),
+        ],
+      }),
+      "rewards",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("https");
+  });
+});
+
+describe("parseShippingRegions", () => {
+  it("keeps the creator's order, drops blanks and collapses duplicates", () => {
+    expect(
+      parseShippingRegions("Nigeria\n\n  Ghana  \nnigeria\nKenya\n"),
+    ).toEqual(["Nigeria", "Ghana", "Kenya"]);
+  });
+
+  it("returns nothing for blank input", () => {
+    expect(parseShippingRegions("   \n  \n")).toEqual([]);
+  });
+});
+
+describe("toSupportTiers", () => {
+  it("attaches shipping only when the reward includes something physical", () => {
+    const [digital, mixed] = toSupportTiers([
+      reward({
+        description: "A download.",
+        fulfilment: "digital",
+        minimumInput: "10",
+        shippingRegionsInput: "Nigeria",
+        title: "Download",
+      }),
+      reward({
+        description: "A download and a posted poster.",
+        fulfilment: "mixed",
+        minimumInput: "35",
+        shippingRegionsInput: "Nigeria\nGhana",
+        shippingTerms: "Posted from Lagos after the handover milestone.",
+        title: "Poster and download",
+      }),
+    ]);
+
+    expect(digital?.shipping).toBeNull();
+    expect(mixed?.shipping).toEqual({
+      regions: ["Nigeria", "Ghana"],
+      terms: "Posted from Lagos after the handover milestone.",
+    });
+  });
+
+  it("nulls an unusable image rather than pointing the page at it", () => {
+    const [tier] = toSupportTiers([
+      reward({
+        description: "A thank-you message.",
+        fulfilment: "digital",
+        imageInput: "javascript:alert(1)",
+        minimumInput: "10",
+        title: "Supporter",
+      }),
+    ]);
+
+    expect(tier?.image).toBeNull();
+  });
+
+  it("keeps a hosted reward image", () => {
+    const [tier] = toSupportTiers([
+      reward({
+        description: "A printed report.",
+        fulfilment: "digital",
+        imageInput: "https://images.example.com/report.jpg",
+        minimumInput: "20",
+        title: "Report",
+      }),
+    ]);
+
+    expect(tier?.image).toBe("https://images.example.com/report.jpg");
+  });
+
+  it("drops a reward with no title or no readable amount", () => {
+    expect(
+      toSupportTiers([
+        reward({ description: "No title.", minimumInput: "10" }),
+        reward({ description: "No amount.", title: "Untitled" }),
+      ]),
+    ).toEqual([]);
   });
 });

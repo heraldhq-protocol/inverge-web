@@ -225,6 +225,29 @@ export type CampaignVideo = {
  */
 export type CampaignMedia = CampaignImage | CampaignVideo;
 
+/**
+ * One creator-authored story block.
+ *
+ * `problem`, `solution`, `beneficiaries`, and `useOfFunds` are the reviewed
+ * summary a campaign is approved on, and they stay required. `blocks` is
+ * additive: it is the long-form narrative the creator writes themselves, in the
+ * order that tells their story. A record with no blocks renders the structured
+ * overview exactly as it always has, which is what makes the extension safe for
+ * the campaign records that already exist.
+ *
+ * The vocabulary is closed and has no `html` member: creator content is data the
+ * page decides how to render, never a document the page trusts.
+ */
+export type StoryBlock =
+  | { id: string; kind: "heading"; text: string }
+  | { id: string; kind: "paragraph"; text: string }
+  | { id: string; kind: "list"; ordered: boolean; items: readonly string[] }
+  | { id: string; kind: "quote"; text: string; attribution: string | null }
+  | { id: string; kind: "note"; title: string; text: string }
+  | { id: string; kind: "image"; image: CampaignImage }
+  | { id: string; kind: "video"; video: CampaignVideo }
+  | { id: string; kind: "gallery"; images: readonly CampaignImage[] };
+
 export type CampaignStory = {
   problem: string;
   solution: string;
@@ -232,6 +255,8 @@ export type CampaignStory = {
   useOfFunds: readonly UseOfFundsLine[];
   /** Media the creator attached inside the story. Empty hides the block. */
   media: readonly CampaignMedia[];
+  /** The creator's long-form narrative, in their order. Empty renders none. */
+  blocks: readonly StoryBlock[];
 };
 
 export type CampaignUpdate = {
@@ -247,18 +272,61 @@ export type CampaignUpdate = {
 export type CampaignFact = { label: string; value: string };
 
 /**
+ * What a reward sends.
+ *
+ * `mixed` is not two rewards: it is one promise with a digital part and a
+ * physical part (a printed report plus digital handover access, say). The flow
+ * has to ask for a delivery destination for the physical part without asking the
+ * wrong questions about the digital one, so the distinction is in the model
+ * rather than left to a description.
+ */
+export type RewardFulfilment = "digital" | "physical" | "mixed";
+
+/**
+ * How a creator will send a physical reward.
+ *
+ * Creator-declared and display-only. Inverge neither quotes a shipping price nor
+ * holds a carrier integration, so this carries the destinations a creator names
+ * and their own terms — never an amount. An empty `regions` list means the
+ * creator named no destination; the wizard refuses that for a physical reward,
+ * and the UI renders whatever is here verbatim rather than guessing at a scope.
+ */
+export type RewardShipping = {
+  /** The destinations the creator will send to, in their own words. */
+  regions: readonly string[];
+  /** The creator's own fulfilment terms, e.g. "posted from Lagos in April". */
+  terms: string | null;
+};
+
+/**
  * An optional reward tier.
  *
  * Campaigns are rewards- or donation-based (SRS §5). A campaign with no tiers is
  * donation-based and the UI says so rather than showing an empty box. The tier
  * changes what the creator promises to send, never the amount that is charged —
  * a contribution is valid at any amount either way.
+ *
+ * Delivery is the creator's own estimate, so it is rendered as an estimate and
+ * never as a guarantee. `image` is a same-origin asset path or an `https` URL;
+ * when a tier has no artwork the card draws its own mark rather than
+ * substituting a stock photograph that belongs to another project.
  */
 export type SupportTier = {
   id: string;
   title: string;
   minimum: MoneyAmount;
   description: string;
+  image: string | null;
+  /** What the campaign sends, when the creator said. A reward is never equity. */
+  fulfilment: RewardFulfilment | null;
+  /** The creator's own estimate, e.g. "2 weeks after the funding deadline". */
+  estimatedDelivery: string | null;
+  /**
+   * Non-null only when the reward includes something physical — that is, when
+   * `fulfilment` is `physical` or `mixed`. A digital reward carries `null` so a
+   * shipping line can never appear where nothing ships.
+   */
+  shipping: RewardShipping | null;
 };
 
 /** A question the campaign answers itself. Authored upstream; shown verbatim. */

@@ -21,6 +21,8 @@ import { isAllocationComplete } from "@/features/campaigns/lib/milestones";
 import type {
   Campaign,
   CampaignMedia,
+  RewardFulfilment,
+  SupportTier,
   VideoSource,
 } from "@/features/campaigns/types";
 import {
@@ -48,7 +50,13 @@ import { parseUsdAmount, sumMoneyAmounts, type MoneyAmount } from "@/lib/money";
  */
 
 export type CampaignWizardStepId =
-  "basics" | "media" | "funding" | "milestones" | "terms" | "review";
+  | "basics"
+  | "media"
+  | "funding"
+  | "milestones"
+  | "rewards"
+  | "terms"
+  | "review";
 
 export type CampaignWizardStep = {
   id: CampaignWizardStepId;
@@ -82,6 +90,12 @@ export const campaignWizardSteps: readonly CampaignWizardStep[] = [
   },
   {
     description:
+      "Optional. What a backer may receive, and how a physical one reaches them.",
+    id: "rewards",
+    title: "Rewards",
+  },
+  {
+    description:
       "Eligibility, risks, and what happens if the target is not reached.",
     id: "terms",
     title: "Terms and disclosures",
@@ -109,11 +123,29 @@ export type DraftUseOfFunds = {
   amountInput: string;
 };
 
+/**
+ * A reward as the wizard edits it.
+ *
+ * `imageInput` is held raw, like a media source, so an unfinished or invalid
+ * address stays visible instead of being silently dropped. Destinations are held
+ * as the creator's own lines rather than as a fixed list of countries: Inverge
+ * has no shipping-rate service, so it must not imply it knows which countries
+ * exist or what a parcel costs to reach them.
+ */
 export type DraftSupportTier = {
   id: string;
   title: string;
   minimumInput: string;
   description: string;
+  /** A reward image link or asset path. Empty means no artwork. */
+  imageInput: string;
+  /** What the reward sends. Empty until the creator chooses. */
+  fulfilment: "" | RewardFulfilment;
+  estimatedDelivery: string;
+  /** One destination per line; converted with `parseShippingRegions`. */
+  shippingRegionsInput: string;
+  /** The creator's own fulfilment terms. Only meaningful for a physical part. */
+  shippingTerms: string;
 };
 
 /**
@@ -194,6 +226,45 @@ export function createDraftMedia(
   };
 }
 
+export function createDraftTier(): DraftSupportTier {
+  return {
+    description: "",
+    estimatedDelivery: "",
+    fulfilment: "",
+    id: nextDraftId("tier"),
+    imageInput: "",
+    minimumInput: "",
+    shippingRegionsInput: "",
+    shippingTerms: "",
+    title: "",
+  };
+}
+
+/**
+ * The creator's destination lines as the model holds them.
+ *
+ * One destination per line, blanks dropped, duplicates collapsed
+ * case-insensitively (so "Nigeria" and "nigeria" are one destination). The order
+ * is the creator's, because it is their list and not a taxonomy to normalise.
+ */
+export function parseShippingRegions(input: string): string[] {
+  const seen = new Set<string>();
+  const regions: string[] = [];
+
+  for (const line of input.split("\n")) {
+    const value = line.trim();
+    if (!value) continue;
+
+    const key = value.toLowerCase();
+    if (seen.has(key)) continue;
+
+    seen.add(key);
+    regions.push(value);
+  }
+
+  return regions;
+}
+
 export const emptyCampaignDraft: CampaignDraft = {
   beneficiaries: "",
   category: "",
@@ -251,8 +322,13 @@ export function draftFromCampaign(campaign: Campaign): CampaignDraft {
     summary: campaign.summary,
     supportTiers: campaign.supportTiers.map((tier) => ({
       description: tier.description,
+      estimatedDelivery: tier.estimatedDelivery ?? "",
+      fulfilment: tier.fulfilment ?? "",
       id: tier.id,
+      imageInput: tier.image ?? "",
       minimumInput: wholeUnits(tier.minimum),
+      shippingRegionsInput: (tier.shipping?.regions ?? []).join("\n"),
+      shippingTerms: tier.shipping?.terms ?? "",
       title: tier.title,
     })),
     targetInput: wholeUnits(campaign.funding.target),
@@ -355,6 +431,53 @@ export function toCampaignMedia(
   }
 
   return media;
+}
+
+/** Whether a reward's fulfilment means something has to be shipped. */
+export function isPhysicalReward(fulfilment: "" | RewardFulfilment): boolean {
+  return fulfilment === "physical" || fulfilment === "mixed";
+}
+
+/**
+ * The draft's reward tiers as the model would hold them.
+ *
+ * A tier without a title or a readable amount is dropped rather than guessed at,
+ * for the same reason an unusable media item is: this is the shape a submission
+ * would carry. `shipping` is attached only for a reward that includes something
+ * physical, so a digital tier can never render a shipping line. An image that
+ * does not parse becomes `null` — the card draws its own mark rather than the
+ * page pointing a browser at an address the creator mistyped.
+ */
+export function toSupportTiers(
+  tiers: readonly DraftSupportTier[],
+): readonly SupportTier[] {
+  const result: SupportTier[] = [];
+
+  for (const tier of tiers) {
+    const title = tier.title.trim();
+    const atomic = parseUsdAmount(tier.minimumInput);
+    if (!title || atomic === null) continue;
+
+    const image = parseImageSource(tier.imageInput);
+
+    result.push({
+      description: tier.description.trim(),
+      estimatedDelivery: blankToNull(tier.estimatedDelivery),
+      fulfilment: tier.fulfilment === "" ? null : tier.fulfilment,
+      id: tier.id,
+      image: image.ok ? image.src : null,
+      minimum: { atomic, currency: "USD", decimals: 2 },
+      shipping: isPhysicalReward(tier.fulfilment)
+        ? {
+            regions: parseShippingRegions(tier.shippingRegionsInput),
+            terms: blankToNull(tier.shippingTerms),
+          }
+        : null,
+      title,
+    });
+  }
+
+  return result;
 }
 
 export type DraftIssue = { field: string; message: string };
@@ -656,6 +779,68 @@ export function validateCampaignStep(
 
       return issues;
     }
+    case "rewards": {
+      /**
+       * Zero tiers is valid — that is a donation-based campaign (FR-301 says
+       * rewards are optional). Everything below is per reward the creator did
+       * add, keyed to the field it belongs to so one card never shows the same
+       * message in six places.
+       */
+      for (const tier of draft.supportTiers) {
+        const base = `supportTiers.${tier.id}`;
+        const label = tier.title.trim() || "This reward";
+
+        if (!tier.title.trim()) {
+          issues.push({ field: base, message: "Give this reward a title." });
+        } else if (tier.title.trim().length > 60) {
+          issues.push({
+            field: base,
+            message: `"${label}" is over 60 characters. Keep reward titles short.`,
+          });
+        }
+
+        if (parseUsdAmount(tier.minimumInput) === null) {
+          issues.push({
+            field: `${base}.minimum`,
+            message: `${label} needs an amount, for example 10.00.`,
+          });
+        }
+
+        if (!tier.description.trim()) {
+          issues.push({
+            field: `${base}.description`,
+            message: `${label} needs a description of what the backer receives.`,
+          });
+        }
+
+        if (tier.imageInput.trim() && !parseImageSource(tier.imageInput).ok) {
+          issues.push({
+            field: `${base}.image`,
+            message:
+              "A reward image has to be an https image link, or an asset path that starts with /.",
+          });
+        }
+
+        if (tier.fulfilment === "") {
+          issues.push({
+            field: `${base}.type`,
+            message: `${label} needs a type: digital, physical, or both.`,
+          });
+        }
+
+        if (
+          isPhysicalReward(tier.fulfilment) &&
+          parseShippingRegions(tier.shippingRegionsInput).length === 0
+        ) {
+          issues.push({
+            field: `${base}.shipping`,
+            message: `${label} ships, so list at least one destination — one per line.`,
+          });
+        }
+      }
+
+      return issues;
+    }
     case "terms": {
       if (draft.eligibility.trim().length < 20) {
         issues.push({
@@ -713,6 +898,7 @@ export function validateCampaignStep(
         ...validateCampaignStep(draft, "media"),
         ...validateCampaignStep(draft, "funding"),
         ...validateCampaignStep(draft, "milestones"),
+        ...validateCampaignStep(draft, "rewards"),
         ...validateCampaignStep(draft, "terms"),
       ];
     }

@@ -3,6 +3,7 @@ import {
   PLATFORM_SUCCESS_FEE_BPS,
   WORKING_CAPITAL_MAX_BPS,
 } from "@/features/campaigns/lib/escrow";
+import { categoryLabel } from "@/features/campaigns/lib/filters";
 import type {
   Campaign,
   CampaignDisclosures,
@@ -17,6 +18,7 @@ import type {
   MilestoneEvidence,
   MilestoneState,
   PublicCreator,
+  StoryBlock,
   SupportTier,
   UseOfFundsLine,
 } from "@/features/campaigns/types";
@@ -92,6 +94,8 @@ type Seed = {
     useOfFunds: readonly UseOfFundsLine[];
     /** Media attached inside the story. Omitted when there is none. */
     media?: readonly CampaignMedia[];
+    /** The creator's long-form narrative. Omitted when they wrote none. */
+    blocks?: readonly StoryBlock[];
   };
   supportTiers?: readonly SupportTier[];
   faqs?: readonly CampaignFaq[];
@@ -179,9 +183,11 @@ function buildCampaign(seed: Seed): Campaign {
     },
     escrow,
     facts: [
-      { label: "Funding deadline", value: formatLongDate(seed.closesAt) },
+      { label: "Category", value: categoryLabel(seed.category) },
       { label: "Location", value: seed.location },
       { label: "Funding model", value: "All-or-Nothing" },
+      { label: "Funding deadline", value: formatLongDate(seed.closesAt) },
+      { label: "Funding asset", value: "USDC" },
       { label: "Campaign ID", value: seed.campaignNumber },
     ],
     faqs: seed.faqs ?? defaultFaqs(),
@@ -203,7 +209,11 @@ function buildCampaign(seed: Seed): Campaign {
     publishedAt: seed.publishedAt ?? null,
     review: seed.review ?? { status: "not-submitted" },
     slug: seed.slug,
-    story: { ...seed.story, media: seed.story.media ?? [] },
+    story: {
+      ...seed.story,
+      blocks: seed.story.blocks ?? [],
+      media: seed.story.media ?? [],
+    },
     summary: seed.summary,
     supportTiers: seed.supportTiers ?? [],
     title: seed.title,
@@ -390,6 +400,45 @@ const sungrid = buildCampaign({
   story: {
     beneficiaries:
       "Around 2,400 people across six communities, plus the traders and workshops whose working day currently ends when the light does.",
+    blocks: [
+      {
+        id: "sungrid-block-sites",
+        kind: "heading",
+        text: "How a site gets chosen",
+      },
+      {
+        id: "sungrid-block-sites-body",
+        kind: "paragraph",
+        text: "Every site on this list has already been surveyed, and each one is sized to the water demand the community has today rather than to a projection of what it might need later. That is deliberate. An oversized system is a system nobody can afford to maintain once the programme has moved on.\n\nSix communities are on the list for this campaign. They are the ones where the survey found both a workable site and a local group willing to hold the maintenance contract.",
+      },
+      {
+        id: "sungrid-block-process",
+        kind: "list",
+        items: [
+          "Survey the site and agree the demand figure with the community association.",
+          "Order and receive the pump, inverter, storage, and mounting hardware.",
+          "Install and commission the system with the operator cohort on site.",
+          "Hand over the maintenance programme with six months of parts.",
+        ],
+        ordered: true,
+      },
+      {
+        id: "sungrid-block-operators",
+        kind: "heading",
+        text: "Why the operators matter more than the panels",
+      },
+      {
+        id: "sungrid-block-operators-body",
+        kind: "paragraph",
+        text: "Hardware is the easy half. There are solar installations across the region standing unused because the nearest qualified technician is a day's travel away and the spare part is in another country. This programme funds the operator cohort in the same milestone as the installation, so the people who maintain the system are trained before the panels are even in the ground.",
+      },
+      {
+        id: "sungrid-block-scope",
+        kind: "note",
+        text: "This campaign funds the installations, the operator training, the parts inventory, and the reporting that shows each one working. The survey work is already done and is not part of the target.",
+        title: "What you are funding, and what you are not",
+      },
+    ],
     problem:
       "Many communities in Ogun State have an intermittent grid and no reliable way to pump or store water. Households either travel long distances for it or draw from sources they know are unsafe. The same problem reaches the small businesses that keep a community running, because a workshop without dependable power cannot take on a full day of work.",
     solution:
@@ -426,22 +475,52 @@ const sungrid = buildCampaign({
   supportTiers: [
     {
       description: "A thank-you message and access to campaign updates.",
+      estimatedDelivery: "Within a week of the funding deadline",
+      fulfilment: "digital",
       id: "sungrid-tier-community",
+      image: null,
       minimum: money("1000"),
+      shipping: null,
       title: "Community supporter",
     },
     {
       description:
         "Everything above, plus a digital postcard and your name on the supporter wall.",
+      estimatedDelivery: "Four weeks after the funding deadline",
+      fulfilment: "digital",
       id: "sungrid-tier-impact",
+      image: null,
       minimum: money("5000"),
+      shipping: null,
       title: "Impact supporter",
     },
     {
       description:
-        "Everything above, plus an invitation to the site handover and a named acknowledgement in the final report.",
+        "A solar reading lantern kit assembled by the operator cohort, posted to you.",
+      estimatedDelivery: "Six weeks after the funding deadline",
+      fulfilment: "physical",
+      id: "sungrid-tier-lantern",
+      image: null,
+      minimum: money("15000"),
+      shipping: {
+        regions: ["Nigeria", "Ghana", "Kenya"],
+        terms:
+          "Posted by courier from Lagos once the first site is commissioned. Any import duty is the backer's.",
+      },
+      title: "Lantern kit",
+    },
+    {
+      description:
+        "Everything above, plus a printed copy of the final report posted to you, an invitation to the site handover, and a named acknowledgement in that report.",
+      estimatedDelivery: "After the site handover milestone is approved",
+      fulfilment: "mixed",
       id: "sungrid-tier-site",
+      image: null,
       minimum: money("20000"),
+      shipping: {
+        regions: ["Nigeria", "Ghana", "Kenya"],
+        terms: "Posted from Lagos once the final report is approved.",
+      },
       title: "Site partner",
     },
   ],
