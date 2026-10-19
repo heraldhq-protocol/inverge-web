@@ -18,10 +18,19 @@ import {
   parseVideoSource,
 } from "@/features/campaigns/lib/media";
 import { isAllocationComplete } from "@/features/campaigns/lib/milestones";
+import { hasPhysicalPart } from "@/features/campaigns/lib/shipping";
 import type {
   Campaign,
   CampaignMedia,
+  CountryCode,
+  RewardAddOn,
   RewardFulfilment,
+  RewardShipping,
+  RewardVariantGroup,
+  ShippingCoverage,
+  ShippingRate,
+  ShippingRule,
+  ShippingZone,
   SupportTier,
   VideoSource,
 } from "@/features/campaigns/types";
@@ -123,14 +132,63 @@ export type DraftUseOfFunds = {
   amountInput: string;
 };
 
+/** A named group of countries as the wizard edits it. */
+export type DraftShippingZone = {
+  id: string;
+  name: string;
+  /** ISO 3166-1 alpha-2 codes, chosen from the shared country list. */
+  countries: readonly CountryCode[];
+};
+
+/**
+ * A rule's coverage as the wizard edits it.
+ *
+ * A country rule can be half-finished — the creator chose "one country" before
+ * choosing which — so the code is allowed to be empty here and is rejected by
+ * validation rather than by the type. Everything else about the coverage is a
+ * closed choice, because there is no other kind of destination.
+ */
+export type DraftShippingCoverage =
+  | { kind: "worldwide" }
+  | { kind: "origin" }
+  | { kind: "country"; country: CountryCode | "" }
+  | { kind: "zone"; zoneId: string };
+
+export type DraftShippingRateKind =
+  "free" | "flat" | "deferred" | "unavailable";
+
+/**
+ * One shipping rule as the wizard edits it.
+ *
+ * The price model and its amount are two fields rather than one union so that
+ * switching a rule from "flat rate" to "billed later" and back does not lose the
+ * number the creator typed. `amountInput` is raw for the same reason every other
+ * amount in this file is: the field has to show what was typed, including a
+ * value that is not yet valid.
+ */
+export type DraftShippingRule = {
+  id: string;
+  coverage: DraftShippingCoverage;
+  rateKind: DraftShippingRateKind;
+  amountInput: string;
+  /** Whether a flat rate is for the whole order or for each unit in it. */
+  basis: "order" | "unit";
+  /** The creator's own words for a deferred or refused destination. */
+  note: string;
+};
+
 /**
  * A reward as the wizard edits it.
  *
  * `imageInput` is held raw, like a media source, so an unfinished or invalid
- * address stays visible instead of being silently dropped. Destinations are held
- * as the creator's own lines rather than as a fixed list of countries: Inverge
- * has no shipping-rate service, so it must not imply it knows which countries
- * exist or what a parcel costs to reach them.
+ * address stays visible instead of being silently dropped. Destinations are
+ * structured — countries from the shared list, in rules the creator orders —
+ * because a destination that is not a real place is a parcel that does not
+ * arrive, and because the order of the rules is what makes an exclusion work.
+ *
+ * Variants and add-ons are carried rather than edited: the wizard has no control
+ * for creating them yet, so a published reward that has them must not lose them
+ * by round-tripping through an edit screen.
  */
 export type DraftSupportTier = {
   id: string;
@@ -142,10 +200,22 @@ export type DraftSupportTier = {
   /** What the reward sends. Empty until the creator chooses. */
   fulfilment: "" | RewardFulfilment;
   estimatedDelivery: string;
-  /** One destination per line; converted with `parseShippingRegions`. */
-  shippingRegionsInput: string;
+  /** What the backer gets, one per line; converted with `parseLines`. */
+  includesInput: string;
+  /** Blank means a single unit. Converted with `parseQuantityLimit`. */
+  quantityLimitInput: string;
+  /** Preserved from the campaign. Not editable in the wizard. */
+  variants: readonly RewardVariantGroup[];
+  /** Preserved from the campaign. Not editable in the wizard. */
+  addOns: readonly RewardAddOn[];
+  /** The country the creator posts from, or empty when they have not said. */
+  shippingOriginCountry: CountryCode | "";
+  shippingZones: DraftShippingZone[];
+  shippingRules: DraftShippingRule[];
   /** The creator's own fulfilment terms. Only meaningful for a physical part. */
   shippingTerms: string;
+  /** What the creator says about import duty, verbatim. Never a figure. */
+  shippingCustoms: string;
 };
 
 /**
@@ -228,41 +298,67 @@ export function createDraftMedia(
 
 export function createDraftTier(): DraftSupportTier {
   return {
+    addOns: [],
     description: "",
     estimatedDelivery: "",
     fulfilment: "",
     id: nextDraftId("tier"),
     imageInput: "",
+    includesInput: "",
     minimumInput: "",
-    shippingRegionsInput: "",
+    quantityLimitInput: "",
+    shippingCustoms: "",
+    shippingOriginCountry: "",
+    shippingRules: [],
     shippingTerms: "",
+    shippingZones: [],
     title: "",
+    variants: [],
+  };
+}
+
+export function createDraftShippingZone(): DraftShippingZone {
+  return { countries: [], id: nextDraftId("zone"), name: "" };
+}
+
+export function createDraftShippingRule(): DraftShippingRule {
+  return {
+    amountInput: "",
+    basis: "order",
+    coverage: { kind: "worldwide" },
+    id: nextDraftId("rule"),
+    note: "",
+    rateKind: "flat",
   };
 }
 
 /**
- * The creator's destination lines as the model holds them.
+ * The creator's own lines as the model holds them.
  *
- * One destination per line, blanks dropped, duplicates collapsed
- * case-insensitively (so "Nigeria" and "nigeria" are one destination). The order
- * is the creator's, because it is their list and not a taxonomy to normalise.
+ * One entry per line, blanks dropped. Used for what a backer receives, where the
+ * order and the wording are the creator's and there is nothing to normalise.
  */
-export function parseShippingRegions(input: string): string[] {
-  const seen = new Set<string>();
-  const regions: string[] = [];
+export function parseLines(input: string): string[] {
+  return input
+    .split("\n")
+    .map((line) => line.trim())
+    .filter((line) => line.length > 0);
+}
 
-  for (const line of input.split("\n")) {
-    const value = line.trim();
-    if (!value) continue;
+/**
+ * How many of a reward one backer may take, or null for the single-unit default.
+ *
+ * A blank field, and a field holding "1", both mean one — the creator who does
+ * not think about quantity is never blocked by a question they did not ask. A
+ * value that is not a whole number of at least one is null here and reported by
+ * the rewards step, so the model can never hold a limit the creator did not mean.
+ */
+export function parseQuantityLimit(input: string): number | null {
+  const trimmed = input.trim();
+  if (!/^\d+$/.test(trimmed)) return null;
 
-    const key = value.toLowerCase();
-    if (seen.has(key)) continue;
-
-    seen.add(key);
-    regions.push(value);
-  }
-
-  return regions;
+  const value = Number(trimmed);
+  return value >= 2 ? value : null;
 }
 
 export const emptyCampaignDraft: CampaignDraft = {
@@ -321,15 +417,38 @@ export function draftFromCampaign(campaign: Campaign): CampaignDraft {
         : formatBpsNumber(campaign.escrow.successFeeBps),
     summary: campaign.summary,
     supportTiers: campaign.supportTiers.map((tier) => ({
+      addOns: tier.addOns,
       description: tier.description,
       estimatedDelivery: tier.estimatedDelivery ?? "",
       fulfilment: tier.fulfilment ?? "",
       id: tier.id,
       imageInput: tier.image ?? "",
+      includesInput: tier.includes.join("\n"),
       minimumInput: wholeUnits(tier.minimum),
-      shippingRegionsInput: (tier.shipping?.regions ?? []).join("\n"),
+      quantityLimitInput:
+        tier.quantityLimit === null ? "" : String(tier.quantityLimit),
+      shippingCustoms: tier.shipping?.customs ?? "",
+      shippingOriginCountry: tier.shipping?.originCountry ?? "",
+      shippingRules: (tier.shipping?.rules ?? []).map((rule) => ({
+        amountInput:
+          rule.rate.kind === "flat" ? wholeUnits(rule.rate.amount) : "",
+        basis: rule.rate.kind === "flat" ? rule.rate.basis : "order",
+        coverage: rule.coverage,
+        id: rule.id,
+        note:
+          rule.rate.kind === "deferred" || rule.rate.kind === "unavailable"
+            ? (rule.rate.note ?? "")
+            : "",
+        rateKind: rule.rate.kind,
+      })),
       shippingTerms: tier.shipping?.terms ?? "",
+      shippingZones: (tier.shipping?.zones ?? []).map((zone) => ({
+        countries: [...zone.countries],
+        id: zone.id,
+        name: zone.name,
+      })),
       title: tier.title,
+      variants: tier.variants,
     })),
     targetInput: wholeUnits(campaign.funding.target),
     title: campaign.title,
@@ -435,7 +554,106 @@ export function toCampaignMedia(
 
 /** Whether a reward's fulfilment means something has to be shipped. */
 export function isPhysicalReward(fulfilment: "" | RewardFulfilment): boolean {
-  return fulfilment === "physical" || fulfilment === "mixed";
+  return hasPhysicalPart(fulfilment === "" ? null : fulfilment);
+}
+
+/** Whether a reward ships at all — itself, or because one of its add-ons does. */
+export function tierNeedsShipping(tier: DraftSupportTier): boolean {
+  return (
+    isPhysicalReward(tier.fulfilment) ||
+    tier.addOns.some((addOn) => addOn.affectsShipping)
+  );
+}
+
+/** The zones a draft tier keeps: a name and at least one country. */
+function draftZones(tier: DraftSupportTier): ShippingZone[] {
+  const zones: ShippingZone[] = [];
+
+  for (const zone of tier.shippingZones) {
+    const name = zone.name.trim();
+    if (!name || zone.countries.length === 0) continue;
+
+    zones.push({ countries: [...zone.countries], id: zone.id, name });
+  }
+
+  return zones;
+}
+
+function draftCoverage(
+  coverage: DraftShippingCoverage,
+  zoneIds: ReadonlySet<string>,
+): ShippingCoverage | null {
+  switch (coverage.kind) {
+    case "worldwide":
+      return { kind: "worldwide" };
+    case "origin":
+      return { kind: "origin" };
+    case "country":
+      return coverage.country === ""
+        ? null
+        : { country: coverage.country, kind: "country" };
+    case "zone":
+      // A rule pointing at a zone the draft no longer keeps is dropped rather
+      // than widened to everything.
+      return zoneIds.has(coverage.zoneId)
+        ? { kind: "zone", zoneId: coverage.zoneId }
+        : null;
+  }
+}
+
+function draftRate(rule: DraftShippingRule): ShippingRate | null {
+  switch (rule.rateKind) {
+    case "free":
+      return { kind: "free" };
+    case "flat": {
+      const atomic = parseUsdAmount(rule.amountInput);
+      return atomic === null
+        ? null
+        : {
+            amount: { atomic, currency: "USD", decimals: 2 },
+            basis: rule.basis,
+            kind: "flat",
+          };
+    }
+    case "deferred":
+      return { kind: "deferred", note: blankToNull(rule.note) };
+    case "unavailable":
+      return { kind: "unavailable", note: blankToNull(rule.note) };
+  }
+}
+
+/**
+ * The shipping policy a draft tier describes, or null when nothing is posted.
+ *
+ * Only rules that are complete survive: a half-filled rule is dropped here and
+ * reported by the rewards step, so the model never carries a destination with no
+ * meaning — but the creator still sees the row they need to finish.
+ */
+export function draftShipping(tier: DraftSupportTier): RewardShipping | null {
+  if (!tierNeedsShipping(tier)) return null;
+
+  const zones = draftZones(tier);
+  const zoneIds = new Set(zones.map((zone) => zone.id));
+  const rules: ShippingRule[] = [];
+
+  for (const rule of tier.shippingRules) {
+    const coverage = draftCoverage(rule.coverage, zoneIds);
+    if (!coverage) continue;
+
+    const rate = draftRate(rule);
+    if (!rate) continue;
+
+    rules.push({ coverage, id: rule.id, rate });
+  }
+
+  return {
+    customs: blankToNull(tier.shippingCustoms),
+    originCountry:
+      tier.shippingOriginCountry === "" ? null : tier.shippingOriginCountry,
+    rules,
+    terms: blankToNull(tier.shippingTerms),
+    zones,
+  };
 }
 
 /**
@@ -443,10 +661,11 @@ export function isPhysicalReward(fulfilment: "" | RewardFulfilment): boolean {
  *
  * A tier without a title or a readable amount is dropped rather than guessed at,
  * for the same reason an unusable media item is: this is the shape a submission
- * would carry. `shipping` is attached only for a reward that includes something
- * physical, so a digital tier can never render a shipping line. An image that
- * does not parse becomes `null` — the card draws its own mark rather than the
- * page pointing a browser at an address the creator mistyped.
+ * would carry. `shipping` is attached whenever something has to be posted, which
+ * includes an otherwise digital reward carrying a printed add-on, so the postage
+ * that add-on needs still has a policy. An image that does not parse becomes
+ * `null` — the card draws its own mark rather than the page pointing a browser
+ * at an address the creator mistyped.
  */
 export function toSupportTiers(
   tiers: readonly DraftSupportTier[],
@@ -461,19 +680,18 @@ export function toSupportTiers(
     const image = parseImageSource(tier.imageInput);
 
     result.push({
+      addOns: tier.addOns,
       description: tier.description.trim(),
       estimatedDelivery: blankToNull(tier.estimatedDelivery),
       fulfilment: tier.fulfilment === "" ? null : tier.fulfilment,
       id: tier.id,
       image: image.ok ? image.src : null,
+      includes: parseLines(tier.includesInput),
       minimum: { atomic, currency: "USD", decimals: 2 },
-      shipping: isPhysicalReward(tier.fulfilment)
-        ? {
-            regions: parseShippingRegions(tier.shippingRegionsInput),
-            terms: blankToNull(tier.shippingTerms),
-          }
-        : null,
+      quantityLimit: parseQuantityLimit(tier.quantityLimitInput),
+      shipping: draftShipping(tier),
       title,
+      variants: tier.variants,
     });
   }
 
@@ -539,6 +757,121 @@ export function draftWorkingCapitalFor(
 
   const bps = Math.min(requested, firstBps);
   return { amount: bpsOf(target, bps), bps };
+}
+
+/**
+ * What is wrong with a reward's shipping policy, one issue per broken row.
+ *
+ * The check that matters most is the ordering one. A creator who writes
+ * "Everywhere" and then adds "Brazil — we cannot ship here" has written a rule
+ * that can never apply. Silently accepting it is the exact failure this model
+ * exists to prevent: the destination would look excluded in the editor and be
+ * priced as included for the backer. So it is reported as an error, with the fix
+ * in the message.
+ */
+function shippingRuleIssues(
+  tier: DraftSupportTier,
+  base: string,
+  label: string,
+): DraftIssue[] {
+  const issues: DraftIssue[] = [];
+  const zoneIds = new Set(draftZones(tier).map((zone) => zone.id));
+
+  if (tier.shippingRules.length === 0) {
+    issues.push({
+      field: `${base}.shipping`,
+      message: `${label} ships, so it needs at least one destination rule.`,
+    });
+  }
+
+  tier.shippingZones.forEach((zone, index) => {
+    const position = index + 1;
+
+    if (!zone.name.trim()) {
+      issues.push({
+        field: `${base}.zones.${zone.id}`,
+        message: `Zone ${position} needs a name.`,
+      });
+    }
+
+    if (zone.countries.length === 0) {
+      issues.push({
+        field: `${base}.zones.${zone.id}`,
+        message: `Zone ${position} needs at least one country.`,
+      });
+    }
+  });
+
+  tier.shippingRules.forEach((rule, index) => {
+    const position = index + 1;
+    const field = `${base}.rules.${rule.id}`;
+
+    switch (rule.coverage.kind) {
+      case "country":
+        if (rule.coverage.country === "") {
+          issues.push({ field, message: `Rule ${position} needs a country.` });
+        }
+        break;
+      case "zone":
+        if (!zoneIds.has(rule.coverage.zoneId)) {
+          issues.push({
+            field,
+            message: `Rule ${position} points at a zone that no longer exists.`,
+          });
+        }
+        break;
+      case "origin":
+        if (tier.shippingOriginCountry === "") {
+          issues.push({
+            field,
+            message: `Rule ${position} covers your own country, so say which country you post from.`,
+          });
+        }
+        break;
+      case "worldwide":
+        break;
+    }
+
+    if (rule.rateKind === "flat" && parseUsdAmount(rule.amountInput) === null) {
+      issues.push({
+        field,
+        message: `Rule ${position} needs a flat rate, for example 8.00.`,
+      });
+    }
+
+    if (
+      tier.shippingRules
+        .slice(0, index)
+        .some((earlier) => earlier.coverage.kind === "worldwide")
+    ) {
+      issues.push({
+        field,
+        message: `Rule ${position} sits below a rule that covers everywhere, so it can never apply. Move it above that rule if it is an exception.`,
+      });
+    }
+  });
+
+  return issues;
+}
+
+/**
+ * A note for the creator about what their policy does not reach, or null when
+ * every destination is covered.
+ *
+ * Without a worldwide rule the policy covers some countries and not others, and
+ * a backer in an uncovered country cannot take the reward at all. The note says
+ * that plainly and does not enumerate the missing countries: Inverge only knows
+ * the destinations the creator named, and listing the rest would be pretending
+ * to a completeness it cannot check.
+ */
+export function shippingCoverageNote(tier: DraftSupportTier): string | null {
+  if (!tierNeedsShipping(tier)) return null;
+
+  const rules = draftShipping(tier)?.rules ?? [];
+  if (rules.length === 0) return null;
+  if (rules.some((rule) => rule.coverage.kind === "worldwide")) return null;
+
+  return "No rule covers everywhere, so a backer in a country you have not named cannot take this reward. Add an \u201cEverywhere\u201d rule to reach the rest of the world, and put any destinations you exclude above it.";
 }
 
 const REQUIRED = "This is required.";
@@ -828,14 +1161,26 @@ export function validateCampaignStep(
           });
         }
 
-        if (
-          isPhysicalReward(tier.fulfilment) &&
-          parseShippingRegions(tier.shippingRegionsInput).length === 0
-        ) {
+        const quantity = tier.quantityLimitInput.trim();
+        if (quantity && !/^\d+$/.test(quantity)) {
           issues.push({
-            field: `${base}.shipping`,
-            message: `${label} ships, so list at least one destination — one per line.`,
+            field: `${base}.quantity`,
+            message: `${label}'s quantity limit has to be a whole number.`,
           });
+        } else if (quantity && Number(quantity) < 1) {
+          issues.push({
+            field: `${base}.quantity`,
+            message: `${label}'s quantity limit has to be at least one.`,
+          });
+        } else if (quantity && Number(quantity) > 999) {
+          issues.push({
+            field: `${base}.quantity`,
+            message: `${label}'s quantity limit is too high. Keep it under 1000.`,
+          });
+        }
+
+        if (tierNeedsShipping(tier)) {
+          issues.push(...shippingRuleIssues(tier, base, label));
         }
       }
 

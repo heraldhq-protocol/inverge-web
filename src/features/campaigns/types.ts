@@ -282,20 +282,129 @@ export type CampaignFact = { label: string; value: string };
  */
 export type RewardFulfilment = "digital" | "physical" | "mixed";
 
+/** ISO 3166-1 alpha-2. Validated against `@/lib/countries`; never free text. */
+export type CountryCode = string;
+
+/**
+ * A creator-named group of countries — "West Africa", "the EU", "diaspora by
+ * post".
+ *
+ * Inverge ships no continent table of its own, so a region is only ever the
+ * creator's own definition of one. That is deliberate: a hand-maintained
+ * country-to-continent mapping is exactly the kind of dataset that quietly
+ * mis-classifies a country, and a mis-classified destination is a parcel that
+ * does not arrive.
+ */
+export type ShippingZone = {
+  id: string;
+  name: string;
+  countries: readonly CountryCode[];
+};
+
+/**
+ * What one shipping rule covers.
+ *
+ * `origin` is the creator's own country, which is why it is a member rather than
+ * a note: shipping inside Nigeria is a different price from shipping to Ghana,
+ * and the creator should not have to retype the country they are already in.
+ */
+export type ShippingCoverage =
+  | { kind: "worldwide" }
+  | { kind: "zone"; zoneId: string }
+  | { kind: "country"; country: CountryCode }
+  | { kind: "origin" };
+
+/**
+ * What a covered destination is charged for postage.
+ *
+ * Only `free` and `flat` carry a figure. `deferred` is the creator saying they
+ * will bill postage later — it is never used as a fallback because a rate failed
+ * to load. `unavailable` is how a creator excludes a destination, and `note` is
+ * where they say why, so the exclusion is explained rather than merely refused.
+ *
+ * `basis` exists because neither assumption is safe: some creators add postage
+ * per parcel and some absorb it into one shipment. It is the creator's
+ * declaration, never something inferred from a quantity.
+ */
+export type ShippingRate =
+  | { kind: "free" }
+  | { kind: "flat"; amount: MoneyAmount; basis: "order" | "unit" }
+  | { kind: "deferred"; note: string | null }
+  | { kind: "unavailable"; note: string | null };
+
+/**
+ * One row of a reward's shipping policy.
+ *
+ * Rules are evaluated in order and the first match wins, which is what makes an
+ * exclusion possible: a creator puts "Brazil — we cannot ship there" above a
+ * worldwide rule, and the worldwide rule can never silently override it.
+ */
+export type ShippingRule = {
+  id: string;
+  coverage: ShippingCoverage;
+  rate: ShippingRate;
+};
+
 /**
  * How a creator will send a physical reward.
  *
- * Creator-declared and display-only. Inverge neither quotes a shipping price nor
- * holds a carrier integration, so this carries the destinations a creator names
- * and their own terms — never an amount. An empty `regions` list means the
- * creator named no destination; the wizard refuses that for a physical reward,
- * and the UI renders whatever is here verbatim rather than guessing at a scope.
+ * Everything here is creator-declared. Inverge holds no carrier integration, so
+ * it never quotes a destination itself — it applies the policy the creator
+ * published, and a destination the policy does not cover is reported as not
+ * covered rather than priced with a guess.
+ *
+ * `customs` is a statement, never an amount. Inverge does not calculate duties
+ * and does not collect or remit them.
  */
 export type RewardShipping = {
-  /** The destinations the creator will send to, in their own words. */
-  regions: readonly string[];
+  /**
+   * The creator's own country, so a rule can say "inside my country" without the
+   * creator retyping it. Null when they have not said.
+   */
+  originCountry: CountryCode | null;
+  /** The named groups of countries a rule can cover. */
+  zones: readonly ShippingZone[];
+  /** The policy, in priority order. First match wins. */
+  rules: readonly ShippingRule[];
   /** The creator's own fulfilment terms, e.g. "posted from Lagos in April". */
   terms: string | null;
+  /** What the creator says about import duty, verbatim. Never a derived figure. */
+  customs: string | null;
+};
+
+/** One choice inside a variant group, e.g. "Amber" inside "Lantern colour". */
+export type RewardVariantOption = { id: string; label: string };
+
+/**
+ * A choice a backer must make before the reward can be sent, e.g. size or
+ * colour. A group exists only where the creator added one, and a group that
+ * exists must be chosen from: an unanswered variant is not a default we pick.
+ */
+export type RewardVariantGroup = {
+  id: string;
+  /** What is being chosen, e.g. "Size". */
+  label: string;
+  options: readonly RewardVariantOption[];
+};
+
+/**
+ * Something a backer can take on top of a reward.
+ *
+ * Add-ons belong to the reward rather than to the campaign because they are
+ * priced and shipped under that reward's own policy. `affectsShipping` is the
+ * creator saying whether taking one needs its own parcel; a digital add-on can
+ * never set it, so a download is never charged postage.
+ */
+export type RewardAddOn = {
+  id: string;
+  title: string;
+  description: string;
+  image: string | null;
+  price: MoneyAmount;
+  fulfilment: RewardFulfilment;
+  /** True only when this add-on needs postage of its own. */
+  affectsShipping: boolean;
+  estimatedDelivery: string | null;
 };
 
 /**
@@ -316,17 +425,34 @@ export type SupportTier = {
   title: string;
   minimum: MoneyAmount;
   description: string;
+  /** What the backer gets, one line each. Empty when the description says it all. */
+  includes: readonly string[];
   image: string | null;
   /** What the campaign sends, when the creator said. A reward is never equity. */
   fulfilment: RewardFulfilment | null;
   /** The creator's own estimate, e.g. "2 weeks after the funding deadline". */
   estimatedDelivery: string | null;
   /**
-   * Non-null only when the reward includes something physical — that is, when
-   * `fulfilment` is `physical` or `mixed`. A digital reward carries `null` so a
-   * shipping line can never appear where nothing ships.
+   * Non-null exactly when something has to be posted: the reward is `physical`
+   * or `mixed`, or one of its add-ons needs a parcel of its own. A reward with
+   * nothing physical carries `null`, so a shipping line can never appear where
+   * nothing ships — and a download with a printed add-on still gets the policy
+   * that add-on needs.
    */
   shipping: RewardShipping | null;
+  /**
+   * Choices the backer must make, e.g. size. Empty when there are none, and the
+   * backing flow then asks for no variant at all.
+   */
+  variants: readonly RewardVariantGroup[];
+  /** Extras that can be added to this reward. Empty hides the section entirely. */
+  addOns: readonly RewardAddOn[];
+  /**
+   * The most units one backer may take. Null or 1 means a single unit and the
+   * backing flow shows no quantity control, so a number is only ever the
+   * creator's own limit rather than one the platform invented.
+   */
+  quantityLimit: number | null;
 };
 
 /** A question the campaign answers itself. Authored upstream; shown verbatim. */

@@ -24,6 +24,7 @@ import { MediaImage } from "@/features/campaigns/components/media-image";
 import { PrototypeNotice } from "@/features/campaigns/components/prototype-notice";
 import { StepRail } from "@/features/campaigns/components/step-rail";
 import { WizardMediaList } from "@/features/campaigns/components/wizard-media-list";
+import { WizardShippingEditor } from "@/features/campaigns/components/wizard-shipping-editor";
 import {
   describeMediaCount,
   parseImageSource,
@@ -34,10 +35,9 @@ import {
   createDraftTier,
   draftTarget,
   draftUseOfFundsTotal,
-  isPhysicalReward,
   nextDraftId,
-  parseShippingRegions,
   submissionPreconditions,
+  tierNeedsShipping,
   toCampaignMedia,
   toSupportTiers,
   validateCampaignStep,
@@ -950,10 +950,7 @@ export function CampaignWizard({
                   <ul className="mt-2 space-y-3">
                     {draft.supportTiers.map((tier, index) => {
                       const preview = parseImageSource(tier.imageInput);
-                      const physical = isPhysicalReward(tier.fulfilment);
-                      const destinations = parseShippingRegions(
-                        tier.shippingRegionsInput,
-                      );
+                      const ships = tierNeedsShipping(tier);
 
                       return (
                         <li
@@ -1077,6 +1074,55 @@ export function CampaignWizard({
                             </Field>
                           </div>
 
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <Field
+                              label="Included items"
+                              help="Optional. One item per line, shown as a list on the reward card."
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Textarea
+                                  id={id}
+                                  rows={3}
+                                  placeholder={
+                                    "One per line\ne.g. signed field guide"
+                                  }
+                                  value={tier.includesInput}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      includesInput: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                            <Field
+                              label="Quantity limit"
+                              help="Optional. How many one backer may take. Blank means one: Inverge holds no stock count, so it never promises availability it cannot check."
+                              error={errorFor(
+                                `supportTiers.${tier.id}.quantity`,
+                              )}
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Input
+                                  id={id}
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  placeholder="1"
+                                  value={tier.quantityLimitInput}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      quantityLimitInput: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
                           <div className="mt-3">
                             <Field
                               label="Reward image link"
@@ -1155,79 +1201,39 @@ export function CampaignWizard({
                             </Field>
                           </div>
 
-                          {physical ? (
+                          {ships ? (
+                            <WizardShippingEditor
+                              base={`supportTiers.${tier.id}`}
+                              issues={issues}
+                              tier={tier}
+                              onChange={(changes) =>
+                                patchTier(tier.id, changes)
+                              }
+                            />
+                          ) : null}
+
+                          {tier.variants.length > 0 ||
+                          tier.addOns.length > 0 ? (
                             <div className="mt-3 rounded-xl border border-border bg-surface p-3.5">
-                              <p className="flex items-start gap-2 text-xs leading-5 text-muted">
-                                <HugeiconsIcon
-                                  icon={InformationCircleIcon}
-                                  size={14}
-                                  strokeWidth={1.9}
-                                  aria-hidden="true"
-                                  className="mt-0.5 shrink-0 text-brand-strong"
-                                />
-                                <span>
-                                  This reward ships, so name the places you will
-                                  send it. Inverge quotes no postage and holds
-                                  no carrier integration: your own wording is
-                                  published as-is, and nobody is charged a
-                                  shipping amount here.
-                                </span>
+                              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                                Carried from the published reward
                               </p>
-                              <div className="mt-3">
-                                <Field
-                                  label="Ships to"
-                                  help="One destination per line. Your own wording: a country, a set of countries, or “diaspora by post”."
-                                  error={errorFor(
-                                    `supportTiers.${tier.id}.shipping`,
-                                  )}
-                                >
-                                  {({ describedBy, id, invalid }) => (
-                                    <Textarea
-                                      id={id}
-                                      rows={3}
-                                      value={tier.shippingRegionsInput}
-                                      aria-describedby={
-                                        describedBy || undefined
-                                      }
-                                      aria-invalid={invalid || undefined}
-                                      onChange={(event) =>
-                                        patchTier(tier.id, {
-                                          shippingRegionsInput:
-                                            event.target.value,
-                                        })
-                                      }
-                                    />
-                                  )}
-                                </Field>
-                                <p className="mt-1.5 text-xs text-muted">
-                                  {destinations.length === 0
-                                    ? "No destinations yet."
-                                    : `${destinations.length} destination${destinations.length === 1 ? "" : "s"}: ${destinations.join(", ")}`}
-                                </p>
-                              </div>
-                              <div className="mt-3">
-                                <Field
-                                  label="Shipping terms"
-                                  help="Optional. How and when you post it, and anything a backer should know."
-                                >
-                                  {({ describedBy, id, invalid }) => (
-                                    <Input
-                                      id={id}
-                                      autoComplete="off"
-                                      value={tier.shippingTerms}
-                                      aria-describedby={
-                                        describedBy || undefined
-                                      }
-                                      aria-invalid={invalid || undefined}
-                                      onChange={(event) =>
-                                        patchTier(tier.id, {
-                                          shippingTerms: event.target.value,
-                                        })
-                                      }
-                                    />
-                                  )}
-                                </Field>
-                              </div>
+                              <p className="mt-1.5 text-xs leading-5 text-muted">
+                                {tier.variants.length > 0
+                                  ? `${tier.variants.length} variant group${tier.variants.length === 1 ? "" : "s"}`
+                                  : ""}
+                                {tier.variants.length > 0 &&
+                                tier.addOns.length > 0
+                                  ? " and "
+                                  : ""}
+                                {tier.addOns.length > 0
+                                  ? `${tier.addOns.length} add-on${tier.addOns.length === 1 ? "" : "s"}`
+                                  : ""}{" "}
+                                are kept as published. This build has no editor
+                                for creating them, and dropping what a backer
+                                was already offered would change the reward
+                                under them.
+                              </p>
                             </div>
                           ) : null}
                         </li>

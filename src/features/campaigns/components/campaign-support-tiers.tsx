@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import {
   ArrowRight01Icon,
   Award01Icon,
+  CheckmarkCircle02Icon,
   HeartHandshakeIcon,
   InformationCircleIcon,
 } from "@hugeicons/core-free-icons";
@@ -36,7 +37,7 @@ const DONATION_NOTE =
   "This campaign is donation-based. A contribution is a contribution to the work, not a purchase: there is no reward tier to select, and the creator's obligation is the published milestone plan.";
 
 const SHIPPING_NOTE =
-  "Shipping destinations and terms are declared by the creator. Inverge quotes no postage, and this build collects no delivery address.";
+  "Postage figures are the creator's own declared rates for the destinations they named; Inverge calculates none of them. This build collects no delivery address.";
 
 function RewardCard({
   accepting,
@@ -82,6 +83,26 @@ function RewardCard({
         <p className="mt-2 flex-1 text-sm leading-6 text-muted">
           {tier.description}
         </p>
+
+        {tier.includes.length > 0 ? (
+          <ul className="mt-3 space-y-1">
+            {tier.includes.map((item) => (
+              <li
+                className="flex items-start gap-1.5 text-xs leading-5 text-muted"
+                key={item}
+              >
+                <HugeiconsIcon
+                  icon={CheckmarkCircle02Icon}
+                  size={12}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                  className="mt-1 shrink-0 text-brand-strong"
+                />
+                <span>{item}</span>
+              </li>
+            ))}
+          </ul>
+        ) : null}
 
         <RewardFulfilmentLine className="mt-3" tier={tier} />
 

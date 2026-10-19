@@ -6,17 +6,26 @@ import {
   campaignWizardSteps,
   createDraftMedia,
   createDraftMilestone,
+  createDraftShippingRule,
+  createDraftShippingZone,
   createDraftTier,
   draftFromCampaign,
+  draftShipping,
   emptyCampaignDraft,
-  parseShippingRegions,
+  parseLines,
+  parseQuantityLimit,
+  shippingCoverageNote,
+  tierNeedsShipping,
   toCampaignMedia,
   toSupportTiers,
   validateCampaignStep,
   type CampaignDraft,
   type DraftMedia,
+  type DraftShippingRule,
+  type DraftShippingZone,
   type DraftSupportTier,
 } from "@/features/campaigns/lib/wizard";
+import type { RewardAddOn } from "@/features/campaigns/types";
 
 function draftWith(media: Partial<CampaignDraft>): CampaignDraft {
   return { ...emptyCampaignDraft, ...media };
@@ -322,20 +331,73 @@ function reward(overrides: Partial<DraftSupportTier> = {}): DraftSupportTier {
   return { ...createDraftTier(), ...overrides };
 }
 
+/** A flat rate of $8, ordered per parcel, covering everywhere unless overridden. */
+function flatRule(
+  overrides: Partial<DraftShippingRule> = {},
+): DraftShippingRule {
+  return {
+    ...createDraftShippingRule(),
+    amountInput: "8",
+    coverage: { kind: "worldwide" },
+    ...overrides,
+  };
+}
+
+function zone(overrides: Partial<DraftShippingZone> = {}): DraftShippingZone {
+  return {
+    ...createDraftShippingZone(),
+    countries: ["GH"],
+    name: "West Africa",
+    ...overrides,
+  };
+}
+
+const printedAddOn: RewardAddOn = {
+  affectsShipping: true,
+  description: "A printed booklet posted with the reward.",
+  estimatedDelivery: null,
+  fulfilment: "physical",
+  id: "printed-booklet",
+  image: null,
+  price: { atomic: "500", currency: "USD", decimals: 2 },
+  title: "Printed booklet",
+};
+
+/** A physical reward with a type, a price, and a name, ready for its rules. */
+function printedReward(
+  overrides: Partial<DraftSupportTier> = {},
+): DraftSupportTier {
+  return reward({
+    description: "A printed project report posted to you.",
+    fulfilment: "physical",
+    minimumInput: "20",
+    shippingOriginCountry: "NG",
+    title: "Printed report",
+    ...overrides,
+  });
+}
+
 describe("createDraftTier", () => {
   it("starts blank, with no type chosen, and gives every reward its own id", () => {
     const first = createDraftTier();
     const second = createDraftTier();
 
     expect(first).toMatchObject({
+      addOns: [],
       description: "",
       estimatedDelivery: "",
       fulfilment: "",
       imageInput: "",
+      includesInput: "",
       minimumInput: "",
-      shippingRegionsInput: "",
+      quantityLimitInput: "",
+      shippingCustoms: "",
+      shippingOriginCountry: "",
+      shippingRules: [],
       shippingTerms: "",
+      shippingZones: [],
       title: "",
+      variants: [],
     });
     expect(first.id).not.toBe(second.id);
   });
@@ -361,13 +423,8 @@ describe("validateCampaignStep for rewards", () => {
     expect(validateCampaignStep(draft, "rewards")).toEqual([]);
   });
 
-  it("requires a destination for a physical reward, and accepts one once given", () => {
-    const printed = reward({
-      description: "A printed project report posted to you.",
-      fulfilment: "physical",
-      minimumInput: "20",
-      title: "Printed report",
-    });
+  it("requires a destination rule for a physical reward, and accepts one once given", () => {
+    const printed = printedReward();
 
     const missing = validateCampaignStep(
       draftWith({ supportTiers: [printed] }),
@@ -376,16 +433,97 @@ describe("validateCampaignStep for rewards", () => {
 
     expect(missing).toHaveLength(1);
     expect(missing[0]?.field).toBe(`supportTiers.${printed.id}.shipping`);
-    expect(missing[0]?.message).toContain("one per line");
+    expect(missing[0]?.message).toContain("at least one destination rule");
 
     const complete = validateCampaignStep(
       draftWith({
-        supportTiers: [{ ...printed, shippingRegionsInput: "Nigeria\nGhana" }],
+        supportTiers: [
+          {
+            ...printed,
+            shippingRules: [flatRule({ coverage: { kind: "origin" } })],
+          },
+        ],
       }),
       "rewards",
     );
 
     expect(complete).toEqual([]);
+  });
+
+  it("accepts a quantity limit that is a whole number of two or more", () => {
+    expect(
+      validateCampaignStep(
+        draftWith({
+          supportTiers: [
+            reward({
+              description: "A thank-you message.",
+              fulfilment: "digital",
+              minimumInput: "10",
+              quantityLimitInput: "4",
+              title: "Supporter",
+            }),
+          ],
+        }),
+        "rewards",
+      ),
+    ).toEqual([]);
+  });
+
+  it("accepts a blank quantity limit, and treats a stated one as a single unit", () => {
+    expect(
+      validateCampaignStep(
+        draftWith({
+          supportTiers: [
+            reward({
+              description: "A thank-you message.",
+              fulfilment: "digital",
+              minimumInput: "10",
+              quantityLimitInput: "1",
+              title: "Supporter",
+            }),
+          ],
+        }),
+        "rewards",
+      ),
+    ).toEqual([]);
+  });
+
+  it("reports a quantity limit that is not a whole number under its own field", () => {
+    const tier = reward({
+      description: "A thank-you message.",
+      fulfilment: "digital",
+      minimumInput: "10",
+      quantityLimitInput: "2.5",
+      title: "Supporter",
+    });
+
+    const issues = validateCampaignStep(
+      draftWith({ supportTiers: [tier] }),
+      "rewards",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.field).toBe(`supportTiers.${tier.id}.quantity`);
+  });
+
+  it("reports an implausible quantity limit rather than publishing it", () => {
+    const issues = validateCampaignStep(
+      draftWith({
+        supportTiers: [
+          reward({
+            description: "A thank-you message.",
+            fulfilment: "digital",
+            minimumInput: "10",
+            quantityLimitInput: "1000",
+            title: "Supporter",
+          }),
+        ],
+      }),
+      "rewards",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("under 1000");
   });
 
   it("requires a destination for a mixed reward too, because part of it ships", () => {
@@ -443,43 +581,326 @@ describe("validateCampaignStep for rewards", () => {
   });
 });
 
-describe("parseShippingRegions", () => {
-  it("keeps the creator's order, drops blanks and collapses duplicates", () => {
-    expect(
-      parseShippingRegions("Nigeria\n\n  Ghana  \nnigeria\nKenya\n"),
-    ).toEqual(["Nigeria", "Ghana", "Kenya"]);
+describe("parseQuantityLimit", () => {
+  it("treats a blank field, and a stated one, as the single-unit default", () => {
+    expect(parseQuantityLimit("")).toBeNull();
+    expect(parseQuantityLimit("   ")).toBeNull();
+    expect(parseQuantityLimit("1")).toBeNull();
+  });
+
+  it("reads a whole number of two or more, ignoring surrounding space", () => {
+    expect(parseQuantityLimit(" 4 ")).toBe(4);
+  });
+
+  it("refuses anything that is not a whole number of at least one", () => {
+    expect(parseQuantityLimit("0")).toBeNull();
+    expect(parseQuantityLimit("-3")).toBeNull();
+    expect(parseQuantityLimit("2.5")).toBeNull();
+    expect(parseQuantityLimit("many")).toBeNull();
+  });
+});
+
+describe("parseLines", () => {
+  it("keeps the creator's order, drops blanks, and trims each line", () => {
+    expect(parseLines("One\n\n  Two  \nThree\n")).toEqual([
+      "One",
+      "Two",
+      "Three",
+    ]);
   });
 
   it("returns nothing for blank input", () => {
-    expect(parseShippingRegions("   \n  \n")).toEqual([]);
+    expect(parseLines("   \n  \n")).toEqual([]);
+  });
+});
+
+describe("tierNeedsShipping", () => {
+  it("is false for a digital reward with nothing posted", () => {
+    expect(tierNeedsShipping(reward({ fulfilment: "digital" }))).toBe(false);
+  });
+
+  it("is false before the creator has chosen a type", () => {
+    expect(tierNeedsShipping(reward())).toBe(false);
+  });
+
+  it("is true for a physical reward", () => {
+    expect(tierNeedsShipping(reward({ fulfilment: "physical" }))).toBe(true);
+  });
+
+  it("is true for a digital reward carrying a printed add-on, which still posts", () => {
+    expect(
+      tierNeedsShipping(
+        reward({ addOns: [printedAddOn], fulfilment: "digital" }),
+      ),
+    ).toBe(true);
+  });
+});
+
+describe("draftShipping", () => {
+  it("stays null when nothing has to be posted, whatever rules were typed", () => {
+    expect(
+      draftShipping(
+        reward({ fulfilment: "digital", shippingRules: [flatRule()] }),
+      ),
+    ).toBeNull();
+  });
+
+  it("drops a half-filled rule rather than publishing a destination with no meaning", () => {
+    const shipping = draftShipping(
+      printedReward({
+        shippingRules: [
+          flatRule({ amountInput: "" }),
+          flatRule({ coverage: { country: "", kind: "country" } }),
+          flatRule({ coverage: { kind: "worldwide" } }),
+        ],
+      }),
+    );
+
+    expect(shipping?.rules).toHaveLength(1);
+    expect(shipping?.rules[0]?.coverage).toEqual({ kind: "worldwide" });
+  });
+
+  it("drops a rule pointing at a zone the draft no longer keeps", () => {
+    const shipping = draftShipping(
+      printedReward({
+        shippingRules: [
+          flatRule({ coverage: { kind: "zone", zoneId: "deleted" } }),
+        ],
+      }),
+    );
+
+    expect(shipping?.rules).toEqual([]);
+  });
+
+  it("keeps a zone with its members, and a refusal with the creator's reason", () => {
+    const westAfrica = zone();
+    const shipping = draftShipping(
+      printedReward({
+        shippingCustoms: "Duty is the recipient's to pay.",
+        shippingRules: [
+          flatRule({
+            coverage: { kind: "zone", zoneId: westAfrica.id },
+          }),
+          flatRule({
+            coverage: { country: "BR", kind: "country" },
+            note: "Two parcels were returned.",
+            rateKind: "unavailable",
+          }),
+        ],
+        shippingTerms: "Posted from Lagos.",
+        shippingZones: [westAfrica],
+      }),
+    );
+
+    expect(shipping).toMatchObject({
+      customs: "Duty is the recipient's to pay.",
+      originCountry: "NG",
+      terms: "Posted from Lagos.",
+      zones: [{ countries: ["GH"], id: westAfrica.id, name: "West Africa" }],
+    });
+    expect(shipping?.rules).toHaveLength(2);
+    expect(shipping?.rules[1]?.rate).toEqual({
+      kind: "unavailable",
+      note: "Two parcels were returned.",
+    });
+  });
+});
+
+describe("validateCampaignStep for shipping rules", () => {
+  function withRules(...rules: DraftShippingRule[]): CampaignDraft {
+    return draftWith({
+      supportTiers: [printedReward({ shippingRules: rules })],
+    });
+  }
+
+  it("accepts an exclusion written above a rule that covers everywhere", () => {
+    const exclusion = flatRule({
+      coverage: { country: "BR", kind: "country" },
+      rateKind: "unavailable",
+    });
+
+    expect(
+      validateCampaignStep(withRules(exclusion, flatRule()), "rewards"),
+    ).toEqual([]);
+  });
+
+  it("reports a rule below 'everywhere', because nothing can reach it", () => {
+    const exclusion = flatRule({
+      coverage: { country: "BR", kind: "country" },
+      rateKind: "unavailable",
+    });
+    const draft = withRules(flatRule(), exclusion);
+    const issues = validateCampaignStep(draft, "rewards");
+    const tierId = draft.supportTiers[0]?.id ?? "";
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.field).toBe(
+      `supportTiers.${tierId}.rules.${exclusion.id}`,
+    );
+    expect(issues[0]?.message).toContain("can never apply");
+  });
+
+  it("reports a custom zone with no name, under that zone", () => {
+    const unnamed = zone({ name: "" });
+    const draft = draftWith({
+      supportTiers: [
+        printedReward({
+          shippingRules: [flatRule()],
+          shippingZones: [unnamed],
+        }),
+      ],
+    });
+    const issues = validateCampaignStep(draft, "rewards");
+    const tierId = draft.supportTiers[0]?.id ?? "";
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.field).toBe(`supportTiers.${tierId}.zones.${unnamed.id}`);
+    expect(issues[0]?.message).toContain("needs a name");
+  });
+
+  it("reports a custom zone with no countries in it", () => {
+    const empty = zone({ countries: [] });
+    const draft = draftWith({
+      supportTiers: [
+        printedReward({
+          shippingRules: [flatRule()],
+          shippingZones: [empty],
+        }),
+      ],
+    });
+    const issues = validateCampaignStep(draft, "rewards");
+
+    expect(issues[0]?.message).toContain("at least one country");
+  });
+
+  it("reports a rule with no flat rate", () => {
+    const draft = withRules(flatRule({ amountInput: "" }));
+    const issues = validateCampaignStep(draft, "rewards");
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("flat rate");
+  });
+
+  it("reports a rule covering the creator's own country when they have not said where that is", () => {
+    const draft = draftWith({
+      supportTiers: [
+        printedReward({
+          shippingOriginCountry: "",
+          shippingRules: [flatRule({ coverage: { kind: "origin" } })],
+        }),
+      ],
+    });
+
+    const issues = validateCampaignStep(draft, "rewards");
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("say which country you post from");
+  });
+});
+
+describe("shippingCoverageNote", () => {
+  it("says nothing about a reward that does not post", () => {
+    expect(shippingCoverageNote(reward({ fulfilment: "digital" }))).toBeNull();
+  });
+
+  it("says nothing while the creator has not written a rule yet", () => {
+    expect(shippingCoverageNote(printedReward())).toBeNull();
+  });
+
+  it("warns when no rule reaches the rest of the world, without listing what is missing", () => {
+    const note = shippingCoverageNote(
+      printedReward({
+        shippingRules: [
+          flatRule({ coverage: { country: "GH", kind: "country" } }),
+        ],
+      }),
+    );
+
+    expect(note).toContain("No rule covers everywhere");
+  });
+
+  it("says nothing once a rule covers everywhere", () => {
+    expect(
+      shippingCoverageNote(printedReward({ shippingRules: [flatRule()] })),
+    ).toBeNull();
   });
 });
 
 describe("toSupportTiers", () => {
   it("attaches shipping only when the reward includes something physical", () => {
+    const westAfrica = zone();
     const [digital, mixed] = toSupportTiers([
       reward({
         description: "A download.",
         fulfilment: "digital",
         minimumInput: "10",
-        shippingRegionsInput: "Nigeria",
+        shippingRules: [flatRule()],
         title: "Download",
       }),
       reward({
         description: "A download and a posted poster.",
         fulfilment: "mixed",
         minimumInput: "35",
-        shippingRegionsInput: "Nigeria\nGhana",
+        shippingCustoms: "Duty is the recipient's to pay.",
+        shippingOriginCountry: "NG",
+        shippingRules: [
+          flatRule({ coverage: { kind: "zone", zoneId: westAfrica.id } }),
+        ],
         shippingTerms: "Posted from Lagos after the handover milestone.",
+        shippingZones: [westAfrica],
         title: "Poster and download",
       }),
     ]);
 
     expect(digital?.shipping).toBeNull();
     expect(mixed?.shipping).toEqual({
-      regions: ["Nigeria", "Ghana"],
+      customs: "Duty is the recipient's to pay.",
+      originCountry: "NG",
+      rules: [
+        {
+          coverage: { kind: "zone", zoneId: westAfrica.id },
+          id: expect.any(String),
+          rate: {
+            amount: { atomic: "800", currency: "USD", decimals: 2 },
+            basis: "order",
+            kind: "flat",
+          },
+        },
+      ],
       terms: "Posted from Lagos after the handover milestone.",
+      zones: [{ countries: ["GH"], id: westAfrica.id, name: "West Africa" }],
     });
+  });
+
+  it("attaches shipping to an otherwise digital reward whose extra item posts", () => {
+    const [tier] = toSupportTiers([
+      reward({
+        addOns: [printedAddOn],
+        description: "A download, with a printed booklet as an extra.",
+        fulfilment: "digital",
+        minimumInput: "10",
+        shippingRules: [flatRule()],
+        title: "Download and booklet",
+      }),
+    ]);
+
+    expect(tier?.shipping?.rules).toHaveLength(1);
+  });
+
+  it("carries the creator's own includes and quantity limit through", () => {
+    const [tier] = toSupportTiers([
+      reward({
+        description: "A printed report.",
+        fulfilment: "digital",
+        includesInput: "A signed cover\n\n  A site photograph  \n",
+        minimumInput: "20",
+        quantityLimitInput: "3",
+        title: "Report",
+      }),
+    ]);
+
+    expect(tier?.includes).toEqual(["A signed cover", "A site photograph"]);
+    expect(tier?.quantityLimit).toBe(3);
   });
 
   it("nulls an unusable image rather than pointing the page at it", () => {

@@ -14,9 +14,17 @@ import type { Campaign } from "@/features/campaigns/types";
  */
 export function CampaignBackPage({
   campaign,
+  initialCountry = "",
   initialTierId = null,
 }: {
   campaign: Campaign;
+  /**
+   * A destination handed over from the campaign page or a shared link, when the
+   * backer already said where they are. Only used when it is a real country
+   * code, so a hand-edited query string cannot preset a destination the country
+   * list does not contain.
+   */
+  initialCountry?: string;
   /**
    * A reward tier chosen on the campaign page, when the backer picked one. Only
    * used when it matches a tier this campaign actually publishes.
@@ -57,6 +65,7 @@ export function CampaignBackPage({
         <div className="mt-6">
           <ContributionPreview
             campaign={campaign}
+            initialCountry={initialCountry}
             initialTierId={initialTierId}
           />
         </div>

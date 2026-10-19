@@ -37,13 +37,14 @@ export default async function CampaignBackRoute({
   searchParams,
 }: PageProps) {
   const { slug } = await params;
-  const { tier } = await searchParams;
+  const { country, tier } = await searchParams;
   const view = getCampaignDetailView(slug);
   if (!view) notFound();
 
   return (
     <CampaignBackPage
       campaign={view.campaign}
+      initialCountry={typeof country === "string" ? country : ""}
       initialTierId={typeof tier === "string" ? tier : null}
     />
   );

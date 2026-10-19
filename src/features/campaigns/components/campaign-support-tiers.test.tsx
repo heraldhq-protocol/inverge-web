@@ -14,23 +14,78 @@ function campaignById(id: string): Campaign {
 }
 
 describe("CampaignSupportTiers catalogue", () => {
-  it("shows the creator's destinations on a posted reward and none on a digital one", () => {
+  it("names each posted reward's destinations and the creator's own rate for them", () => {
     render(
       <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
     );
 
     expect(
-      screen.getAllByText(/Ships to Nigeria, Ghana, Kenya/).length,
+      screen.getAllByText(/Ships to: Inside Nigeria — \$8 per order/).length,
     ).toBeGreaterThan(0);
-    expect(screen.getAllByText("Digital").length).toBeGreaterThan(0);
+    expect(
+      screen.getAllByText(/Ships to: Nigeria — free/).length,
+    ).toBeGreaterThan(0);
   });
 
-  it("says it quotes no postage once any reward ships", () => {
+  it("shows no shipping line at all on a reward that posts nothing", () => {
     render(
       <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
     );
 
-    expect(screen.getByText(/quotes no postage/)).toBeInTheDocument();
+    // Two of the four rewards are posted; the two digital ones carry no
+    // destination, no rate, and no postal wording.
+    expect(screen.getAllByText(/Ships to:/)).toHaveLength(2);
+  });
+
+  it("shows what each reward includes, and what it still asks the backer to choose", () => {
+    render(
+      <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
+    );
+
+    expect(
+      screen.getByText(/A printed assembly and care card/),
+    ).toBeInTheDocument();
+    expect(screen.getAllByText(/3 add-ons available/).length).toBeGreaterThan(
+      0,
+    );
+    expect(screen.getAllByText(/Up to 4 per backer/).length).toBeGreaterThan(0);
+  });
+
+  it("shows the creator's own reward artwork where they supplied it", () => {
+    render(
+      <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
+    );
+
+    expect(
+      screen.getAllByRole("img", { name: "Lantern kit reward" }).length,
+    ).toBeGreaterThan(0);
+  });
+
+  it("attributes every postage figure to the creator rather than to Inverge", () => {
+    render(
+      <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
+    );
+
+    expect(
+      screen.getByText(/Postage figures are the creator's own declared rates/),
+    ).toBeInTheDocument();
+  });
+
+  it("links each reward into the backing flow with that reward chosen", () => {
+    render(
+      <CampaignSupportTiers campaign={campaignById("campaign-sungrid")} />,
+    );
+
+    expect(
+      screen
+        .getAllByRole("link", {
+          name: /Select the Lantern kit reward when backing/,
+        })
+        .at(0),
+    ).toHaveAttribute(
+      "href",
+      "/campaigns/sungrid-community-power/back?tier=sungrid-tier-lantern",
+    );
   });
 
   it("describes a donation-based campaign as having no reward to select", () => {
@@ -44,6 +99,7 @@ describe("CampaignSupportTiers catalogue", () => {
       screen.getByRole("heading", { name: "Donation-based" }),
     ).toBeInTheDocument();
     expect(screen.queryByText("Physical")).toBeNull();
+    expect(screen.queryByText(/Ships to:/)).toBeNull();
   });
 });
 
@@ -57,7 +113,7 @@ describe("CampaignSupportTiers rail", () => {
     );
 
     expect(
-      screen.getAllByText(/Ships to Nigeria, Ghana, Kenya/).length,
+      screen.getAllByText(/Ships to: Inside Nigeria — \$8 per order/).length,
     ).toBeGreaterThan(0);
     expect(
       screen.getByRole("heading", { name: "Optional rewards" }),
