@@ -96,55 +96,62 @@ export function CampaignTabs({
 
   return (
     <div>
-      <div
-        aria-label="Campaign sections"
-        className="sticky top-20 z-30 border-b border-border bg-canvas"
-        role="tablist"
-        onKeyDown={onKeyDown}
-      >
-        <div className="flex items-center gap-1 overflow-x-auto py-2.5">
-          {panels.map((panel, index) => {
-            const isActive = index === selectedIndex;
+      {/* The scroll container is this outer strip and the row inside it is
+          `min-w-max`, so the pills keep their natural width and the bar scrolls
+          instead of squeezing the labels or stretching the page. The scrollbar
+          is hidden because a visible one inside a sticky bar changes the bar's
+          height; the pills stay reachable by swipe, by Tab, and by arrow key. */}
+      <div className="sticky top-20 z-30 overflow-x-clip border-b border-border bg-canvas">
+        <div
+          aria-label="Campaign sections"
+          className="w-full min-w-0 overflow-x-auto overscroll-x-contain py-2.5 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          role="tablist"
+          onKeyDown={onKeyDown}
+        >
+          <div className="flex min-w-max items-center gap-1">
+            {panels.map((panel, index) => {
+              const isActive = index === selectedIndex;
 
-            return (
-              <a
-                key={panel.tab.id}
-                aria-controls={`panel-${panel.tab.id}`}
-                aria-selected={isActive}
-                className={`inline-flex min-h-8 items-center whitespace-nowrap rounded-full px-3 text-xs md:text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none ${
-                  isActive
-                    ? "bg-brand/10 font-semibold text-brand-strong"
-                    : "font-medium text-muted hover:bg-canvas hover:text-ink"
-                }`}
-                href={campaignTabHref(slug, panel.tab.id)}
-                id={`tab-${panel.tab.id}`}
-                onClick={(event) => {
-                  // Let the browser handle a new-tab or new-window click.
-                  if (
-                    event.defaultPrevented ||
-                    event.button !== 0 ||
-                    event.metaKey ||
-                    event.ctrlKey ||
-                    event.shiftKey ||
-                    event.altKey
-                  ) {
-                    return;
-                  }
+              return (
+                <a
+                  key={panel.tab.id}
+                  aria-controls={`panel-${panel.tab.id}`}
+                  aria-selected={isActive}
+                  className={`inline-flex min-h-8 items-center whitespace-nowrap rounded-full px-3 text-xs md:text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:transition-none ${
+                    isActive
+                      ? "bg-brand/10 font-semibold text-brand-strong"
+                      : "font-medium text-muted hover:bg-canvas hover:text-ink"
+                  }`}
+                  href={campaignTabHref(slug, panel.tab.id)}
+                  id={`tab-${panel.tab.id}`}
+                  onClick={(event) => {
+                    // Let the browser handle a new-tab or new-window click.
+                    if (
+                      event.defaultPrevented ||
+                      event.button !== 0 ||
+                      event.metaKey ||
+                      event.ctrlKey ||
+                      event.shiftKey ||
+                      event.altKey
+                    ) {
+                      return;
+                    }
 
-                  event.preventDefault();
-                  select(index, false);
-                }}
-                ref={(node) => {
-                  if (node) tabRefs.current.set(panel.tab.id, node);
-                  else tabRefs.current.delete(panel.tab.id);
-                }}
-                role="tab"
-                tabIndex={isActive ? 0 : -1}
-              >
-                {panel.tab.label}
-              </a>
-            );
-          })}
+                    event.preventDefault();
+                    select(index, false);
+                  }}
+                  ref={(node) => {
+                    if (node) tabRefs.current.set(panel.tab.id, node);
+                    else tabRefs.current.delete(panel.tab.id);
+                  }}
+                  role="tab"
+                  tabIndex={isActive ? 0 : -1}
+                >
+                  {panel.tab.label}
+                </a>
+              );
+            })}
+          </div>
         </div>
       </div>
 
