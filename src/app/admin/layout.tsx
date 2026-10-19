@@ -1,12 +1,15 @@
 import type { Metadata } from "next";
 
-import { AdminAccessDenied, AdminShell } from "@/features/programmes/components/admin-shell";
+import {
+  AdminAccessDenied,
+  AdminShell,
+} from "@/features/programmes/components/admin-shell";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
 
 export const metadata: Metadata = {
-  title: "Programme administration",
+  title: "Admin workspace",
   description:
-    "Create, schedule, and run Inverge ideathons, sponsor challenges, showcases, and workshops.",
+    "Review campaigns, run ideathons, sponsor challenges, showcases, and workshops, and audit privileged actions.",
   robots: { follow: false, index: false },
 };
 

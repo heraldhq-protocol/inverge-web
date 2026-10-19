@@ -5,6 +5,8 @@ import type { IconSvgElement } from "@hugeicons/react";
 import {
   Analytics01Icon,
   ArrowLeft02Icon,
+  CheckListIcon,
+  Home01Icon,
   Invoice01Icon,
   Note01Icon,
   TrophyIcon,
@@ -12,13 +14,17 @@ import {
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-const items: readonly { href: string; icon: IconSvgElement; label: string }[] = [
-  { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
-  { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
-  { href: "/admin/audit", icon: Note01Icon, label: "Audit log" },
-];
+const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
+  [
+    { href: "/admin", icon: Home01Icon, label: "Overview" },
+    { href: "/admin/campaigns", icon: CheckListIcon, label: "Campaign review" },
+    { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
+    { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
+    { href: "/admin/audit", icon: Note01Icon, label: "Audit log" },
+  ];
 
 function current(pathname: string, href: string): boolean {
+  if (href === "/admin") return pathname === "/admin";
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -76,7 +82,12 @@ export function AdminMobileNavigation() {
                 : "text-muted hover:bg-canvas hover:text-ink"
             }`}
           >
-            <HugeiconsIcon icon={icon} size={15} strokeWidth={1.9} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={icon}
+              size={15}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
             {label}
           </Link>
         );
@@ -91,7 +102,12 @@ export function AdminBackLink() {
       href="/d"
       className="inline-flex min-h-10 items-center gap-1.5 rounded-lg px-2 text-xs font-medium text-white/60 transition-colors hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
-      <HugeiconsIcon icon={ArrowLeft02Icon} size={14} strokeWidth={1.9} aria-hidden="true" />
+      <HugeiconsIcon
+        icon={ArrowLeft02Icon}
+        size={14}
+        strokeWidth={1.9}
+        aria-hidden="true"
+      />
       Back to product
     </Link>
   );
@@ -100,7 +116,12 @@ export function AdminBackLink() {
 export function AdminAnalyticsMark() {
   return (
     <span className="grid size-9 place-items-center rounded-xl bg-white/10 text-brand">
-      <HugeiconsIcon icon={Analytics01Icon} size={18} strokeWidth={1.8} aria-hidden="true" />
+      <HugeiconsIcon
+        icon={Analytics01Icon}
+        size={18}
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
     </span>
   );
 }

@@ -1,3 +1,5 @@
+import type { AdminPermission, AdminRole } from "@/features/admin/permissions";
+import { ROLE_PERMISSIONS } from "@/features/admin/permissions";
 import type { MoneyAmount } from "@/lib/money";
 
 /**
@@ -36,7 +38,8 @@ export type ProgrammeModuleKey =
   | "community_followup";
 
 /** What a module can honestly claim about itself today. */
-export type ModuleAvailability = "available" | "preview" | "coming_soon" | "plan";
+export type ModuleAvailability =
+  "available" | "preview" | "coming_soon" | "plan";
 
 export type ProgrammeModule = {
   key: ProgrammeModuleKey;
@@ -106,12 +109,7 @@ export type Reward = {
 };
 
 export type SponsorInvoiceStatus =
-  | "draft"
-  | "issued"
-  | "pending"
-  | "paid"
-  | "overdue"
-  | "cancelled";
+  "draft" | "issued" | "pending" | "paid" | "overdue" | "cancelled";
 
 export type Sponsor = {
   id: string;
@@ -160,7 +158,8 @@ export type JudgingRubric = {
   resultsVisibility: "private" | "participants" | "public";
 };
 
-export type RegistrationStatus = "pending" | "eligible" | "rejected" | "withdrawn";
+export type RegistrationStatus =
+  "pending" | "eligible" | "rejected" | "withdrawn";
 
 export type Registration = {
   id: string;
@@ -285,45 +284,24 @@ export type Programme = {
 
 export type ProgrammeSummary = Pick<
   Programme,
-  "id" | "slug" | "type" | "status" | "title" | "category" | "organiser" | "updatedAt"
+  | "id"
+  | "slug"
+  | "type"
+  | "status"
+  | "title"
+  | "category"
+  | "organiser"
+  | "updatedAt"
 >;
 
-/** Admin permission matrix. Enforced by the API; mirrored here for clarity. */
-export type ProgrammeRole = "platform_admin" | "organiser" | "judge";
+/**
+ * Admin permission matrix. Enforced by the API; mirrored here for clarity.
+ *
+ * ProgrammeRole and ProgrammePermission remain aliases for the shared admin
+ * vocabulary so existing imports keep working while new admin surfaces use the
+ * feature-level names.
+ */
+export type ProgrammeRole = AdminRole;
+export type ProgrammePermission = AdminPermission;
 
-export type ProgrammePermission =
-  | "programme:create"
-  | "programme:edit"
-  | "programme:publish"
-  | "programme:archive"
-  | "submission:moderate"
-  | "judging:score"
-  | "results:publish"
-  | "rewards:fulfil"
-  | "sponsors:manage"
-  | "payments:confirm"
-  | "settings:manage";
-
-export const ROLE_PERMISSIONS: Readonly<Record<ProgrammeRole, readonly ProgrammePermission[]>> = {
-  platform_admin: [
-    "programme:create",
-    "programme:edit",
-    "programme:publish",
-    "programme:archive",
-    "submission:moderate",
-    "judging:score",
-    "results:publish",
-    "rewards:fulfil",
-    "sponsors:manage",
-    "payments:confirm",
-    "settings:manage",
-  ],
-  organiser: [
-    "programme:edit",
-    "programme:publish",
-    "submission:moderate",
-    "rewards:fulfil",
-    "sponsors:manage",
-  ],
-  judge: ["judging:score"],
-};
+export { ROLE_PERMISSIONS };
