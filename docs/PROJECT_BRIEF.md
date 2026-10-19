@@ -104,16 +104,27 @@ authorizing protected operations, notification read state, account changes, and
 deletion requests.
 
 The campaign experience is the second slice (D-018): public discovery and
-category pages, one campaign detail route with anchor sections, a contribution
-preview, backer history and receipts, the milestone accountability view, and the
-creator's campaign workspace and wizard. It reads the same preview fixtures
-through `src/features/campaigns/server/`, so no campaign figure, milestone
-release, transaction reference, or moderation state shown there is live. Two
-creator-facing steps are deliberately blocked rather than faked: a campaign
-cannot be submitted until identity verification and the application fee exist,
-and the fiat on-ramp waits for a live provider quote. Campaign amounts are USDC
-at a 1:1 label, every share is integer basis points, and escrow terms are read
-from the campaign's own published terms rather than from a platform constant.
+category pages, one tabbed campaign detail route (`?tab=`, D-021), a
+multi-step contribution preview, backer history and receipts, the milestone
+accountability view, and the creator's campaign workspace and wizard. It reads
+the same preview fixtures through `src/features/campaigns/server/`, so no
+campaign figure, milestone release, transaction reference, or moderation state
+shown there is live. Two creator-facing steps are deliberately blocked rather
+than faked: a campaign cannot be submitted until identity verification and the
+application fee exist, and the fiat on-ramp waits for a live provider quote.
+Campaign amounts are USDC at a 1:1 label, every share is integer basis points,
+and escrow terms are read from the campaign's own published terms rather than
+from a platform constant.
+
+The contribution flow stops where the payment provider would begin (D-025). Its
+final action opens a labelled "payment is not connected in this build" panel that
+shows the assembled quote and the states a real handoff would display; no
+success, receipt, or transaction reference is produced. The quote states that
+Inverge does not quote postage rather than showing a shipping figure, and it
+never invents an exchange rate, provider fee, or settlement amount. Reward tiers
+declare a digital, physical, or mixed fulfilment and, for anything posted, the
+creator's own destinations and terms (D-024); no delivery address is collected.
+Saved campaigns are device-local and every surface says so (D-023).
 
 ## Non-functional launch gates
 

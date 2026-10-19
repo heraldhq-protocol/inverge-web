@@ -29,6 +29,11 @@ choices.
 | D-018 | 2026-10-18 | Accepted | Build the campaign experience as one preview feature (`src/features/campaigns`) whose only data seam knows the data is preview: no wallet, no chain, no fabricated transaction, and every fixture carries `demo: true`. |
 | D-019 | 2026-10-18 | Accepted | Campaign media is a creator-supplied link, never an upload in this build: a video is preferred at the top but optional, hosted players are addressed by a parsed id rather than by the creator's string, and no fixture ships a video. |
 | D-020 | 2026-10-18 | Accepted (widens FR-503a, SRS to be reconciled) | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. |
+| D-021 | 2026-10-19 | Accepted | The campaign detail page is tabbed, not one scroll: tab state lives in `?tab=`, the panel is chosen on the server, and the desktop rail repeats the most-scanned cards. |
+| D-022 | 2026-10-19 | Accepted | The creator's story is a closed, typed block vocabulary rendered as data; the schema has no `html` member and the page never injects creator markup. |
+| D-023 | 2026-10-19 | Accepted | Saved campaigns live in this browser behind a `SavedCampaignsStore` boundary and every surface says so; no surface may claim account synchronisation. |
+| D-024 | 2026-10-19 | Accepted | A reward tier declares a fulfilment type and, for anything posted, the creator's own destinations and terms. Shipping is display-only: Inverge quotes no postage, collects no address, and no fixture ships reward artwork. |
+| D-025 | 2026-10-19 | Accepted | The backing flow is one route with step-id state and a conditional delivery step; its quote never invents a figure and it ends at a labelled provider-absent handoff rather than a success screen. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -582,6 +587,217 @@ which is why the divergence is recorded here.
 
 Revisit when: The SRS is reconciled, the settings API can supply these
 parameters, or a campaign type needs a different fee or band.
+
+### D-021: The campaign detail page is tabbed, with a rail beside it
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering and product
+
+Context: The detail page had grown into one continuous document with an in-page
+anchor bar. A backer who wanted the reward terms scrolled past the whole
+milestone contract, and a page that long flattens the important information into
+the unimportant. The bar also scrolled rather than switched, so `?section=` links
+were the only way to deep-link and the panels were all mounted at once.
+
+Decision: The detail page is one full-height two-column grid —
+`lg:grid-cols-[minmax(0,1fr)_20rem]`, `xl:…_23rem` — with the panel body in the
+main column and a supporting rail on the right. Tab state is a query string
+(`?tab=`), validated against a known tab list in `lib/campaign-tabs.ts` and
+resolved on the server in `page.tsx`, so a shared link opens on the right tab
+with no client-only flash. `CampaignTabs` renders a real `<a href="?tab=…">` per
+tab and intercepts a plain left click to swap the panel in place with
+`history.replaceState` (no extra history entry, no navigation). Arrow keys move
+the selection, `aria-selected` names the active tab, and the panel is
+`aria-labelledby` its tab. Only the selected panel is rendered, so the other
+tabs' content is absent rather than `hidden`. The rail (desktop only) repeats
+funding, rewards, facts, escrow, and FAQs as `RailCard`s; it is hidden entirely
+on mobile, where the same content is reached through the tabs and the mobile
+funding bar.
+
+Alternatives: Keep the single scrolling document with a sticky anchor bar (the
+problem being solved); make each tab its own route (four fetches and four 404
+checks for one record, and a tab is not a resource); keep every panel mounted and
+toggle visibility (a hidden panel is still in document order and still found by
+"find in page", which is exactly the noise the tab was meant to remove).
+
+Consequences: Only the selected panel is rendered into the document, so the other
+tabs' content is not in the DOM, not in the accessibility tree, and not
+reachable by "find in page" — which is what the tab was for. It is, however,
+still present in the response as unrendered element data in the React payload
+(verified against the running server: the text of the unselected panels appears
+in the serialized payload and not in the HTML). A crawler that reads the raw
+response therefore still sees every tab's text, so the panels are not private;
+if that becomes a problem, the click should become a real navigation instead of
+an in-place swap. The rail duplicates the rewards and facts markup; the copy is
+shared through `RewardFulfilmentLine` and `CampaignFacts` rather than copied, so
+the two placements cannot drift.
+
+Revisit when: A tab needs its own URL that is shareable independently of the
+campaign (for example a permalink to one update), or a panel's content becomes
+expensive enough that server-rendering all of them is wasteful.
+
+### D-022: The creator's story is typed blocks, not markup
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering
+
+Context: A campaign story needs headings, prose, lists, quotes, notes, and
+images in an order the creator controls. The obvious shortcut — store HTML and
+render it — puts arbitrary markup and script from a creator into a page about
+money, and requires sanitisation on every render.
+
+Decision: `StoryBlock` is a closed union: `heading`, `paragraph`, `list`,
+`quote`, `note`, `image`, `video`, and `gallery`. It has no `html` member and no
+free-form attribute bag. `CampaignStoryBlocks` switches on `kind` and renders
+each block as a component the page owns; text is always rendered as text. The
+image and video members reuse the `CampaignImage`/`CampaignVideo` shapes from
+D-019, so a story image follows the same link-not-upload rule as the hero.
+
+Alternatives: Store HTML and sanitise it (two dependencies and a sanitiser to
+keep current, and a bypass is a page-wide defect); store Markdown (a parser plus
+a rendering policy, and no structural type for the editor or the test to assert
+against); store ProseMirror JSON like the idea pitch (D-013) and reuse the rich
+editor (heavier for a narrative, and it brings the editor bundle to the creator
+wizard).
+
+Consequences: A new block kind is a schema change plus a component, which is the
+intended cost. Creator content cannot break the page layout, and the render path
+is unit-tested against hostile text.
+
+Revisit when: Creators need embeds or interactive blocks, which would need an
+allowlist rather than the current closed union.
+
+### D-023: Saved campaigns are device-local, behind a store boundary
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering and product
+
+Context: "Save for later" needs somewhere to save. This repository has no
+session, no account, and no campaign API (D-018), so there is nowhere to attach a
+per-account list. The failure mode to avoid is a button that appears to persist a
+campaign and then loses it, or copy that implies the save follows the reader to
+another device.
+
+Decision: Saved campaigns are kept in this browser under
+`inverge.saved-campaigns`, behind a `SavedCampaignsStore` interface
+(`read`, `write`) that is the only thing components talk to. The stored value is
+a versioned envelope; `parseSavedCampaigns` drops a value written by a different
+schema version, drops records it cannot trust, and dedupes by `campaignId`
+instead of throwing, because losing a convenience must not break the page. A
+storage that *exists but refuses access* is reported as a failure rather than
+read as empty: `read()` rejects, and the dashboard distinguishes "nothing saved
+yet" from "this browser refused the store". `SAVED_CAMPAIGNS_SCOPE` is the single
+sentence describing the limitation and it is what every surface renders; no
+surface claims account synchronisation.
+
+Alternatives: Persist in a cookie (sent to the server on every request, and no
+server resource to receive it); add a real backend store now (out of scope for
+this repository and would be a fabricated service); render the control disabled
+with "coming soon" (drops a usable feature to avoid writing one sentence of
+honest copy).
+
+Consequences: A save does not follow the reader to another device or another
+browser, and the copy says so. When the campaigns API exposes a saved-campaigns
+resource, one implementation of the interface is replaced and no component
+changes. The `read`-failure branch is currently reachable only through a storage
+access error, not a remote failure; the interface shape is what the future store
+will satisfy.
+
+Revisit when: Sign-in exists and a saved-campaigns resource is available, at
+which point the local store becomes a cache or is dropped.
+
+### D-024: A reward declares its fulfilment and its shipping, and neither is priced
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: Rewards had no way to say whether they were digital, posted, or both,
+and posting a physical reward needs to tell a backer where it can go. Shipping
+cost is the trap: Inverge has no carrier integration and no rate source, so any
+number shown would be invented, and a shipping figure folded into the
+contribution total would misstate what the escrow holds.
+
+Decision: `SupportTier` gains `fulfilment: RewardFulfilment | null`
+(`digital` | `physical` | `mixed`) and `shipping: RewardShipping | null`, where
+`RewardShipping` is the creator's own list of destinations plus optional free-text
+terms. `shipping` is non-null only for a physical or mixed reward, so a digital
+reward can never render a shipping line. Shipping is display-only: the campaign
+page, the rail, the creator wizard preview, and the backing flow all render it
+through one `RewardFulfilmentLine`, which shows the fulfilment pills and the
+creator's destinations and terms and never a price. The creator's destinations
+are typed one-per-line in the wizard and parsed by `parseShippingRegions`. No
+address is collected anywhere in this build, because there is nowhere to send it
+and no fulfilment process to receive it.
+
+Alternatives: A single boolean "physical" (cannot express a reward that is both,
+which the campaign fixtures already need); collect a shipping address in the
+backing flow (a delivery address with no fulfilment process, no consent record,
+and no retention policy — a privacy liability that looks like a feature); show a
+shipping estimate (a number with no source); bill shipping inside the
+contribution (misstates the escrow and the refund).
+
+Consequences: A backer sees where a reward can be posted and that Inverge does
+not quote postage, and the contribution total never includes a shipping figure.
+Address collection, rate quoting, and a fulfilment handoff are all still missing
+and are stated as such. No fixture ships reward artwork: the repository has no
+authentic reward photography, and D-019's rule against stock substitution
+applies, so the image path is exercised by the wizard and its tests instead. See
+D-025 for the flow the delivery step sits inside.
+
+Revisit when: A carrier or fulfilment provider is chosen, at which point shipping
+becomes a quoted amount and address collection becomes a consented, retained
+record rather than a form field.
+
+### D-025: The backing flow is step-id based, and it ends where the provider begins
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The contribution flow had to handle a step that only sometimes exists
+(delivery, only for a posted reward), an amount that can come from a reward or
+from the backer, and a final "pay" action with no payment provider in this
+repository. A flow that shows a success screen after a button press would be the
+single most misleading thing on the site.
+
+Decision: The flow is one route with its step held as a `ContributionStepId`
+string rather than an index, so the conditional `options` (delivery) step can
+appear and disappear without the current step silently shifting. Selecting a
+reward sets the amount from the reward's own `minimum` and adds an optional
+"Additional support" extra; with no reward the backer types a free amount, and
+switching selection keeps what was typed so nothing is lost. `quoteLines` is the
+one place the money story is assembled. It states that shipping is not quoted by
+Inverge (never a figure), keeps shipping out of the total, and on the fiat
+on-ramp branch marks the exchange rate, provider fee, total charged, and
+estimated settlement as "Not available" rather than inventing a rate. The final
+action is "Continue to payment", and pressing it does not fake a payment: the
+flow swaps to a neutral, non-success panel headed "Payment is not connected in
+this build" that shows the quote, describes the three steps a provider would
+perform, and lists the handoff states the flow is built to display
+(`handoffStates`).
+
+Alternatives: An index-based step and a fixed step count (the conditional step
+breaks it); make delivery a field inside the reward step (shipping terms and
+destinations are a separate decision from choosing the reward, and the step
+disappears cleanly for digital rewards when it is its own step); show a success
+screen with a demo notice (a success screen for a payment that did not happen is
+read as a receipt, notice or not); omit the handoff screen entirely and stop at
+review (leaves the flow visibly unfinished and hides what the real integration
+must do).
+
+Consequences: The flow is honest about where it stops and what the real
+integration will show. Step state is per-page-view and is not persisted across a
+refresh or a sign-in, because the infrastructure to keep a draft does not exist.
+The quote, the fee line, and the shipping statement are pinned by unit and
+component tests, including the rule that no figure is attached to shipping.
+
+Revisit when: A payment provider and a quote service are integrated, at which
+point the handoff panel is replaced by the provider's own step and the
+`handoffStates` names map onto real states.
 
 ## Decision template
 
