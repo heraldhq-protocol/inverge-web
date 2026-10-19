@@ -128,10 +128,10 @@ export function CampaignEscrowSection({ campaign }: { campaign: Campaign }) {
                 aria-hidden="true"
               />
             </span>
-            <h3 className="mt-3 text-base font-semibold text-ink">
+            <h3 className="mt-3 text-sm font-semibold text-ink">
               {step.title}
             </h3>
-            <p className="mt-1.5 text-sm leading-6 text-muted">{step.body}</p>
+            <p className="mt-1.5 text-xs leading-6 text-muted">{step.body}</p>
           </li>
         ))}
       </ul>

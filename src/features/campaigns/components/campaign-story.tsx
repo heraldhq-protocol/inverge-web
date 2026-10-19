@@ -1,4 +1,5 @@
 import { Amount } from "@/components/ui/amount";
+import { CampaignStoryBlocks } from "@/features/campaigns/components/campaign-story-blocks";
 import { CampaignVideoPlayer } from "@/features/campaigns/components/campaign-video-player";
 import { MediaImage } from "@/features/campaigns/components/media-image";
 import {
@@ -9,43 +10,75 @@ import type { Campaign, CampaignMedia } from "@/features/campaigns/types";
 import { fundedRatio } from "@/features/campaigns/lib/amounts";
 
 /**
- * The story, and how the money would be used.
+ * The story.
  *
- * Use-of-funds is drawn against the funding target rather than against what has
- * been raised, because the plan was written for the target. Bars are visual
- * only: the label and the exact amount carry the meaning, so a proportional bar
- * with no legend never has to be read precisely.
+ * A campaign is two things at once: a project someone can be excited about, and
+ * a claim someone is being asked to fund. So the story leads with whatever the
+ * creator wrote, and then states the reviewed summary — the problem, the plan,
+ * and who benefits — in the campaign's own words.
+ *
+ * When the creator has written no narrative the summary *is* the story and it is
+ * given the room to be read as one. When they have, the summary steps back to a
+ * supporting three-up and stops competing with the creator's own telling.
  */
-export function CampaignStory({ campaign }: { campaign: Campaign }) {
+
+const summaryEntries = (campaign: Campaign) =>
+  [
+    { key: "problem", label: "The problem", body: campaign.story.problem },
+    { key: "plan", label: "The plan", body: campaign.story.solution },
+    {
+      key: "beneficiaries",
+      label: "Who benefits",
+      body: campaign.story.beneficiaries,
+    },
+  ] as const;
+
+function StorySummary({
+  campaign,
+  compact,
+}: {
+  campaign: Campaign;
+  compact: boolean;
+}) {
+  const entries = summaryEntries(campaign);
+
   return (
-    <div className="space-y-6">
-      <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-brand-strong">
-          The problem
-        </h3>
-        <p className="mt-2.5 text-base leading-7 text-ink">
-          {campaign.story.problem}
-        </p>
-      </div>
+    <section
+      aria-labelledby={compact ? "story-summary-heading" : undefined}
+      className={compact ? "border-t border-border pt-7" : undefined}
+    >
+      {compact ? (
+        <h2
+          className="text-lg font-bold tracking-tight text-ink"
+          id="story-summary-heading"
+        >
+          The project, in short
+        </h2>
+      ) : null}
 
-      <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-brand-strong">
-          The plan
-        </h3>
-        <p className="mt-2.5 text-base leading-7 text-ink">
-          {campaign.story.solution}
-        </p>
-      </div>
-
-      <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-        <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-brand-strong">
-          Who benefits
-        </h3>
-        <p className="mt-2.5 text-base leading-7 text-ink">
-          {campaign.story.beneficiaries}
-        </p>
-      </div>
-    </div>
+      <dl
+        className={
+          compact ? "mt-4 grid gap-x-10 gap-y-6 sm:grid-cols-3" : "grid gap-8"
+        }
+      >
+        {entries.map((entry) => (
+          <div key={entry.key}>
+            <dt className="text-xs font-bold uppercase tracking-[0.12em] text-brand-strong">
+              {entry.label}
+            </dt>
+            <dd
+              className={`mt-2 whitespace-pre-line ${
+                compact
+                  ? "text-sm leading-6 text-muted"
+                  : "text-base leading-7 text-ink sm:text-lg sm:leading-8"
+              }`}
+            >
+              {entry.body}
+            </dd>
+          </div>
+        ))}
+      </dl>
+    </section>
   );
 }
 
@@ -61,18 +94,18 @@ function StoryMediaFigure({ item }: { item: CampaignMedia }) {
   return (
     <li>
       <figure>
-        <div className="relative aspect-video w-full overflow-hidden rounded-xl border border-border bg-surface-muted">
+        <div className="relative aspect-video w-full overflow-hidden rounded-2xl border border-border bg-surface-muted">
           {item.kind === "image" ? (
             <MediaImage
               src={item.src}
               alt={item.alt}
-              sizes="(min-width: 640px) 320px, 100vw"
+              sizes="(min-width: 640px) 420px, 100vw"
               className="object-cover"
             />
           ) : (
             <CampaignVideoPlayer
               media={item}
-              sizes="(min-width: 640px) 320px, 100vw"
+              sizes="(min-width: 640px) 420px, 100vw"
             />
           )}
         </div>
@@ -103,24 +136,50 @@ export function CampaignStoryMedia({ campaign }: { campaign: Campaign }) {
   if (campaign.story.media.length === 0) return null;
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
-      <h3 className="text-sm font-bold uppercase tracking-[0.12em] text-brand-strong">
+    <section
+      aria-labelledby="story-media-heading"
+      className="border-t border-border pt-7"
+    >
+      <h2
+        className="text-lg font-bold tracking-tight text-ink"
+        id="story-media-heading"
+      >
         From the campaign
-      </h3>
+      </h2>
       <ul className="mt-4 grid gap-4 sm:grid-cols-2">
         {campaign.story.media.map((item) => (
           <StoryMediaFigure key={item.id} item={item} />
         ))}
       </ul>
+    </section>
+  );
+}
+
+export function CampaignStory({ campaign }: { campaign: Campaign }) {
+  const hasNarrative = campaign.story.blocks.length > 0;
+
+  return (
+    <div className="space-y-8">
+      <CampaignStoryBlocks blocks={campaign.story.blocks} />
+      <StorySummary campaign={campaign} compact={hasNarrative} />
+      <CampaignStoryMedia campaign={campaign} />
     </div>
   );
 }
 
+/**
+ * How the money would be used.
+ *
+ * Drawn against the funding target rather than against what has been raised,
+ * because the plan was written for the target. Bars are visual only: the label
+ * and the exact amount carry the meaning, so a proportional bar with no legend
+ * never has to be read precisely.
+ */
 export function CampaignUseOfFunds({ campaign }: { campaign: Campaign }) {
   const target = campaign.funding.target;
 
   return (
-    <div className="rounded-2xl border border-border bg-surface p-5 sm:p-6">
+    <div>
       <div className="flex flex-wrap items-baseline justify-between gap-2">
         <h3 className="text-base font-semibold text-ink">
           How {campaign.funding.fundingAsset} would be used
@@ -144,7 +203,7 @@ export function CampaignUseOfFunds({ campaign }: { campaign: Campaign }) {
                   <Amount value={line.amount} />
                 </p>
               </div>
-              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/[0.08]">
+              <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-ink/8">
                 <div
                   className="h-full rounded-full bg-brand"
                   style={{ width: `${Math.min(1, ratio) * 100}%` }}

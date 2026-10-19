@@ -3,6 +3,7 @@ import {
   PLATFORM_SUCCESS_FEE_BPS,
   WORKING_CAPITAL_MAX_BPS,
 } from "@/features/campaigns/lib/escrow";
+import { categoryLabel } from "@/features/campaigns/lib/filters";
 import type {
   Campaign,
   CampaignDisclosures,
@@ -17,6 +18,7 @@ import type {
   MilestoneEvidence,
   MilestoneState,
   PublicCreator,
+  StoryBlock,
   SupportTier,
   UseOfFundsLine,
 } from "@/features/campaigns/types";
@@ -92,6 +94,8 @@ type Seed = {
     useOfFunds: readonly UseOfFundsLine[];
     /** Media attached inside the story. Omitted when there is none. */
     media?: readonly CampaignMedia[];
+    /** The creator's long-form narrative. Omitted when they wrote none. */
+    blocks?: readonly StoryBlock[];
   };
   supportTiers?: readonly SupportTier[];
   faqs?: readonly CampaignFaq[];
@@ -179,9 +183,11 @@ function buildCampaign(seed: Seed): Campaign {
     },
     escrow,
     facts: [
-      { label: "Funding deadline", value: formatLongDate(seed.closesAt) },
+      { label: "Category", value: categoryLabel(seed.category) },
       { label: "Location", value: seed.location },
       { label: "Funding model", value: "All-or-Nothing" },
+      { label: "Funding deadline", value: formatLongDate(seed.closesAt) },
+      { label: "Funding asset", value: "USDC" },
       { label: "Campaign ID", value: seed.campaignNumber },
     ],
     faqs: seed.faqs ?? defaultFaqs(),
@@ -203,7 +209,11 @@ function buildCampaign(seed: Seed): Campaign {
     publishedAt: seed.publishedAt ?? null,
     review: seed.review ?? { status: "not-submitted" },
     slug: seed.slug,
-    story: { ...seed.story, media: seed.story.media ?? [] },
+    story: {
+      ...seed.story,
+      blocks: seed.story.blocks ?? [],
+      media: seed.story.media ?? [],
+    },
     summary: seed.summary,
     supportTiers: seed.supportTiers ?? [],
     title: seed.title,
@@ -390,6 +400,45 @@ const sungrid = buildCampaign({
   story: {
     beneficiaries:
       "Around 2,400 people across six communities, plus the traders and workshops whose working day currently ends when the light does.",
+    blocks: [
+      {
+        id: "sungrid-block-sites",
+        kind: "heading",
+        text: "How a site gets chosen",
+      },
+      {
+        id: "sungrid-block-sites-body",
+        kind: "paragraph",
+        text: "Every site on this list has already been surveyed, and each one is sized to the water demand the community has today rather than to a projection of what it might need later. That is deliberate. An oversized system is a system nobody can afford to maintain once the programme has moved on.\n\nSix communities are on the list for this campaign. They are the ones where the survey found both a workable site and a local group willing to hold the maintenance contract.",
+      },
+      {
+        id: "sungrid-block-process",
+        kind: "list",
+        items: [
+          "Survey the site and agree the demand figure with the community association.",
+          "Order and receive the pump, inverter, storage, and mounting hardware.",
+          "Install and commission the system with the operator cohort on site.",
+          "Hand over the maintenance programme with six months of parts.",
+        ],
+        ordered: true,
+      },
+      {
+        id: "sungrid-block-operators",
+        kind: "heading",
+        text: "Why the operators matter more than the panels",
+      },
+      {
+        id: "sungrid-block-operators-body",
+        kind: "paragraph",
+        text: "Hardware is the easy half. There are solar installations across the region standing unused because the nearest qualified technician is a day's travel away and the spare part is in another country. This programme funds the operator cohort in the same milestone as the installation, so the people who maintain the system are trained before the panels are even in the ground.",
+      },
+      {
+        id: "sungrid-block-scope",
+        kind: "note",
+        text: "This campaign funds the installations, the operator training, the parts inventory, and the reporting that shows each one working. The survey work is already done and is not part of the target.",
+        title: "What you are funding, and what you are not",
+      },
+    ],
     problem:
       "Many communities in Ogun State have an intermittent grid and no reliable way to pump or store water. Households either travel long distances for it or draw from sources they know are unsafe. The same problem reaches the small businesses that keep a community running, because a workshop without dependable power cannot take on a full day of work.",
     solution:
@@ -425,24 +474,235 @@ const sungrid = buildCampaign({
     "Solar-powered water systems bringing clean, safe water to six rural communities in Ogun State.",
   supportTiers: [
     {
+      addOns: [],
       description: "A thank-you message and access to campaign updates.",
+      estimatedDelivery: "Within a week of the funding deadline",
+      fulfilment: "digital",
       id: "sungrid-tier-community",
+      image: null,
+      includes: [
+        "A thank-you message from the operator cohort",
+        "Access to the campaign's backer updates",
+      ],
       minimum: money("1000"),
+      quantityLimit: null,
+      shipping: null,
       title: "Community supporter",
+      variants: [],
     },
     {
+      addOns: [],
       description:
         "Everything above, plus a digital postcard and your name on the supporter wall.",
+      estimatedDelivery: "Four weeks after the funding deadline",
+      fulfilment: "digital",
       id: "sungrid-tier-impact",
+      image: null,
+      includes: [
+        "Everything in Community supporter",
+        "A digital postcard from the first commissioned site",
+        "Your name on the campaign's supporter wall",
+      ],
       minimum: money("5000"),
+      quantityLimit: null,
+      shipping: null,
       title: "Impact supporter",
+      variants: [],
     },
     {
+      addOns: [
+        {
+          affectsShipping: true,
+          description:
+            "A printed, folded guide to reading a solar site's daily output, signed by the operator cohort.",
+          estimatedDelivery: "With the lantern kit",
+          fulfilment: "physical",
+          id: "sungrid-addon-field-guide",
+          image: null,
+          price: money("2500"),
+          title: "Signed field guide",
+        },
+        {
+          affectsShipping: true,
+          description:
+            "One more lantern kit, boxed alongside the first so both arrive together.",
+          estimatedDelivery: "With the lantern kit",
+          fulfilment: "physical",
+          id: "sungrid-addon-second-lantern",
+          image: null,
+          price: money("12000"),
+          title: "Second lantern kit",
+        },
+        {
+          affectsShipping: false,
+          description:
+            "A year of output readings from every site, as a spreadsheet, sent once the last site is commissioned.",
+          estimatedDelivery: "After the final commissioning",
+          fulfilment: "digital",
+          id: "sungrid-addon-data-pack",
+          image: null,
+          price: money("1000"),
+          title: "Site data pack (digital)",
+        },
+      ],
       description:
-        "Everything above, plus an invitation to the site handover and a named acknowledgement in the final report.",
+        "A solar reading lantern kit assembled by the operator cohort, posted to you.",
+      estimatedDelivery: "Six weeks after the funding deadline",
+      fulfilment: "physical",
+      id: "sungrid-tier-lantern",
+      // A vendored placeholder photograph, like the campaign's own gallery, so
+      // the demo shows artwork on a reward without claiming this is the kit.
+      image: "/images/ideas/market-basket.jpg",
+      includes: [
+        "One solar reading lantern kit, assembled and tested by the operator cohort",
+        "A printed assembly and care card",
+        "Your name on the campaign's supporter wall",
+      ],
+      minimum: money("15000"),
+      quantityLimit: 4,
+      shipping: {
+        customs:
+          "We declare the value of every parcel accurately and cannot mark one as a gift. Any import duty or handling charge is the backer's to pay on delivery.",
+        originCountry: "NG",
+        rules: [
+          {
+            coverage: { kind: "origin" },
+            id: "sungrid-rule-origin",
+            rate: { amount: money("800"), basis: "order", kind: "flat" },
+          },
+          {
+            coverage: { kind: "zone", zoneId: "sungrid-zone-west-africa" },
+            id: "sungrid-rule-west-africa",
+            rate: { amount: money("1500"), basis: "order", kind: "flat" },
+          },
+          {
+            coverage: { kind: "zone", zoneId: "sungrid-zone-europe" },
+            id: "sungrid-rule-europe",
+            rate: { amount: money("2200"), basis: "unit", kind: "flat" },
+          },
+          {
+            coverage: { kind: "zone", zoneId: "sungrid-zone-north-america" },
+            id: "sungrid-rule-north-america",
+            rate: { amount: money("2400"), basis: "unit", kind: "flat" },
+          },
+          {
+            coverage: { country: "BR", kind: "country" },
+            id: "sungrid-rule-brazil",
+            rate: {
+              kind: "unavailable",
+              note: "Two parcels were held in customs there last year and sent back, so we are not offering it until we have a courier that can clear them.",
+            },
+          },
+          {
+            coverage: { kind: "worldwide" },
+            id: "sungrid-rule-worldwide",
+            rate: {
+              kind: "deferred",
+              note: "We will send you a courier quote before the kit is boxed, and you can decide then.",
+            },
+          },
+        ],
+        terms:
+          "Posted by courier from Lagos once the first site is commissioned, in the order the parcels are boxed.",
+        zones: [
+          {
+            countries: ["GH", "SN", "CI", "BJ", "TG", "BF", "ML", "NE"],
+            id: "sungrid-zone-west-africa",
+            name: "West Africa",
+          },
+          {
+            countries: [
+              "GB",
+              "IE",
+              "FR",
+              "DE",
+              "NL",
+              "ES",
+              "PT",
+              "IT",
+              "BE",
+              "AT",
+              "SE",
+              "DK",
+              "FI",
+              "NO",
+              "PL",
+            ],
+            id: "sungrid-zone-europe",
+            name: "Europe",
+          },
+          {
+            countries: ["US", "CA", "MX"],
+            id: "sungrid-zone-north-america",
+            name: "North America",
+          },
+        ],
+      },
+      title: "Lantern kit",
+      variants: [
+        {
+          id: "sungrid-variant-colour",
+          label: "Lantern colour",
+          options: [
+            { id: "amber", label: "Amber" },
+            { id: "jade", label: "Jade" },
+            { id: "charcoal", label: "Charcoal" },
+          ],
+        },
+        {
+          id: "sungrid-variant-plug",
+          label: "Plug",
+          options: [
+            { id: "plug-uk", label: "UK type G" },
+            { id: "plug-eu", label: "EU type C" },
+            { id: "plug-us", label: "US type A" },
+          ],
+        },
+      ],
+    },
+    {
+      addOns: [],
+      description:
+        "Everything above, plus a printed copy of the final report posted to you, an invitation to the site handover, and a named acknowledgement in that report.",
+      estimatedDelivery: "After the site handover milestone is approved",
+      fulfilment: "mixed",
       id: "sungrid-tier-site",
+      image: null,
+      includes: [
+        "Everything in the Lantern kit",
+        "The printed final report, posted to you",
+        "An invitation to the site handover",
+        "A named acknowledgement in the report",
+      ],
       minimum: money("20000"),
+      quantityLimit: null,
+      shipping: {
+        customs:
+          "Duty and handling charges are the backer's. The report is sent as documents, not as goods.",
+        originCountry: "NG",
+        rules: [
+          {
+            coverage: { country: "NG", kind: "country" },
+            id: "sungrid-site-rule-origin",
+            rate: { kind: "free" },
+          },
+          {
+            coverage: { kind: "zone", zoneId: "sungrid-site-zone-partners" },
+            id: "sungrid-site-rule-partners",
+            rate: { amount: money("3500"), basis: "order", kind: "flat" },
+          },
+        ],
+        terms: "Posted from Lagos once the final report is approved.",
+        zones: [
+          {
+            countries: ["GH", "KE", "ZA"],
+            id: "sungrid-site-zone-partners",
+            name: "Partner countries",
+          },
+        ],
+      },
       title: "Site partner",
+      variants: [],
     },
   ],
   target: "2500000",

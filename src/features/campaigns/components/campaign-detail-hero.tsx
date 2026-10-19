@@ -1,5 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { MapPinIcon, Shield01Icon } from "@hugeicons/core-free-icons";
+import { MapPinIcon, BadgeCheckIcon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -33,7 +33,7 @@ export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
           media={campaign.media}
           label={categoryLabel(campaign.category)}
           title={campaign.title}
-          sizes="(min-width: 1024px) 640px, 100vw"
+          sizes="(min-width: 1280px) 48rem, (min-width: 1024px) 36rem, 100vw"
         />
       ) : (
         <div className="overflow-hidden rounded-3xl border border-border bg-surface-muted">
@@ -50,6 +50,7 @@ export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
       <div className="mt-5 flex flex-wrap items-center gap-2">
         <PhasePill phase={campaign.phase} />
         <PlanBadge
+          size={"sm"}
           hasPlan={campaign.milestones.length >= 2}
           accepting={planWillRun(campaign.phase)}
         />
@@ -68,21 +69,24 @@ export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
         {campaign.summary}
       </p>
 
-      <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-border pt-5">
+      <div className="mt-5 flex flex-wrap items-center justify-between gap-x-5 gap-y-3 border-t border-border pt-5">
         <div className="flex min-w-0 items-center gap-3">
           <Avatar name={campaign.creator.name} size={40} />
           <div className="min-w-0">
             <p className="flex items-center gap-1.5 text-sm font-semibold text-ink">
               {campaign.creator.name}
               {campaign.creator.identityVerified ? (
-                <span className="inline-flex items-center gap-1 rounded-full bg-brand/10 px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.06em] text-brand-strong">
+                <span
+                  className="inline-flex items-center text-brand-strong"
+                  title="Identity verified"
+                >
                   <HugeiconsIcon
-                    icon={Shield01Icon}
-                    size={11}
+                    icon={BadgeCheckIcon}
+                    size={14}
                     strokeWidth={2}
                     aria-hidden="true"
                   />
-                  Identity verified
+                  <span className="sr-only">Identity verified</span>
                 </span>
               ) : null}
             </p>

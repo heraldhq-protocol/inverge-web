@@ -12,7 +12,25 @@ import type { Campaign } from "@/features/campaigns/types";
  * a modal that hides the terms. The heading says "preview" before a backer
  * enters an amount, not after.
  */
-export function CampaignBackPage({ campaign }: { campaign: Campaign }) {
+export function CampaignBackPage({
+  campaign,
+  initialCountry = "",
+  initialTierId = null,
+}: {
+  campaign: Campaign;
+  /**
+   * A destination handed over from the campaign page or a shared link, when the
+   * backer already said where they are. Only used when it is a real country
+   * code, so a hand-edited query string cannot preset a destination the country
+   * list does not contain.
+   */
+  initialCountry?: string;
+  /**
+   * A reward tier chosen on the campaign page, when the backer picked one. Only
+   * used when it matches a tier this campaign actually publishes.
+   */
+  initialTierId?: string | null;
+}) {
   return (
     <div className="bg-canvas pb-14 sm:pb-20">
       <Container className="py-6 sm:py-8">
@@ -45,7 +63,11 @@ export function CampaignBackPage({ campaign }: { campaign: Campaign }) {
         </header>
 
         <div className="mt-6">
-          <ContributionPreview campaign={campaign} />
+          <ContributionPreview
+            campaign={campaign}
+            initialCountry={initialCountry}
+            initialTierId={initialTierId}
+          />
         </div>
       </Container>
     </div>

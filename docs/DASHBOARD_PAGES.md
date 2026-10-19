@@ -38,6 +38,7 @@ Ground rules that shape this list:
 | `/d/notifications` | Notifications | Real list with unread states |
 | `/d/profile` | Profile | Real. Identity preview plus the creator's public surface |
 | `/d/settings` | Settings | Real form, surfaces programme-admin access when present |
+| `/d/saved` | Saved campaigns | Real list of this browser's saves (D-023), resolved against the public campaign set. An id that no longer resolves is shown as unavailable rather than dropped. Not account-synced, and the page says so |
 
 ### Campaign surfaces
 
@@ -50,7 +51,7 @@ moves money.
 | `/d/backing` | Backing history | Real list from the viewer's own contributions, filtered from the URL, with per-contribution state |
 | `/d/backing/[contributionId]` | Contribution receipt | Real, preview-labelled. States payment, contribution, and refund separately; transaction references are `null` and read "None recorded" |
 | `/d/creator/campaigns` | Creator's campaigns | List of owned campaigns with phase and next action |
-| `/d/creator/campaigns/new` | Campaign wizard | Six steps (basics, media, funding, milestones, terms, review). Submitting is blocked until KYC and the application fee exist |
+| `/d/creator/campaigns/new` | Campaign wizard | Seven steps (basics, media, funding, milestones, rewards, terms, review). A reward declares digital/physical/mixed fulfilment and, when it posts, the creator's own destinations and terms (D-024). Submitting is blocked until KYC and the application fee exist |
 | `/d/creator/campaigns/[campaignId]` | Campaign workspace | Real. Phase, story, funding, and milestone summary; edit and milestone entry points |
 | `/d/creator/campaigns/[campaignId]/edit` | Campaign wizard (edit) | Same wizard loaded from the campaign's own published terms |
 | `/d/creator/campaigns/[campaignId]/milestones` | Milestone worklist | Real. Every milestone with its state and the reason it is closed; claiming never moves money |
@@ -58,8 +59,15 @@ moves money.
 Loading/error boundaries exist at `d/`, `d/(home)`, `d/creator`,
 `d/creator/ideas/[id]/insights`, `d/notifications`, `d/pre-pledges`,
 `d/settings`. `/d/discover`, `/d/creator/ideas`, `/d/ideathons`, `/d/profile`,
-`/d/creator/ideas/[id]/feedback`, `/d/backing`, and `/d/creator/campaigns`
-inherit the `d/` fallbacks only and have no local skeleton yet.
+`/d/creator/ideas/[id]/feedback`, `/d/backing`, `/d/saved`, and
+`/d/creator/campaigns` inherit the `d/` fallbacks only and have no local skeleton
+yet.
+
+The public campaign detail page itself is tabbed as of D-021: `?tab=` selects the
+panel (`story`, `milestones`, `rewards`, `updates`, `discussion`, `faqs`,
+`facts`), the panel is resolved on the server, and the desktop rail repeats the
+funding, rewards, facts, escrow, and FAQ cards. The tab bar is keyboard
+navigable, and only the selected panel is in the document.
 
 ## 2. Reachable from the dashboard, outside `/d`
 

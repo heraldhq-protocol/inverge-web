@@ -50,6 +50,31 @@ export function sumMoneyAmounts(amounts: readonly MoneyAmount[]): MoneyAmount {
 }
 
 /**
+ * Multiply an amount by a whole, non-negative factor — a quantity, or a count of
+ * parcels.
+ *
+ * Integer maths only, and a fractional factor is refused rather than rounded:
+ * two and a half of something is not a quantity this model has a meaning for, and
+ * a silently rounded price is a price nobody agreed to.
+ */
+export function scaleMoneyAmount(
+  amount: MoneyAmount,
+  factor: number,
+): MoneyAmount {
+  if (!Number.isInteger(factor) || factor < 0) {
+    throw new RangeError(
+      `scaleMoneyAmount expects a non-negative integer factor, got ${factor}`,
+    );
+  }
+
+  return {
+    atomic: (BigInt(amount.atomic) * BigInt(factor)).toString(),
+    currency: amount.currency,
+    decimals: amount.decimals,
+  };
+}
+
+/**
  * Parse a user-entered whole-currency decimal ("500", "500.00") into integer
  * atomic units, or `null` when it is not a positive amount. String/BigInt math
  * only — never floating point.

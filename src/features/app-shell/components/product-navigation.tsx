@@ -5,6 +5,7 @@ import type { IconSvgElement } from "@hugeicons/react";
 import {
   Analytics01Icon,
   Bookmark01Icon,
+  BookmarkCheck02Icon,
   BookOpen01Icon,
   Compass01Icon,
   HandCoinsIcon,
@@ -40,9 +41,10 @@ type NavGroup = {
 /**
  * One label per destination the product actually has.
  *
- * "Following and saved" and "My feedback" are absent on purpose: neither has a
- * data model in this repository yet, and a nav item that cannot show real
- * activity is worse than a shorter menu.
+ * "Following" and "My feedback" are absent on purpose: neither has a data model
+ * in this repository yet, and a nav item that cannot show real activity is worse
+ * than a shorter menu. "Saved" is present because saved campaigns do persist —
+ * in the viewer's browser, which the page itself states (D-022).
  */
 export function sidebarGroups(unreadCount: number): readonly NavGroup[] {
   return [
@@ -55,6 +57,11 @@ export function sidebarGroups(unreadCount: number): readonly NavGroup[] {
           href: "/d/backing",
           icon: HandCoinsIcon,
           label: "Backing",
+        },
+        {
+          href: "/d/saved",
+          icon: BookmarkCheck02Icon,
+          label: "Saved",
         },
         {
           href: "/d/pre-pledges",

@@ -5,6 +5,7 @@ import {
   Alert02Icon,
   ArrowLeft02Icon,
   ArrowRight01Icon,
+  Award01Icon,
   Cancel01Icon,
   CheckListIcon,
   CloudUploadIcon,
@@ -19,21 +20,30 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { MediaImage } from "@/features/campaigns/components/media-image";
 import { PrototypeNotice } from "@/features/campaigns/components/prototype-notice";
 import { StepRail } from "@/features/campaigns/components/step-rail";
 import { WizardMediaList } from "@/features/campaigns/components/wizard-media-list";
-import { describeMediaCount } from "@/features/campaigns/lib/media";
+import { WizardShippingEditor } from "@/features/campaigns/components/wizard-shipping-editor";
+import {
+  describeMediaCount,
+  parseImageSource,
+} from "@/features/campaigns/lib/media";
 import {
   draftAllocationTotalBps,
   createDraftMilestone,
+  createDraftTier,
   draftTarget,
   draftUseOfFundsTotal,
   nextDraftId,
   submissionPreconditions,
+  tierNeedsShipping,
   toCampaignMedia,
+  toSupportTiers,
   validateCampaignStep,
   type CampaignDraft,
   type DraftIssue,
+  type DraftSupportTier,
 } from "@/features/campaigns/lib/wizard";
 import { formatBps, parsePercentToBps } from "@/features/campaigns/lib/amounts";
 import {
@@ -69,6 +79,18 @@ const AUTOSAVE_NOTE =
 
 /** The first-tranche shares Inverge allows, one percent at a time (FR-503a). */
 const WORKING_CAPITAL_OPTIONS = workingCapitalChoices();
+
+/**
+ * What a reward sends. "Not stated" is the empty value rather than a label, so
+ * the rewards step can require a real choice while still showing the field as
+ * untouched when a creator has not answered yet.
+ */
+const FULFILMENT_OPTIONS = [
+  { label: "Not stated yet", value: "" },
+  { label: "Digital", value: "digital" },
+  { label: "Physical", value: "physical" },
+  { label: "Digital and physical", value: "mixed" },
+] as const;
 
 function cloneDraft(draft: CampaignDraft): CampaignDraft {
   return {
@@ -147,6 +169,14 @@ export function CampaignWizard({
     setIssues([]);
   }
 
+  function patchTier(id: string, changes: Partial<DraftSupportTier>) {
+    patch({
+      supportTiers: draft.supportTiers.map((tier) =>
+        tier.id === id ? { ...tier, ...changes } : tier,
+      ),
+    });
+  }
+
   function errorFor(field: string): string | null {
     return issues.find((issue) => issue.field === field)?.message ?? null;
   }
@@ -172,6 +202,8 @@ export function CampaignWizard({
   const preconditions = submissionPreconditions();
   const heroMedia = toCampaignMedia(draft.heroMedia);
   const storyMedia = toCampaignMedia(draft.storyMedia);
+  /** What the reward tiers would publish as. Drives the review summary. */
+  const publishedTiers = toSupportTiers(draft.supportTiers);
   /**
    * The success fee is Inverge's, not the creator's, so the step shows the rate
    * that would apply instead of a field. A published campaign keeps the rate it
@@ -864,6 +896,355 @@ export function CampaignWizard({
             </div>
           ) : null}
 
+          {stepId === "rewards" ? (
+            <div className="mt-6 space-y-5">
+              <div className="rounded-2xl border border-border bg-canvas p-4">
+                <p className="text-sm font-semibold text-ink">
+                  Rewards are optional
+                </p>
+                <p className="mt-1.5 text-sm leading-6 text-muted">
+                  A campaign with no rewards is donation-based, and backers
+                  contribute any amount. A reward changes what you promise to
+                  send — never what is charged, and never the published
+                  milestone plan (FR-301).
+                </p>
+              </div>
+
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm font-medium text-ink">
+                    Reward tiers{" "}
+                    <span className="text-xs font-normal text-muted">
+                      optional, as many as you like
+                    </span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      patch({
+                        supportTiers: [
+                          ...draft.supportTiers,
+                          createDraftTier(),
+                        ],
+                      })
+                    }
+                    className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/40 hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  >
+                    <HugeiconsIcon
+                      icon={PlusSignIcon}
+                      size={14}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                      className="text-muted"
+                    />
+                    Add a reward
+                  </button>
+                </div>
+
+                {draft.supportTiers.length === 0 ? (
+                  <p className="mt-2 rounded-xl border border-dashed border-border-strong bg-canvas px-3.5 py-3 text-xs leading-5 text-muted">
+                    No rewards yet. Leave it that way for a donation-based
+                    campaign, or add one to promise something back.
+                  </p>
+                ) : (
+                  <ul className="mt-2 space-y-3">
+                    {draft.supportTiers.map((tier, index) => {
+                      const preview = parseImageSource(tier.imageInput);
+                      const ships = tierNeedsShipping(tier);
+
+                      return (
+                        <li
+                          key={tier.id}
+                          className="rounded-xl border border-border bg-canvas p-3.5"
+                        >
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                              Reward {index + 1}
+                            </p>
+                            <button
+                              type="button"
+                              onClick={() =>
+                                patch({
+                                  supportTiers: draft.supportTiers.filter(
+                                    (item) => item.id !== tier.id,
+                                  ),
+                                })
+                              }
+                              className="inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-muted transition-colors hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                            >
+                              <HugeiconsIcon
+                                icon={Cancel01Icon}
+                                size={13}
+                                strokeWidth={2}
+                                aria-hidden="true"
+                              />
+                              Remove
+                            </button>
+                          </div>
+
+                          <div className="mt-2 grid gap-3 sm:grid-cols-[minmax(0,7rem)_minmax(0,1fr)]">
+                            <div className="relative aspect-[3/2] w-full overflow-hidden rounded-lg border border-border bg-brand/[0.06]">
+                              {preview.ok ? (
+                                <MediaImage
+                                  alt=""
+                                  className="object-cover"
+                                  sizes="112px"
+                                  src={preview.src}
+                                />
+                              ) : (
+                                <span className="absolute inset-0 grid place-items-center text-brand-strong/55">
+                                  <HugeiconsIcon
+                                    icon={Award01Icon}
+                                    size={22}
+                                    strokeWidth={1.5}
+                                    aria-hidden="true"
+                                  />
+                                </span>
+                              )}
+                            </div>
+
+                            <div className="grid gap-3">
+                              <Field
+                                label="Title"
+                                error={errorFor(`supportTiers.${tier.id}`)}
+                              >
+                                {({ describedBy, id, invalid }) => (
+                                  <Input
+                                    id={id}
+                                    autoComplete="off"
+                                    value={tier.title}
+                                    aria-describedby={describedBy || undefined}
+                                    aria-invalid={invalid || undefined}
+                                    onChange={(event) =>
+                                      patchTier(tier.id, {
+                                        title: event.target.value,
+                                      })
+                                    }
+                                  />
+                                )}
+                              </Field>
+                              <Field
+                                label="Minimum"
+                                help="The lowest contribution that selects this reward. A contribution below it is still valid — the reward is simply not selected."
+                                error={errorFor(
+                                  `supportTiers.${tier.id}.minimum`,
+                                )}
+                              >
+                                {({ describedBy, id, invalid }) => (
+                                  <Input
+                                    id={id}
+                                    inputMode="decimal"
+                                    autoComplete="off"
+                                    placeholder="0.00"
+                                    value={tier.minimumInput}
+                                    aria-describedby={describedBy || undefined}
+                                    aria-invalid={invalid || undefined}
+                                    onChange={(event) =>
+                                      patchTier(tier.id, {
+                                        minimumInput: event.target.value,
+                                      })
+                                    }
+                                  />
+                                )}
+                              </Field>
+                            </div>
+                          </div>
+
+                          <div className="mt-3">
+                            <Field
+                              label="What the backer receives"
+                              error={errorFor(
+                                `supportTiers.${tier.id}.description`,
+                              )}
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Textarea
+                                  id={id}
+                                  rows={2}
+                                  value={tier.description}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      description: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <Field
+                              label="Included items"
+                              help="Optional. One item per line, shown as a list on the reward card."
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Textarea
+                                  id={id}
+                                  rows={3}
+                                  placeholder={
+                                    "One per line\ne.g. signed field guide"
+                                  }
+                                  value={tier.includesInput}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      includesInput: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                            <Field
+                              label="Quantity limit"
+                              help="Optional. How many one backer may take. Blank means one: Inverge holds no stock count, so it never promises availability it cannot check."
+                              error={errorFor(
+                                `supportTiers.${tier.id}.quantity`,
+                              )}
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Input
+                                  id={id}
+                                  inputMode="numeric"
+                                  autoComplete="off"
+                                  placeholder="1"
+                                  value={tier.quantityLimitInput}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      quantityLimitInput: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
+                          <div className="mt-3">
+                            <Field
+                              label="Reward image link"
+                              help="An https image link, or an asset path starting with /. Leave it blank and Inverge's own reward mark is shown instead."
+                              error={errorFor(`supportTiers.${tier.id}.image`)}
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Input
+                                  id={id}
+                                  inputMode="url"
+                                  autoComplete="off"
+                                  placeholder="https://…"
+                                  value={tier.imageInput}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      imageInput: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                            <div>
+                              <label
+                                className="text-sm font-medium text-ink"
+                                htmlFor={`tier-type-${tier.id}`}
+                              >
+                                Type
+                              </label>
+                              <div className="mt-1.5">
+                                <Select
+                                  id={`tier-type-${tier.id}`}
+                                  placeholder="Not stated yet"
+                                  value={tier.fulfilment}
+                                  options={FULFILMENT_OPTIONS.map((option) => ({
+                                    label: option.label,
+                                    value: option.value,
+                                  }))}
+                                  onValueChange={(value) =>
+                                    patchTier(tier.id, {
+                                      fulfilment:
+                                        value as DraftSupportTier["fulfilment"],
+                                    })
+                                  }
+                                />
+                              </div>
+                              {errorFor(`supportTiers.${tier.id}.type`) ? (
+                                <p className="mt-1.5 text-xs font-medium text-danger">
+                                  {errorFor(`supportTiers.${tier.id}.type`)}
+                                </p>
+                              ) : null}
+                            </div>
+                            <Field
+                              label="Estimated delivery"
+                              help="Your own estimate. It is shown as an estimate, never a promise."
+                            >
+                              {({ describedBy, id, invalid }) => (
+                                <Input
+                                  id={id}
+                                  autoComplete="off"
+                                  placeholder="e.g. 4 weeks after the deadline"
+                                  value={tier.estimatedDelivery}
+                                  aria-describedby={describedBy || undefined}
+                                  aria-invalid={invalid || undefined}
+                                  onChange={(event) =>
+                                    patchTier(tier.id, {
+                                      estimatedDelivery: event.target.value,
+                                    })
+                                  }
+                                />
+                              )}
+                            </Field>
+                          </div>
+
+                          {ships ? (
+                            <WizardShippingEditor
+                              base={`supportTiers.${tier.id}`}
+                              issues={issues}
+                              tier={tier}
+                              onChange={(changes) =>
+                                patchTier(tier.id, changes)
+                              }
+                            />
+                          ) : null}
+
+                          {tier.variants.length > 0 ||
+                          tier.addOns.length > 0 ? (
+                            <div className="mt-3 rounded-xl border border-border bg-surface p-3.5">
+                              <p className="text-xs font-semibold uppercase tracking-[0.1em] text-muted">
+                                Carried from the published reward
+                              </p>
+                              <p className="mt-1.5 text-xs leading-5 text-muted">
+                                {tier.variants.length > 0
+                                  ? `${tier.variants.length} variant group${tier.variants.length === 1 ? "" : "s"}`
+                                  : ""}
+                                {tier.variants.length > 0 &&
+                                tier.addOns.length > 0
+                                  ? " and "
+                                  : ""}
+                                {tier.addOns.length > 0
+                                  ? `${tier.addOns.length} add-on${tier.addOns.length === 1 ? "" : "s"}`
+                                  : ""}{" "}
+                                are kept as published. This build has no editor
+                                for creating them, and dropping what a backer
+                                was already offered would change the reward
+                                under them.
+                              </p>
+                            </div>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ul>
+                )}
+              </div>
+            </div>
+          ) : null}
+
           {stepId === "terms" ? (
             <div className="mt-6 space-y-5">
               <Field
@@ -1022,6 +1403,18 @@ export function CampaignWizard({
                   <dd className="mt-0.5 font-medium text-ink">
                     {draft.milestones.length} milestones totalling{" "}
                     {formatBps(allocationTotal)}
+                  </dd>
+                </div>
+                <div className="bg-surface px-4 py-3 text-sm">
+                  <dt className="text-xs text-muted">Rewards</dt>
+                  <dd className="mt-0.5 font-medium text-ink">
+                    {publishedTiers.length === 0
+                      ? "Donation-based — no reward tiers"
+                      : `${publishedTiers.length} reward${publishedTiers.length === 1 ? "" : "s"}${
+                          draft.supportTiers.length > publishedTiers.length
+                            ? ` (${draft.supportTiers.length - publishedTiers.length} incomplete, so not counted)`
+                            : ""
+                        }`}
                   </dd>
                 </div>
                 <div className="bg-surface px-4 py-3 text-sm">

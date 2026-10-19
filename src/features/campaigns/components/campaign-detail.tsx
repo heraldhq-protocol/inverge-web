@@ -1,10 +1,14 @@
+import type { ReactNode } from "react";
+
 import { Container } from "@/components/ui/container";
 import { CampaignBreadcrumbs } from "@/features/campaigns/components/campaign-breadcrumbs";
 import { CampaignDetailHero } from "@/features/campaigns/components/campaign-detail-hero";
-import { CampaignDisclosures } from "@/features/campaigns/components/campaign-disclosures";
 import { CampaignDiscussion } from "@/features/campaigns/components/campaign-discussion";
-import { CampaignEscrowSection } from "@/features/campaigns/components/campaign-escrow-section";
-import { CampaignFacts } from "@/features/campaigns/components/campaign-facts";
+import { CampaignEscrowCard } from "@/features/campaigns/components/campaign-escrow-card";
+import {
+  CampaignFacts,
+  CampaignFactsTab,
+} from "@/features/campaigns/components/campaign-facts";
 import { CampaignFaq } from "@/features/campaigns/components/campaign-faq";
 import {
   CampaignFundingPanel,
@@ -12,42 +16,74 @@ import {
 } from "@/features/campaigns/components/campaign-funding-panel";
 import { CampaignMilestoneTimeline } from "@/features/campaigns/components/campaign-milestone-timeline";
 import { CampaignRelated } from "@/features/campaigns/components/campaign-related";
-import { CampaignSection } from "@/features/campaigns/components/campaign-section";
-import {
-  CampaignSectionNav,
-  type CampaignSection as CampaignSectionLink,
-} from "@/features/campaigns/components/campaign-section-nav";
-import {
-  CampaignStory,
-  CampaignStoryMedia,
-  CampaignUseOfFunds,
-} from "@/features/campaigns/components/campaign-story";
+import { CampaignStory } from "@/features/campaigns/components/campaign-story";
 import { CampaignSupportTiers } from "@/features/campaigns/components/campaign-support-tiers";
+import {
+  CampaignTabs,
+  type CampaignTabPanel,
+} from "@/features/campaigns/components/campaign-tabs";
 import { CampaignUpdates } from "@/features/campaigns/components/campaign-updates";
 import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
+import {
+  campaignTabsFor,
+  type CampaignTabId,
+} from "@/features/campaigns/lib/campaign-tabs";
 import { categoryLabel } from "@/features/campaigns/lib/filters";
 import type { CampaignDetailView } from "@/features/campaigns/server/campaigns";
-
-const sections: readonly CampaignSectionLink[] = [
-  { id: "overview", label: "Overview" },
-  { id: "use-of-funds", label: "Use of funds" },
-  { id: "plan", label: "Milestone plan" },
-  { id: "escrow", label: "Escrow" },
-  { id: "rewards", label: "Rewards" },
-  { id: "updates", label: "Updates" },
-  { id: "faq", label: "Questions" },
-];
 
 /**
  * The campaign detail page.
  *
- * One document, read top to bottom: the claim, how the money would be used, the
- * milestone contract, and the escrow terms — in that order, because a backer
- * decides on the plan before they care about the artwork. The section bar is
- * anchors rather than routes so that reading order is never broken up.
+ * Two registers, deliberately separated. The main column is the pitch and then
+ * the campaign's story, told in tabs — a backer who wants the release terms
+ * should not have to scroll the entire story, and a backer reading the story
+ * should not have a milestone contract in the way.
+ *
+ * The rail is the third register: the things a backer checks *while* reading.
+ * Funding state, what the rewards are, the facts, the escrow rule, and the
+ * creator's answers are all one glance away on desktop instead of being reached
+ * by leaving the story. It runs the full height of the page rather than
+ * stopping under the hero, because a column that empties halfway down is a
+ * column that is only decorative.
+ *
+ * On a phone there is no room for a second column, so the rail's content is not
+ * duplicated above or below the tabs — the same material is already the Rewards,
+ * Campaign facts, and FAQs tabs, which stack cleanly, and the funding summary is
+ * repeated directly under the hero as a compact bar.
+ *
+ * The tabs used to be an anchor bar over one long page. Anchors meant every
+ * section was always in the DOM (searchable, but also in the reading order of
+ * someone who only wanted the rewards), and the page reached a length where the
+ * funding panel had to be either detached from what it described or covering it.
+ * See docs/DECISIONS.md.
+ *
+ * Which tab is open is a query string, resolved on the server, so a shared link
+ * and a refresh both open on the right tab with no client-side flash.
  */
-export function CampaignDetail({ view }: { view: CampaignDetailView }) {
+export function CampaignDetail({
+  activeTab,
+  view,
+}: {
+  activeTab: CampaignTabId;
+  view: CampaignDetailView;
+}) {
   const { campaign, now, related } = view;
+  const tabs = campaignTabsFor(campaign);
+
+  const content: Record<CampaignTabId, ReactNode> = {
+    discussion: <CampaignDiscussion slug={campaign.slug} />,
+    facts: <CampaignFactsTab campaign={campaign} />,
+    faqs: <CampaignFaq campaign={campaign} />,
+    milestones: <CampaignMilestoneTimeline campaign={campaign} nowIso={now} />,
+    rewards: <CampaignSupportTiers campaign={campaign} />,
+    story: <CampaignStory campaign={campaign} />,
+    updates: <CampaignUpdates campaign={campaign} />,
+  };
+
+  const panels: readonly CampaignTabPanel[] = tabs.map((tab) => ({
+    tab,
+    content: content[tab.id],
+  }));
 
   return (
     <div className="bg-canvas pb-14 sm:pb-20">
@@ -64,102 +100,39 @@ export function CampaignDetail({ view }: { view: CampaignDetailView }) {
           ]}
         />
 
-        <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1fr)_22rem] lg:gap-10">
+        {/* Stretch, not `items-start`: the main column has to keep its height so
+            the tab bar stays stuck to the top for as long as the rail runs
+            beside it. */}
+        <div className="mt-4 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_23rem] xl:gap-10">
           <div className="min-w-0">
             <CampaignDetailHero campaign={campaign} />
-
-            <div className="mt-5">
-              <CampaignFacts campaign={campaign} />
-            </div>
 
             <div className="mt-5 lg:hidden">
               <CampaignMobileFundingBar campaign={campaign} nowIso={now} />
             </div>
 
-            <div className="mt-6">
-              <CampaignSectionNav sections={sections} />
-            </div>
-
-            <div className="mt-8 space-y-10 sm:space-y-12">
-              <CampaignSection
-                id="overview"
-                title="Overview"
-                description={`Why ${campaign.creator.name} is building this, and who it is for.`}
-                action={<PreviewDataChip />}
-              >
-                <CampaignStory campaign={campaign} />
-                {campaign.story.media.length > 0 ? (
-                  <div className="mt-6">
-                    <CampaignStoryMedia campaign={campaign} />
-                  </div>
-                ) : null}
-              </CampaignSection>
-
-              <CampaignSection
-                id="use-of-funds"
-                title="How your contribution is used"
-                description="Each line is the creator's own published allocation of the funding target."
-              >
-                <CampaignUseOfFunds campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="plan"
-                title="Milestone plan"
-                description="Funds are released in these tranches, and only when the evidence for each is approved."
-              >
-                <CampaignMilestoneTimeline campaign={campaign} nowIso={now} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="escrow"
-                title="How escrow works"
-                description="The rules this campaign publishes, and where each tranche sits right now."
-              >
-                <CampaignEscrowSection campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="rewards"
-                title="Rewards"
-                description="What the creator promises to send, if anything."
-              >
-                <CampaignSupportTiers campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="updates"
-                title="Updates"
-                description="Progress posts from the creator, newest first."
-              >
-                <CampaignUpdates campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="disclosures"
-                title="Before you contribute"
-                description="Who can contribute, what could go wrong, and what happens if the target is not reached."
-              >
-                <CampaignDisclosures campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection
-                id="faq"
-                title="Questions"
-                description="Answered by the creator."
-              >
-                <CampaignFaq campaign={campaign} />
-              </CampaignSection>
-
-              <CampaignSection id="discussion" title="Discussion">
-                <CampaignDiscussion />
-              </CampaignSection>
+            <div className="mt-10">
+              {/* Keyed on the tab so a link from the funding panel to another tab
+                  remounts the bar on the tab the server rendered. */}
+              <CampaignTabs
+                key={activeTab}
+                activeTab={activeTab}
+                panels={panels}
+                slug={campaign.slug}
+              />
             </div>
           </div>
 
-          <div className="hidden lg:block">
+          <aside
+            aria-label="Campaign funding, rewards, and facts"
+            className="hidden min-w-0 space-y-4 lg:block"
+          >
             <CampaignFundingPanel campaign={campaign} nowIso={now} />
-          </div>
+            <CampaignSupportTiers campaign={campaign} variant="rail" />
+            <CampaignFacts campaign={campaign} variant="rail" />
+            <CampaignEscrowCard campaign={campaign} />
+            <CampaignFaq campaign={campaign} variant="rail" />
+          </aside>
         </div>
 
         {related.length > 0 ? (
@@ -167,15 +140,20 @@ export function CampaignDetail({ view }: { view: CampaignDetailView }) {
             aria-labelledby="related-heading"
             className="mt-14 border-t border-border pt-8"
           >
-            <h2
-              id="related-heading"
-              className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
-            >
-              More in {categoryLabel(campaign.category)}
-            </h2>
-            <p className="mt-1 text-sm text-muted">
-              Other campaigns raising in the same category.
-            </p>
+            <div className="flex flex-wrap items-end justify-between gap-3">
+              <div>
+                <h2
+                  id="related-heading"
+                  className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
+                >
+                  More in {categoryLabel(campaign.category)}
+                </h2>
+                <p className="mt-1 text-sm text-muted">
+                  Other campaigns raising in the same category.
+                </p>
+              </div>
+              <PreviewDataChip />
+            </div>
             <div className="mt-5">
               <CampaignRelated campaigns={related} nowIso={now} />
             </div>

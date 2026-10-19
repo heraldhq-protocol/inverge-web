@@ -104,16 +104,43 @@ authorizing protected operations, notification read state, account changes, and
 deletion requests.
 
 The campaign experience is the second slice (D-018): public discovery and
-category pages, one campaign detail route with anchor sections, a contribution
-preview, backer history and receipts, the milestone accountability view, and the
-creator's campaign workspace and wizard. It reads the same preview fixtures
-through `src/features/campaigns/server/`, so no campaign figure, milestone
-release, transaction reference, or moderation state shown there is live. Two
-creator-facing steps are deliberately blocked rather than faked: a campaign
-cannot be submitted until identity verification and the application fee exist,
-and the fiat on-ramp waits for a live provider quote. Campaign amounts are USDC
-at a 1:1 label, every share is integer basis points, and escrow terms are read
-from the campaign's own published terms rather than from a platform constant.
+category pages, one tabbed campaign detail route (`?tab=`, D-021), a
+multi-step contribution preview, backer history and receipts, the milestone
+accountability view, and the creator's campaign workspace and wizard. It reads
+the same preview fixtures through `src/features/campaigns/server/`, so no
+campaign figure, milestone release, transaction reference, or moderation state
+shown there is live. Two creator-facing steps are deliberately blocked rather
+than faked: a campaign cannot be submitted until identity verification and the
+application fee exist, and the fiat on-ramp waits for a live provider quote.
+Campaign amounts are USDC at a 1:1 label, every share is integer basis points,
+and escrow terms are read from the campaign's own published terms rather than
+from a platform constant.
+
+The contribution flow stops where the payment provider would begin (D-025). Its
+final action opens a labelled "payment is not connected in this build" panel that
+shows the assembled quote and the states a real handoff would display; no
+success, receipt, or transaction reference is produced. Both payment routes are
+always offered (D-029): paying in USDC from the backer's own wallet needs no
+conversion and can be reviewed end to end, while paying by card or bank transfer
+is named, explained, and blocked until a licensed provider can quote a live rate.
+The backer's country never changes the contribution asset, and the quote carries
+"Not available" and unknown marks rather than an invented exchange rate, provider
+fee, or settlement amount.
+
+A reward declares a digital, physical, or mixed fulfilment, so a digital reward
+can never render a shipping line; it also declares what it includes, the variant
+groups the creator requires, optional add-ons, and an optional per-backer
+quantity limit (D-024, D-028). Destinations are ISO 3166-1 alpha-2 codes chosen
+from a searchable combobox with names taken from the platform's own CLDR data
+(D-026), and a creator prices them with ordered rules over named zones — first
+match wins, with an exclusion written above a "everywhere" rule doing exactly
+what it looks like (D-027). Postage is a fulfilment charge shown in the total
+due, never part of the escrowed contribution, and this build charges none because
+there is no provider to charge it through; a rate that is not known reads as
+pending with the creator's own reason, and a refused or uncovered destination is
+shown and blocked rather than mis-priced. No delivery address is ever collected,
+because there is nowhere to send it and no fulfilment process to receive it.
+Saved campaigns are device-local and every surface says so (D-023).
 
 ## Non-functional launch gates
 
@@ -133,9 +160,16 @@ from the campaign's own published terms rather than from a platform constant.
 Resolve these before the affected integration is built and record material choices
 in `DECISIONS.md`:
 
-- KYC, fiat on/off-ramp, and flat-fee payment providers;
+- KYC, fiat on/off-ramp, and flat-fee payment providers (the card and bank route
+  named in D-029 stays blocked until one can quote a live rate);
+- a carrier or fulfilment provider, which is what would turn a declared shipping
+  rate into a quoted one, add weight- and carrier-based rate models (D-027), and
+  make collecting a delivery address a consented, retained record (D-024);
+- an inventory count, which is what would turn a per-backer quantity limit into
+  real availability (D-028);
 - typed API contract source and versioning workflow with the NestJS service;
 - Solana RPC/indexing provider and failover design;
 - notification providers and delivery/retry policy;
 - production deployment, observability, analytics, and consent tooling;
-- final visual assets and any revisions to the working brand system.
+- final visual assets and any revisions to the working brand system. Reward
+  artwork in the fixtures is a vendored placeholder, not reward photography.

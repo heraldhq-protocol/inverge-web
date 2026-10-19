@@ -126,6 +126,11 @@ export function successFeeSentence(campaign: Campaign): string {
   return `Inverge deducts ${formatBps(fee)} of each released tranche as its fee, taken at the moment the tranche is released — including the working-capital tranche — rather than up front. It is not charged to you on top of your contribution.`;
 }
 
+/** The All-or-Nothing promise, in one place so the panel and the explainer agree. */
+export function allOrNothingSentence(): string {
+  return "This campaign is All-or-Nothing. If the target is not reached by the funding deadline the campaign fails, and every backer can claim a full refund without depending on the creator or on Inverge.";
+}
+
 /** The "How your contribution is used" list, in the order a backer needs it. */
 export function accountabilitySteps(
   campaign: Campaign,
@@ -138,7 +143,7 @@ export function accountabilitySteps(
       title: "Held in escrow",
     },
     {
-      body: "This campaign is All-or-Nothing. If the target is not reached by the funding deadline the campaign fails, and every backer can claim a full refund without depending on the creator or on Inverge.",
+      body: allOrNothingSentence(),
       icon: "target",
       id: "all-or-nothing",
       title: "All-or-Nothing funding",
