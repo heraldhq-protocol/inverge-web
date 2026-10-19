@@ -4,51 +4,59 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Share08Icon } from "@hugeicons/core-free-icons";
 import { useState } from "react";
 
+import {
+  browserShareDependencies,
+  shareCampaign,
+  shareOutcomeMessage,
+  shareOutcomeRevealsLink,
+  type CampaignSharePayload,
+  type ShareOutcome,
+} from "@/features/campaigns/lib/share";
+
 /**
- * Share a campaign.
+ * Share a public campaign.
  *
- * A real action with no backend: it hands the current URL to the platform share
- * sheet where one exists, otherwise copies it. If the clipboard is blocked (an
- * insecure context, or a denied permission) the button reveals the link instead
- * of claiming a copy that did not happen.
+ * The button does one thing and reports one of four honest outcomes. It never
+ * announces a share the user cancelled, and it never claims a copy that the
+ * clipboard refused. When both routes fail the link is revealed in a read-only
+ * field so the campaign can still be shared by hand.
  */
 export function CampaignShareButton({
-  title,
+  payload,
   className = "",
+  label = "Share campaign",
 }: {
-  title: string;
+  payload: CampaignSharePayload;
   className?: string;
+  label?: string;
 }) {
-  const [status, setStatus] = useState<"idle" | "copied" | "failed">("idle");
+  const [outcome, setOutcome] = useState<ShareOutcome | null>(null);
+  const [busy, setBusy] = useState(false);
 
-  const url = typeof window === "undefined" ? "" : window.location.href;
+  async function handleShare() {
+    if (busy) return;
 
-  async function share() {
-    const shareUrl = window.location.href;
-
-    if (typeof navigator.share === "function") {
-      try {
-        await navigator.share({ title, url: shareUrl });
-        return;
-      } catch {
-        // A cancelled share sheet is not a failure; fall through to copying.
-      }
-    }
+    setBusy(true);
+    setOutcome(null);
 
     try {
-      await navigator.clipboard.writeText(shareUrl);
-      setStatus("copied");
-    } catch {
-      setStatus("failed");
+      setOutcome(await shareCampaign(payload, browserShareDependencies()));
+    } finally {
+      setBusy(false);
     }
   }
+
+  const message = outcome === null ? null : shareOutcomeMessage(outcome);
+  const revealLink = outcome !== null && shareOutcomeRevealsLink(outcome);
 
   return (
     <div className={className}>
       <button
         type="button"
-        onClick={share}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        onClick={handleShare}
+        disabled={busy}
+        aria-busy={busy || undefined}
+        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
       >
         <HugeiconsIcon
           icon={Share08Icon}
@@ -56,20 +64,17 @@ export function CampaignShareButton({
           strokeWidth={1.8}
           aria-hidden="true"
         />
-        Share campaign
+        {label}
       </button>
 
       <p role="status" aria-live="polite" className="mt-1.5 text-xs text-muted">
-        {status === "copied" ? "Link copied to your clipboard." : null}
-        {status === "failed"
-          ? "Copying was blocked. Select the link below."
-          : null}
+        {message}
       </p>
 
-      {status === "failed" ? (
+      {revealLink ? (
         <input
           readOnly
-          value={url}
+          value={payload.url}
           aria-label="Campaign link"
           onFocus={(event) => event.target.select()}
           className="mt-1.5 min-h-11 w-full rounded-xl border border-border bg-canvas px-3 text-xs text-ink"
