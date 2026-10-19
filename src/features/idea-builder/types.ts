@@ -93,7 +93,7 @@ export const BUILDER_STEPS = [
   { id: "basics", label: "Idea basics" },
   { id: "problem", label: "Problem & audience" },
   { id: "solution", label: "Solution" },
-  { id: "roadmap", label: "Roadmap" },
+  { id: "roadmap", label: "Roadmap (optional)" },
   { id: "goals", label: "Ask & funding" },
   { id: "feedback", label: "Feedback & community" },
   { id: "review", label: "Review & publish" },
