@@ -44,7 +44,6 @@ import {
   type CommunityInvite,
   type FeedbackAnswers,
   type FeedbackForm,
-  type FeedbackOption,
   type FeedbackQuestion,
   type FeedbackQuestionType,
 } from "@/features/feedback/types";
@@ -77,7 +76,10 @@ function readDraft(ideaId: string): StoredDraft | null {
 
 function writeDraft(ideaId: string, draft: StoredDraft): void {
   try {
-    window.localStorage.setItem(`${DRAFT_PREFIX}${ideaId}`, JSON.stringify(draft));
+    window.localStorage.setItem(
+      `${DRAFT_PREFIX}${ideaId}`,
+      JSON.stringify(draft),
+    );
   } catch {
     // Storage failure must not block editing.
   }
@@ -103,7 +105,12 @@ function IconButton({
       onClick={onClick}
       className="grid size-10 place-items-center rounded-lg border border-border bg-surface text-muted transition-colors hover:border-brand/35 hover:text-ink disabled:cursor-not-allowed disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
-      <HugeiconsIcon icon={icon} size={16} strokeWidth={1.8} aria-hidden="true" />
+      <HugeiconsIcon
+        icon={icon}
+        size={16}
+        strokeWidth={1.8}
+        aria-hidden="true"
+      />
     </button>
   );
 }
@@ -505,6 +512,10 @@ export function FeedbackBuilder({
   useEffect(() => {
     const draft = readDraft(idea.id);
     if (draft) {
+      // The draft lives only in this browser. Reading localStorage during render would
+      // make the first client render disagree with the server HTML, so restoring after
+      // mount is intentional; this is a hydration boundary, not derived state.
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setForm(draft.form);
       setCommunity(draft.community);
       setStatus("Restored the draft saved in this browser.");
@@ -524,7 +535,8 @@ export function FeedbackBuilder({
   const communityIssues = useMemo(() => {
     if (!community.enabled) return [] as string[];
     const problems: string[] = [];
-    if (!community.title.trim()) problems.push("Community invitation needs a title.");
+    if (!community.title.trim())
+      problems.push("Community invitation needs a title.");
     for (const destination of community.destinations) {
       if (!destination.enabled) continue;
       const result = validateCommunityUrl(destination.url);
@@ -695,7 +707,10 @@ export function FeedbackBuilder({
       </div>
 
       {status ? (
-        <p className="mt-4 rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs leading-5 text-brand-strong" role="status">
+        <p
+          className="mt-4 rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs leading-5 text-brand-strong"
+          role="status"
+        >
           {status}
         </p>
       ) : null}
@@ -706,7 +721,9 @@ export function FeedbackBuilder({
             <section className="rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
-                  <h2 className="text-base font-bold text-ink">Feedback form</h2>
+                  <h2 className="text-base font-bold text-ink">
+                    Feedback form
+                  </h2>
                   <p className="mt-0.5 text-xs leading-5 text-muted">
                     When this is off, the public page shows no feedback card at
                     all. Support and funding interest are separate.
@@ -726,15 +743,23 @@ export function FeedbackBuilder({
                     <Input
                       value={form.title}
                       maxLength={120}
-                      onChange={(event) => updateForm({ title: event.target.value })}
+                      onChange={(event) =>
+                        updateForm({ title: event.target.value })
+                      }
                       className="mt-1"
                       aria-describedby={
-                        showErrors && issueMap.get("title") ? "form-title-error" : undefined
+                        showErrors && issueMap.get("title")
+                          ? "form-title-error"
+                          : undefined
                       }
                     />
                   </label>
                   {showErrors && issueMap.get("title") ? (
-                    <p id="form-title-error" className="text-xs text-danger" role="alert">
+                    <p
+                      id="form-title-error"
+                      className="text-xs text-danger"
+                      role="alert"
+                    >
                       {issueMap.get("title")?.join(" ")}
                     </p>
                   ) : null}
@@ -758,7 +783,10 @@ export function FeedbackBuilder({
               <>
                 <section aria-labelledby="questions-heading">
                   <div className="flex items-center justify-between gap-3">
-                    <h2 id="questions-heading" className="text-base font-bold text-ink">
+                    <h2
+                      id="questions-heading"
+                      className="text-base font-bold text-ink"
+                    >
                       Questions
                     </h2>
                     <span className="text-xs tabular-nums text-muted">
@@ -815,18 +843,25 @@ export function FeedbackBuilder({
                   )}
 
                   <div className="mt-4 rounded-2xl border border-border bg-canvas p-4">
-                    <p className="text-sm font-semibold text-ink">Add a question</p>
+                    <p className="text-sm font-semibold text-ink">
+                      Add a question
+                    </p>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {typeOptions.map((option) => (
                         <button
                           key={option.value}
                           type="button"
-                          disabled={form.questions.length >= FEEDBACK_LIMITS.maxQuestions}
+                          disabled={
+                            form.questions.length >=
+                            FEEDBACK_LIMITS.maxQuestions
+                          }
                           onClick={() =>
                             updateForm({
                               questions: [
                                 ...form.questions,
-                                newQuestion(option.value as FeedbackQuestionType),
+                                newQuestion(
+                                  option.value as FeedbackQuestionType,
+                                ),
                               ],
                             })
                           }
@@ -885,8 +920,8 @@ export function FeedbackBuilder({
               <h2 className="text-sm font-bold text-ink">Publishing rules</h2>
               <p className="mt-1 text-xs leading-5 text-muted">
                 The API currently allows survey edits only while an idea is a
-                draft. This preview lets you edit at any time, but a live publish
-                must follow that rule and create a new version.
+                draft. This preview lets you edit at any time, but a live
+                publish must follow that rule and create a new version.
               </p>
               <Link
                 href="/guides"
@@ -974,7 +1009,10 @@ function CommunitySettings({
   onAddDestination: () => void;
   onChange: (next: CommunityInvite) => void;
   onRemoveDestination: (id: string) => void;
-  onUpdateDestination: (id: string, patch: Partial<CommunityDestination>) => void;
+  onUpdateDestination: (
+    id: string,
+    patch: Partial<CommunityDestination>,
+  ) => void;
 }) {
   const destinations = enabledDestinations(community);
 
@@ -984,10 +1022,13 @@ function CommunitySettings({
         <div className="rounded-2xl border border-border bg-surface p-4">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h2 className="text-base font-bold text-ink">Community invitation</h2>
+              <h2 className="text-base font-bold text-ink">
+                Community invitation
+              </h2>
               <p className="mt-0.5 text-xs leading-5 text-muted">
-                Shown after feedback, on the public page, or both. Every field is
-                optional and feedback can be completed without joining anything.
+                Shown after feedback, on the public page, or both. Every field
+                is optional and feedback can be completed without joining
+                anything.
               </p>
             </div>
             <Switch
@@ -1062,11 +1103,22 @@ function CommunitySettings({
               <div>
                 <h2 className="text-base font-bold text-ink">Destinations</h2>
                 <p className="mt-0.5 text-xs text-muted">
-                  External links open in a new tab. Only HTTPS links are accepted.
+                  External links open in a new tab. Only HTTPS links are
+                  accepted.
                 </p>
               </div>
-              <Button type="button" variant="outline" size="sm" onClick={onAddDestination}>
-                <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} aria-hidden="true" />
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={onAddDestination}
+              >
+                <HugeiconsIcon
+                  icon={Add01Icon}
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 Add link
               </Button>
             </div>
@@ -1076,7 +1128,10 @@ function CommunitySettings({
                 {community.destinations.map((destination, index) => {
                   const check = validateCommunityUrl(destination.url);
                   return (
-                    <li key={destination.id} className="rounded-xl border border-border p-3">
+                    <li
+                      key={destination.id}
+                      className="rounded-xl border border-border p-3"
+                    >
                       <div className="flex items-center justify-between gap-2">
                         <label className="flex items-center gap-2 text-xs font-medium text-ink">
                           <input
@@ -1154,7 +1209,10 @@ function CommunitySettings({
                         <Input
                           type="url"
                           value={destination.url}
-                          placeholder={COMMUNITY_DESTINATION_META[destination.kind].placeholder}
+                          placeholder={
+                            COMMUNITY_DESTINATION_META[destination.kind]
+                              .placeholder
+                          }
                           onChange={(event) =>
                             onUpdateDestination(destination.id, {
                               url: event.target.value,
@@ -1197,7 +1255,10 @@ function CommunitySettings({
         ) : null}
 
         {issues.length > 0 ? (
-          <div className="rounded-xl border border-danger/30 bg-danger/5 p-3" role="alert">
+          <div
+            className="rounded-xl border border-danger/30 bg-danger/5 p-3"
+            role="alert"
+          >
             {issues.map((issue) => (
               <p key={issue} className="text-xs text-danger">
                 {issue}
@@ -1209,13 +1270,18 @@ function CommunitySettings({
 
       <aside className="rounded-2xl border border-border bg-brand-tint p-4 xl:sticky xl:top-24 xl:self-start">
         <span className="grid size-9 place-items-center rounded-xl bg-brand/10 text-brand-strong">
-          <HugeiconsIcon icon={Idea01Icon} size={18} strokeWidth={1.8} aria-hidden="true" />
+          <HugeiconsIcon
+            icon={Idea01Icon}
+            size={18}
+            strokeWidth={1.8}
+            aria-hidden="true"
+          />
         </span>
         <h2 className="mt-3 text-sm font-bold text-ink">Keep it optional</h2>
         <p className="mt-1 text-xs leading-5 text-muted">
-          A community link is an invitation, not a condition. Feedback submission
-          must work when every destination is disabled. Inverge never reports a
-          click as a join.
+          A community link is an invitation, not a condition. Feedback
+          submission must work when every destination is disabled. Inverge never
+          reports a click as a join.
         </p>
         {destinations.length > 0 ? (
           <p className="mt-2 text-[0.6875rem] text-muted">

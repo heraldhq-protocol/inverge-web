@@ -1,12 +1,53 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useSyncExternalStore } from "react";
 
 function pad(value: number): string {
   return String(value).padStart(2, "0");
 }
 
-type Remaining = { days: number; hours: number; minutes: number; seconds: number };
+// One shared one-second clock. Several countdowns can be mounted at once, so the timer
+// starts with the first subscriber and stops with the last. The server snapshot is 0,
+// which renders neutral placeholders; the browser clock is published after hydration.
+let clockNow = 0;
+let clockTimer: number | null = null;
+const clockListeners = new Set<() => void>();
+
+function emitClockTick() {
+  clockNow = Date.now();
+  for (const listener of clockListeners) listener();
+}
+
+function subscribeToClock(listener: () => void) {
+  clockListeners.add(listener);
+  if (clockTimer === null) {
+    clockNow = Date.now();
+    clockTimer = window.setInterval(emitClockTick, 1_000);
+    listener();
+  }
+  return () => {
+    clockListeners.delete(listener);
+    if (clockListeners.size === 0 && clockTimer !== null) {
+      window.clearInterval(clockTimer);
+      clockTimer = null;
+    }
+  };
+}
+
+function getClockSnapshot(): number {
+  return clockNow;
+}
+
+function getClockServerSnapshot(): number {
+  return 0;
+}
+
+type Remaining = {
+  days: number;
+  hours: number;
+  minutes: number;
+  seconds: number;
+};
 
 function remainingUntil(target: number, now: number): Remaining | null {
   const distance = target - now;
@@ -38,13 +79,11 @@ export function CompetitionCountdown({
 }) {
   const target = new Date(endsAt).getTime();
   const starts = new Date(startsAt).getTime();
-  const [now, setNow] = useState<number | null>(null);
-
-  useEffect(() => {
-    setNow(Date.now());
-    const interval = window.setInterval(() => setNow(Date.now()), 1_000);
-    return () => window.clearInterval(interval);
-  }, []);
+  const now = useSyncExternalStore(
+    subscribeToClock,
+    getClockSnapshot,
+    getClockServerSnapshot,
+  );
 
   const deadlineLabel = new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
@@ -53,7 +92,7 @@ export function CompetitionCountdown({
     year: "numeric",
   }).format(new Date(endsAt));
 
-  if (now === null) {
+  if (now === 0) {
     return (
       <div className="flex items-center gap-2">
         <span className="text-xs text-muted">Next ideathon ends in</span>
@@ -91,10 +130,7 @@ export function CompetitionCountdown({
   if (!remaining) {
     return (
       <p className="inline-flex items-center gap-2 text-xs font-medium text-ink-soft">
-        <span
-          aria-hidden="true"
-          className="size-2 rounded-full bg-warning"
-        />
+        <span aria-hidden="true" className="size-2 rounded-full bg-warning" />
         Entries closed on {deadlineLabel}.
       </p>
     );

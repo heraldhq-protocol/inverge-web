@@ -69,6 +69,20 @@ panel (`story`, `milestones`, `rewards`, `updates`, `discussion`, `faqs`,
 funding, rewards, facts, escrow, and FAQ cards. The tab bar is keyboard
 navigable, and only the selected panel is in the document.
 
+### Admin surfaces
+
+Added with the campaign review workspace (D-030). The workspace is gated by
+`getProgrammeAdminAccess`; production access is denied because no authenticated
+admin session exists, and development runs as a labelled preview. Review
+decisions are stored in this browser and are explicitly non-authoritative.
+
+| Route | Page | State |
+| --- | --- | --- |
+| `/admin` | Operating overview | Real. Review counts, oldest-first queue, recent local decisions, and named integration gaps |
+| `/admin/campaigns` | Campaign review queue | Real. Awaiting review, changes requested, and decided groups with honest empty states |
+| `/admin/campaigns/[id]` | Campaign review detail | Real. Pitch, milestone plan with evidence, disclosures, review history, and a reasoned decision form. Unknown ids 404 |
+| `/admin/audit` | Audit history | Partial. Local review decisions and sampled programme entries, both labelled. No authoritative server trail exists |
+
 ## 2. Reachable from the dashboard, outside `/d`
 
 | Route | Why it is linked |
@@ -77,7 +91,7 @@ navigable, and only the selected panel is in the document.
 | `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/back`, `/campaigns/categories/[slug]` | Public campaign discovery, detail, contribution preview, and category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
 | `/guides`, `/guides/[slug]` | Sidebar item "Guides & journal" |
 | `/ideathon`, `/ideathon/about`, `/ideathon/past`, `/ideathon/rules` | Public ideathon standings |
-| `/admin`, `/admin/audit`, `/admin/payments`, `/admin/programmes`, `/admin/programmes/new`, `/admin/programmes/[id]` | Organiser workspace, linked from the home rail only when the viewer has the capability |
+| `/admin`, `/admin/campaigns`, `/admin/campaigns/[id]`, `/admin/audit`, `/admin/payments`, `/admin/programmes`, `/admin/programmes/new`, `/admin/programmes/[id]` | Admin workspace, linked from the home rail only when the viewer has the capability |
 | `/help`, `/blog`, `/about`, `/contact` | Marketing footer and header |
 
 ## 3. Creator Studio sections versus what exists

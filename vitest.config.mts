@@ -13,5 +13,9 @@ export default defineConfig({
   test: {
     environment: "jsdom",
     setupFiles: ["./vitest.setup.ts"],
+    // Cold runs on Windows re-evaluate the module graph slowly enough that the
+    // 5s default times out the first assertion in a file. The tests themselves
+    // complete in milliseconds once loaded, so only the ceiling is raised.
+    testTimeout: 20_000,
   },
 });

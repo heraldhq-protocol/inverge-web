@@ -27,7 +27,7 @@ export function AdminShell({
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
       <aside className="sticky top-0 hidden h-dvh flex-col bg-contrast px-4 py-6 text-white lg:flex">
         <div className="px-1">
-          <BrandMark href="/admin/programmes" inverted />
+          <BrandMark href="/admin" inverted />
         </div>
         <div className="mt-7 flex items-center gap-2 px-2">
           <span className="text-[0.625rem] font-bold uppercase tracking-[0.16em] text-white/45">
@@ -69,7 +69,9 @@ export function AdminShell({
                 .slice(0, 2)}
             </span>
             <div className="min-w-0">
-              <p className="truncate text-xs font-semibold">{access.actor.name}</p>
+              <p className="truncate text-xs font-semibold">
+                {access.actor.name}
+              </p>
               <p className="truncate text-[0.625rem] text-white/50">
                 {access.actor.role.replace("_", " ")}
               </p>
@@ -82,12 +84,12 @@ export function AdminShell({
         <header className="sticky top-0 z-30 border-b border-border/75 bg-canvas/92 backdrop-blur">
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 lg:hidden">
-              <BrandMark href="/admin/programmes" />
+              <BrandMark href="/admin" />
             </div>
             <div className="hidden items-center gap-2 lg:flex">
               <IconTile icon={SecurityCheckIcon} size="sm" tone="soft" />
               <p className="text-xs text-muted">
-                Programme operations and publishing
+                Campaign curation, programmes, and platform operations
               </p>
             </div>
             <span className="rounded-full bg-warning/10 px-2.5 py-1 text-[0.625rem] font-semibold text-warning-strong">
@@ -100,8 +102,9 @@ export function AdminShell({
           {children}
         </main>
         <footer className="border-t border-border px-4 py-4 text-[0.6875rem] text-muted sm:px-6 lg:px-8">
-          Inverge programme operations. Prize and sponsor figures are preview
-          data. No money moves from this workspace.
+          Inverge admin workspace. Campaign decisions and programme figures are
+          preview data until the API is connected. No money moves from this
+          workspace.
         </footer>
       </div>
     </div>

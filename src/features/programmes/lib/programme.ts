@@ -1,3 +1,4 @@
+import { adminCan } from "@/features/admin/permissions";
 import type { MoneyAmount } from "@/lib/money";
 import type {
   JudgingRubric,
@@ -12,7 +13,6 @@ import type {
   Reward,
   Submission,
 } from "@/features/programmes/types";
-import { ROLE_PERMISSIONS } from "@/features/programmes/types";
 
 export const PROGRAMME_TYPE_LABELS: Readonly<Record<ProgrammeType, string>> = {
   monthly_ideathon: "Monthly ideathon",
@@ -23,7 +23,9 @@ export const PROGRAMME_TYPE_LABELS: Readonly<Record<ProgrammeType, string>> = {
   other: "Other programme",
 };
 
-export const PROGRAMME_STATUS_LABELS: Readonly<Record<ProgrammeStatus, string>> = {
+export const PROGRAMME_STATUS_LABELS: Readonly<
+  Record<ProgrammeStatus, string>
+> = {
   draft: "Draft",
   scheduled: "Scheduled",
   registration_open: "Registration open",
@@ -56,7 +58,9 @@ export function programmeStatusTone(status: ProgrammeStatus): StatusTone {
 }
 
 /** Allowed lifecycle transitions, enforced again by the API when it exists. */
-const TRANSITIONS: Readonly<Record<ProgrammeStatus, readonly ProgrammeStatus[]>> = {
+const TRANSITIONS: Readonly<
+  Record<ProgrammeStatus, readonly ProgrammeStatus[]>
+> = {
   draft: ["scheduled", "registration_open"],
   scheduled: ["registration_open", "draft", "archived"],
   registration_open: ["submission_open", "judging", "archived"],
@@ -182,7 +186,10 @@ export function publicCta(
   };
 }
 
-export function phaseLabel(programme: Programme, now: Date = new Date()): string {
+export function phaseLabel(
+  programme: Programme,
+  now: Date = new Date(),
+): string {
   const time = now.getTime();
   if (programme.status === "submission_open") {
     return time <= new Date(programme.schedule.submissionClosesAt).getTime()
@@ -261,7 +268,10 @@ export function validateProgramme(programme: Programme): ValidationIssue[] {
     issues.push({ field: "description", message: "Describe the programme." });
   }
   if (!nonEmpty(programme.audience.who)) {
-    issues.push({ field: "audience.who", message: "State who the programme is for." });
+    issues.push({
+      field: "audience.who",
+      message: "State who the programme is for.",
+    });
   }
 
   const schedule = programme.schedule;
@@ -319,10 +329,15 @@ export function validateProgramme(programme: Programme): ValidationIssue[] {
   }
 
   for (const sponsor of programme.sponsors) {
-    if (sponsor.commitment.atomic !== "0" && !sponsor.confirmedByProvider && sponsor.invoiceStatus === "paid") {
+    if (
+      sponsor.commitment.atomic !== "0" &&
+      !sponsor.confirmedByProvider &&
+      sponsor.invoiceStatus === "paid"
+    ) {
       issues.push({
         field: `sponsor.${sponsor.id}`,
-        message: "A sponsor invoice cannot be paid without provider confirmation.",
+        message:
+          "A sponsor invoice cannot be paid without provider confirmation.",
       });
     }
   }
@@ -355,7 +370,9 @@ export type PublishCheck = {
 export function publishChecklist(programme: Programme): PublishCheck[] {
   const issues = validateProgramme(programme);
   const has = (field: string) =>
-    !issues.some((issue) => issue.field === field || issue.field.startsWith(`${field}.`));
+    !issues.some(
+      (issue) => issue.field === field || issue.field.startsWith(`${field}.`),
+    );
 
   return [
     {
@@ -368,29 +385,39 @@ export function publishChecklist(programme: Programme): PublishCheck[] {
       key: "schedule",
       label: "Dates are in order",
       complete: has("schedule"),
-      detail: "Registration, submission, judging, and results must run in sequence.",
+      detail:
+        "Registration, submission, judging, and results must run in sequence.",
     },
     {
       key: "asset",
       label: "Public banner",
-      complete: programme.assets.some((asset) => asset.kind === "banner" && nonEmpty(asset.url)),
+      complete: programme.assets.some(
+        (asset) => asset.kind === "banner" && nonEmpty(asset.url),
+      ),
       detail: "A banner prevents a generic empty header on the public page.",
     },
     {
       key: "rewards",
       label: "Rewards have an owner",
       complete: programme.rewards.every(
-        (reward) => nonEmpty(reward.fulfilmentOwner) && (reward.kind === "non_cash" || Boolean(reward.amount)),
+        (reward) =>
+          nonEmpty(reward.fulfilmentOwner) &&
+          (reward.kind === "non_cash" || Boolean(reward.amount)),
       ),
-      detail: "Cash and mixed rewards need an amount; every reward needs an owner.",
+      detail:
+        "Cash and mixed rewards need an amount; every reward needs an owner.",
     },
     {
       key: "judging",
       label: "Judging weights total 100",
       complete:
         programme.rubric.criteria.length === 0 ||
-        programme.rubric.criteria.reduce((sum, criterion) => sum + criterion.weight, 0) === 100,
-      detail: "Optional for a community-only programme. Required once judging is enabled.",
+        programme.rubric.criteria.reduce(
+          (sum, criterion) => sum + criterion.weight,
+          0,
+        ) === 100,
+      detail:
+        "Optional for a community-only programme. Required once judging is enabled.",
     },
     {
       key: "modules",
@@ -419,7 +446,9 @@ export function moduleLabel(key: ProgrammeModuleKey): string {
   return labels[key];
 }
 
-export function moduleAvailabilityLabel(availability: ModuleAvailability): string {
+export function moduleAvailabilityLabel(
+  availability: ModuleAvailability,
+): string {
   switch (availability) {
     case "available":
       return "Available";
@@ -476,13 +505,16 @@ export function submissionJudgeTotal(
       .map((judge) => judge.id),
   );
   const scores = rubric.scores.filter(
-    (score) => score.submissionId === submissionId && activeJudges.has(score.judgeId),
+    (score) =>
+      score.submissionId === submissionId && activeJudges.has(score.judgeId),
   );
   if (scores.length === 0) return 0;
 
   return (
-    scores.reduce((sum, score) => sum + weightedJudgeScore(rubric, score.scores), 0) /
-    scores.length
+    scores.reduce(
+      (sum, score) => sum + weightedJudgeScore(rubric, score.scores),
+      0,
+    ) / scores.length
   );
 }
 
@@ -507,8 +539,12 @@ export function computeLeaderboard(programme: Programme): LeaderboardEntry[] {
       communityScore: submission.supporters,
     }))
     .toSorted((left, right) => {
-      if (right.judgeScore !== left.judgeScore) return right.judgeScore - left.judgeScore;
-      if (programme.rubric.tieBreak === "community_support" && right.communityScore !== left.communityScore) {
+      if (right.judgeScore !== left.judgeScore)
+        return right.judgeScore - left.judgeScore;
+      if (
+        programme.rubric.tieBreak === "community_support" &&
+        right.communityScore !== left.communityScore
+      ) {
         return right.communityScore - left.communityScore;
       }
       if (programme.rubric.tieBreak === "earliest_submission") {
@@ -533,11 +569,16 @@ export function submissionFor(
   programme: Programme,
   submissionId: string,
 ): Submission | undefined {
-  return programme.submissions.find((submission) => submission.id === submissionId);
+  return programme.submissions.find(
+    (submission) => submission.id === submissionId,
+  );
 }
 
-export function roleCan(role: ProgrammeRole, permission: ProgrammePermission): boolean {
-  return ROLE_PERMISSIONS[role].includes(permission);
+export function roleCan(
+  role: ProgrammeRole,
+  permission: ProgrammePermission,
+): boolean {
+  return adminCan(role, permission);
 }
 
 export function formatProgrammeDate(iso: string, withTime = false): string {
@@ -569,7 +610,10 @@ export function nextDeadline(
   switch (programme.status) {
     case "scheduled":
     case "registration_open":
-      return { at: schedule.registrationClosesAt, label: "Registration closes" };
+      return {
+        at: schedule.registrationClosesAt,
+        label: "Registration closes",
+      };
     case "submission_open":
       return { at: schedule.submissionClosesAt, label: "Submissions close" };
     case "judging":
@@ -585,7 +629,10 @@ export function nextDeadline(
 export function securedSponsorFunding(programme: Programme): MoneyAmount {
   return {
     atomic: programme.sponsors
-      .filter((sponsor) => sponsor.invoiceStatus === "paid" && sponsor.confirmedByProvider)
+      .filter(
+        (sponsor) =>
+          sponsor.invoiceStatus === "paid" && sponsor.confirmedByProvider,
+      )
       .reduce((sum, sponsor) => sum + BigInt(sponsor.commitment.atomic), 0n)
       .toString(),
     currency: "USD",

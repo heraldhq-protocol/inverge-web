@@ -38,6 +38,10 @@ choices.
 | D-027 | 2026-10-19 | Accepted | A creator declares ordered shipping rules over named zones, each with a free, flat, deferred, or unavailable rate; the first matching rule wins. Postage is a separate fulfilment charge in the total due, never part of the escrowed contribution, and no postage is charged in this build. |
 | D-028 | 2026-10-19 | Accepted | A reward carries what it includes, the variant groups the creator requires, optional add-ons that may or may not add a parcel, and an optional per-backer quantity limit; a digital add-on can never be marked as affecting shipping. |
 | D-029 | 2026-10-19 | Accepted | Both payment routes are always offered — USDC from the backer's own wallet, and card or bank transfer through a licensed provider — and the backer's country never changes the contribution asset. The provider route is blocked and explained until a live quote exists. |
+| D-030 | 2026-10-19 | Accepted | Campaign review decisions are a preview record until the API exists. |
+| D-031 | 2026-10-19 | Accepted | The wallet feature ships as a provider-agnostic, preview-only surface: identity-bound (never an address), SDK-absent, with no fabricated address, signature, deposit, withdrawal, refund, or export. |
+| D-032 | 2026-10-19 | Accepted | Line endings are normalized by Prettier, not by rewriting the tree. |
+| D-033 | 2026-10-19 | Accepted | Choose MetaMask Embedded Wallets (Web3Auth) for web authentication and embedded Solana wallets; keep the provider-neutral `EmbeddedWalletPort` and supersede D-008 for the web client. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -992,6 +996,219 @@ confirmation: a redirect or a client callback would not be one either.
 Revisit when: A licensed on-ramp provider is contracted and can quote a live
 rate, at which point the blocked route becomes available and its quote lines
 carry the provider's own figures.
+
+### D-030: Campaign review decisions are a preview record until the API exists
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: The campaign domain already models `CampaignReview` and
+`CampaignPhase` separately, but there was no surface where an operator could
+see a submitted campaign or record a decision, and no review endpoint, Prisma
+review state, or authenticated web session to write through. Rendering a
+decision control without a place for the decision to go would either imply a
+production change that never happened or invent an audit trail.
+
+Decision: `/admin` becomes the workspace overview, `/admin/campaigns` the
+review queue, and `/admin/campaigns/[id]` the review detail. A decision moves the
+review state and the phase together through one pure rule
+(`decideCampaignReview`): approve to `approved`/`funding`, request changes to
+`changes-requested`/`changes-requested`, reject to `rejected`/`rejected`. Only a
+campaign in `in-review` can be decided, change requests and rejections require a
+trimmed reason of at least twenty characters, and `campaign:review` is enforced
+in the domain action and the UI. Because no API exists, the decision and its
+audit event are written to a browser-local store and every surface labels them
+as preview-only and non-authoritative; production admin access remains denied
+rather than simulated. KYC (FR-103) and the application fee (FR-311) are named
+as missing preconditions and never fabricated.
+
+Alternatives: Build the review control against an optimistic client state and
+present it as authoritative (invents a production change); add a Prisma review
+enum and migration now (changes the schema before the API contract is agreed);
+leave `/admin` as a redirect and defer review entirely (keeps the lifecycle
+one-sided and the queue non-existent); block the queue until the API lands (no
+reviewable surface at all, and no testable decision rules).
+
+Consequences: Review decisions are real, permission-checked, reasoned, and
+recorded, and the domain rules are unit-tested independently of the UI. Nothing
+here publishes a campaign, moves money, or confirms identity: approving changes
+the local preview state, and the server-backed discovery reader is untouched.
+The local store is explicitly disposable and is not an audit trail. The API must
+repeat the permission and state checks, enforce FR-103 and FR-311, append the
+authoritative audit entry, and own the review states.
+
+Revisit when: An authenticated admin session and a campaign review endpoint
+exist, at which point `admin-review-store` is replaced by an API client and the
+Prisma review states are added in the same change.
+
+Revisited 2026-10-19: The API now owns the review lifecycle. `inverge-api` adds
+`CampaignReviewStatus`/`CampaignReviewAction`, an append-only
+`CampaignReviewEvent`, review fields on `Campaign`, and
+`POST /admin/campaigns/:id/review` behind `PrivyAuthGuard` + `AdminGuard`, with
+FR-103/FR-311 enforced before a campaign can be submitted for review and a
+non-refundable, single-use application fee charge (`applicationFeeChargeId`
+`@unique`). The web preview is unchanged and still writes to the browser-local
+store; it is now explicitly a disconnected preview of an endpoint that exists,
+not a stand-in for a missing one. Replacing `admin-review-store` with an API
+client sits with the authenticated-session work.
+
+### D-031: The wallet is provider-agnostic and preview-only until an SDK and session exist
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering and product
+
+Context: The wallet and payment experience had to be built, but this repository
+has no embedded-wallet SDK in `inverge-web/package.json`, no authenticated
+session (`getDashboardViewer()` returns a labelled preview identity), and no
+provider credentials. The backend `inverge-api` already models `WalletAccount`
+and a Privy reference adapter behind `EmbeddedWalletPort`, and D-008 names Privy,
+while the product direction for this work names MetaMask Embedded Wallets
+(formerly Web3Auth). Building either integration now would need a dependency,
+credentials, a real session, and a decision that this repository cannot make on
+its own. A screen that manufactures an address, a QR code, a signature, or a
+"confirmed" payment would misrepresent custody and money.
+
+Decision: The web client gets a provider-agnostic wallet feature
+(`src/features/wallet`) whose provider identity is a value, not an import: the
+preview account names MetaMask Embedded Wallets with `configured: false` and no
+address, and no provider SDK is added. Inverge's internal user id is the stable
+identity and the address is only ever an attribute of a provisioned account; no
+route parameter, fixture, or label uses an address as an identity. Every wallet
+surface reads one capability audit (`lib/capabilities.ts`) built from integration
+facts, so provisioning, balance, activity, receive, signing, on-ramp, withdrawal,
+refunds, and export are each marked `available`, `preview`, or `unavailable` with
+the missing mechanism named. Balances are labelled samples, activity is derived
+from preview contribution records, and every item carries `demo: true` and a null
+transaction. Transfer validation (base58 destination bytes, wrong-network EVM
+detection, integer token amounts, sample-balance sufficiency) runs locally and
+always ends at a labelled "not submitted" handoff. The contribution checkout
+receives a serialisable `WalletFundingSnapshot` and blocks settlement for
+insufficient, unavailable, or unsupported-asset funding, while signing-unavailable
+continues to the existing labelled handoff. Live provisioning, on-ramp,
+withdrawals, refunds, key export, and webhook verification are reported as not
+implemented rather than simulated, and the provider conflict is escalated rather
+than resolved silently.
+
+Alternatives: Install a MetaMask Embedded Wallets SDK and wire it against a
+stubbed session (would fabricate provisioning without a real account binding and
+pre-empt the provider decision); keep building on the API's Privy adapter
+(contradicts the product direction and still needs credentials and a session);
+render a finished-looking wallet over static data (invents addresses and money);
+omit the wallet entirely until the provider is chosen (leaves the checkout and
+escrow/refund story untestable).
+
+Consequences: The wallet routes, validation, state model, and honest unavailable
+states are real and unit-tested, and the provider can be chosen without rewriting
+the feature because only `server/wallet.ts` and `lib/capabilities.ts` inputs are
+provider-specific. Nothing here provisions an account, moves money, claims a
+refund, exports a key, or verifies a webhook. The preview balances and refund
+records are disposable and must be replaced by the API's wallet read and a live
+on-ramp quote before any contribution can settle from a wallet. The backend auth
+stub (`AuthService.authenticate()`) must call the provider port before
+provisioning can be real.
+
+Revisit when: The provider is chosen, its SDK is added with reviewed credentials,
+an authenticated Inverge session exists, and `inverge-api` exposes a wallet read
+and funding quote, at which point `server/wallet.ts` is replaced and each
+capability flips from `unavailable` only when its mechanism is present.
+
+Follow-up: D-033 chooses MetaMask Embedded Wallets. The preview boundaries and
+the single provider seam above still apply.
+
+### D-032: Line endings are normalized by Prettier, not by rewriting the tree
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Web engineering
+
+Context: `format:check` failed with hundreds of "delete CR" diagnostics because
+files checked out with CRLF endings on Windows disagreed with Prettier's default
+`endOfLine: "lf"`. The formatting gate was unusable on the working platform and
+masked real formatting drift.
+
+Decision: `.prettierrc.json` sets `endOfLine: "auto"`, so Prettier preserves
+each file's existing line endings (LF stays LF, CRLF stays CRLF) instead of
+forcing one ending. Committed files keep their endings; the check stops
+reporting spurious `delete CR` diagnostics while still catching real formatting
+problems.
+
+Alternatives: Rewrite roughly 335 files to LF and add `.gitattributes`
+enforcement (a large diff touching files unrelated to any feature, with merge
+conflicts); set `endOfLine: "crlf"` (forces CRLF into files authored on other
+platforms and changes committed bytes); drop the format check (loses the gate).
+
+Consequences: Formatting passes on both Windows and Unix checkouts without a
+mass rewrite, at the cost of a file's ending being whatever it had on disk. A
+future `.gitattributes` (`text=auto eol=lf`) would make endings deterministic and
+is the preferred long-term follow-up.
+
+Revisit when: A `.gitattributes` normalizes endings or the team standardizes on
+one ending.
+
+### D-033: MetaMask Embedded Wallets is the web provider; identity stays Inverge's
+
+- Date: 2026-10-19
+- Status: Accepted
+- Owner: Product owner, web engineering, and backend engineering
+
+Context: D-008 chose Privy for authentication and embedded Solana wallets, while
+the wallet feature direction and the installed MetaMask Embedded Wallets skill
+name MetaMask Embedded Wallets (formerly Web3Auth). The product owner has now
+chosen MetaMask. The web app has no provider SDK, no Client ID, and no
+authenticated session; `inverge-api` already exposes a provider-neutral
+`EmbeddedWalletPort` with a Privy reference adapter and a stub adapter, but
+`AuthService.authenticate()` is still a stub that never calls the port. Adding an
+SDK without a real dashboard project, allowlisted origin, and server-side token
+verification would produce a wallet that looks live but cannot provision or sign.
+
+Decision: MetaMask Embedded Wallets is the provider for web authentication and
+embedded Solana wallets. Use `@web3auth/modal` v11 with the React hooks from
+`@web3auth/modal/react` and the Solana hooks from `@web3auth/modal/react/solana`
+(peer packages `@solana/kit`, `@solana-program/system`, `@solana/react-hooks`).
+In the Next.js App Router the provider tree lives in a `"use client"` component,
+never a Server Component. Sapphire Devnet is used for local and staging origins;
+Sapphire Mainnet is used in production. Sapphire is the wallet network, not the
+Solana cluster; both are configured and recorded explicitly.
+
+Identity remains Inverge's: the provider user identifier (`sub` in the `id_token`)
+maps to the existing `User`, the Solana address is an attribute of a provisioned
+`WalletAccount`, and no route, fixture, or authorization decision uses the
+address as a primary key. The backend verifies the ES256 `id_token` against the
+provider JWKS and issues the existing Inverge session token; a client-supplied
+address is never trusted for authorization. The provider-neutral
+`EmbeddedWalletPort` stays, and a MetaMask adapter replaces or joins the Privy
+adapter behind it. `AuthService.authenticate()` must call the port before any
+provisioning is real.
+
+Address stability is a production invariant: the same wallet requires the same
+Client ID, the same Sapphire network, the same connection configuration, and the
+same `useSFAKey` value. Changing any of them changes every user's address, so
+none may change in production without an explicit migration. Group connections
+are required where multiple login methods must resolve to one wallet. Inverge
+does not call `getPrivateKey`; signing uses the SDK hooks and key export stays
+disabled unless the dashboard and a reviewed export flow both exist.
+
+Alternatives: Keep Privy (D-008) and ignore the product choice; add MetaMask only
+as an external wallet connector without embedded provisioning; use a conventional
+auth provider plus a separate wallet provider; build custom auth and key
+management.
+
+Consequences: D-008 is superseded for web authentication and embedded wallets.
+The API needs a MetaMask adapter, guard/module naming cleanup, a real
+`AuthService.authenticate()` exchange, and a decision about the provider-specific
+`User.privyDid` column (rename or add a neutral provider-user-id field) in a
+separately reviewed migration. The web app needs the SDK, a guarded provider
+shell, a login surface, an `id_token` exchange, and an authenticated session
+before provisioning can be called live. Until those land, the preview boundaries
+in D-031 still hold: no fabricated address, signature, deposit, withdrawal,
+refund, or export.
+
+Revisit when: MetaMask Embedded Wallets no longer satisfies the required Solana
+support, security, regional availability, reliability, or commercial terms; or
+the product intentionally accepts the address churn of changing Client ID,
+Sapphire network, or connection configuration.
 
 ## Decision template
 

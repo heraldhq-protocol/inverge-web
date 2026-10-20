@@ -1,18 +1,9 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Cancel01Icon,
-  LockKeyIcon,
-} from "@hugeicons/core-free-icons";
+import { Cancel01Icon, LockKeyIcon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import {
-  useEffect,
-  useId,
-  useRef,
-  useState,
-  type FormEvent,
-} from "react";
+import { useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { createPortal } from "react-dom";
 
 import { Button } from "@/components/ui/button";
@@ -36,13 +27,14 @@ import type {
 } from "@/features/feedback/types";
 import type { IdeaDetail } from "@/features/ideas/types";
 
-const RATING_VALUES = [1, 2, 3, 4, 5] as const;
-
 function draftKey(ideaId: string, formVersion: number): string {
   return `inverge:feedback-draft:${ideaId}:${formVersion}`;
 }
 
-function readDraft(ideaId: string, formVersion: number): FeedbackAnswers | null {
+function readDraft(
+  ideaId: string,
+  formVersion: number,
+): FeedbackAnswers | null {
   try {
     const raw = window.sessionStorage.getItem(draftKey(ideaId, formVersion));
     if (!raw) return null;
@@ -131,7 +123,11 @@ function QuestionField({
 
   function errorText() {
     return error ? (
-      <p id={errorId} className="mt-1.5 text-xs font-medium text-danger" role="alert">
+      <p
+        id={errorId}
+        className="mt-1.5 text-xs font-medium text-danger"
+        role="alert"
+      >
         {error}
       </p>
     ) : null;
@@ -389,12 +385,17 @@ export function FeedbackDialog({
     onClose();
   }
 
-  closeRef.current = requestClose;
+  useEffect(() => {
+    closeRef.current = requestClose;
+  });
 
   useEffect(() => {
     if (!open) return;
 
     const restored = readDraft(idea.id, form.version);
+    // The draft is browser-only; reading it during render would make the first client
+    // render disagree with the server HTML. Restoring after mount is intentional.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (restored) setAnswers(restored);
     setErrors({});
     setSignInRequired(false);
@@ -559,9 +560,9 @@ export function FeedbackDialog({
             <div className="space-y-4">
               <FeedbackThanks />
               <p className="rounded-xl bg-canvas px-3 py-2 text-center text-[0.6875rem] leading-4 text-muted">
-                This is a preview: nothing has been sent to the creator yet. When
-                accounts are connected, your response will be stored against form
-                version {form.version}.
+                This is a preview: nothing has been sent to the creator yet.
+                When accounts are connected, your response will be stored
+                against form version {form.version}.
               </p>
               {idea.community?.enabled && idea.community.showAfterFeedback ? (
                 <CommunityInvite invite={idea.community} />
@@ -603,7 +604,10 @@ export function FeedbackDialog({
               </div>
 
               {signInRequired ? (
-                <div className="mt-5 rounded-xl border border-brand/25 bg-brand-tint p-4" role="status">
+                <div
+                  className="mt-5 rounded-xl border border-brand/25 bg-brand-tint p-4"
+                  role="status"
+                >
                   <p className="flex items-center gap-2 text-sm font-semibold text-ink">
                     <HugeiconsIcon
                       icon={LockKeyIcon}
@@ -615,8 +619,8 @@ export function FeedbackDialog({
                     Sign in to send your feedback
                   </p>
                   <p className="mt-1 text-xs leading-5 text-muted">
-                    Your answers are saved in this browser. Sign in and come back
-                    to send them without starting again.
+                    Your answers are saved in this browser. Sign in and come
+                    back to send them without starting again.
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
@@ -644,7 +648,12 @@ export function FeedbackDialog({
               {answered} of {form.questions.length} answered
             </p>
             <div className="flex gap-2">
-              <Button type="button" variant="outline" size="md" onClick={requestClose}>
+              <Button
+                type="button"
+                variant="outline"
+                size="md"
+                onClick={requestClose}
+              >
                 Cancel
               </Button>
               <Button type="submit" size="md" form="feedback-form">
