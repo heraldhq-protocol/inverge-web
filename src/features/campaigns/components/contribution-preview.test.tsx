@@ -4,6 +4,7 @@ import { afterEach, describe, expect, it } from "vitest";
 import { ContributionPreview } from "@/features/campaigns/components/contribution-preview";
 import { findPreviewCampaignById } from "@/features/campaigns/content/preview-campaigns";
 import type { Campaign } from "@/features/campaigns/types";
+import { previewWalletFundingSnapshot } from "@/features/wallet/content/preview-wallet";
 
 /**
  * The backing flow, driven the way a backer drives it.
@@ -38,6 +39,7 @@ function renderFlow(
       campaign={campaign}
       initialCountry={options.country ?? ""}
       initialTierId={options.tierId ?? null}
+      walletFunding={previewWalletFundingSnapshot()}
     />,
   );
 }
@@ -451,6 +453,35 @@ describe("ContributionPreview settlement step", () => {
       screen.getByRole("radio", { name: /Card or bank transfer/ }),
     ).toBeDisabled();
     expect(screen.getByText(/converts it to USDC or cNGN/)).toBeInTheDocument();
+  });
+
+  it("labels a sample wallet balance and states that signing is not connected", () => {
+    toSettlement(sungrid(), DIGITAL);
+
+    expect(screen.getByText("Sample balance")).toBeInTheDocument();
+    expect(screen.getByText("Signing not connected")).toBeInTheDocument();
+    expect(
+      screen.getByText(/sample balance covers this contribution/),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(/contribution confirmed/i)).toBeNull();
+  });
+
+  it("blocks a wallet contribution the sample balance cannot cover", () => {
+    renderFlow();
+    fireEvent.change(screen.getByLabelText("Amount in USDC"), {
+      target: { value: "2000" },
+    });
+    next();
+
+    expect(stepHeading("How you'll pay")).toBeInTheDocument();
+    next();
+
+    expect(stepHeading("How you'll pay")).toBeInTheDocument();
+    expect(screen.getByText("Insufficient balance")).toBeInTheDocument();
+    expect(
+      screen.getAllByText(/wallet balance is short by 749\.5 USDC/).length,
+    ).toBeGreaterThan(0);
+    expect(screen.queryByRole("heading", { name: "Review" })).toBeNull();
   });
 
   it("names the postage as paid to the creator and outside the escrow", () => {
