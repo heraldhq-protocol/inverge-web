@@ -123,7 +123,7 @@ describe("IdeasDashboard", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Create account" }),
-    ).toHaveAttribute("href", "/sign-up");
+    ).toHaveAttribute("href", "/auth");
   });
 
   it("counts only public ideas in the topic directory", () => {

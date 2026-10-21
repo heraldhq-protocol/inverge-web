@@ -24,7 +24,7 @@ describe("HomePage", () => {
     for (const link of screen.getAllByRole("link", {
       name: /Start an idea/i,
     })) {
-      expect(link).toHaveAttribute("href", "/auth");
+      expect(link).toHaveAttribute("href", "/auth?intent=creator");
     }
   });
 });
