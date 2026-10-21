@@ -88,7 +88,7 @@ decisions are stored in this browser and are explicitly non-authoritative.
 | Route | Why it is linked |
 | --- | --- |
 | `/ideas`, `/ideas/[id]`, `/topics/[slug]` | Public discovery and detail, linked from the featured band and idea cards |
-| `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/back`, `/campaigns/categories/[slug]` | Public campaign discovery, detail, contribution preview, and category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
+| `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/recommended`, `/campaigns/[slug]/back`, `/campaigns/categories/[categorySlug]`, `/campaigns/categories/[categorySlug]/[subcategorySlug]` | Public campaign discovery, detail, recommendations, contribution preview, and taxonomy category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
 | `/guides`, `/guides/[slug]` | Sidebar item "Guides & journal" |
 | `/ideathon`, `/ideathon/about`, `/ideathon/past`, `/ideathon/rules` | Public ideathon standings |
 | `/admin`, `/admin/campaigns`, `/admin/campaigns/[id]`, `/admin/audit`, `/admin/payments`, `/admin/programmes`, `/admin/programmes/new`, `/admin/programmes/[id]` | Admin workspace, linked from the home rail only when the viewer has the capability |

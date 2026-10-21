@@ -46,9 +46,11 @@ Feature module `src/features/campaigns/` with `types.ts`, `lib/`, `content/`,
 
 Public (`(marketing)` shell, indexable except unrealisable states):
 
-- `/campaigns` — discovery: search, category, sort, URL state, featured band, trust explainer, loading/empty/error.
-- `/campaigns/categories/[slug]` — category-scoped discovery.
-- `/campaigns/[slug]` — detail: hero, funding summary, story, use of funds, milestone plan + evidence, escrow/accountability explanation, updates, milestone ledger, lifecycle-specific actions.
+- `/campaigns` — discovery: search, parent/subcategory filters, sort, URL state, featured campaigns (one band or a carousel of several), load-more pagination, trust explainer, loading/empty/error.
+- `/campaigns/categories/[categorySlug]` — parent-category discovery with subcategory navigation.
+- `/campaigns/categories/[categorySlug]/[subcategorySlug]` — subcategory-scoped discovery.
+- `/campaigns/[slug]` — detail: hero, funding summary, story, use of funds, milestone plan + evidence, escrow/accountability explanation, updates, milestone ledger, lifecycle-specific actions, related campaigns.
+- `/campaigns/[slug]/recommended` — deterministic recommendations with the source campaign excluded.
 - `/campaigns/[slug]/back` — contribution preview (4 steps, demo only, no payment).
 
 Backer (product shell):

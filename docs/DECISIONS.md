@@ -42,6 +42,9 @@ choices.
 | D-031 | 2026-10-19 | Accepted | The wallet feature ships as a provider-agnostic, preview-only surface: identity-bound (never an address), SDK-absent, with no fabricated address, signature, deposit, withdrawal, refund, or export. |
 | D-032 | 2026-10-19 | Accepted | Line endings are normalized by Prettier, not by rewriting the tree. |
 | D-033 | 2026-10-19 | Accepted | Choose MetaMask Embedded Wallets (Web3Auth) for web authentication and embedded Solana wallets; keep the provider-neutral `EmbeddedWalletPort` and supersede D-008 for the web client. |
+| D-034 | 2026-10-20 | Accepted | Adopt the supplied 15-parent campaign taxonomy as canonical, keep the legacy broad category as a read-only compatibility field, and leave campaigns without an honest fit unassigned rather than guessing. |
+| D-035 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
+| D-036 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -1209,6 +1212,174 @@ Revisit when: MetaMask Embedded Wallets no longer satisfies the required Solana
 support, security, regional availability, reliability, or commercial terms; or
 the product intentionally accepts the address churn of changing Client ID,
 Sapphire network, or connection configuration.
+
+### D-034: The supplied campaign taxonomy is canonical and additive
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Product owner and web engineering
+
+Context: Campaign discovery had one broad, preview-only `DiscoveryCategory`
+field, while the product now needs the supplied 15-parent, Kickstarter-style
+taxonomy for navigation, filtering, and creator submission. Renaming or
+remapping the existing field would silently relabel fixtures, URLs, tests, and
+any future stored campaign. The API's Prisma `Campaign` has no taxonomy field
+and no campaign discovery endpoint, so there is no authoritative backend value
+to migrate to.
+
+Decision: `src/features/campaigns/lib/taxonomy.ts` is the single taxonomy
+source: 15 parent categories, 154 subcategories, explicit stable slugs, and the
+supplied labels verbatim — including `STL`, `TTRPG`, `Ready-to-wear`,
+`Farmer's Markets`, `Theater`, and `Movie Theaters`. Labels are never
+normalised at runtime, and slugs are written explicitly so renaming a label
+does not silently move a URL. Module-load assertions reject a duplicate parent
+slug, duplicate subcategory id, or duplicate label within a parent.
+
+`Campaign` gains nullable `taxonomy: { category, subcategory } | null`, where
+`subcategory` may be null when the parent is the honest level of fit. The
+existing broad `category` remains as a read-only compatibility field for
+surfaces that have not moved; it is not a second taxonomy and no new discovery
+surface reads it as one. Preview campaigns are assigned only where the fit is
+honest: health and education fixtures are not forced into an unrelated parent,
+so HealthReach Mobile Clinics, Harmattan Health Kiosks, and Skill Circle carry
+`taxonomy: null`.
+
+Routes are `/campaigns/categories/[categorySlug]` and
+`/campaigns/categories/[categorySlug]/[subcategorySlug]`, with static params
+and metadata generated from the same module. No backend migration, external
+API field, or stored-data rewrite is implied by this change.
+
+Alternatives: Map the legacy broad values onto the closest new parent (invents
+a taxonomy decision and mislabels every fixture); derive slugs from labels at
+render time (a label edit silently changes a shared URL); duplicate the
+taxonomy in filters, creator validation, and route code (three sources drift);
+give every campaign a parent whether or not one fits (dishonest classification,
+especially for health and education).
+
+Consequences: Unassigned campaigns remain reachable through `All` discovery but
+do not appear under a category or subcategory, so the category counts do not
+sum to the total. That gap is visible and deliberate until the product supplies
+honest health and education categories; it must not be closed by forcing a
+campaign into Technology, Art, or another adjacent parent. A new category or
+subcategory requires an explicit slug and an assertion-checked entry, not a
+guess. The API will need nullable taxonomy fields, validation against the
+canonical list, and a reviewed migration before the seam can read real data.
+
+Revisit when: The API exposes campaign taxonomy, the product defines
+health/education destinations, or the supplied taxonomy is revised.
+
+### D-035: Pagination and recommendations are deterministic local projections
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Web engineering and product
+
+Context: Discovery needed load-more pagination, filter counts, and a
+"Recommended campaigns" page, but this repository has no campaign API, no
+server-side cursor or total, and no recommendation service. There are only 11
+preview campaigns (8 public, 7 discovery candidates after the featured set), so
+a real page request would be fiction. A recommendation score, live count, or
+"because you backed…" explanation would be invented data.
+
+Decision: Discovery pagination is a deterministic slice of the locally filtered
+result set with `CAMPAIGN_PAGE_SIZE = 6`. Load more appends by campaign id,
+deduplicates, keeps the previous results if a later slice cannot be read, and
+resets to the first page whenever any filter, search, or sort changes. Progress
+copy reports only the loaded count against the filtered local total; no
+platform-wide total or live activity claim is rendered. Filter counts and the
+`All` count are derived from the discovery candidates, so a featured campaign
+shown above the grid cannot inflate a category chip. The `funding` status
+filter is exactly `phase === "funding"`; a paused campaign stays visible under
+`All` but is never labelled "Funding open".
+
+The featured set is every stored, currently-funding campaign with
+`featured: true`, in stored order. One campaign keeps the full-width band;
+several become a carousel. Every featured campaign is excluded from the
+discovery candidates and counts, so it is not duplicated in the grid.
+
+Recommendations use `rankCampaignRecommendations`, a deterministic ordering
+rather than a score. Candidates exclude the source campaign and deduplicate by
+id, then fall through these tiers: same subcategory, same parent category,
+featured, any other eligible public campaign. Within a tier, the campaign ending
+soonest comes first, then the slug as a stable tie-breaker. When the source has
+no taxonomy, the subcategory tier is skipped and the legacy broad category acts
+as the parent-level fallback, so an unassigned health or education campaign can
+still relate to its peers without pretending it has a supplied category. A
+result is never described as personalised, predicted, or AI-powered; no external
+model or recommendation service is called. The campaign detail page's related
+section and the dedicated `/campaigns/[slug]/recommended` page use the same
+ranking.
+
+Alternatives: Request page offsets and totals from an endpoint that does not
+exist (fabricates a backend contract and a live count); render every result and
+call it pagination (defeats the interaction); assign each recommendation a
+numeric score or reason (invents evidence); hand-order a fixed related list
+(does not survive a new campaign or a changed taxonomy); add an external AI
+recommendation dependency (new runtime dependency, privacy surface, and
+unverifiable rationale).
+
+Consequences: The UI is honest and deterministic today, and its pagination,
+count, and ranking rules are unit-tested. The cost is that pagination is a
+client-side view over a complete local list and recommendations are
+rule-ordered, not personalised. When the API owns discovery it must supply
+taxonomy filters, stable cursor pagination, filtered totals, and either the same
+documented fallback order or a recommendation service that also explains its
+basis. Until then, no surface may call this a live feed or a personalised
+recommendation.
+
+Revisit when: A campaign discovery or recommendation endpoint exists, the
+preview set grows beyond what a local slice can represent, or product adopts a
+measured recommendation strategy.
+
+### D-036: Discovery filters are global, honest, and URL-serialised
+
+- Date: 2026-10-21
+- Status: Accepted
+- Owner: Web engineering and product
+
+Context: Backers needed more than a category and status: project status,
+location, goal, amount raised, percent raised, and cross-cutting views such as
+featured, saved, and open campaigns. The preview locations were written as
+display strings such as "Ogun State, Nigeria", so a location filter built from
+those strings would be a Nigeria-only list in practice. The repository also has
+no viewer identity or recommendation service, so a "Recommended for you" filter
+would be fabricated.
+
+Decision: Discovery filters are `category`, `country`, `region`, `phase`,
+`goal`, `raised`, `percent`, `show`, `sort`, and `view`, serialised to the query
+string. Money bands are half-open and compared in integer atomic units. A null
+raised total is its own "Not reported" value, never zero. Country filtering uses
+the ISO 3166-1 alpha-2 codes and CLDR names in `@/lib/countries`. The country is
+read from the final comma-separated segment of the stored location, matched by
+code or name; the region is the exact stored location, grouped under its
+country. A location with no recognised country is grouped as "Other locations"
+rather than guessed into a country. Country and region options are derived from
+the current pool, so a campaign in Ghana, Kenya, or Germany needs no code change
+and no hand-maintained country list. `show=loved` is the stored `featured` flag,
+`show=saved` intersects the browser-local saved list, and `show=open` is the
+funding phase. "Recommended for you" is rendered disabled with an explanation;
+it is not a filter value and is never faked. Changing any filter resets
+load-more to the first page. Counts are derived from the same pool the view can
+show, including the show-only pool, so a filter never promises a count the grid
+cannot satisfy.
+
+Alternatives: Hardcode Nigerian states (does not survive a second country);
+store a free-text country (unvalidated, no stable query value, and inconsistent
+case); add a continent table (misclassifies countries and creates a dataset the
+product does not need); infer a country from a city name (guesses); add a
+personal-recommendation endpoint or a local score (invents data); treat a null
+raised total as zero (lies about funding progress).
+
+Consequences: The location filter is country-aware and global from the first
+non-Nigerian campaign, and its values are stable ISO codes. The cost is that a
+legacy free-text location without a recognised final country segment is only
+available under "Other locations". When the API owns discovery it must supply
+the country code and region as structured fields rather than relying on parsing
+a display string.
+
+Revisit when: The campaign API returns structured country and region fields, a
+viewer identity and recommendation service exist, or the product adds a
+location type that is not a country/region pair.
 
 ## Decision template
 
