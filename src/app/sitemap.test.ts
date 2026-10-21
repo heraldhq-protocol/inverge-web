@@ -13,11 +13,10 @@ afterEach(() => {
 const PRIVATE_PREFIXES = [
   "/admin",
   "/api",
+  "/auth",
   "/d",
   "/onboarding",
-  "/sign-in",
-  "/sign-up",
-  "/verify-email",
+  "/sign-out",
 ];
 
 function pathsOf(entries: ReturnType<typeof sitemap>): string[] {

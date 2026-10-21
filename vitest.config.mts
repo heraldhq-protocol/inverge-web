@@ -8,6 +8,11 @@ export default defineConfig({
   resolve: {
     alias: {
       "@": fileURLToPath(new URL("./src", import.meta.url)),
+      // `server-only` throws outside a React Server Component. Tests exercise
+      // server modules directly, so they resolve to a no-op marker instead.
+      "server-only": fileURLToPath(
+        new URL("./src/test/server-only.ts", import.meta.url),
+      ),
     },
   },
   test: {

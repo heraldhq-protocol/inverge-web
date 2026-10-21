@@ -16,6 +16,7 @@ import {
   PlusSignIcon,
   Settings01Icon,
   TrophyIcon,
+  Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -91,6 +92,7 @@ export function sidebarGroups(unreadCount: number): readonly NavGroup[] {
     {
       label: "Account",
       items: [
+        { href: "/d/wallet", icon: Wallet01Icon, label: "Wallet" },
         {
           href: "/d/notifications",
           icon: Notification01Icon,
@@ -122,7 +124,7 @@ export function DesktopNavigation({
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Product navigation" className="space-y-6">
+    <nav aria-label="Product navigation" className="space-y-4">
       {sidebarGroups(unreadCount).map((group) => (
         <div key={group.label}>
           <p
@@ -133,7 +135,7 @@ export function DesktopNavigation({
           >
             {group.label}
           </p>
-          <ul className="mt-1.5 space-y-1">
+          <ul className="mt-1 space-y-0.5">
             {group.items.map(({ badgeCount, href, icon, label }) => {
               const isCurrent = isCurrentNavigationHref(pathname, href);
 

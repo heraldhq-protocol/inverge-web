@@ -22,6 +22,11 @@ export type DashboardViewer = {
   handle: string | null;
   /** Copy shown wherever the UI states where its data comes from. */
   dataSource: "preview" | "live";
+  /**
+   * True when a session exists, including a local preview session. The preview
+   * identity rendered while signed out leaves this false.
+   */
+  authenticated?: boolean;
   capabilities: ViewerCapabilities;
 };
 

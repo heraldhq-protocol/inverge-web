@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 
 import { CampaignBackPage } from "@/features/campaigns/components/campaign-back-page";
 import { getCampaignDetailView } from "@/features/campaigns/server/campaigns";
+import { getWalletFundingSnapshot } from "@/features/wallet/server/wallet";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type PageProps = {
@@ -46,6 +47,7 @@ export default async function CampaignBackRoute({
       campaign={view.campaign}
       initialCountry={typeof country === "string" ? country : ""}
       initialTierId={typeof tier === "string" ? tier : null}
+      walletFunding={getWalletFundingSnapshot()}
     />
   );
 }

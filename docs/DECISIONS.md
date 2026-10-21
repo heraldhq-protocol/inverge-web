@@ -42,9 +42,13 @@ choices.
 | D-031 | 2026-10-19 | Accepted | The wallet feature ships as a provider-agnostic, preview-only surface: identity-bound (never an address), SDK-absent, with no fabricated address, signature, deposit, withdrawal, refund, or export. |
 | D-032 | 2026-10-19 | Accepted | Line endings are normalized by Prettier, not by rewriting the tree. |
 | D-033 | 2026-10-19 | Accepted | Choose MetaMask Embedded Wallets (Web3Auth) for web authentication and embedded Solana wallets; keep the provider-neutral `EmbeddedWalletPort` and supersede D-008 for the web client. |
-| D-034 | 2026-10-20 | Accepted | Adopt the supplied 15-parent campaign taxonomy as canonical, keep the legacy broad category as a read-only compatibility field, and leave campaigns without an honest fit unassigned rather than guessing. |
-| D-035 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
-| D-036 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
+| D-034 | 2026-10-20 | Accepted | One `/auth` route, a server-held BFF session, and a single viewer seam. |
+| D-035 | 2026-10-20 | Accepted | Onboarding intent is a routing hint; the shared profile is persisted through the API. |
+| D-036 | 2026-10-20 | Accepted | A local preview auth mode keeps UI work unblocked without pretending to be an Inverge session. |
+| D-037 | 2026-10-20 | Accepted | Every intent sees the starting-point question; account type is asked before the name fields, as a preview-only prototype. |
+| D-038 | 2026-10-20 | Accepted | Adopt the supplied 15-parent campaign taxonomy as canonical, keep the legacy broad category as a read-only compatibility field, and leave campaigns without an honest fit unassigned rather than guessing. |
+| D-039 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
+| D-040 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -1213,7 +1217,220 @@ support, security, regional availability, reliability, or commercial terms; or
 the product intentionally accepts the address churn of changing Client ID,
 Sapphire network, or connection configuration.
 
-### D-034: The supplied campaign taxonomy is canonical and additive
+Delivery (same day): the SDK (`@web3auth/modal` 11.4.3 and its Solana peers) is
+installed, and the client sign-in boundary is gated on
+`NEXT_PUBLIC_WEB3AUTH_CLIENT_ID`. The overview shows the provider address as
+device-only; no session, account link, chain read, or signing exists yet, so
+`server/wallet.ts` still returns labelled preview data. Two transitive build
+scripts (`protobufjs`, `tiny-secp256k1`) are denied in `pnpm-workspace.yaml`
+because the browser bundle uses the pure-JS secp256k1 entry and neither native
+build is required. See `docs/wallet-integration.md`.
+
+### D-034: One `/auth` route, a server-held session, and a single viewer seam
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Product owner, web engineering, and backend engineering
+
+Context: D-033 chose MetaMask Embedded Wallets for the web client, but the app
+still had a placeholder email form, a verification screen for a flow that never
+sent mail, two credential routes (`/sign-in`, `/sign-up`), and no session. The
+dashboard's identity was a fixture (`getDashboardViewer()` returned a preview
+person), so the wallet could not be bound to an account and every "signed in"
+state was decorative.
+
+Decision:
+
+- **One route.** `/auth` is the only authentication surface. `next.config.ts`
+  permanently redirects `/sign-in`, `/sign-up`, and `/verify-email` to it and
+  Next carries the query string, so `?next=` survives. The placeholder
+  credential form and the verification screen are deleted; `/onboarding/profile`
+  and `/onboarding/role` remain.
+- **One credential UI.** The provider's own modal, whitelabelled through
+  `uiConfig` (`appName: "Inverge"`, brand colour, light mode). No logo is
+  supplied: the modal renders on the provider's origin, where a relative asset
+  cannot load, and there is no hosted brand asset yet.
+- **Server-held session.** `POST /api/auth/session` forwards the provider
+  `id_token` to the API's `POST /auth/session` and writes the returned one-hour
+  session JWT into an HttpOnly, `SameSite=Lax`, `Path=/` cookie
+  (`inverge_session`), `Secure` in production. The token is never returned to
+  the browser, so no script can read it. A BFF is used instead of exposing the
+  API's bearer token so that XSS cannot lift a credential out of storage.
+- **Same-origin only.** Both session endpoints require an `Origin` header equal
+  to the app's own origin. Without it, the exchange is a login-CSRF target: a
+  third party could sign a visitor into the attacker's account.
+- **One server seam.** `getDashboardViewer()` reads the cookie, calls
+  `GET /auth/me` with `Authorization: Bearer`, and is the only function the
+  dashboard changed. It reports `dataSource: "live"` only when that lookup
+  succeeds; otherwise it returns the existing labelled preview identity, so a
+  missing API or expired session never renders as a blank or fake account. The
+  lookup is memoised per render and bounded by a three-second timeout.
+- **Sign-out ends both halves.** `/sign-out` disconnects the provider (the only
+  way to clear its browser session) and then clears the cookie. A failed
+  provider disconnect does not leave the cookie behind.
+- **Config has no default.** `INVERGE_API_URL` is server-only and unset by
+  default. A guessed port could point the app at the wrong service or at
+  itself; instead the auth page reports that the account service is not
+  configured.
+
+Alternatives: keep the placeholder form until the provider was fully wired
+(rejected: it offers a credential path that cannot work); put the session JWT in
+`localStorage` or a readable cookie (rejected: XSS would export a bearer token);
+let the browser call the API directly (rejected: the API would need CORS and the
+token would be exposed); return the session token from the BFF response
+(rejected: no benefit over the cookie and one more way to leak it).
+
+Consequences: Sign-in is real, provider-specific code stays inside
+`wallet-sdk-boundary.tsx` and `auth-sign-in-panel.tsx`, and the dashboard's
+identity is the account's. Authorization is **not** solved: the API's permission
+projection is not exposed, so no dashboard route is gated on a server-verified
+capability and programme administration keeps its development preview gate. The
+session lasts one hour and silent re-exchange is the next step; until then an
+expired cookie falls back to preview rather than prompting. Live provisioning,
+balances, signing, funding, refunds, and export remain unimplemented and are
+still labelled as such.
+
+Revisit when: the API exposes a permission projection the web can consume; the
+session lifetime or refresh policy changes; or an incident shows the cookie
+transport is insufficient (for example, a same-site XSS that can drive the BFF).
+
+## D-035: Onboarding intent is a routing hint; the shared profile is persisted
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Engineering
+
+Context: A visitor can arrive through a general door or a "Start an idea" door,
+and the two need different post-auth destinations. The shared profile step was
+presentational: it navigated without saving anything, so `requiresOnboarding`
+from the API stayed true forever. The web also had no way to check a username
+before submitting.
+
+Decision:
+
+- Model intent as the closed set `general | creator` in
+  `src/features/auth/lib/onboarding.ts`. Validate every URL value; unknown
+  values become `general`.
+- Carry intent in `?intent=creator` and in the HttpOnly
+  `inverge_onboarding_intent` cookie. The BFF writes it on every successful
+  sign-in, the API never receives it, and it is cleared after the shared profile
+  is stored and on sign-out. It is explicitly **not** an authorisation claim.
+- Resolve the post-auth destination with `postAuthPath`: an incomplete profile
+  always wins, then creator intent, then the validated `?next=`.
+- Persist the shared profile with `PATCH /api/auth/profile`, a same-origin BFF
+  route that reads the HttpOnly session and forwards it as a bearer token. The
+  API's `PATCH /auth/me/profile` remains the only writer.
+- Proxy `GET /auth/check-username` through a session-only
+  `GET /api/auth/username-available`; the API re-validates on save, so this is a
+  hint, not a reservation.
+- Gate both onboarding pages on `readSessionUser()`. No session redirects to
+  `/auth?next=…`; an unfinished profile cannot be skipped by opening
+  `/onboarding/role` directly.
+
+Alternatives: `localStorage` (rejected: readable by scripts, survives sign-out,
+and invites treating it as trust); a `User.onboardingIntent` column (deferred:
+the durable fact the product needs is creator type, which has no field yet, and
+adding schema requires product approval); a client-supplied `role` (rejected:
+client state must never grant a role).
+
+Consequences: creator intent survives the provider redirect and refreshes, and
+profile onboarding is real. No schema changed. Creator type/organisation
+onboarding, progressive verification, tier display, KYC, wallet provisioning
+states, and `/d` route authorisation remain unimplemented and are listed in
+`docs/auth-onboarding.md`. With `INVERGE_API_URL` unset, onboarding is
+unreachable by design rather than silently failing open.
+
+Revisit when: `CreatorProfile` gains a creator type, the API exposes
+verification/tier/KYC projections, or the API supplies a permission projection
+that dashboard routes can enforce.
+
+## D-036: A local preview auth mode keeps UI work unblocked
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Engineering
+
+Context: The live BFF exchange was blocked on a provider JWT/JWKS mismatch, which
+made the authenticated UI impossible to exercise while the signing issue was
+resolved. The UI still needed honest signed-in, onboarding, and preview states.
+
+Decision:
+
+- `INVERGE_AUTH_MODE=preview` keeps the real Web3Auth sign-in but skips the API
+  exchange. The BFF decodes the provider token payload for a stable subject
+  (`sub`, then `authConnection|userId`, then email; never the wallet address),
+  hashes it with SHA-256, and stores the result in the HttpOnly
+  `inverge_preview_session` cookie.
+- The token signature is not verified in preview mode. The cookie is not a
+  credential: it unlocks only the already-labelled preview shell, is never sent
+  to the API, and grants no role, tier, wallet, KYC, or payment capability.
+- Profile saves persist to the same cookie. Username availability returns 501
+  and the form says the check was unavailable rather than claiming the handle is
+  free.
+- Preview mode is ignored when `NODE_ENV=production`. The account menu labels
+  the identity "Preview account" and says it is local to the browser.
+- Preview cookies written before the account-type step are still readable and
+  count as incomplete, so they return to account setup.
+
+Alternatives: keeping the app unusable until the provider verification was fixed
+(rejected: it blocked unrelated UI work); storing the raw provider subject or
+email (rejected: needless PII in a cookie); pretending the preview identity was
+an Inverge session (rejected: a fabricated authentication state).
+
+Consequences: UI and onboarding can be reviewed end to end without the API. The
+preview cookie is deliberately unauthenticated and must never be treated as an
+authorisation source. Switching back to live mode is a one-line environment
+change.
+
+Revisit when: the live exchange is reliable end to end, or the preview mode
+starts to diverge so far from live behavior that it stops being a useful
+prototype.
+
+## D-037: Every intent sees the starting-point question; account type precedes names
+
+- Date: 2026-10-20
+- Status: Accepted
+- Owner: Engineering / Product
+
+Context: Creator intent previously skipped `/onboarding/role` and went straight
+to Creator Studio, while a general sign-up answered the same question. That made
+the shared onboarding inconsistent and hid the choice from the visitors most
+likely to want it. The first step also asked for a public name before asking
+whether the account belonged to a person or a business.
+
+Decision:
+
+- The account step asks "Who is this account for?" first: `individual` or
+  `business`. Individual accounts collect a public person's name; business
+  accounts collect a public business name and a non-public contact name. Both
+  collect a username.
+- `postProfilePath` sends every completed account step to
+  `/onboarding/role`. Creator intent becomes `?intent=creator`, which
+  pre-selects "Build & validate" but still shows both doors.
+- A chosen "build" goes to `/d/creator`; "support" goes to `/d`. Skipping goes
+  to `/d/creator` for creator intent and `/d` otherwise.
+- The account type and business contact are a **preview-only prototype**.
+  `CreatorProfile` has no field for either. The BFF accepts them at its boundary
+  and stores them in the preview cookie, but drops them before calling the live
+  API. Live mode therefore keeps the original display-name + username form until
+  the schema and API contract are approved.
+
+Alternatives: a separate `/onboarding/account-type` route (rejected: it adds a
+step to the two-step progress without adding a meaningful decision); letting
+creator intent continue to skip the question (rejected: intent is a hint, not an
+answer); persisting the account type by adding a Prisma column now (deferred:
+requires product approval and a reviewed migration).
+
+Consequences: both doors share one onboarding path and the starting-point choice
+is never silently answered. The preview UI can be tested with business accounts,
+but live business accounts cannot be persisted yet. `docs/auth-onboarding.md`
+lists that gap.
+
+Revisit when: `CreatorProfile` gains an approved account/creator type and
+business fields, or product decides the starting-point question should be
+skippable by intent.
+
+### D-038: The supplied campaign taxonomy is canonical and additive
 
 - Date: 2026-10-20
 - Status: Accepted
@@ -1268,7 +1485,7 @@ canonical list, and a reviewed migration before the seam can read real data.
 Revisit when: The API exposes campaign taxonomy, the product defines
 health/education destinations, or the supplied taxonomy is revised.
 
-### D-035: Pagination and recommendations are deterministic local projections
+### D-039: Pagination and recommendations are deterministic local projections
 
 - Date: 2026-10-20
 - Status: Accepted
@@ -1331,7 +1548,7 @@ Revisit when: A campaign discovery or recommendation endpoint exists, the
 preview set grows beyond what a local slice can represent, or product adopts a
 measured recommendation strategy.
 
-### D-036: Discovery filters are global, honest, and URL-serialised
+### D-040: Discovery filters are global, honest, and URL-serialised
 
 - Date: 2026-10-21
 - Status: Accepted

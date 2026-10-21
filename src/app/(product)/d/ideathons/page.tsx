@@ -35,10 +35,13 @@ export const metadata: Metadata = {
  * platform is currently running, links to the real standings and rules pages,
  * and states plainly which participation features are not connected yet.
  */
-export default function IdeathonsPage() {
+export default async function IdeathonsPage() {
   const programme = getPreviewActiveIdeathon();
-  const viewer = getDashboardViewer();
-  const milestone = nextProgrammeMilestone(programme.status, programme.schedule);
+  const viewer = await getDashboardViewer();
+  const milestone = nextProgrammeMilestone(
+    programme.status,
+    programme.schedule,
+  );
   const milestoneDate = milestone
     ? formatMilestoneDate(milestone.at, programme.schedule.timezone)
     : null;
@@ -215,12 +218,13 @@ export default function IdeathonsPage() {
             <>
               <p className="mt-2 text-sm leading-6 text-muted">
                 Registration and submissions are not connected yet. Nothing is
-                recorded when you browse this programme, and no entry is implied.
+                recorded when you browse this programme, and no entry is
+                implied.
               </p>
               <p className="mt-2 text-xs leading-5 text-muted">
                 You can still read the standings and rules today. Entry,
-                deadline, and result updates will appear here once the
-                programme service is connected.
+                deadline, and result updates will appear here once the programme
+                service is connected.
               </p>
             </>
           )}

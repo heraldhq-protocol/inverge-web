@@ -182,7 +182,7 @@ function FilterControls({
             support before you build.
           </p>
           <Link
-            href="/sign-up"
+            href="/auth"
             className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Start building

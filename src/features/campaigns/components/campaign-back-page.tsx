@@ -6,6 +6,7 @@ import {
   campaignTaxonomyText,
 } from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
+import type { WalletFundingSnapshot } from "@/features/wallet/types";
 
 /**
  * The contribution entry screen.
@@ -19,8 +20,15 @@ export function CampaignBackPage({
   campaign,
   initialCountry = "",
   initialTierId = null,
+  walletFunding = null,
 }: {
   campaign: Campaign;
+  /**
+   * The wallet slice the checkout may use to answer "can this be paid from the
+   * wallet balance?". Null means no wallet state is available, which the flow
+   * states rather than assuming a balance.
+   */
+  walletFunding?: WalletFundingSnapshot | null;
   /**
    * A destination handed over from the campaign page or a shared link, when the
    * backer already said where they are. Only used when it is a real country
@@ -76,6 +84,7 @@ export function CampaignBackPage({
             campaign={campaign}
             initialCountry={initialCountry}
             initialTierId={initialTierId}
+            walletFunding={walletFunding}
           />
         </div>
       </Container>

@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { Container } from "@/features/marketing/components/container";
 
 export function TwoDoorsSection() {
@@ -34,7 +35,7 @@ export function TwoDoorsSection() {
               </p>
               <div className="mt-5 flex flex-col items-start gap-2.5">
                 <Link
-                  href="/sign-up"
+                  href={authHref(undefined, "creator")}
                   className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
                 >
                   Start an idea

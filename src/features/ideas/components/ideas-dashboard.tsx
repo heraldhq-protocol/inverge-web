@@ -574,7 +574,7 @@ export function IdeasDashboard({
               </p>
             </div>
             <Link
-              href="/sign-up"
+              href="/auth"
               className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-contrast focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
             >
               Create account
