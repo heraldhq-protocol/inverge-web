@@ -32,6 +32,14 @@ export const SAVED_CAMPAIGNS_SHORT_NOTE =
 
 export const SAVED_CAMPAIGNS_STORAGE_KEY = "inverge.saved-campaigns";
 
+/**
+ * Dispatched on `window` after a save write resolves.
+ *
+ * Other surfaces (discovery's "Saved projects" view) listen for this rather than
+ * polling storage, so a save on one card updates a filter without a reload.
+ */
+export const SAVED_CAMPAIGNS_EVENT = "inverge:saved-campaigns-changed";
+
 export const SAVED_CAMPAIGNS_SCHEMA_VERSION = 1;
 
 /** A saved campaign, as persisted. The id is the identity; the slug is for links. */

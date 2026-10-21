@@ -8,6 +8,7 @@ import {
 import { useEffect, useState } from "react";
 
 import {
+  SAVED_CAMPAIGNS_EVENT,
   SAVED_CAMPAIGNS_SCOPE,
   isCampaignSaved,
   savedCampaignRecord,
@@ -33,9 +34,12 @@ import {
 export function CampaignSaveButton({
   campaign,
   className = "",
+  variant = "default",
 }: {
-  campaign: { id: string; slug: string };
+  campaign: { id: string; slug: string; title?: string };
   className?: string;
+  /** `icon` is for cards: same control, compact and independently focusable. */
+  variant?: "default" | "icon";
 }) {
   const [saved, setSaved] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -91,6 +95,7 @@ export function CampaignSaveButton({
           ? "Removed from your saved campaigns."
           : "Saved in this browser.",
       );
+      window.dispatchEvent(new Event(SAVED_CAMPAIGNS_EVENT));
     } catch {
       setMessage(
         "This device would not store the change, so nothing was saved.",
@@ -101,6 +106,11 @@ export function CampaignSaveButton({
   }
 
   const disabled = loading || busy;
+  const isIcon = variant === "icon";
+  const title = campaign.title ?? "this campaign";
+  const accessibleName = saved
+    ? `Remove ${title} from saved campaigns`
+    : `Save ${title} for later`;
 
   return (
     <div className={className}>
@@ -109,21 +119,30 @@ export function CampaignSaveButton({
         onClick={toggle}
         disabled={disabled}
         aria-busy={disabled || undefined}
+        aria-label={isIcon ? accessibleName : undefined}
         aria-pressed={loading ? undefined : saved}
-        title={SAVED_CAMPAIGNS_SCOPE}
-        className="inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
+        title={isIcon ? accessibleName : SAVED_CAMPAIGNS_SCOPE}
+        className={
+          isIcon
+            ? "pointer-events-auto grid size-9 place-items-center rounded-full border border-border bg-surface/95 text-ink shadow-sm backdrop-blur transition-colors hover:border-brand/45 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
+            : "inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:opacity-60"
+        }
       >
         <HugeiconsIcon
           icon={saved ? BookmarkCheck02Icon : Bookmark01Icon}
-          size={16}
+          size={isIcon ? 17 : 16}
           strokeWidth={saved ? 2 : 1.8}
           aria-hidden="true"
           className={saved ? "text-brand-strong" : undefined}
         />
-        {saved ? "Saved" : "Save for later"}
+        {isIcon ? null : saved ? "Saved" : "Save for later"}
       </button>
 
-      <p role="status" aria-live="polite" className="mt-1.5 text-xs text-muted">
+      <p
+        role="status"
+        aria-live="polite"
+        className={isIcon ? "sr-only" : "mt-1.5 text-xs text-muted"}
+      >
         {message}
       </p>
     </div>

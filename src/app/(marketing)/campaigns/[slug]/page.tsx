@@ -7,7 +7,10 @@ import {
   campaignTabsFor,
   resolveCampaignTab,
 } from "@/features/campaigns/lib/campaign-tabs";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryHref,
+  campaignTaxonomyText,
+} from "@/features/campaigns/lib/filters";
 import {
   getCampaignDetailView,
   getPublicCampaignSlugs,
@@ -53,7 +56,10 @@ export async function generateMetadata({
  * the story followed by a swap. An unknown or unavailable tab falls back to the
  * campaign's first tab instead of erroring.
  */
-export default async function CampaignPage({ params, searchParams }: PageProps) {
+export default async function CampaignPage({
+  params,
+  searchParams,
+}: PageProps) {
   const { slug } = await params;
   const view = getCampaignDetailView(slug);
   if (!view) notFound();
@@ -64,6 +70,7 @@ export default async function CampaignPage({ params, searchParams }: PageProps) 
     Array.isArray(requested) ? requested[0] : requested,
     campaignTabsFor(campaign),
   );
+  const categoryHref = campaignCategoryHref(campaign);
 
   return (
     <>
@@ -71,10 +78,9 @@ export default async function CampaignPage({ params, searchParams }: PageProps) 
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
           { name: "Campaigns", path: "/campaigns" },
-          {
-            name: categoryLabel(campaign.category),
-            path: `/campaigns/categories/${campaign.category}`,
-          },
+          ...(categoryHref
+            ? [{ name: campaignTaxonomyText(campaign), path: categoryHref }]
+            : []),
           { name: campaign.title, path: `/campaigns/${campaign.slug}` },
         ])}
       />

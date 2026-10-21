@@ -7,7 +7,10 @@ import {
   PhasePill,
 } from "@/features/campaigns/components/campaign-status-pill";
 import { CampaignFundingCard } from "@/features/campaigns/components/campaign-progress";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryText,
+  campaignTaxonomyText,
+} from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
 
 /**
@@ -20,21 +23,24 @@ import type { Campaign } from "@/features/campaigns/types";
  */
 export function CampaignFeaturedBand({
   campaign,
+  headingId = "featured-campaign-heading",
   nowIso,
 }: {
   campaign: Campaign;
+  /** Unique per slide when several featured campaigns share a carousel. */
+  headingId?: string;
   nowIso: string;
 }) {
   return (
     <section
-      aria-labelledby="featured-campaign-heading"
+      aria-labelledby={headingId}
       className="overflow-hidden rounded-3xl border border-border bg-surface"
     >
       <div className="grid items-stretch gap-0 lg:grid-cols-[1.05fr_1fr]">
         <div className="order-2 flex flex-col p-5 sm:p-7 lg:order-1 lg:p-9">
           <Eyebrow>Featured campaign</Eyebrow>
           <h2
-            id="featured-campaign-heading"
+            id={headingId}
             className="mt-2.5 text-balance text-2xl font-bold tracking-[-0.04em] text-ink sm:text-3xl"
           >
             {campaign.title}
@@ -46,7 +52,7 @@ export function CampaignFeaturedBand({
           <div className="mt-4 flex flex-wrap items-center gap-2">
             <PhasePill phase={campaign.phase} />
             <span className="text-xs text-muted">
-              {categoryLabel(campaign.category)} · {campaign.location}
+              {campaignTaxonomyText(campaign)} · {campaign.location}
             </span>
           </div>
 
@@ -78,7 +84,7 @@ export function CampaignFeaturedBand({
         <div className="relative order-1 min-h-56 lg:order-2 lg:min-h-full">
           <Cover
             seed={campaign.slug}
-            label={categoryLabel(campaign.category)}
+            label={campaignCategoryText(campaign)}
             src={campaign.cover}
             ratio="thumbnail"
             size="featured"
