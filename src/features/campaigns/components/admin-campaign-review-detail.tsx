@@ -42,7 +42,7 @@ import {
   formatDateOrNull,
   formatShortDate,
 } from "@/features/campaigns/lib/dates";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import { campaignPhaseDescriptions } from "@/features/campaigns/lib/status";
 import type { Campaign } from "@/features/campaigns/types";
 
@@ -141,7 +141,7 @@ export function AdminCampaignReviewDetail({
             </Pill>
             <PhasePill phase={campaign.phase} size="sm" />
             <Pill size="sm" tone="neutral">
-              {categoryLabel(campaign.category)}
+              {campaignCategoryText(campaign)}
             </Pill>
           </div>
         </div>

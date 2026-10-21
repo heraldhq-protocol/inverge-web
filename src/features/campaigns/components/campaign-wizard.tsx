@@ -52,7 +52,10 @@ import {
   WORKING_CAPITAL_MIN_BPS,
   workingCapitalChoices,
 } from "@/features/campaigns/lib/escrow";
-import { discoveryCategories } from "@/features/home/discovery-categories";
+import {
+  campaignCategories,
+  findCampaignCategory,
+} from "@/features/campaigns/lib/taxonomy";
 import { formatMoney } from "@/lib/money";
 import {
   campaignWizardSteps,
@@ -163,6 +166,21 @@ export function CampaignWizard({
   const step = campaignWizardSteps[stepIndex] ?? campaignWizardSteps[0];
   if (!step) throw new Error("Wizard step index out of range");
   const stepId: CampaignWizardStepId = step.id;
+
+  const selectedCategory = draft.category
+    ? findCampaignCategory(draft.category)
+    : null;
+  const subcategoryOptions = (selectedCategory?.subcategories ?? []).map(
+    (subcategory) => ({
+      label: subcategory.label,
+      value: subcategory.slug,
+    }),
+  );
+  const categoryLabelText = selectedCategory?.label ?? "";
+  const subcategoryLabelText =
+    selectedCategory?.subcategories.find(
+      (subcategory) => subcategory.slug === draft.subcategory,
+    )?.label ?? "";
 
   function patch(next: Partial<CampaignDraft>) {
     setDraft((current) => ({ ...current, ...next }));
@@ -292,19 +310,52 @@ export function CampaignWizard({
                     aria-labelledby="campaign-category-label"
                     placeholder="Choose a category"
                     value={draft.category}
-                    options={discoveryCategories.map((category) => ({
+                    options={campaignCategories.map((category) => ({
                       label: category.label,
-                      value: category.value,
+                      value: category.slug,
                     }))}
                     onValueChange={(value) =>
                       patch({
                         category: value as CampaignDraft["category"],
+                        subcategory: "",
                       })
                     }
                   />
                   {errorFor("category") ? (
                     <p className="text-xs font-medium text-danger">
                       {errorFor("category")}
+                    </p>
+                  ) : null}
+                </div>
+
+                <div className="space-y-1.5">
+                  <label
+                    id="campaign-subcategory-label"
+                    htmlFor="campaign-subcategory"
+                    className="text-sm font-medium text-ink"
+                  >
+                    Subcategory
+                  </label>
+                  <Select
+                    id="campaign-subcategory"
+                    aria-labelledby="campaign-subcategory-label"
+                    placeholder={
+                      draft.category
+                        ? "Choose a subcategory (optional)"
+                        : "Choose a category first"
+                    }
+                    value={draft.subcategory}
+                    disabled={!draft.category}
+                    options={subcategoryOptions}
+                    onValueChange={(value) =>
+                      patch({
+                        subcategory: value as CampaignDraft["subcategory"],
+                      })
+                    }
+                  />
+                  {errorFor("subcategory") ? (
+                    <p className="text-xs font-medium text-danger">
+                      {errorFor("subcategory")}
                     </p>
                   ) : null}
                 </div>
@@ -1387,8 +1438,10 @@ export function CampaignWizard({
                 <div className="bg-surface px-4 py-3 text-sm">
                   <dt className="text-xs text-muted">Category and place</dt>
                   <dd className="mt-0.5 font-medium text-ink">
-                    {draft.category || "No category"} ·{" "}
-                    {draft.location.trim() || "No location"}
+                    {categoryLabelText || "No category"}
+                    {subcategoryLabelText
+                      ? ` / ${subcategoryLabelText}`
+                      : ""} · {draft.location.trim() || "No location"}
                   </dd>
                 </div>
                 <div className="bg-surface px-4 py-3 text-sm">

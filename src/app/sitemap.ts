@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 
+import { campaignCategoryRoutes } from "@/features/campaigns/lib/taxonomy";
 import { allPublicCampaigns } from "@/features/campaigns/server/campaigns";
 import { previewTopics } from "@/features/ideas/content/topics";
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
@@ -105,19 +106,49 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.8,
       url: absoluteUrl(`/campaigns/${campaign.slug}`),
     });
-  }
-
-  // A category with no public campaign would be an empty landing page, so it is
-  // withheld rather than published with a count that says nothing.
-  const populatedCategories = new Set(
-    publicCampaigns.map((campaign) => campaign.category),
-  );
-
-  for (const category of populatedCategories) {
     entries.push({
       changeFrequency: "weekly",
-      priority: 0.6,
-      url: absoluteUrl(`/campaigns/categories/${category}`),
+      priority: 0.5,
+      url: absoluteUrl(`/campaigns/${campaign.slug}/recommended`),
+    });
+  }
+
+  // A category or subcategory with no public campaign would be an empty landing
+  // page, so it is withheld rather than published with a count that says
+  // nothing. The route still accepts every taxonomy slug and renders an honest
+  // empty state; it simply is not advertised to crawlers.
+  const populatedCategories = new Set(
+    publicCampaigns.flatMap((campaign) =>
+      campaign.taxonomy ? [campaign.taxonomy.category] : [],
+    ),
+  );
+  const populatedSubcategories = new Set(
+    publicCampaigns.flatMap((campaign) =>
+      campaign.taxonomy?.subcategory
+        ? [`${campaign.taxonomy.category}/${campaign.taxonomy.subcategory}`]
+        : [],
+    ),
+  );
+
+  for (const route of campaignCategoryRoutes) {
+    if (!populatedCategories.has(route.categorySlug)) continue;
+    if (
+      route.subcategorySlug &&
+      !populatedSubcategories.has(
+        `${route.categorySlug}/${route.subcategorySlug}`,
+      )
+    ) {
+      continue;
+    }
+
+    entries.push({
+      changeFrequency: "weekly",
+      priority: route.subcategorySlug ? 0.5 : 0.6,
+      url: absoluteUrl(
+        route.subcategorySlug
+          ? `/campaigns/categories/${route.categorySlug}/${route.subcategorySlug}`
+          : `/campaigns/categories/${route.categorySlug}`,
+      ),
     });
   }
 

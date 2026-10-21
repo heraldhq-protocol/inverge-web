@@ -1,3 +1,7 @@
+import type {
+  CampaignCategorySlug,
+  CampaignSubcategorySlug,
+} from "@/features/campaigns/lib/taxonomy";
 import type { DiscoveryCategory } from "@/features/home/discovery-categories";
 import type { MoneyAmount } from "@/lib/money";
 
@@ -493,12 +497,33 @@ export type EscrowTerms = {
   successFeeBps: number | null;
 };
 
+/**
+ * The discovery taxonomy assignment for a campaign.
+ *
+ * `subcategory` is null when the campaign is assigned to a parent only. A
+ * campaign with no honest fit carries `taxonomy: null`: the supplied campaign
+ * taxonomy has no Health or Education parent, and inventing one would make the
+ * category filter lie. Unassigned records remain discoverable under All and
+ * keep their legacy broad category as a read-only compatibility label.
+ */
+export type CampaignTaxonomy = {
+  category: CampaignCategorySlug;
+  subcategory: CampaignSubcategorySlug | null;
+};
+
 export type Campaign = {
   id: string;
   slug: string;
   title: string;
   summary: string;
+  /**
+   * @deprecated The broad six-value taxonomy used by the first preview slice.
+   * Kept so existing records are not silently renamed. New discovery reads
+   * `taxonomy` and only falls back to this label when `taxonomy` is null.
+   */
   category: DiscoveryCategory;
+  /** The authoritative discovery taxonomy assignment, when one fits. */
+  taxonomy: CampaignTaxonomy | null;
   location: string;
   /** Local artwork path or null; `Cover` renders the branded fallback either way. */
   cover: string | null;
@@ -595,6 +620,7 @@ export type CreatorCampaignSummary = {
   slug: string;
   title: string;
   category: DiscoveryCategory;
+  taxonomy: CampaignTaxonomy | null;
   phase: CampaignPhase;
   cover: string | null;
   target: MoneyAmount;
@@ -647,15 +673,69 @@ export type CampaignSort =
   "ending-soon" | "most-funded" | "newest" | "recently-updated";
 
 export type CampaignPhaseFilter =
-  "all" | "funding" | "live-delivery" | "successful" | "unsuccessful";
+  | "all"
+  | "funding"
+  | "live-delivery"
+  | "successful"
+  | "unsuccessful"
+  | "paused";
 
-export type CampaignCategoryFilter = "all" | DiscoveryCategory;
+export type CampaignCategoryFilter = "all" | CampaignCategorySlug;
+
+/**
+ * A subcategory filter is meaningful only alongside its parent category.
+ * `parseCampaignFilters` drops an incompatible pair rather than carrying a
+ * selection the query could never satisfy.
+ */
+export type CampaignSubcategoryFilter = "all" | CampaignSubcategorySlug;
+
+/**
+ * Money bands used by the goal and amount-raised filters.
+ *
+ * These are filter boundaries, not platform statistics: a band is a stable
+ * query value and the count beside it is derived from the campaigns the current
+ * surface can show. Amounts are compared in integer atomic units.
+ */
+export type CampaignMoneyRange =
+  "under-10k" | "10k-25k" | "25k-50k" | "50k-plus";
+
+export type CampaignGoalFilter = "all" | CampaignMoneyRange;
+
+/**
+ * `unreported` is a real state, not zero. A campaign whose funding source is
+ * not indexed has no raised total, so it is never folded into "under $10k".
+ */
+export type CampaignRaisedFilter = "all" | CampaignMoneyRange | "unreported";
+
+/** Percent-raised bands. `unreported` has the same meaning as above. */
+export type CampaignPercentFilter =
+  "all" | "under-25" | "25-49" | "50-74" | "75-99" | "100-plus" | "unreported";
+
+/**
+ * Cross-cutting discovery views.
+ *
+ * `loved` is the stored editorial `featured` designation, not a performance
+ * score. `saved` intersects the browser-local saved list. `open` is a
+ * convenience view of campaigns accepting contributions. Personal
+ * recommendations are deliberately not a value here: without a viewer or a
+ * recommendation service, "recommended for you" would be fabricated.
+ */
+export type CampaignShowFilter = "all" | "loved" | "saved" | "open";
 
 export type CampaignFilters = {
   category: CampaignCategoryFilter;
+  /** ISO 3166-1 alpha-2 country code, or `all`. */
+  country: string;
+  goal: CampaignGoalFilter;
+  percent: CampaignPercentFilter;
   phase: CampaignPhaseFilter;
   query: string;
+  raised: CampaignRaisedFilter;
+  /** Exact campaign location within the selected country, or `all`. */
+  region: string;
+  show: CampaignShowFilter;
   sort: CampaignSort;
+  subcategory: CampaignSubcategoryFilter;
   view: "grid" | "list";
 };
 
@@ -675,7 +755,43 @@ export const CAMPAIGN_PHASE_FILTERS = [
   "live-delivery",
   "successful",
   "unsuccessful",
+  "paused",
 ] as const satisfies readonly CampaignPhaseFilter[];
+
+export const CAMPAIGN_MONEY_RANGES = [
+  "under-10k",
+  "10k-25k",
+  "25k-50k",
+  "50k-plus",
+] as const satisfies readonly CampaignMoneyRange[];
+
+export const CAMPAIGN_GOAL_FILTERS = [
+  "all",
+  ...CAMPAIGN_MONEY_RANGES,
+] as const satisfies readonly CampaignGoalFilter[];
+
+export const CAMPAIGN_RAISED_FILTERS = [
+  "all",
+  ...CAMPAIGN_MONEY_RANGES,
+  "unreported",
+] as const satisfies readonly CampaignRaisedFilter[];
+
+export const CAMPAIGN_PERCENT_FILTERS = [
+  "all",
+  "under-25",
+  "25-49",
+  "50-74",
+  "75-99",
+  "100-plus",
+  "unreported",
+] as const satisfies readonly CampaignPercentFilter[];
+
+export const CAMPAIGN_SHOW_FILTERS = [
+  "all",
+  "loved",
+  "saved",
+  "open",
+] as const satisfies readonly CampaignShowFilter[];
 
 export const CAMPAIGN_VIEWS = ["grid", "list"] as const satisfies readonly (
   "grid" | "list"
@@ -689,6 +805,30 @@ export function isCampaignPhaseFilter(
   value: string,
 ): value is CampaignPhaseFilter {
   return (CAMPAIGN_PHASE_FILTERS as readonly string[]).includes(value);
+}
+
+export function isCampaignGoalFilter(
+  value: string,
+): value is CampaignGoalFilter {
+  return (CAMPAIGN_GOAL_FILTERS as readonly string[]).includes(value);
+}
+
+export function isCampaignRaisedFilter(
+  value: string,
+): value is CampaignRaisedFilter {
+  return (CAMPAIGN_RAISED_FILTERS as readonly string[]).includes(value);
+}
+
+export function isCampaignPercentFilter(
+  value: string,
+): value is CampaignPercentFilter {
+  return (CAMPAIGN_PERCENT_FILTERS as readonly string[]).includes(value);
+}
+
+export function isCampaignShowFilter(
+  value: string,
+): value is CampaignShowFilter {
+  return (CAMPAIGN_SHOW_FILTERS as readonly string[]).includes(value);
 }
 
 export function isCampaignView(value: string): value is "grid" | "list" {

@@ -78,6 +78,7 @@ export function summariseCampaign(campaign: Campaign): CreatorCampaignSummary {
     backerCount: campaign.funding.backerCount,
     campaignId: campaign.id,
     category: campaign.category,
+    taxonomy: campaign.taxonomy,
     closesAt: campaign.funding.closesAt,
     cover: campaign.cover,
     milestoneProgress: progress.total > 0 ? progress : null,

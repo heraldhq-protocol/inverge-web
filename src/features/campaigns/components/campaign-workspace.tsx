@@ -21,7 +21,7 @@ import {
 import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { formatBps } from "@/features/campaigns/lib/amounts";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import { isPublicPhase } from "@/features/campaigns/lib/status";
 import type { CampaignWorkspaceView } from "@/features/campaigns/server/creator";
 import { formatMoney } from "@/lib/money";
@@ -84,7 +84,7 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
           <div className="hidden w-20 shrink-0 overflow-hidden rounded-xl sm:block">
             <Cover
               seed={campaign.slug}
-              label={categoryLabel(campaign.category)}
+              label={campaignCategoryText(campaign)}
               src={campaign.cover}
               ratio="thumbnail"
               size="grid"
@@ -94,7 +94,7 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
             <div className="flex flex-wrap items-center gap-2">
               <PhasePill phase={campaign.phase} />
               <span className="text-xs text-muted">
-                {categoryLabel(campaign.category)}
+                {campaignCategoryText(campaign)}
               </span>
             </div>
             <h1 className="mt-1 text-2xl font-bold tracking-[-0.04em] text-ink sm:text-3xl">

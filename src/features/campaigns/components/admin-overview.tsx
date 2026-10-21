@@ -26,7 +26,7 @@ import {
   subscribeCampaignReviewStore,
 } from "@/features/campaigns/lib/admin-review-store";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
 import type { AdminActor } from "@/features/admin/permissions";
 
@@ -204,7 +204,7 @@ export function AdminOverview({
                         </p>
                         <p className="mt-0.5 text-xs text-muted">
                           {campaign.creator.name} ·{" "}
-                          {categoryLabel(campaign.category)} · submitted{" "}
+                          {campaignCategoryText(campaign)} · submitted{" "}
                           {formatShortDate(submittedAt(campaign))}
                         </p>
                       </div>

@@ -25,7 +25,7 @@ import {
   subscribeCampaignReviewStore,
 } from "@/features/campaigns/lib/admin-review-store";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
 
 /**
@@ -318,7 +318,7 @@ function QueueRow({ campaign }: { campaign: Campaign }) {
             <PhasePill phase={campaign.phase} size="xs" />
           </div>
           <p className="mt-1 text-xs text-muted">
-            {campaign.creator.name} · {categoryLabel(campaign.category)} ·{" "}
+            {campaign.creator.name} · {campaignCategoryText(campaign)} ·{" "}
             {campaign.location}
           </p>
           {reason ? (

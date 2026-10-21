@@ -6,7 +6,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { Cover } from "@/components/ui/cover";
 import { Pill } from "@/components/ui/pill";
 import { CampaignMediaCarousel } from "@/features/campaigns/components/campaign-media-carousel";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryHref,
+  campaignTaxonomyText,
+} from "@/features/campaigns/lib/filters";
 import {
   PlanBadge,
   PhasePill,
@@ -26,12 +29,15 @@ import { formatLongDate } from "@/features/campaigns/lib/dates";
  * say what was verified.
  */
 export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
+  const categoryHref = campaignCategoryHref(campaign);
+  const categoryText = campaignTaxonomyText(campaign);
+
   return (
     <div>
       {campaign.media.length > 0 ? (
         <CampaignMediaCarousel
           media={campaign.media}
-          label={categoryLabel(campaign.category)}
+          label={campaignTaxonomyText(campaign)}
           title={campaign.title}
           sizes="(min-width: 1280px) 48rem, (min-width: 1024px) 36rem, 100vw"
         />
@@ -39,7 +45,7 @@ export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
         <div className="overflow-hidden rounded-3xl border border-border bg-surface-muted">
           <Cover
             seed={campaign.slug}
-            label={categoryLabel(campaign.category)}
+            label={categoryText}
             src={campaign.cover}
             ratio="thumbnail"
             size="featured"
@@ -54,12 +60,16 @@ export function CampaignDetailHero({ campaign }: { campaign: Campaign }) {
           hasPlan={campaign.milestones.length >= 2}
           accepting={planWillRun(campaign.phase)}
         />
-        <Link
-          href={`/campaigns/categories/${campaign.category}`}
-          className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-        >
-          <Pill tone="neutral">{categoryLabel(campaign.category)}</Pill>
-        </Link>
+        {categoryHref ? (
+          <Link
+            href={categoryHref}
+            className="rounded-full focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            <Pill tone="neutral">{categoryText}</Pill>
+          </Link>
+        ) : (
+          <Pill tone="neutral">{categoryText}</Pill>
+        )}
       </div>
 
       <h1 className="mt-3 text-balance text-3xl font-bold leading-[1.08] tracking-[-0.045em] text-ink sm:text-4xl lg:text-[2.75rem]">

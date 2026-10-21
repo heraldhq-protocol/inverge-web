@@ -10,7 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Cover } from "@/components/ui/cover";
 import { CampaignFundingCard } from "@/features/campaigns/components/campaign-progress";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
 
 /**
@@ -70,7 +70,7 @@ export function SavedCampaignRow({
       >
         <Cover
           seed={campaign.slug}
-          label={categoryLabel(campaign.category)}
+          label={campaignCategoryText(campaign)}
           src={campaign.cover}
           ratio="thumbnail"
           size="grid"
