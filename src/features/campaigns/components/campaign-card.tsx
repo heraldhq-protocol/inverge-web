@@ -81,7 +81,7 @@ export function CampaignCard({
           />
         </div>
 
-        <div className="absolute left-3 bottom-3 z-20">
+        <div className="absolute left-3 bottom-4 z-20">
           <CampaignSaveButton
             campaign={{
               id: campaign.id,
