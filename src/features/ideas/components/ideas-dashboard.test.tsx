@@ -40,11 +40,21 @@ describe("IdeasDashboard", () => {
       screen.getAllByRole("link", { name: /CampusKonekt/ }).length,
     ).toBeGreaterThanOrEqual(1);
 
+    // Several featured ideas become a carousel, not a stack in the hero.
+    expect(
+      screen.getByRole("heading", { name: "Featured this week" }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(`1 of ${ideasPreviewData.featured.length}`),
+    ).toBeInTheDocument();
+
     const agriculture = screen.getByRole("radio", { name: "Agriculture" });
     fireEvent.click(agriculture);
 
     expect(agriculture).toBeChecked();
-    const results = within(screen.getByRole("region", { name: "Idea results" }));
+    const results = within(
+      screen.getByRole("region", { name: "Idea results" }),
+    );
     expect(
       results.getByRole("heading", { name: "FarmLink ColdBox" }),
     ).toBeInTheDocument();
@@ -85,9 +95,10 @@ describe("IdeasDashboard", () => {
     expect(
       grid().getByRole("heading", { name: "CareBridge" }),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("button", { name: "Page 2" }),
-    ).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Page 2" })).toHaveAttribute(
+      "aria-current",
+      "page",
+    );
   });
 
   it("shows the active filter as a removable chip", () => {

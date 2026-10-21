@@ -2,14 +2,18 @@
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
+  Activity01Icon,
   Cancel01Icon,
   FilterHorizontalIcon,
+  Folder01Icon,
   Idea01Icon,
+  Location01Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { FilterSection } from "@/components/ui/filter-section";
 import { discoveryCategories } from "@/features/home/discovery-categories";
 import type { IdeaFilterState } from "@/features/ideas/lib/filters";
 import type { IdeaRegion, IdeaValidationStage } from "@/features/ideas/types";
@@ -48,9 +52,8 @@ function RadioGroup<Value extends string>({
   const groupName = useId();
 
   return (
-    <fieldset>
-      <legend className="text-xs font-semibold text-ink">{label}</legend>
-      <div className="mt-2.5 space-y-0.5">
+    <fieldset aria-label={label}>
+      <div className="space-y-0.5">
         {options.map((option) => {
           const selected = option.value === value;
 
@@ -59,8 +62,8 @@ function RadioGroup<Value extends string>({
               key={option.value}
               className={`flex min-h-10 cursor-pointer items-center gap-2.5 rounded-lg px-2.5 text-sm transition-colors focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand ${
                 selected
-                  ? "bg-brand-soft font-semibold text-brand-strong"
-                  : "text-ink-soft hover:bg-canvas hover:text-ink"
+                  ? "bg-brand-soft font-semibold text-brand-strong ring-1 ring-inset ring-brand/20"
+                  : "text-ink-soft hover:bg-surface hover:text-ink"
               }`}
             >
               <input
@@ -86,7 +89,11 @@ function RadioGroup<Value extends string>({
               </span>
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
               {option.count !== undefined ? (
-                <span className="text-[0.6875rem] font-normal tabular-nums text-muted">
+                <span
+                  className={`text-[0.6875rem] font-normal tabular-nums ${
+                    selected ? "text-brand-strong" : "text-muted"
+                  }`}
+                >
                   {option.count.toLocaleString("en-US")}
                 </span>
               ) : null}
@@ -99,16 +106,12 @@ function RadioGroup<Value extends string>({
 }
 
 function FilterControls({
-  activeFilterCount,
   categoryCounts,
   onChange,
-  onClear,
   state,
 }: {
-  activeFilterCount: number;
   categoryCounts: Record<string, number>;
   onChange: (patch: Partial<IdeaFilterState>) => void;
-  onClear: () => void;
   state: IdeaFilterState;
 }) {
   const categoryOptions: readonly Option<IdeaFilterState["category"]>[] = [
@@ -121,51 +124,55 @@ function FilterControls({
   ];
 
   return (
-    <div className="divide-y divide-border">
-      <div className="pb-5">
-        <div className="flex items-center justify-between gap-3">
-          <h2 className="text-base font-bold text-ink">Filter by</h2>
-          <button
-            type="button"
-            onClick={onClear}
-            disabled={activeFilterCount === 0}
-            className="min-h-9 rounded-lg px-1 text-xs font-semibold text-brand-strong transition-colors hover:text-brand disabled:cursor-not-allowed disabled:text-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-          >
-            Clear all
-          </button>
-        </div>
-        <div className="mt-4">
-          <RadioGroup
-            label="Category"
-            options={categoryOptions}
-            value={state.category}
-            onChange={(category) => onChange({ category, page: 1 })}
-          />
-        </div>
-      </div>
+    <div className="space-y-3">
+      <FilterSection
+        icon={Folder01Icon}
+        label="Category"
+        count={state.category !== "all" ? 1 : undefined}
+      >
+        <RadioGroup
+          label="Category"
+          options={categoryOptions}
+          value={state.category}
+          onChange={(category) => onChange({ category, page: 1 })}
+        />
+      </FilterSection>
 
-      <div className="py-5">
+      <FilterSection
+        icon={Activity01Icon}
+        label="Validation stage"
+        count={state.stage !== "all" ? 1 : undefined}
+      >
         <RadioGroup
           label="Validation stage"
           options={stageOptions}
           value={state.stage}
           onChange={(stage) => onChange({ page: 1, stage })}
         />
-      </div>
+      </FilterSection>
 
-      <div className="py-5">
+      <FilterSection
+        icon={Location01Icon}
+        label="Location"
+        count={state.region !== "all" ? 1 : undefined}
+      >
         <RadioGroup
           label="Location"
           options={regionOptions}
           value={state.region}
           onChange={(region) => onChange({ page: 1, region })}
         />
-      </div>
+      </FilterSection>
 
-      <div className="pt-5">
+      <div className="pt-2">
         <div className="rounded-2xl bg-brand-soft px-4 py-5">
           <span className="grid size-9 place-items-center rounded-full bg-brand/12 text-brand-strong">
-            <HugeiconsIcon icon={Idea01Icon} size={18} strokeWidth={1.7} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Idea01Icon}
+              size={18}
+              strokeWidth={1.7}
+              aria-hidden="true"
+            />
           </span>
           <p className="mt-3 text-base font-bold tracking-[-0.02em] text-ink">
             Have an idea?
@@ -257,12 +264,36 @@ export function FilterSidebar({
   return (
     <>
       <aside aria-label="Idea filters" className="hidden lg:block">
-        <div className="sticky top-24 rounded-2xl border border-border bg-surface px-5 py-5">
+        <div className="sticky top-24 rounded-2xl border border-border bg-surface p-4">
+          <div className="mb-4 flex items-center justify-between gap-2">
+            <div className="flex min-w-0 items-center gap-2">
+              <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand-strong">
+                <HugeiconsIcon
+                  icon={FilterHorizontalIcon}
+                  size={15}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
+              </span>
+              <h2 className="text-sm font-bold text-ink">Filters</h2>
+              {activeFilterCount > 0 ? (
+                <span className="grid size-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[0.6875rem] font-bold tabular-nums text-white">
+                  {activeFilterCount}
+                </span>
+              ) : null}
+            </div>
+            <button
+              type="button"
+              onClick={onClear}
+              disabled={activeFilterCount === 0}
+              className="min-h-9 shrink-0 rounded-lg px-1 text-xs font-semibold text-brand-strong transition-colors hover:text-brand disabled:cursor-not-allowed disabled:text-muted/60 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              Clear
+            </button>
+          </div>
           <FilterControls
-            activeFilterCount={activeFilterCount}
             categoryCounts={categoryCounts}
             onChange={onChange}
-            onClear={onClear}
             state={state}
           />
         </div>
@@ -308,9 +339,24 @@ export function FilterSidebar({
             className="absolute inset-x-0 bottom-0 max-h-[88dvh] overflow-y-auto rounded-t-3xl border-t border-border bg-surface px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-5 shadow-2xl motion-safe:animate-[inv-fade-in_160ms_ease-out]"
           >
             <div className="mb-4 flex items-center justify-between gap-3">
-              <h2 id={titleId} className="text-lg font-bold text-ink">
-                Filter ideas
-              </h2>
+              <div className="flex min-w-0 items-center gap-2.5">
+                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand-strong">
+                  <HugeiconsIcon
+                    icon={FilterHorizontalIcon}
+                    size={16}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                </span>
+                <h2 id={titleId} className="text-lg font-bold text-ink">
+                  Filters
+                </h2>
+                {activeFilterCount > 0 ? (
+                  <span className="grid size-5 min-w-5 place-items-center rounded-full bg-brand px-1 text-[0.6875rem] font-bold tabular-nums text-white">
+                    {activeFilterCount}
+                  </span>
+                ) : null}
+              </div>
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -326,10 +372,8 @@ export function FilterSidebar({
               </button>
             </div>
             <FilterControls
-              activeFilterCount={activeFilterCount}
               categoryCounts={categoryCounts}
               onChange={onChange}
-              onClear={onClear}
               state={state}
             />
             <Button
