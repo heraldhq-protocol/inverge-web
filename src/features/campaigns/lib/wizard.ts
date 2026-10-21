@@ -35,9 +35,11 @@ import type {
   VideoSource,
 } from "@/features/campaigns/types";
 import {
-  isDiscoveryCategory,
-  type DiscoveryCategory,
-} from "@/features/home/discovery-categories";
+  isCampaignCategorySlug,
+  isCampaignSubcategoryOf,
+  type CampaignCategorySlug,
+  type CampaignSubcategorySlug,
+} from "@/features/campaigns/lib/taxonomy";
 import { parseUsdAmount, sumMoneyAmounts, type MoneyAmount } from "@/lib/money";
 
 /**
@@ -240,7 +242,8 @@ export type DraftMedia = {
 export type CampaignDraft = {
   title: string;
   summary: string;
-  category: DiscoveryCategory | "";
+  category: CampaignCategorySlug | "";
+  subcategory: CampaignSubcategorySlug | "";
   location: string;
   problem: string;
   solution: string;
@@ -364,6 +367,7 @@ export function parseQuantityLimit(input: string): number | null {
 export const emptyCampaignDraft: CampaignDraft = {
   beneficiaries: "",
   category: "",
+  subcategory: "",
   deadline: "",
   eligibility: "",
   failurePlan: "",
@@ -389,7 +393,8 @@ export const emptyCampaignDraft: CampaignDraft = {
 export function draftFromCampaign(campaign: Campaign): CampaignDraft {
   return {
     beneficiaries: campaign.story.beneficiaries,
-    category: campaign.category,
+    category: campaign.taxonomy?.category ?? "",
+    subcategory: campaign.taxonomy?.subcategory ?? "",
     deadline: campaign.funding.closesAt.slice(0, 10),
     eligibility: campaign.disclosures.eligibility,
     failurePlan: campaign.disclosures.failurePlan,
@@ -904,10 +909,18 @@ export function validateCampaignStep(
 
       if (!draft.category) {
         issues.push({ field: "category", message: "Choose a category." });
-      } else if (!isDiscoveryCategory(draft.category)) {
+      } else if (!isCampaignCategorySlug(draft.category)) {
         issues.push({
           field: "category",
           message: "Choose a listed category.",
+        });
+      } else if (
+        draft.subcategory &&
+        !isCampaignSubcategoryOf(draft.category, draft.subcategory)
+      ) {
+        issues.push({
+          field: "subcategory",
+          message: "Choose a subcategory from the selected category.",
         });
       }
 

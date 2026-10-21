@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import { Container } from "@/components/ui/container";
 import { CampaignDiscovery } from "@/features/campaigns/components/campaign-discovery";
 import { CampaignDiscoveryHero } from "@/features/campaigns/components/campaign-discovery-hero";
-import { CampaignFeaturedBand } from "@/features/campaigns/components/campaign-featured";
+import { CampaignFeaturedCarousel } from "@/features/campaigns/components/campaign-featured-carousel";
 import { CampaignTrustStrip } from "@/features/campaigns/components/campaign-trust-strip";
 import { parseCampaignFilters } from "@/features/campaigns/lib/filters";
 import { getCampaignDiscoveryView } from "@/features/campaigns/server/campaigns";
@@ -30,18 +30,23 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
       <CampaignDiscoveryHero />
 
       <section className="bg-canvas">
-        {view.featured ? (
+        {view.featured.length > 0 ? (
           <Container className="pt-7 sm:pt-9">
-            <CampaignFeaturedBand campaign={view.featured} nowIso={view.now} />
+            <CampaignFeaturedCarousel
+              campaigns={view.featured}
+              nowIso={view.now}
+            />
           </Container>
         ) : null}
 
         <CampaignDiscovery
           candidates={view.candidates}
           categoryCounts={view.categoryCounts}
+          featuredCandidates={view.featured}
+          subcategoryCounts={view.subcategoryCounts}
           initialFilters={parseCampaignFilters(params)}
           nowIso={view.now}
-          totalPublic={view.totalPublic}
+          totalPublic={view.candidates.length}
         />
       </section>
 

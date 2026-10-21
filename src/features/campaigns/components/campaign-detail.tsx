@@ -1,3 +1,4 @@
+import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Container } from "@/components/ui/container";
@@ -28,7 +29,10 @@ import {
   campaignTabsFor,
   type CampaignTabId,
 } from "@/features/campaigns/lib/campaign-tabs";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryHref,
+  campaignTaxonomyText,
+} from "@/features/campaigns/lib/filters";
 import type { CampaignDetailView } from "@/features/campaigns/server/campaigns";
 
 /**
@@ -69,6 +73,8 @@ export function CampaignDetail({
 }) {
   const { campaign, now, related } = view;
   const tabs = campaignTabsFor(campaign);
+  const categoryHref = campaignCategoryHref(campaign);
+  const categoryText = campaignTaxonomyText(campaign);
 
   const content: Record<CampaignTabId, ReactNode> = {
     discussion: <CampaignDiscussion slug={campaign.slug} />,
@@ -92,10 +98,9 @@ export function CampaignDetail({
           trail={[
             { href: "/", label: "Home" },
             { href: "/campaigns", label: "Campaigns" },
-            {
-              href: `/campaigns/categories/${campaign.category}`,
-              label: categoryLabel(campaign.category),
-            },
+            ...(categoryHref
+              ? [{ href: categoryHref, label: categoryText }]
+              : []),
             { label: campaign.title },
           ]}
         />
@@ -146,16 +151,28 @@ export function CampaignDetail({
                   id="related-heading"
                   className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
                 >
-                  More in {categoryLabel(campaign.category)}
+                  More campaigns you might like
                 </h2>
                 <p className="mt-1 text-sm text-muted">
-                  Other campaigns raising in the same category.
+                  Related by subcategory, then category, then editorial feature.
                 </p>
               </div>
-              <PreviewDataChip />
+              <div className="flex flex-wrap items-center gap-3">
+                <PreviewDataChip />
+                <Link
+                  href={`/campaigns/${campaign.slug}/recommended`}
+                  className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  See more
+                </Link>
+              </div>
             </div>
             <div className="mt-5">
-              <CampaignRelated campaigns={related} nowIso={now} />
+              <CampaignRelated
+                campaigns={related}
+                nowIso={now}
+                source={campaign}
+              />
             </div>
           </section>
         ) : null}

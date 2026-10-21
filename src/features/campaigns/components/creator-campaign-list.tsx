@@ -17,7 +17,7 @@ import { Meter } from "@/components/ui/meter";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
 import { daysLeftLabel } from "@/features/campaigns/lib/filters";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import { campaignCategoryText } from "@/features/campaigns/lib/filters";
 import { isPublicPhase } from "@/features/campaigns/lib/status";
 import type { CreatorCampaignSummary } from "@/features/campaigns/types";
 import { fundedRatio } from "@/features/campaigns/lib/amounts";
@@ -104,7 +104,7 @@ export function CreatorCampaignCard({
         <div className="w-full shrink-0 overflow-hidden rounded-xl sm:w-28">
           <Cover
             seed={summary.slug}
-            label={categoryLabel(summary.category)}
+            label={campaignCategoryText(summary)}
             src={summary.cover}
             ratio="thumbnail"
             size="lane"
@@ -115,7 +115,7 @@ export function CreatorCampaignCard({
           <div className="flex flex-wrap items-center gap-2">
             <PhasePill phase={summary.phase} size="xs" />
             <span className="text-xs text-muted">
-              {categoryLabel(summary.category)}
+              {campaignCategoryText(summary)}
             </span>
             <span aria-hidden="true" className="text-xs text-muted">
               ·

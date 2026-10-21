@@ -27,6 +27,7 @@ import {
   DiscoveryHeroFeatured,
   type HeroFeaturedIdea,
 } from "@/features/ideas/components/discovery-hero";
+import { FeaturedCarousel } from "@/features/ideas/components/featured-carousel";
 import { FilterSidebar } from "@/features/ideas/components/filter-sidebar";
 import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";
 import { TopicDirectory } from "@/features/ideas/components/topic-directory";
@@ -320,7 +321,13 @@ export function IdeasDashboard({
   );
   const chips = activeFilterChips(state);
   const tab = activeSortTab(state);
-  const featured = data.featured[0] ?? publicIdeas[0];
+  // One featured idea still belongs in the hero. Several become a carousel:
+  // stacking them into the hero would either hide the rest or make the hero
+  // taller than the page it introduces.
+  const showFeaturedCarousel = data.featured.length > 1;
+  const heroFeatured = showFeaturedCarousel
+    ? undefined
+    : (data.featured[0] ?? publicIdeas[0]);
 
   useEffect(() => {
     const query = ideaFiltersToQuery(state);
@@ -358,7 +365,13 @@ export function IdeasDashboard({
 
   return (
     <>
-      <DiscoveryHero idea={featured} />
+      <DiscoveryHero idea={heroFeatured} />
+
+      {showFeaturedCarousel ? (
+        <Container>
+          <FeaturedCarousel ideas={data.featured} />
+        </Container>
+      ) : null}
 
       <Container className="py-6 sm:py-8">
         <div className="grid gap-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">

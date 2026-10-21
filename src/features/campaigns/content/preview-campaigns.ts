@@ -3,7 +3,12 @@ import {
   PLATFORM_SUCCESS_FEE_BPS,
   WORKING_CAPITAL_MAX_BPS,
 } from "@/features/campaigns/lib/escrow";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryLabel,
+  campaignSubcategoryLabel,
+  type CampaignCategorySlug,
+  type CampaignSubcategorySlug,
+} from "@/features/campaigns/lib/taxonomy";
 import type {
   Campaign,
   CampaignDisclosures,
@@ -71,7 +76,13 @@ type Seed = {
   slug: string;
   title: string;
   summary: string;
+  /** @deprecated broad preview category, retained for compatibility. */
   category: DiscoveryCategory;
+  /** Explicit fit against the supplied discovery taxonomy. Omit when none fits. */
+  taxonomy?: {
+    category: CampaignCategorySlug;
+    subcategory?: CampaignSubcategorySlug | null;
+  };
   location: string;
   cover: string | null;
   creator: PublicCreator;
@@ -168,8 +179,16 @@ function buildCampaign(seed: Seed): Campaign {
     ...seed.escrow,
   };
 
+  const taxonomy = seed.taxonomy
+    ? {
+        category: seed.taxonomy.category,
+        subcategory: seed.taxonomy.subcategory ?? null,
+      }
+    : null;
+
   return {
     category: seed.category,
+    taxonomy,
     cover: seed.cover,
     creator: seed.creator,
     demo: true,
@@ -183,7 +202,19 @@ function buildCampaign(seed: Seed): Campaign {
     },
     escrow,
     facts: [
-      { label: "Category", value: categoryLabel(seed.category) },
+      {
+        label: "Category",
+        value: taxonomy
+          ? taxonomy.subcategory
+            ? `${campaignCategoryLabel(
+                taxonomy.category,
+              )} / ${campaignSubcategoryLabel(
+                taxonomy.category,
+                taxonomy.subcategory,
+              )}`
+            : campaignCategoryLabel(taxonomy.category)
+          : "Not yet categorised",
+      },
       { label: "Location", value: seed.location },
       { label: "Funding model", value: "All-or-Nothing" },
       { label: "Funding deadline", value: formatLongDate(seed.closesAt) },
@@ -291,6 +322,7 @@ const sungrid = buildCampaign({
   backerCount: 214,
   campaignNumber: "IVG-2026-0114",
   category: "clean-energy",
+  taxonomy: { category: "technology", subcategory: "hardware" },
   closesAt: "2027-01-15T23:59:59.000Z",
   cover: COVERS.sungrid,
   creator: {
@@ -733,6 +765,7 @@ const farmlink = buildCampaign({
   backerCount: 61,
   campaignNumber: "IVG-2027-0007",
   category: "agriculture",
+  taxonomy: { category: "technology", subcategory: "hardware" },
   closesAt: "2027-02-28T23:59:59.000Z",
   cover: COVERS.farmlink,
   creator: {
@@ -832,6 +865,7 @@ const ibadanCreativeLab = buildCampaign({
   backerCount: null,
   campaignNumber: "IVG-2027-0019",
   category: "creative",
+  taxonomy: { category: "art", subcategory: "mixed-media" },
   closesAt: "2027-03-10T23:59:59.000Z",
   cover: COVERS.storyFoundry,
   creator: {
@@ -906,6 +940,7 @@ const studymate = buildCampaign({
   backerCount: 388,
   campaignNumber: "IVG-2026-0071",
   category: "technology",
+  taxonomy: { category: "technology", subcategory: "software" },
   closesAt: "2026-09-30T23:59:59.000Z",
   cover: COVERS.studymate,
   creator: {
@@ -1072,6 +1107,7 @@ const lagosKitchen = buildCampaign({
   backerCount: 143,
   campaignNumber: "IVG-2026-0058",
   category: "food-retail",
+  taxonomy: { category: "food", subcategory: "restaurants" },
   closesAt: "2026-09-15T23:59:59.000Z",
   cover: COVERS.kitchenCollective,
   creator: {
@@ -1277,6 +1313,7 @@ const campusKonekt = buildCampaign({
   backerCount: 176,
   campaignNumber: "IVG-2026-0042",
   category: "technology",
+  taxonomy: { category: "technology", subcategory: "web" },
   closesAt: "2026-08-15T23:59:59.000Z",
   cover: COVERS.campusKonekt,
   creator: {
@@ -1502,6 +1539,7 @@ const naijaCraft = buildCampaign({
   backerCount: null,
   campaignNumber: "IVG-2027-0033",
   category: "creative",
+  taxonomy: { category: "crafts", subcategory: null },
   closesAt: "2027-04-15T23:59:59.000Z",
   cover: COVERS.naijacraft,
   creator: {
@@ -1591,6 +1629,7 @@ const greenMiles = buildCampaign({
   backerCount: null,
   campaignNumber: "IVG-2027-0041",
   category: "agriculture",
+  taxonomy: { category: "food", subcategory: "farms" },
   closesAt: "2027-05-20T23:59:59.000Z",
   cover: COVERS.agroroute,
   creator: {

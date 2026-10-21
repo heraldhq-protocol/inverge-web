@@ -1,7 +1,10 @@
 import { Container } from "@/components/ui/container";
 import { CampaignBreadcrumbs } from "@/features/campaigns/components/campaign-breadcrumbs";
 import { ContributionPreview } from "@/features/campaigns/components/contribution-preview";
-import { categoryLabel } from "@/features/campaigns/lib/filters";
+import {
+  campaignCategoryHref,
+  campaignTaxonomyText,
+} from "@/features/campaigns/lib/filters";
 import type { Campaign } from "@/features/campaigns/types";
 import type { WalletFundingSnapshot } from "@/features/wallet/types";
 
@@ -39,6 +42,8 @@ export function CampaignBackPage({
    */
   initialTierId?: string | null;
 }) {
+  const categoryHref = campaignCategoryHref(campaign);
+
   return (
     <div className="bg-canvas pb-14 sm:pb-20">
       <Container className="py-6 sm:py-8">
@@ -46,10 +51,14 @@ export function CampaignBackPage({
           trail={[
             { href: "/", label: "Home" },
             { href: "/campaigns", label: "Campaigns" },
-            {
-              href: `/campaigns/categories/${campaign.category}`,
-              label: categoryLabel(campaign.category),
-            },
+            ...(categoryHref
+              ? [
+                  {
+                    href: categoryHref,
+                    label: campaignTaxonomyText(campaign),
+                  },
+                ]
+              : []),
             { href: `/campaigns/${campaign.slug}`, label: campaign.title },
             { label: "Contribute" },
           ]}
