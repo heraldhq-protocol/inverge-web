@@ -13,6 +13,12 @@ const config: NextConfig = {
   async redirects() {
     return [
       { source: "/home", destination: "/d", permanent: true },
+      // One page owns provider sign-in (D-034). The old routes stay as
+      // permanent redirects so existing links and bookmarks keep working; Next
+      // carries the request's query string, so `?next=` survives the hop.
+      { source: "/sign-in", destination: "/auth", permanent: true },
+      { source: "/sign-up", destination: "/auth", permanent: true },
+      { source: "/verify-email", destination: "/auth", permanent: true },
       // Public idea surfaces live at `/ideas` (D-014) and the creator's own
       // under `/d/creator/ideas` (D-017), so `/ideas` must never be redirected
       // into the dashboard namespace - config redirects are matched before the

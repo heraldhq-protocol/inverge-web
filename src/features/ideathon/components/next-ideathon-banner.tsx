@@ -65,7 +65,7 @@ export function NextIdeathonBanner() {
             Read the rules
           </Link>
           <Link
-            href="/sign-up"
+            href="/auth"
             className="inline-flex min-h-11 items-center justify-center gap-2 rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-contrast focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
           >
             <HugeiconsIcon

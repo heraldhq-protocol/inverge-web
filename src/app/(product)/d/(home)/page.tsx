@@ -36,11 +36,11 @@ export const dynamic = "force-dynamic";
 
 /**
  * Route composition only: every value below is read from an existing fixture
- * through a pure helper. No fetching happens here because the web app has no
- * authenticated API client yet (`docs/programmes-audit.md` §3).
+ * through a pure helper. The viewer is the one server lookup, and it is the
+ * shell's session seam rather than page data.
  */
-export default function HomePage() {
-  const viewer = getDashboardViewer();
+export default async function HomePage() {
+  const viewer = await getDashboardViewer();
   const publicIdeas = allPublicIdeas(ideasPreviewData);
 
   const featured = ideasPreviewData.featured.at(0) ?? publicIdeas.at(0);

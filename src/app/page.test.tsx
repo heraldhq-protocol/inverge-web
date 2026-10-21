@@ -15,12 +15,16 @@ describe("HomePage", () => {
     ).toBeInTheDocument();
 
     // The hero renders desktop and mobile variants of the primary action.
-    for (const link of screen.getAllByRole("link", { name: /Explore ideas/i })) {
+    for (const link of screen.getAllByRole("link", {
+      name: /Explore ideas/i,
+    })) {
       expect(link).toHaveAttribute("href", "/ideas");
     }
 
-    for (const link of screen.getAllByRole("link", { name: /Start an idea/i })) {
-      expect(link).toHaveAttribute("href", "/sign-up");
+    for (const link of screen.getAllByRole("link", {
+      name: /Start an idea/i,
+    })) {
+      expect(link).toHaveAttribute("href", "/auth");
     }
   });
 });

@@ -1,4 +1,4 @@
-import { ShieldCheck } from "lucide-react";
+import { KeyRound, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
@@ -20,6 +20,7 @@ const sections = [
   { href: "#profile", label: "Profile" },
   { href: "#sign-in", label: "Sign in" },
   { href: "#verification", label: "Verification" },
+  { href: "#wallet", label: "Wallet" },
   { href: "#feed", label: "Your feed" },
   { href: "#notification-preferences", label: "Notifications" },
   { href: "#account", label: "Account" },
@@ -114,6 +115,46 @@ export function SettingsDashboard({
               }
             />
           </SettingsCard>
+        </SettingsSection>
+
+        <SettingsSection
+          id="wallet"
+          title="Wallet"
+          description="Your wallet is tied to your Inverge identity. Balances, activity, and refund records live in the wallet, not here."
+        >
+          <SettingsCard>
+            <SettingsRow
+              icon={Wallet}
+              title="Wallet and payments"
+              description="Review the wallet account, labelled sample balances, contribution activity, and refund records."
+              action={
+                <Link
+                  href="/d/wallet"
+                  className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Open wallet
+                </Link>
+              }
+            />
+            <SettingsRow
+              icon={KeyRound}
+              title="Wallet security"
+              description="See what protects signing, why key material is never handled here, and which security controls are connected."
+              action={
+                <Link
+                  href="/d/wallet/security"
+                  className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Review security
+                </Link>
+              }
+            />
+          </SettingsCard>
+          <p className="mt-2 text-xs leading-5 text-muted">
+            No wallet is provisioned in this build. No private key, seed phrase,
+            or signing share is stored by Inverge, and key export is
+            unavailable.
+          </p>
         </SettingsSection>
 
         <SettingsSection

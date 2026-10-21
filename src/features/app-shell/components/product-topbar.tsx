@@ -9,6 +9,7 @@ import {
   Search01Icon,
   Settings01Icon,
   UserCircleIcon,
+  Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
@@ -140,7 +141,13 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
               {displayName}
             </p>
             <p className="truncate text-xs text-muted">
-              {viewer.handle ? `@${viewer.handle}` : "Signed in"}
+              {viewer.authenticated && viewer.dataSource === "preview"
+                ? "Preview account"
+                : viewer.handle
+                  ? `@${viewer.handle}`
+                  : viewer.authenticated
+                    ? "Signed in"
+                    : "Preview data"}
             </p>
           </div>
           <div className="py-1">
@@ -153,6 +160,16 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
                 className="text-muted"
               />
               Campaigns you back
+            </MenuItem>
+            <MenuItem href="/d/wallet">
+              <HugeiconsIcon
+                icon={Wallet01Icon}
+                size={18}
+                strokeWidth={1.7}
+                aria-hidden="true"
+                className="text-muted"
+              />
+              Wallet
             </MenuItem>
             <MenuItem href="/d/profile">
               <HugeiconsIcon
@@ -186,15 +203,44 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
             </MenuItem>
           </div>
           {/*
-           * Sign out needs a session to end. Until one exists the row states
-           * that plainly instead of rendering a control that only looks real.
+           * Sign out exists for every session, including the local preview
+           * identity: it ends the provider session and clears the local cookie.
+           * The signed-out preview identity has nothing to end, so it invites a
+           * sign-in instead of rendering a control that would do nothing.
            * Wallet addresses never appear here (D-008 keeps provider detail in
            * account settings).
            */}
-          <p className="border-t border-border px-3.5 py-3 text-[0.6875rem] leading-4 text-muted">
-            Sign out becomes available when account sessions are connected. This
-            dashboard is a preview.
-          </p>
+          {viewer.authenticated ? (
+            <div className="border-t border-border py-1">
+              {viewer.dataSource === "preview" ? (
+                <p className="px-3.5 py-2 text-[0.6875rem] leading-4 text-muted">
+                  Preview mode. This account is local to this browser and is not
+                  connected to Inverge services.
+                </p>
+              ) : null}
+              <MenuItem href="/sign-out">
+                <HugeiconsIcon
+                  icon={ArrowRight02Icon}
+                  size={18}
+                  strokeWidth={1.7}
+                  aria-hidden="true"
+                  className="text-muted"
+                />
+                Sign out
+              </MenuItem>
+            </div>
+          ) : (
+            <p className="border-t border-border px-3.5 py-3 text-[0.6875rem] leading-4 text-muted">
+              You are viewing preview data.{" "}
+              <Link
+                className="font-medium text-ink underline underline-offset-3"
+                href="/auth"
+              >
+                Sign in
+              </Link>{" "}
+              to use your Inverge account.
+            </p>
+          )}
         </>
       )}
     </Menu>

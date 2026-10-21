@@ -7,7 +7,8 @@ import {
   FavouriteIcon,
   MessageMultiple01Icon,
   Share01Icon,
-} from "@hugeicons/core-free-icons";import Link from "next/link";
+} from "@hugeicons/core-free-icons";
+import Link from "next/link";
 import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
@@ -47,14 +48,14 @@ function SignInGate({ action }: { action: string }) {
   return (
     <p className="text-sm leading-6 text-muted">
       <Link
-        href="/sign-in"
+        href="/auth"
         className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         Sign in
       </Link>{" "}
       or{" "}
       <Link
-        href="/sign-up"
+        href="/auth"
         className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         create an account
@@ -264,7 +265,12 @@ function PrePledgeAction({
             </p>
           ) : null}
           <div className="mt-3 flex gap-2">
-            <Button type="button" variant="outline" size="sm" onClick={beginEdit}>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={beginEdit}
+            >
               Edit
             </Button>
             <Button

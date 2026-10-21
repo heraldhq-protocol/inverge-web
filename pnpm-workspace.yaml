@@ -1,4 +1,6 @@
 allowBuilds:
+  protobufjs: false
+  tiny-secp256k1: false
   unrs-resolver: true
 minimumReleaseAgeExclude:
   - "@next/env@16.3.5"

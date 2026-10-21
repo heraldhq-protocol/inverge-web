@@ -6,11 +6,11 @@ import { OnboardingProgress } from "@/features/auth/components/onboarding-progre
 const onboardingContent = {
   profile: {
     step: 1 as const,
-    stepLabel: "Profile",
+    stepLabel: "Account",
     eyebrow: "Welcome to Inverge",
-    title: "Make Inverge yours",
+    title: "Set up your account",
     description:
-      "Add a few details so people know who they are interacting with across ideas, feedback, and campaigns.",
+      "Add the details that shape your public profile and how you show up across Inverge.",
     panelTitle: "Discover early. Support thoughtfully.",
     panelDescription:
       "Follow ideas from their earliest validation through the work that comes after funding.",

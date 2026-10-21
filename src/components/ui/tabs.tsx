@@ -19,13 +19,16 @@ export type TabItem = {
 export function Tabs({
   items,
   className = "",
+  label = "Sections",
 }: {
   items: readonly TabItem[];
   className?: string;
+  /** Accessible name for the navigational region. */
+  label?: string;
 }) {
   return (
     <nav
-      aria-label="Sections"
+      aria-label={label}
       className={`w-full min-w-0 overflow-x-auto border-b border-border ${className}`}
     >
       <ul className="flex min-w-max items-center gap-1">

@@ -15,6 +15,7 @@ import {
 import type { Metadata } from "next";
 import Image from "next/image";
 
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { ButtonLink } from "@/features/marketing/components/button-link";
 import { CallToAction } from "@/features/marketing/components/call-to-action";
 import { Container } from "@/features/marketing/components/container";
@@ -491,7 +492,7 @@ export default function AboutPage() {
           <ButtonLink href="/ideas" variant="light">
             Explore ideas
           </ButtonLink>
-          <ButtonLink href="/sign-up" variant="light">
+          <ButtonLink href={authHref(undefined, "creator")} variant="light">
             Start an idea
           </ButtonLink>
           <ButtonLink href="/contact" variant="outline-light">

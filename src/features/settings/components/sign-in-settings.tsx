@@ -52,7 +52,7 @@ export function SignInSettings({
                   variant="ghost"
                   onClick={() =>
                     setNotice(
-                      `${connection.label} account management will be available when authentication is connected.`,
+                      `${connection.label} connections are managed by the sign-in provider and cannot be changed here yet.`,
                     )
                   }
                 >

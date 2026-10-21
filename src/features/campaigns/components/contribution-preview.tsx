@@ -58,6 +58,12 @@ import type {
   RewardVariantGroup,
   SupportTier,
 } from "@/features/campaigns/types";
+import {
+  assessWalletFunding,
+  type FundingAssessment,
+} from "@/features/wallet/lib/funding";
+import { formatTokenAmountWithSymbol } from "@/features/wallet/lib/token-amount";
+import type { WalletFundingSnapshot } from "@/features/wallet/types";
 import { normaliseCountryCode } from "@/lib/countries";
 import { formatMoney } from "@/lib/money";
 
@@ -333,6 +339,88 @@ function AddOnChoice({
   );
 }
 
+/**
+ * Whether the wallet balance can cover the contribution.
+ *
+ * Five states are kept apart because they mean different things to a backer:
+ * covered and signable, covered but not signable, short, no wallet, and a wallet
+ * that cannot hold the settlement asset. The sample label travels with the
+ * figures so a preview balance is never mistaken for a chain read.
+ */
+function WalletFundingPanel({
+  funding,
+  sample,
+}: {
+  funding: FundingAssessment;
+  sample: boolean;
+}) {
+  const presentation = {
+    ready: { label: "Ready to sign", tone: "accent" },
+    "signing-unavailable": { label: "Signing not connected", tone: "warning" },
+    insufficient: { label: "Insufficient balance", tone: "danger" },
+    "wallet-unavailable": { label: "Wallet unavailable", tone: "neutral" },
+    "unsupported-asset": { label: "Asset unsupported", tone: "warning" },
+  } as const satisfies Record<
+    FundingAssessment["status"],
+    { label: string; tone: "accent" | "danger" | "neutral" | "warning" }
+  >;
+  const view = presentation[funding.status];
+
+  return (
+    <div className="rounded-2xl border border-border bg-canvas p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm font-semibold text-ink">
+          Paying from your wallet
+        </p>
+        <span className="flex flex-wrap items-center gap-2">
+          {sample ? (
+            <Pill size="xs" tone="neutral">
+              Sample balance
+            </Pill>
+          ) : null}
+          <Pill size="xs" tone={view.tone}>
+            {view.label}
+          </Pill>
+        </span>
+      </div>
+
+      <p className="mt-1.5 text-sm leading-6 text-muted">{funding.message}</p>
+
+      {funding.balance ? (
+        <dl className="mt-2.5 grid gap-x-4 gap-y-1 text-xs sm:grid-cols-2">
+          <div className="flex items-baseline justify-between gap-3">
+            <dt className="text-muted">Balance</dt>
+            <dd className="font-semibold tabular-nums text-ink">
+              {formatTokenAmountWithSymbol(funding.balance, {
+                maxFractionDigits: 2,
+              })}
+            </dd>
+          </div>
+          {funding.required ? (
+            <div className="flex items-baseline justify-between gap-3">
+              <dt className="text-muted">Required</dt>
+              <dd className="font-semibold tabular-nums text-ink">
+                {formatTokenAmountWithSymbol(funding.required, {
+                  maxFractionDigits: 2,
+                })}
+              </dd>
+            </div>
+          ) : null}
+        </dl>
+      ) : null}
+
+      {funding.status === "insufficient" ? (
+        <Link
+          href="/d/wallet/receive"
+          className="mt-2.5 inline-flex min-h-10 items-center rounded-lg text-sm font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          Add USDC to your wallet
+        </Link>
+      ) : null}
+    </div>
+  );
+}
+
 /** The figure rows, shared by the review step, the summary, and the handoff. */
 function SummaryRows({
   className = "",
@@ -502,8 +590,14 @@ export function ContributionPreview({
   campaign,
   initialCountry = "",
   initialTierId = null,
+  walletFunding = null,
 }: {
   campaign: Campaign;
+  /**
+   * The wallet balance and signing facts the settlement step may use. Null
+   * means no wallet state is available, which is stated rather than assumed.
+   */
+  walletFunding?: WalletFundingSnapshot | null;
   /**
    * A destination handed over from the campaign page or a link. Ignored unless
    * it is a real country code, so a hand-edited query string cannot put the flow
@@ -544,6 +638,10 @@ export function ContributionPreview({
   const currentId = step.id;
 
   const amount = contributionAmount(draft, campaign);
+  const funding =
+    amount === null
+      ? null
+      : assessWalletFunding({ required: amount, snapshot: walletFunding });
   const tier = selectedTier(draft, campaign);
   const destination = chosenDestination(draft);
   const outcome = fulfilmentCharge(draft, campaign);
@@ -592,6 +690,23 @@ export function ContributionPreview({
 
     if (found.length > 0) {
       setIssues(found);
+      return;
+    }
+
+    /**
+     * A balance that cannot cover the contribution blocks the step, just as it
+     * would in the live flow. "Signing not connected" does not: it is the
+     * preview's normal end state, and the final screen still submits nothing.
+     */
+    if (
+      currentId === "settlement" &&
+      draft.route === "usdc-wallet" &&
+      funding !== null &&
+      (funding.status === "insufficient" ||
+        funding.status === "wallet-unavailable" ||
+        funding.status === "unsupported-asset")
+    ) {
+      setIssues([{ field: "walletFunding", message: funding.message }]);
       return;
     }
 
@@ -1025,9 +1140,26 @@ export function ContributionPreview({
                   );
                 })}
               </div>
+              {draft.route === "usdc-wallet" && funding ? (
+                <div className="mt-3">
+                  <WalletFundingPanel
+                    funding={funding}
+                    sample={walletFunding?.sample ?? false}
+                  />
+                </div>
+              ) : null}
+
               {errorFor("route") ? (
                 <p className="mt-2 text-xs font-medium text-danger">
                   {errorFor("route")}
+                </p>
+              ) : null}
+              {errorFor("walletFunding") ? (
+                <p
+                  className="mt-2 text-xs font-medium text-danger"
+                  role="alert"
+                >
+                  {errorFor("walletFunding")}
                 </p>
               ) : null}
             </fieldset>
@@ -1087,6 +1219,13 @@ export function ContributionPreview({
               <p className="text-sm leading-6 text-muted">
                 {contributionSummaryLine(amount)}.
               </p>
+
+              {draft.route === "usdc-wallet" && funding ? (
+                <WalletFundingPanel
+                  funding={funding}
+                  sample={walletFunding?.sample ?? false}
+                />
+              ) : null}
 
               <PrototypeNotice title="No payment will be taken">
                 This is a design preview. There is no wallet connection and no

@@ -7,6 +7,7 @@ import {
 import Image from "next/image";
 import Link from "next/link";
 
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { Container } from "@/features/marketing/components/container";
 import { SectionBackground } from "@/features/marketing/components/section-background";
 
@@ -69,7 +70,7 @@ export function HomeHero() {
                 Explore ideas
               </Link>
               <Link
-                href="/sign-up"
+                href={authHref(undefined, "creator")}
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-ink/80 bg-transparent px-7 text-sm font-semibold text-ink shadow-sm transition-colors hover:bg-ink/5 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Start an idea
