@@ -1,20 +1,24 @@
-import { AuthForm } from "@/features/auth/components/auth-form";
 import { AuthShell } from "@/features/auth/components/auth-shell";
+import { AuthSignInCard } from "@/features/auth/components/auth-sign-in-card";
 import { authPageContent } from "@/features/auth/content";
-import type { AuthMode } from "@/features/auth/types";
+import type { OnboardingIntent } from "@/features/auth/lib/onboarding";
 
-export function AuthPage({ mode }: { mode: AuthMode }) {
-  const content = authPageContent[mode];
-
+export function AuthPage({
+  intent,
+  returnPath,
+}: {
+  intent: OnboardingIntent;
+  returnPath: string;
+}) {
   return (
     <AuthShell
-      eyebrow={content.eyebrow}
-      title={content.title}
-      description={<p>{content.description}</p>}
-      panelTitle={content.panelTitle}
-      panelDescription={content.panelDescription}
+      eyebrow={authPageContent.eyebrow}
+      title={authPageContent.title}
+      description={<p>{authPageContent.description}</p>}
+      panelTitle={authPageContent.panelTitle}
+      panelDescription={authPageContent.panelDescription}
     >
-      <AuthForm mode={mode} />
+      <AuthSignInCard intent={intent} returnPath={returnPath} />
     </AuthShell>
   );
 }

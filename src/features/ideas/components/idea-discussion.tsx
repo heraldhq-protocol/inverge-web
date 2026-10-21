@@ -144,7 +144,7 @@ export function IdeaDiscussion({
       ) : (
         <p className="mt-6 text-sm leading-6 text-muted">
           <Link
-            href="/sign-up"
+            href="/auth"
             className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Create an account

@@ -23,7 +23,7 @@ export function ProductCta({ compact = false }: { compact?: boolean }) {
             className="mx-auto flex w-full max-w-sm flex-col items-center justify-center gap-3 sm:max-w-none sm:flex-row sm:gap-4"
             aria-label="Account and product actions"
           >
-            <ButtonLink href="/sign-up" className="sm:w-auto">
+            <ButtonLink href="/auth" className="sm:w-auto">
               Create account
             </ButtonLink>
             <span

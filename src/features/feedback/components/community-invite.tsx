@@ -105,7 +105,8 @@ export function CommunityInvite({
                 rel="noopener noreferrer"
                 className="inline-flex min-h-11 flex-1 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
-                {destination.label || COMMUNITY_DESTINATION_META[destination.kind].label}
+                {destination.label ||
+                  COMMUNITY_DESTINATION_META[destination.kind].label}
                 <span className="sr-only">(opens in a new tab)</span>
               </a>
             ))}
@@ -114,8 +115,8 @@ export function CommunityInvite({
       </div>
 
       <p className="mt-2 text-[0.6875rem] leading-4 text-muted">
-        Optional. You are not signed up to anything by clicking, and Inverge does
-        not pass your feedback to the community.
+        Optional. You are not signed up to anything by clicking, and Inverge
+        does not pass your feedback to the community.
       </p>
     </section>
   );
@@ -141,7 +142,7 @@ export function FollowCreatorButton({
   if (!signedIn) {
     return (
       <Link
-        href={`/sign-in?next=${encodeURIComponent(returnTo)}`}
+        href={`/auth?next=${encodeURIComponent(returnTo)}`}
         className={`inline-flex min-h-11 items-center justify-center gap-1.5 rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
           compact ? "w-full" : ""
         }`}

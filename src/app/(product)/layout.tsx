@@ -14,12 +14,12 @@ import { PRIVATE_ROBOTS } from "@/lib/seo/metadata";
  */
 export const metadata: Metadata = { robots: PRIVATE_ROBOTS };
 
-export default function ProductLayout({
+export default async function ProductLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const viewer = getDashboardViewer();
+  const viewer = await getDashboardViewer();
   const notifications = shellNotifications(notificationsPreviewData, 4);
 
   const shell: ShellData = {

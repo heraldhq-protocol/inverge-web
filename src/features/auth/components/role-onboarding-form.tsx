@@ -4,7 +4,13 @@ import { Check, Lightbulb, Search } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
-type StartingPoint = "build" | "support";
+import {
+  initialStartingPoint,
+  type OnboardingIntent,
+  skipStartingPointPath,
+  type StartingPoint,
+  startingPointPath,
+} from "@/features/auth/lib/onboarding";
 
 const startingPoints = [
   {
@@ -27,10 +33,10 @@ const startingPoints = [
   },
 ] as const;
 
-export function RoleOnboardingForm() {
+export function RoleOnboardingForm({ intent }: { intent: OnboardingIntent }) {
   const router = useRouter();
   const [startingPoint, setStartingPoint] = useState<StartingPoint | null>(
-    null,
+    initialStartingPoint(intent),
   );
   const [status, setStatus] = useState("");
 
@@ -43,13 +49,13 @@ export function RoleOnboardingForm() {
     }
 
     setStatus("");
-    router.push("/d");
+    router.push(startingPointPath(startingPoint));
   }
 
   function handleSkip() {
     setStartingPoint(null);
     setStatus("");
-    router.push("/d");
+    router.push(skipStartingPointPath(intent));
   }
 
   return (

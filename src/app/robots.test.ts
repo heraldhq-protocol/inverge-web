@@ -48,11 +48,10 @@ describe("robots", () => {
     for (const prefix of [
       "/admin",
       "/api",
+      "/auth",
       "/d",
       "/onboarding",
-      "/sign-in",
-      "/sign-up",
-      "/verify-email",
+      "/sign-out",
     ]) {
       expect(disallow).toContain(prefix);
     }

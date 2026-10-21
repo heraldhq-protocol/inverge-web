@@ -79,9 +79,7 @@ describe("SettingsDashboard", () => {
     fireEvent.click(screen.getByRole("button", { name: "Manage" }));
 
     expect(
-      screen.getByText(
-        "Google account management will be available when authentication is connected.",
-      ),
+      screen.getByText(/connections are managed by the sign-in provider/i),
     ).toBeInTheDocument();
   });
 

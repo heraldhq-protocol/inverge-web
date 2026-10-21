@@ -133,7 +133,7 @@ export function AdminAccessDenied({ reason }: { reason: string }) {
         </p>
         <div className="mt-4 flex flex-wrap justify-center gap-2">
           <Link
-            href="/sign-in"
+            href="/auth"
             className="inline-flex min-h-11 items-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Sign in

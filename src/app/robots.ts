@@ -13,11 +13,10 @@ import { absoluteUrl, siteOrigin } from "@/lib/seo/site";
 const PRIVATE_PREFIXES = [
   "/admin",
   "/api",
+  "/auth",
   "/d",
   "/onboarding",
-  "/sign-in",
-  "/sign-up",
-  "/verify-email",
+  "/sign-out",
 ] as const;
 
 export default function robots(): MetadataRoute.Robots {

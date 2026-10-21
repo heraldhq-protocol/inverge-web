@@ -12,6 +12,7 @@ import {
   Refresh01Icon,
   UserMultiple02Icon,
 } from "@/components/ui/hugeicons";
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { Container } from "@/features/marketing/components/container";
 import { SectionBackground } from "@/features/marketing/components/section-background";
 import {
@@ -287,7 +288,7 @@ export function IdeaCardsSection() {
             </p>
             <div className="mt-6">
               <Link
-                href="/sign-up"
+                href={authHref(undefined, "creator")}
                 className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-6 text-sm font-semibold text-ink transition-[filter] hover:brightness-95 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Start an idea

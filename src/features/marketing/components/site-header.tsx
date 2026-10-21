@@ -8,6 +8,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Cancel01Icon, Menu01Icon } from "@/components/ui/hugeicons";
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { Container } from "@/features/marketing/components/container";
 
 /**
@@ -142,13 +143,13 @@ export function SiteHeader() {
             <HeaderSearch id="header-idea-search" />
           </div>
           <Link
-            href="/sign-in"
+            href="/auth"
             className="inline-flex min-h-11 items-center rounded-md px-1 text-sm font-semibold text-ink transition-colors hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Sign in
           </Link>
           <Link
-            href="/sign-up"
+            href={authHref(undefined, "creator")}
             className="inline-flex min-h-11 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white shadow-sm transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
           >
             Start building
@@ -219,14 +220,14 @@ export function SiteHeader() {
             })}
             <div className="flex flex-col gap-3 pt-4">
               <Link
-                href="/sign-in"
+                href="/auth"
                 onClick={closeMenu}
                 className="inline-flex min-h-12 items-center justify-center rounded-full border border-border text-sm font-semibold text-ink transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >
                 Sign in
               </Link>
               <Link
-                href="/sign-up"
+                href={authHref(undefined, "creator")}
                 onClick={closeMenu}
                 className="inline-flex min-h-12 items-center justify-center rounded-full bg-contrast text-sm font-semibold text-white transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
               >

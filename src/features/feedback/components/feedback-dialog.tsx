@@ -624,13 +624,13 @@ export function FeedbackDialog({
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
-                      href={`/sign-in?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
+                      href={`/auth?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
                       className="inline-flex min-h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       Sign in
                     </Link>
                     <Link
-                      href={`/sign-up?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
+                      href={`/auth?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
                       className="inline-flex min-h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       Create an account

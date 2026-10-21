@@ -22,8 +22,8 @@ export const metadata: Metadata = {
  * follower count, or join date in this repository's fixtures, so the page states
  * that they are not connected rather than filling the gaps with invented copy.
  */
-export default function ProfilePage() {
-  const viewer = getDashboardViewer();
+export default async function ProfilePage() {
+  const viewer = await getDashboardViewer();
   const { rows } = getCreatorView();
   const publicIdeas = rows.filter((row) => row.visibility === "public");
 

@@ -450,7 +450,9 @@ export function IdeasDashboard({
                     type="button"
                     aria-pressed={selected}
                     onClick={() =>
-                      setState((current) => filtersForSortTab(current, item.key))
+                      setState((current) =>
+                        filtersForSortTab(current, item.key),
+                      )
                     }
                     className={`relative inline-flex min-h-11 shrink-0 items-center px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                       selected
@@ -495,10 +497,7 @@ export function IdeasDashboard({
 
             {filteredIdeas.length > 0 ? (
               <>
-                <section
-                  aria-labelledby="idea-grid-title"
-                  className="mt-5"
-                >
+                <section aria-labelledby="idea-grid-title" className="mt-5">
                   <h2 id="idea-grid-title" className="sr-only">
                     Idea results
                   </h2>
@@ -562,7 +561,7 @@ export function IdeasDashboard({
               </p>
             </div>
             <Link
-              href="/sign-up"
+              href="/auth"
               className="inline-flex min-h-12 shrink-0 items-center justify-center gap-2 rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-white hover:text-contrast focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
             >
               Create account

@@ -165,7 +165,12 @@ function FilterControls({
       <div className="pt-5">
         <div className="rounded-2xl bg-brand-soft px-4 py-5">
           <span className="grid size-9 place-items-center rounded-full bg-brand/12 text-brand-strong">
-            <HugeiconsIcon icon={Idea01Icon} size={18} strokeWidth={1.7} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Idea01Icon}
+              size={18}
+              strokeWidth={1.7}
+              aria-hidden="true"
+            />
           </span>
           <p className="mt-3 text-base font-bold tracking-[-0.02em] text-ink">
             Have an idea?
@@ -175,7 +180,7 @@ function FilterControls({
             support before you build.
           </p>
           <Link
-            href="/sign-up"
+            href="/auth"
             className="mt-4 inline-flex min-h-10 w-full items-center justify-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Start building
