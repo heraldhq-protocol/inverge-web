@@ -48,10 +48,10 @@ describe("IdeasDashboard", () => {
       screen.getByText(`1 of ${ideasPreviewData.featured.length}`),
     ).toBeInTheDocument();
 
-    const agriculture = screen.getByRole("radio", { name: "Agriculture" });
-    fireEvent.click(agriculture);
+    const food = screen.getByRole("radio", { name: "Food" });
+    fireEvent.click(food);
 
-    expect(agriculture).toBeChecked();
+    expect(food).toBeChecked();
     const results = within(
       screen.getByRole("region", { name: "Idea results" }),
     );
@@ -61,6 +61,31 @@ describe("IdeasDashboard", () => {
     expect(
       results.queryByRole("heading", { name: "SunGrid Community Power" }),
     ).not.toBeInTheDocument();
+  });
+
+  it("narrows by subcategory and clears it when the category changes", () => {
+    renderDashboard();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Food" }));
+    const spaces = screen.getByRole("radio", { name: "Spaces" });
+    fireEvent.click(spaces);
+
+    expect(spaces).toBeChecked();
+    const results = within(
+      screen.getByRole("region", { name: "Idea results" }),
+    );
+    expect(
+      results.getByRole("heading", { name: "Kitchen Collective" }),
+    ).toBeInTheDocument();
+    expect(
+      results.queryByRole("heading", { name: "CropCircle" }),
+    ).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Spaces/ })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("radio", { name: "Technology" }));
+    expect(
+      screen.getByRole("radio", { name: "All subcategories" }),
+    ).toBeChecked();
   });
 
   it("supports search, a useful empty state, and recovery", () => {

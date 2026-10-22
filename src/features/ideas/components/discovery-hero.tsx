@@ -3,6 +3,7 @@ import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Pill } from "@/components/ui/pill";
+import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 import { formatCompactMoney } from "@/lib/money";
 
@@ -37,7 +38,7 @@ export function DiscoveryHeroFeatured({ idea }: { idea: HeroFeaturedIdea }) {
       <h2 className="mt-2 line-clamp-2 text-base font-bold leading-snug tracking-[-0.025em] text-ink">
         {idea.title}
       </h2>
-      <p className="mt-1 text-xs text-muted">{idea.category}</p>
+      <p className="mt-1 text-xs text-muted">{ideaTaxonomyText(idea)}</p>
 
       <dl className="mt-3 grid grid-cols-3 gap-2 border-t border-border pt-3">
         <div className="min-w-0">

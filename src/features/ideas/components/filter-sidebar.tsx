@@ -8,14 +8,19 @@ import {
   Folder01Icon,
   Idea01Icon,
   Location01Icon,
+  Tag01Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { FilterSection } from "@/components/ui/filter-section";
-import { discoveryCategories } from "@/features/home/discovery-categories";
 import type { IdeaFilterState } from "@/features/ideas/lib/filters";
+import {
+  ideaCategories,
+  subcategoriesForIdeaCategory,
+  type IdeaSubcategorySlug,
+} from "@/features/ideas/lib/taxonomy";
 import type { IdeaRegion, IdeaValidationStage } from "@/features/ideas/types";
 
 type Option<Value extends string> = {
@@ -42,18 +47,24 @@ function RadioGroup<Value extends string>({
   label,
   onChange,
   options,
+  scrollable = false,
   value,
 }: {
   label: string;
   onChange: (value: Value) => void;
   options: readonly Option<Value>[];
+  scrollable?: boolean;
   value: Value;
 }) {
   const groupName = useId();
 
   return (
     <fieldset aria-label={label}>
-      <div className="space-y-0.5">
+      <div
+        className={`space-y-0.5 ${
+          scrollable ? "max-h-64 overflow-y-auto overscroll-contain pr-1" : ""
+        }`}
+      >
         {options.map((option) => {
           const selected = option.value === value;
 
@@ -109,17 +120,28 @@ function FilterControls({
   categoryCounts,
   onChange,
   state,
+  subcategoryCounts,
 }: {
   categoryCounts: Record<string, number>;
   onChange: (patch: Partial<IdeaFilterState>) => void;
   state: IdeaFilterState;
+  subcategoryCounts: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }) {
+  const subcategories = subcategoriesForIdeaCategory(state.category);
   const categoryOptions: readonly Option<IdeaFilterState["category"]>[] = [
-    { value: "all", label: "All ideas", count: categoryCounts.all ?? 0 },
-    ...discoveryCategories.map((category) => ({
-      value: category.value,
+    { value: "all", label: "All categories", count: categoryCounts.all ?? 0 },
+    ...ideaCategories.map((category) => ({
+      value: category.slug,
       label: category.label,
-      count: categoryCounts[category.value] ?? 0,
+      count: categoryCounts[category.slug] ?? 0,
+    })),
+  ];
+  const subcategoryOptions: readonly Option<IdeaSubcategorySlug | "all">[] = [
+    { label: "All subcategories", value: "all" },
+    ...subcategories.map((subcategory) => ({
+      count: subcategoryCounts[state.category]?.[subcategory.slug] ?? 0,
+      label: subcategory.label,
+      value: subcategory.slug,
     })),
   ];
 
@@ -134,9 +156,27 @@ function FilterControls({
           label="Category"
           options={categoryOptions}
           value={state.category}
-          onChange={(category) => onChange({ category, page: 1 })}
+          onChange={(category) =>
+            onChange({ category, page: 1, subcategory: "all" })
+          }
+          scrollable
         />
       </FilterSection>
+
+      {state.category !== "all" && subcategories.length > 0 ? (
+        <FilterSection
+          icon={Tag01Icon}
+          label="Subcategory"
+          count={state.subcategory !== "all" ? 1 : undefined}
+        >
+          <RadioGroup
+            label="Subcategory"
+            options={subcategoryOptions}
+            value={state.subcategory}
+            onChange={(subcategory) => onChange({ page: 1, subcategory })}
+          />
+        </FilterSection>
+      ) : null}
 
       <FilterSection
         icon={Activity01Icon}
@@ -207,12 +247,14 @@ export function FilterSidebar({
   onChange,
   onClear,
   state,
+  subcategoryCounts,
 }: {
   activeFilterCount: number;
   categoryCounts: Record<string, number>;
   onChange: (patch: Partial<IdeaFilterState>) => void;
   onClear: () => void;
   state: IdeaFilterState;
+  subcategoryCounts: Readonly<Record<string, Readonly<Record<string, number>>>>;
 }) {
   const [open, setOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -295,6 +337,7 @@ export function FilterSidebar({
             categoryCounts={categoryCounts}
             onChange={onChange}
             state={state}
+            subcategoryCounts={subcategoryCounts}
           />
         </div>
       </aside>
@@ -375,6 +418,7 @@ export function FilterSidebar({
               categoryCounts={categoryCounts}
               onChange={onChange}
               state={state}
+              subcategoryCounts={subcategoryCounts}
             />
             <Button
               type="button"

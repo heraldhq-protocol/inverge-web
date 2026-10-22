@@ -6,6 +6,10 @@ import type {
   FeedbackForm,
   IdeaGoals,
 } from "@/features/feedback/types";
+import type {
+  IdeaCategorySlug,
+  IdeaSubcategorySlug,
+} from "@/features/ideas/lib/taxonomy";
 import type { MoneyAmount } from "@/lib/money";
 
 export type IdeaRegion = "ghana" | "nigeria" | "senegal";
@@ -33,6 +37,23 @@ export type IdeaScope = "all" | "public";
 export type DiscoveryIdea = IdeaSummary & {
   /** Editorial cover, or `null` for the deterministic artwork fallback. */
   cover?: string | null;
+  /**
+   * The idea's category in the shared campaign/idea discovery taxonomy.
+   *
+   * Optional because older records and the API projection may not carry one.
+   * Such an idea still appears under "All categories", but is never counted
+   * under a category it does not have. This is the filter taxonomy, not the
+   * broader `discoveryCategory` bucket used by the idea builder and ideathon.
+   */
+  taxonomyCategory?: IdeaCategorySlug;
+  /**
+   * The idea's subcategory in the shared taxonomy.
+   *
+   * Only meaningful with `taxonomyCategory`; the URL parser requires the child
+   * to belong to the selected parent. An idea without a child is counted under
+   * its parent and "All subcategories", never under a child it does not have.
+   */
+  taxonomySubcategory?: IdeaSubcategorySlug;
   /** FR-203: count of structured survey responses. Volume, never a score. */
   feedbackResponses: number;
   location: string;

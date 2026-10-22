@@ -49,6 +49,7 @@ choices.
 | D-038 | 2026-10-20 | Accepted | Adopt the supplied 15-parent campaign taxonomy as canonical, keep the legacy broad category as a read-only compatibility field, and leave campaigns without an honest fit unassigned rather than guessing. |
 | D-039 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
 | D-040 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
+| D-041 | 2026-10-22 | Accepted | Idea discovery reuses the campaign category/subcategory taxonomy; the taxonomy fields are optional on a record and a child is URL-valid only under its selected parent. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -1639,6 +1640,61 @@ preview admin store is single-browser and cannot be presented as server-audited.
 Revisit when: the API owns inventory and events, a real advertiser signs, or a
 publisher account is approved. At that point the status line in
 `docs/ADVERTISING.md` and the API contract must change in the same release.
+
+### D-041: Idea discovery reuses the campaign category taxonomy
+
+- Date: 2026-10-22
+- Status: Accepted
+- Owner: Product and web engineering
+
+Context: Campaign discovery already narrows results with a parent category and
+a conditional child subcategory. Idea discovery offered only a broad
+`discoveryCategory` plus a free-text `category` label, so the two discovery
+surfaces behaved differently and ideas could not be filtered with the same
+categories. The campaign taxonomy is the product's reviewed vocabulary; a
+second idea-only list would drift from it and produce two meanings for the same
+words. Some ideas also arrive from the API or an older record without any
+child value, and assigning one by guess would misstate what the record
+contains.
+
+Decision: idea discovery uses the campaign taxonomy directly.
+`src/features/ideas/lib/taxonomy.ts` aliases
+`src/features/campaigns/lib/taxonomy.ts` rather than copying it, so both
+surfaces read the same categories, children, labels, and slugs. The idea
+sidebar lists every campaign category and, after a parent is chosen, its
+children. `DiscoveryIdea.taxonomyCategory` and `taxonomySubcategory` carry the
+discovery assignment and are optional because the API projection may not have
+them yet. The broader `IdeaSummary.discoveryCategory` remains the routing bucket
+used by the idea builder and ideathon; it is not the filter value.
+
+Selecting a parent clears the child. `?subcategory=` is accepted and
+serialised only when it belongs to the selected `?category=`; a crafted,
+stale, or legacy pair falls back to "All subcategories" rather than filtering
+by a child of another parent. Category and child counts come from the same
+public pool the grid can show. An idea without a child is counted under its
+parent and under "All subcategories", but is never attributed to a child it
+does not have, and a mismatched pair is skipped rather than counted under the
+wrong parent. Cards show "Parent / Child" with the descriptive `category` label
+as the fallback, and the detail page's category link uses the same pair.
+
+Alternatives: Copy the campaign taxonomy into an idea-only list (drifts, and a
+label or slug edit moves only one surface); keep the earlier idea-specific
+children (not the categories the product asked for); reuse the six broad
+`discoveryCategory` buckets (too coarse and not the campaign taxonomy); make the
+child required (breaks older and API records, or forces a false assignment);
+infer a child from the free-text category or description (guesses).
+
+Consequences: there is exactly one taxonomy to maintain, and an idea cannot
+offer a category that campaign discovery does not. The cost is that every
+preview idea needs an explicit campaign pair and the API must eventually supply
+both slugs; until it does, the card falls back to the existing descriptive label
+and the sidebar counts only declared children. Adding a category or child for
+ideas is a campaign-taxonomy edit, not an idea-local one. Paid placements remain
+outside this taxonomy and outside filtering, counts, ordering, and validation.
+
+Revisit when: The API owns the taxonomy, ideas routinely need a category that
+campaign discovery should not carry, or a child needs to move between parents.
+A move requires migrating stored slugs and keeping old filter URLs working.
 
 ## Decision template
 

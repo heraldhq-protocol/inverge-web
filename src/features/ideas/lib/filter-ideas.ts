@@ -1,4 +1,9 @@
-import type { DiscoveryCategory } from "@/features/home/discovery-categories";
+import {
+  ideaCategoryLabel,
+  ideaSubcategoryLabel,
+  type IdeaCategorySlug,
+  type IdeaSubcategorySlug,
+} from "@/features/ideas/lib/taxonomy";
 import type {
   DiscoveryIdea,
   IdeaRegion,
@@ -9,11 +14,12 @@ import type {
 } from "@/features/ideas/types";
 
 export type IdeaFilters = {
-  category: "all" | DiscoveryCategory;
+  category: "all" | IdeaCategorySlug;
   query: string;
   region: "all" | IdeaRegion;
   sort: IdeaSort;
   stage: "all" | IdeaValidationStage;
+  subcategory: "all" | IdeaSubcategorySlug;
 };
 
 function validationStage(value: number): IdeaValidationStage {
@@ -22,13 +28,45 @@ function validationStage(value: number): IdeaValidationStage {
   return "early";
 }
 
+type IdeaTaxonomyFields = {
+  category: string;
+  taxonomyCategory?: IdeaCategorySlug | undefined;
+  taxonomySubcategory?: IdeaSubcategorySlug | undefined;
+};
+
+/** The taxonomy text a card can show, with the descriptive label as fallback. */
+export function ideaTaxonomyText(idea: IdeaTaxonomyFields): string {
+  if (!idea.taxonomyCategory) return idea.category;
+
+  const parent = ideaCategoryLabel(idea.taxonomyCategory);
+  return idea.taxonomySubcategory
+    ? `${parent} / ${ideaSubcategoryLabel(
+        idea.taxonomyCategory,
+        idea.taxonomySubcategory,
+      )}`
+    : parent;
+}
+
 function matchesQuery(idea: DiscoveryIdea, query: string) {
   const normalizedQuery = query.trim().toLocaleLowerCase();
   if (!normalizedQuery) return true;
 
+  const taxonomy = idea.taxonomyCategory
+    ? [
+        ideaCategoryLabel(idea.taxonomyCategory),
+        idea.taxonomySubcategory
+          ? ideaSubcategoryLabel(
+              idea.taxonomyCategory,
+              idea.taxonomySubcategory,
+            )
+          : "",
+      ]
+    : [];
+
   return [
     idea.title,
     idea.category,
+    ...taxonomy,
     idea.creator,
     idea.description,
     idea.location,
@@ -53,7 +91,9 @@ export function filterAndSortIdeas(
         (scope === "all" || idea.visibility === "public") &&
         matchesQuery(idea, filters.query) &&
         (filters.category === "all" ||
-          idea.discoveryCategory === filters.category) &&
+          idea.taxonomyCategory === filters.category) &&
+        (filters.subcategory === "all" ||
+          idea.taxonomySubcategory === filters.subcategory) &&
         (filters.region === "all" || idea.region === filters.region) &&
         (filters.stage === "all" ||
           validationStage(idea.validationPercent) === filters.stage),

@@ -2,6 +2,10 @@ import { describe, expect, it } from "vitest";
 
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
 import {
+  filterAndSortIdeas,
+  ideaTaxonomyText,
+} from "@/features/ideas/lib/filter-ideas";
+import {
   activeFilterChips,
   activeSortTab,
   countIdeasByCategory,
@@ -9,6 +13,8 @@ import {
   filtersForSortTab,
   ideaFiltersFromSearch,
   ideaFiltersToQuery,
+  ideaSubcategoryCountsByCategory,
+  ideaTaxonomyHref,
   parseIdeaFilters,
 } from "@/features/ideas/lib/filters";
 
@@ -19,32 +25,35 @@ describe("parseIdeaFilters", () => {
 
   it("reads supported values and ignores unknown ones", () => {
     const filters = parseIdeaFilters({
-      category: "agriculture",
+      category: "food",
       page: "3",
       q: "solar",
       region: "ghana",
       sort: "newest",
       stage: "near",
+      subcategory: "farms",
       view: "list",
     });
 
     expect(filters).toMatchObject({
-      category: "agriculture",
+      category: "food",
       page: 3,
       query: "solar",
       region: "ghana",
       sort: "newest",
       stage: "near",
+      subcategory: "farms",
       view: "list",
     });
 
     expect(
       parseIdeaFilters({
-        category: "not-a-category",
+        category: "agriculture",
         page: "-4",
         region: "mars",
         sort: "random",
         stage: "later",
+        subcategory: "farms",
         view: "masonry",
       }),
     ).toMatchObject({
@@ -53,8 +62,23 @@ describe("parseIdeaFilters", () => {
       region: "all",
       sort: "most-validated",
       stage: "all",
+      subcategory: "all",
       view: "grid",
     });
+  });
+
+  it("reads a subcategory only when it belongs to the selected category", () => {
+    expect(
+      parseIdeaFilters({ category: "food", subcategory: "farms" }),
+    ).toMatchObject({ category: "food", subcategory: "farms" });
+
+    expect(
+      parseIdeaFilters({ category: "food", subcategory: "apps" }),
+    ).toMatchObject({ category: "food", subcategory: "all" });
+
+    expect(
+      parseIdeaFilters({ category: "all", subcategory: "farms" }),
+    ).toMatchObject({ category: "all", subcategory: "all" });
   });
 
   it("bounds a crafted page number", () => {
@@ -68,7 +92,7 @@ describe("ideaFiltersToQuery", () => {
     expect(ideaFiltersToQuery(defaultIdeaFilters)).toBe("");
   });
 
-  it("round-trips a non-default state", () => {
+  it("round-trips a non-default state, including a subcategory", () => {
     const query = ideaFiltersToQuery({
       category: "technology",
       page: 2,
@@ -76,6 +100,7 @@ describe("ideaFiltersToQuery", () => {
       region: "nigeria",
       sort: "newest",
       stage: "early",
+      subcategory: "apps",
       view: "list",
     });
 
@@ -86,8 +111,44 @@ describe("ideaFiltersToQuery", () => {
       region: "nigeria",
       sort: "newest",
       stage: "early",
+      subcategory: "apps",
       view: "list",
     });
+  });
+
+  it("never serialises a subcategory without its parent", () => {
+    expect(
+      ideaFiltersToQuery({
+        ...defaultIdeaFilters,
+        category: "all",
+        subcategory: "farms",
+      }),
+    ).toBe("");
+  });
+});
+
+describe("taxonomy display", () => {
+  it("shows the campaign parent and child together", () => {
+    expect(
+      ideaTaxonomyText({
+        category: "Agriculture",
+        taxonomyCategory: "food",
+        taxonomySubcategory: "farms",
+      }),
+    ).toBe("Food / Farms");
+    expect(ideaTaxonomyText({ category: "Campus technology" })).toBe(
+      "Campus technology",
+    );
+  });
+
+  it("links to the same taxonomy filter the sidebar uses", () => {
+    expect(
+      ideaTaxonomyHref({
+        taxonomyCategory: "food",
+        taxonomySubcategory: "farmers-markets",
+      }),
+    ).toBe("/ideas?category=food&subcategory=farmers-markets");
+    expect(ideaTaxonomyHref({})).toBeNull();
   });
 });
 
@@ -115,14 +176,16 @@ describe("activeFilterChips", () => {
     expect(
       activeFilterChips({
         ...defaultIdeaFilters,
-        category: "agriculture",
+        category: "food",
         query: "cold storage",
         region: "nigeria",
         stage: "near",
+        subcategory: "farms",
       }),
     ).toEqual([
       { key: "query", label: "Search: cold storage" },
-      { key: "category", label: "Agriculture" },
+      { key: "category", label: "Food" },
+      { key: "subcategory", label: "Farms" },
       { key: "stage", label: "Near validation" },
       { key: "region", label: "Nigeria" },
     ]);
@@ -130,7 +193,7 @@ describe("activeFilterChips", () => {
 });
 
 describe("countIdeasByCategory", () => {
-  it("counts the visible catalogue per category, including all", () => {
+  it("counts the visible catalogue per campaign category, including all", () => {
     const counts = countIdeasByCategory([
       ...ideasPreviewData.featured,
       ...ideasPreviewData.ideas,
@@ -139,6 +202,69 @@ describe("countIdeasByCategory", () => {
     expect(counts.all).toBe(
       ideasPreviewData.featured.length + ideasPreviewData.ideas.length,
     );
-    expect(counts.agriculture).toBeGreaterThan(0);
+    expect(counts.food).toBe(5);
+    expect(counts.technology).toBe(8);
+    expect(counts.art).toBe(0);
+  });
+});
+
+describe("subcategory filtering", () => {
+  it("returns only the ideas in the selected child", () => {
+    const ideas = [...ideasPreviewData.featured, ...ideasPreviewData.ideas];
+    const results = filterAndSortIdeas(ideas, {
+      ...defaultIdeaFilters,
+      category: "food",
+      subcategory: "spaces",
+    });
+
+    expect(results.map((idea) => idea.id)).toEqual(["kitchen-collective"]);
+  });
+
+  it("keeps an idea without a child under its parent and out of every child", () => {
+    const idea = ideasPreviewData.ideas.find(
+      (candidate) => candidate.id === "kitchen-collective",
+    );
+    const removedSubcategory = idea?.taxonomySubcategory;
+    if (!idea || !removedSubcategory) {
+      throw new Error("Expected a preview idea with a subcategory");
+    }
+
+    const ideaWithoutSubcategory = { ...idea };
+    delete ideaWithoutSubcategory.taxonomySubcategory;
+
+    const ideas = [ideaWithoutSubcategory];
+    expect(
+      filterAndSortIdeas(ideas, {
+        ...defaultIdeaFilters,
+        category: "food",
+      }),
+    ).toHaveLength(1);
+    expect(
+      filterAndSortIdeas(ideas, {
+        ...defaultIdeaFilters,
+        category: "food",
+        subcategory: removedSubcategory,
+      }),
+    ).toHaveLength(0);
+    expect(countIdeasByCategory(ideas).food).toBe(1);
+    expect(ideaSubcategoryCountsByCategory(ideas)).toEqual({});
+  });
+});
+
+describe("ideaSubcategoryCountsByCategory", () => {
+  it("counts each public idea under its parent and child", () => {
+    const ideas = [...ideasPreviewData.featured, ...ideasPreviewData.ideas];
+    const counts = ideaSubcategoryCountsByCategory(ideas);
+
+    expect(counts.food).toEqual({
+      "farmers-markets": 2,
+      farms: 2,
+      spaces: 1,
+    });
+    expect(counts.technology).toEqual({
+      apps: 3,
+      hardware: 3,
+      software: 2,
+    });
   });
 });

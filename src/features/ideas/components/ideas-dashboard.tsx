@@ -42,7 +42,9 @@ import {
   filtersForSortTab,
   ideaFiltersFromSearch,
   ideaFiltersToQuery,
+  ideaSubcategoryCountsByCategory,
   sortTabs,
+  type ActiveFilterChip,
   type IdeaFilterState,
   type IdeaResultView,
 } from "@/features/ideas/lib/filters";
@@ -311,6 +313,10 @@ export function IdeasDashboard({
     () => countIdeasByCategory(publicIdeas),
     [publicIdeas],
   );
+  const subcategoryCounts = useMemo(
+    () => ideaSubcategoryCountsByCategory(publicIdeas),
+    [publicIdeas],
+  );
   const filteredIdeas = useMemo(
     () => filterAndSortIdeas(publicIdeas, state, "public"),
     [publicIdeas, state],
@@ -361,9 +367,13 @@ export function IdeasDashboard({
     setState(defaultIdeaFilters);
   }
 
-  function removeChip(key: "category" | "query" | "region" | "stage") {
+  function removeChip(key: ActiveFilterChip["key"]) {
     if (key === "query") {
       update({ page: 1, query: "" });
+      return;
+    }
+    if (key === "category") {
+      update({ category: "all", page: 1, subcategory: "all" });
       return;
     }
     update({ [key]: "all", page: 1 });
@@ -387,6 +397,7 @@ export function IdeasDashboard({
             onChange={update}
             onClear={clearFilters}
             state={state}
+            subcategoryCounts={subcategoryCounts}
           />
 
           <div className="min-w-0" id="idea-results">
@@ -554,7 +565,7 @@ export function IdeasDashboard({
                   variant="empty"
                   eyebrow="No matching ideas"
                   title="Try a broader search"
-                  description="Change the category, location, or validation stage to discover more ideas."
+                  description="Change the category, subcategory, location, or validation stage to discover more ideas."
                   action={
                     <button
                       type="button"

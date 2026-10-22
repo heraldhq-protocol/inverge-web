@@ -42,6 +42,8 @@ import {
 } from "@/features/ideas/components/idea-viewer";
 import { previewComments } from "@/features/ideas/content/preview-comments";
 import { relatedIdeas, topicsForIdea } from "@/features/ideas/lib/catalog";
+import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
+import { ideaTaxonomyHref } from "@/features/ideas/lib/filters";
 import { evaluateGate } from "@/features/ideas/lib/gate";
 import type {
   DiscoveryIdea,
@@ -282,6 +284,8 @@ export function IdeaDetail({
     : idea.changes && idea.changes.length > 0
       ? "Revised after feedback"
       : "Collecting feedback";
+  const taxonomyHref = ideaTaxonomyHref(idea);
+  const taxonomyText = ideaTaxonomyText(idea);
 
   return (
     <IdeaViewerProvider>
@@ -320,7 +324,7 @@ export function IdeaDetail({
               <IdeaCover
                 artwork={idea.artwork}
                 cover={idea.cover}
-                alt={`${idea.title}, ${idea.category}`}
+                alt={`${idea.title}, ${taxonomyText}`}
                 priority
                 sizes="(min-width: 1024px) 760px, 100vw"
               />
@@ -340,7 +344,7 @@ export function IdeaDetail({
             <header className="mt-5">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 text-xs">
                 <p className="font-semibold text-brand-strong">
-                  {idea.category}
+                  {taxonomyText}
                 </p>
                 <span className="text-border-strong" aria-hidden="true">
                   ·
@@ -837,18 +841,20 @@ export function IdeaDetail({
                 />
                 Back to all ideas
               </Link>
-              <Link
-                href={`/ideas?category=${idea.discoveryCategory}`}
-                className="inline-flex items-center gap-1 rounded text-xs font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-              >
-                More in {idea.category}
-                <HugeiconsIcon
-                  icon={ArrowUpRight01Icon}
-                  size={14}
-                  strokeWidth={1.8}
-                  aria-hidden="true"
-                />
-              </Link>
+              {taxonomyHref ? (
+                <Link
+                  href={taxonomyHref}
+                  className="inline-flex items-center gap-1 rounded text-xs font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  More in {taxonomyText}
+                  <HugeiconsIcon
+                    icon={ArrowUpRight01Icon}
+                    size={14}
+                    strokeWidth={1.8}
+                    aria-hidden="true"
+                  />
+                </Link>
+              ) : null}
             </div>
           </aside>
         </div>

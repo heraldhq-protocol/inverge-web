@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Pill } from "@/components/ui/pill";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 import { formatCompactMoney } from "@/lib/money";
 
@@ -122,6 +123,7 @@ export function IdeaDiscoveryCard({
   priority?: boolean;
 }) {
   const isList = variant === "list";
+  const categoryText = ideaTaxonomyText(idea);
 
   return (
     <Link
@@ -140,7 +142,7 @@ export function IdeaDiscoveryCard({
         <IdeaCover
           artwork={idea.artwork}
           cover={idea.cover}
-          alt={`${idea.title}, ${idea.category}`}
+          alt={`${idea.title}, ${categoryText}`}
           priority={priority}
           sizes={
             isList
@@ -166,7 +168,7 @@ export function IdeaDiscoveryCard({
 
       <div className="flex min-w-0 flex-1 flex-col p-4 sm:p-5">
         <p className="truncate text-xs font-medium text-muted">
-          {idea.category}
+          {categoryText}
         </p>
         <h3 className="mt-1 line-clamp-2 text-lg font-bold leading-snug tracking-[-0.03em] text-ink">
           {idea.title}
