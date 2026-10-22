@@ -1598,6 +1598,48 @@ Revisit when: The campaign API returns structured country and region fields, a
 viewer identity and recommendation service exist, or the product adds a
 location type that is not a country/region pair.
 
+### D-039: Advertising is a labelled, separate bounded context
+
+- Date: 2026-10-22
+- Status: Accepted
+- Owner: Product, web engineering, backend engineering
+
+Context: the product needs a controlled way to sell placements without
+corrupting the thing it sells: organic discovery and validation. A native ad
+that looks like a campaign, an impression that joins campaign analytics, or a
+third-party script that loads before consent would each break a promise already
+made in the privacy notice.
+
+Decision: advertising gets its own domain module, placement registry, inventory
+rules, consent record, event contract, and admin permission. Selection is pure
+and deterministic and runs server-side without cookies. Every placement is
+labelled `Sponsored`, carries the advertiser name, and is excluded from
+ranking, validation, funding figures, and campaign analytics. Feed placements
+require at least six organic results. First-party inventory is on in development
+and off by default in production; the third-party AdSense adapter needs a
+separate flag, public IDs, and an explicit personalised-advertising choice.
+Optional measurement is a second, independent consent purpose and is off by
+default. The admin workspace is explicitly a browser preview until the API owns
+inventory; the proposed schema and serving contract are documented but not
+wired.
+
+Alternatives: a single `isSponsored` flag on campaigns (rejected: puts paid
+state into the domain that must stay neutral); client-side ad selection
+(rejected: hydration drift, layout shift, and cookie reads on static pages);
+loading AdSense site-wide behind a banner (rejected: consent and performance
+risk); a full ad server in this change (rejected: no advertiser, no billing, no
+operational need yet).
+
+Consequences: a new placement is a reviewed registry edit plus a call site, not
+an ad-hoc component. There are two independent consent purposes to explain and
+test. Native ads cannot be targeted by cookie, only by page category and region.
+Third-party advertising stays inert until a real publisher account exists. The
+preview admin store is single-browser and cannot be presented as server-audited.
+
+Revisit when: the API owns inventory and events, a real advertiser signs, or a
+publisher account is approved. At that point the status line in
+`docs/ADVERTISING.md` and the API contract must change in the same release.
+
 ## Decision template
 
 Copy this section for a new decision.
