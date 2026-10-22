@@ -15,7 +15,9 @@ const ANALYTICS_IDEA_ID = "skill-circle";
  * is assigned one unit at a time, which keeps the sum exact.
  */
 function distribute(total: bigint, weights: readonly number[]): bigint[] {
-  const scaled = weights.map((weight) => BigInt(Math.max(0, Math.round(weight * 1_000_000))));
+  const scaled = weights.map((weight) =>
+    BigInt(Math.max(0, Math.round(weight * 1_000_000))),
+  );
   const weightTotal = scaled.reduce((sum, weight) => sum + weight, 0n);
   if (weightTotal === 0n) return weights.map(() => 0n);
 
@@ -49,8 +51,10 @@ function buildSeries({
   const steps = Math.max(1, days - 1);
   // Positive, slightly uneven increments: cumulative counts never fall, while
   // the line still reads like real activity rather than a ruler.
-  const weights = Array.from({ length: steps }, (_, index) =>
-    1 + 0.5 * Math.sin(index * 1.31) + 0.24 * Math.cos(index * 0.57 + 1.2),
+  const weights = Array.from(
+    { length: steps },
+    (_, index) =>
+      1 + 0.5 * Math.sin(index * 1.31) + 0.24 * Math.cos(index * 0.57 + 1.2),
   );
 
   const supporterIncrements = distribute(

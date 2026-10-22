@@ -172,9 +172,7 @@ const categoryLabels = new Map<DiscoveryCategory, string>(
   discoveryCategories.map((category) => [category.value, category.label]),
 );
 
-export function activeFilterChips(
-  state: IdeaFilterState,
-): ActiveFilterChip[] {
+export function activeFilterChips(state: IdeaFilterState): ActiveFilterChip[] {
   const chips: ActiveFilterChip[] = [];
 
   if (state.query.trim()) {
@@ -213,9 +211,9 @@ export function countIdeasByCategory<
   return counts;
 }
 
-export function countIdeasByRegion<
-  Idea extends { region: IdeaRegion },
->(ideas: readonly Idea[]): Record<IdeaRegion | "all", number> {
+export function countIdeasByRegion<Idea extends { region: IdeaRegion }>(
+  ideas: readonly Idea[],
+): Record<IdeaRegion | "all", number> {
   return {
     all: ideas.length,
     ghana: ideas.filter((idea) => idea.region === "ghana").length,

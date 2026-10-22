@@ -24,10 +24,7 @@ export function CompetitionNav() {
   const pathname = usePathname();
 
   return (
-    <nav
-      aria-label="Ideathon sections"
-      className="border-b border-border"
-    >
+    <nav aria-label="Ideathon sections" className="border-b border-border">
       <ul className="flex min-w-max items-center gap-1 overflow-x-auto">
         {tabs.map((tab) => {
           const current = isCurrent(pathname, tab.href);

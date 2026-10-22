@@ -1,10 +1,7 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ChevronLeftIcon,
-  ChevronRightIcon,
-} from "@hugeicons/core-free-icons";
+import { ChevronLeftIcon, ChevronRightIcon } from "@hugeicons/core-free-icons";
 import { useEffect, useRef, useState } from "react";
 
 import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";

@@ -2,7 +2,10 @@
 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 
-import { ANALYTICS_PERIODS, type AnalyticsPeriod } from "@/features/analytics/lib/analytics";
+import {
+  ANALYTICS_PERIODS,
+  type AnalyticsPeriod,
+} from "@/features/analytics/lib/analytics";
 
 /**
  * Period selector. The choice lives in the URL so a creator can share or

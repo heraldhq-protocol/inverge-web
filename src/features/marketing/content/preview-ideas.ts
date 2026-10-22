@@ -22,7 +22,8 @@ export const previewIdeas: PreviewIdea[] = [
     category: "Education",
     title: "Digital skills for young women",
     pitch: "Practical tech training for young women in Lagos.",
-    image: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&h=800&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=1200&h=800&fit=crop",
     supporters: 128,
     prePledgeTotal: "$4,820",
     promoted: true,
@@ -32,7 +33,8 @@ export const previewIdeas: PreviewIdea[] = [
     category: "Clean energy",
     title: "Solar cold storage for farmers",
     pitch: "Affordable, off-grid cooling for rural communities.",
-    image: "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=900&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=1200&h=900&fit=crop",
     supporters: 89,
     prePledgeTotal: "$2,960",
   },
@@ -41,7 +43,8 @@ export const previewIdeas: PreviewIdea[] = [
     category: "Creative",
     title: "Afrobeats production studio",
     pitch: "A community studio for emerging artists in Lagos.",
-    image: "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&h=800&fit=crop",
+    image:
+      "https://images.unsplash.com/photo-1511671782779-c97d3d27a1d4?w=1200&h=800&fit=crop",
     supporters: 64,
     prePledgeTotal: "$1,240",
   },

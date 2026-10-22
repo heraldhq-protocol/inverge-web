@@ -15,7 +15,10 @@ import { Avatar } from "@/components/ui/avatar";
 import { Pill } from "@/components/ui/pill";
 import { Select } from "@/components/ui/select";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
-import type { CompetitionCategoryBreakdown, StandingEntry } from "@/features/ideathon/types";
+import type {
+  CompetitionCategoryBreakdown,
+  StandingEntry,
+} from "@/features/ideathon/types";
 import { totalSupporters } from "@/features/ideathon/lib/standings";
 
 const PAGE_SIZE = 10;
@@ -109,16 +112,14 @@ export function StandingsTable({
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
 
   const filtered = entries.filter(
-    (entry) =>
-      category === "all" || entry.idea.discoveryCategory === category,
+    (entry) => category === "all" || entry.idea.discoveryCategory === category,
   );
   const ordered = (() => {
     if (sort === "supporters") {
       return filtered.toSorted(
         (left, right) =>
           totalSupporters(right.signals.supporters) -
-            totalSupporters(left.signals.supporters) ||
-          left.rank - right.rank,
+            totalSupporters(left.signals.supporters) || left.rank - right.rank,
       );
     }
     if (sort === "newest") {
@@ -158,7 +159,10 @@ export function StandingsTable({
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <label htmlFor="standings-sort" className="text-xs font-medium text-muted">
+          <label
+            htmlFor="standings-sort"
+            className="text-xs font-medium text-muted"
+          >
             Sort by
           </label>
           <div className="w-44">
@@ -209,16 +213,14 @@ export function StandingsTable({
             }`}
           >
             {item.category}
-            <span className="ml-1.5 tabular-nums opacity-70">
-              {item.count}
-            </span>
+            <span className="ml-1.5 tabular-nums opacity-70">{item.count}</span>
           </button>
         ))}
       </div>
 
       <p className="mt-3 text-[0.6875rem] text-muted">
-        Updated {formatUpdatedAt(updatedAt)} UTC. Preview standings, not official
-        results.
+        Updated {formatUpdatedAt(updatedAt)} UTC. Preview standings, not
+        official results.
       </p>
 
       {visible.length > 0 ? (
@@ -237,10 +239,16 @@ export function StandingsTable({
                 <th scope="col" className="px-3 py-2.5">
                   Ideas
                 </th>
-                <th scope="col" className="hidden w-40 px-3 py-2.5 lg:table-cell">
+                <th
+                  scope="col"
+                  className="hidden w-40 px-3 py-2.5 lg:table-cell"
+                >
                   Creator
                 </th>
-                <th scope="col" className="hidden w-28 px-3 py-2.5 xl:table-cell">
+                <th
+                  scope="col"
+                  className="hidden w-28 px-3 py-2.5 xl:table-cell"
+                >
                   Topic
                 </th>
                 <th scope="col" className="w-24 px-3 py-2.5 text-right">
@@ -284,10 +292,11 @@ export function StandingsTable({
                           {entry.idea.description}
                         </p>
                         <p className="mt-1 text-[0.6875rem] tabular-nums text-muted sm:hidden">
-                          {totalSupporters(entry.signals.supporters).toLocaleString(
-                            "en-US",
-                          )}{" "}
-                          supporters · <Amount value={entry.idea.prePledged} compact />
+                          {totalSupporters(
+                            entry.signals.supporters,
+                          ).toLocaleString("en-US")}{" "}
+                          supporters ·{" "}
+                          <Amount value={entry.idea.prePledged} compact />
                         </p>
                       </div>
                     </div>
@@ -327,7 +336,9 @@ export function StandingsTable({
         </div>
       ) : (
         <div className="mt-3 rounded-2xl border border-border bg-surface p-8 text-center">
-          <p className="text-sm font-semibold text-ink">No ideas in this topic</p>
+          <p className="text-sm font-semibold text-ink">
+            No ideas in this topic
+          </p>
           <p className="mt-1 text-xs text-muted">
             Choose another topic to see the entries.
           </p>

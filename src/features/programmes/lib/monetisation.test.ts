@@ -15,7 +15,11 @@ import {
   type WorkshopBooking,
 } from "@/features/programmes/lib/monetisation";
 
-const usd = (cents: string) => ({ atomic: cents, currency: "USD" as const, decimals: 2 as const });
+const usd = (cents: string) => ({
+  atomic: cents,
+  currency: "USD" as const,
+  decimals: 2 as const,
+});
 
 const verified: PaymentProviderEvent = {
   amount: usd("300000"),
@@ -36,7 +40,10 @@ describe("subscriptions", () => {
   });
 
   it("activates only from a verified provider event", () => {
-    const active = confirmSubscription(beginSubscription("acct_1", "pro"), verified);
+    const active = confirmSubscription(
+      beginSubscription("acct_1", "pro"),
+      verified,
+    );
     expect(active.status).toBe("active");
     expect(active.providerConfirmed).toBe(true);
     expect(active.renewsAt).toBeTruthy();
@@ -49,22 +56,44 @@ describe("subscriptions", () => {
   });
 
   it("cancels an active subscription", () => {
-    const active = confirmSubscription(beginSubscription("acct_1", "pro"), verified);
+    const active = confirmSubscription(
+      beginSubscription("acct_1", "pro"),
+      verified,
+    );
     expect(cancelSubscription(active).status).toBe("canceled");
   });
 });
 
 describe("AI allowance", () => {
   it("does not grant AI to a free plan even with allowance left", () => {
-    expect(aiAllowance({ allowance: 5, plan: "free", resetsAt: "2026-11-01", used: 0 }).allowed).toBe(false);
+    expect(
+      aiAllowance({
+        allowance: 5,
+        plan: "free",
+        resetsAt: "2026-11-01",
+        used: 0,
+      }).allowed,
+    ).toBe(false);
   });
 
   it("blocks usage at the cap", () => {
-    expect(aiAllowance({ allowance: 10, plan: "pro", resetsAt: "2026-11-01", used: 10 }).allowed).toBe(false);
+    expect(
+      aiAllowance({
+        allowance: 10,
+        plan: "pro",
+        resetsAt: "2026-11-01",
+        used: 10,
+      }).allowed,
+    ).toBe(false);
   });
 
   it("allows usage inside the cap", () => {
-    const value = aiAllowance({ allowance: 10, plan: "pro", resetsAt: "2026-11-01", used: 3 });
+    const value = aiAllowance({
+      allowance: 10,
+      plan: "pro",
+      resetsAt: "2026-11-01",
+      used: 3,
+    });
     expect(value.allowed).toBe(true);
     expect(value.remaining).toBe(7);
   });
@@ -128,7 +157,9 @@ describe("workshop bookings", () => {
   });
 
   it("rejects confirmation without provider verification", () => {
-    expect(() => confirmBooking(booking, unverified)).toThrow(/verified provider event/i);
+    expect(() => confirmBooking(booking, unverified)).toThrow(
+      /verified provider event/i,
+    );
   });
 
   it("enforces booking transitions", () => {
@@ -139,16 +170,40 @@ describe("workshop bookings", () => {
 
 describe("sponsor invoices", () => {
   it("does not mark paid without a verified confirmation and reference", () => {
-    expect(markInvoicePaid("pending", { method: "offline_transfer", reference: "", verified: true })).toBe("pending");
-    expect(markInvoicePaid("pending", { method: "offline_transfer", reference: "TRX-1", verified: false })).toBe("pending");
+    expect(
+      markInvoicePaid("pending", {
+        method: "offline_transfer",
+        reference: "",
+        verified: true,
+      }),
+    ).toBe("pending");
+    expect(
+      markInvoicePaid("pending", {
+        method: "offline_transfer",
+        reference: "TRX-1",
+        verified: false,
+      }),
+    ).toBe("pending");
   });
 
   it("marks a pending invoice paid with a verified reference", () => {
-    expect(markInvoicePaid("pending", { method: "offline_transfer", reference: "TRX-1", verified: true })).toBe("paid");
+    expect(
+      markInvoicePaid("pending", {
+        method: "offline_transfer",
+        reference: "TRX-1",
+        verified: true,
+      }),
+    ).toBe("paid");
   });
 
   it("never reopens a cancelled invoice", () => {
-    expect(markInvoicePaid("cancelled", { method: "provider", reference: "TRX-1", verified: true })).toBe("cancelled");
+    expect(
+      markInvoicePaid("cancelled", {
+        method: "provider",
+        reference: "TRX-1",
+        verified: true,
+      }),
+    ).toBe("cancelled");
   });
 });
 
@@ -159,12 +214,16 @@ describe("prize fulfilment", () => {
 
   it("requires evidence before delivery", () => {
     expect(advancePrize("processing", "delivered")).toBe("processing");
-    expect(advancePrize("processing", "delivered", "Bank ref 123")).toBe("delivered");
+    expect(advancePrize("processing", "delivered", "Bank ref 123")).toBe(
+      "delivered",
+    );
   });
 
   it("allows the documented sequential path", () => {
     expect(advancePrize("committed", "funded")).toBe("funded");
-    expect(advancePrize("funded", "eligibility_pending")).toBe("eligibility_pending");
+    expect(advancePrize("funded", "eligibility_pending")).toBe(
+      "eligibility_pending",
+    );
   });
 });
 
@@ -177,6 +236,8 @@ describe("provider events", () => {
   });
 
   it("rejects an unverified event", () => {
-    expect(() => processProviderEvent(new Set(), unverified)).toThrow(/Unverified/i);
+    expect(() => processProviderEvent(new Set(), unverified)).toThrow(
+      /Unverified/i,
+    );
   });
 });

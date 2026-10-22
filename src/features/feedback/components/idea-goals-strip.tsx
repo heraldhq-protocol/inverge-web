@@ -55,7 +55,9 @@ export function IdeaGoalsStrip({
           What this idea is looking for
         </h2>
       </div>
-      <ul className={`mt-2 flex flex-wrap gap-1.5 ${compact ? "" : "sm:gap-2"}`}>
+      <ul
+        className={`mt-2 flex flex-wrap gap-1.5 ${compact ? "" : "sm:gap-2"}`}
+      >
         {active.map((key) => (
           <li key={key}>
             <Pill tone={key === "funding" ? "neutral" : "accent"} size="xs">

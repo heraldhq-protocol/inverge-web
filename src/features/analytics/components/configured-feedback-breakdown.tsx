@@ -47,8 +47,8 @@ export function ConfiguredFeedbackBreakdown({
 
       {!summary.configured ? (
         <p className="mt-3 rounded-lg bg-canvas px-3 py-4 text-xs leading-5 text-muted">
-          This idea has no feedback form configured. Feedback analytics stay empty
-          rather than showing a rating nobody was asked for.
+          This idea has no feedback form configured. Feedback analytics stay
+          empty rather than showing a rating nobody was asked for.
         </p>
       ) : summary.responseCount === 0 ? (
         <p className="mt-3 rounded-lg bg-canvas px-3 py-4 text-xs leading-5 text-muted">
@@ -107,7 +107,9 @@ export function ConfiguredFeedbackBreakdown({
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
                           <div
                             className="h-full rounded-full bg-brand"
-                            style={{ width: `${Math.round(tally.share * 100)}%` }}
+                            style={{
+                              width: `${Math.round(tally.share * 100)}%`,
+                            }}
                           />
                         </div>
                       </li>

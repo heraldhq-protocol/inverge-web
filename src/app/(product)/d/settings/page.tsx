@@ -39,5 +39,7 @@ export default function SettingsPage() {
     </section>
   ) : null;
 
-  return <SettingsDashboard adminEntry={adminEntry} data={settingsPreviewData} />;
+  return (
+    <SettingsDashboard adminEntry={adminEntry} data={settingsPreviewData} />
+  );
 }

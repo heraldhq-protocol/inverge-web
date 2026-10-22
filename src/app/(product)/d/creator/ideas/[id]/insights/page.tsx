@@ -61,7 +61,9 @@ function supporterHint(
   return `${current} · ${previousChange >= 0 ? "+" : ""}${previousChange.toLocaleString("en-US")} in the ${period} days before.`;
 }
 
-export default async function AnalyticsOverviewPage({ searchParams }: PageProps) {
+export default async function AnalyticsOverviewPage({
+  searchParams,
+}: PageProps) {
   const params = await searchParams;
   const period = parseAnalyticsPeriod(params.period);
   const range = analyticsWindow(previewAnalytics.series, period);
@@ -243,8 +245,9 @@ export default async function AnalyticsOverviewPage({ searchParams }: PageProps)
           aria-hidden="true"
           className="mt-0.5 shrink-0"
         />
-        Supporter, interest, and feedback figures are shared with the public idea
-        page. Charts use preview data until the analytics endpoint is connected.
+        Supporter, interest, and feedback figures are shared with the public
+        idea page. Charts use preview data until the analytics endpoint is
+        connected.
       </p>
     </div>
   );

@@ -20,7 +20,8 @@ import type { MoneyAmount } from "@/lib/money";
 let visibility: boolean | null = null;
 
 function getVisibility(): boolean {
-  if (visibility === null) visibility = shouldShowNgnEstimate(browserLocaleEvidence());
+  if (visibility === null)
+    visibility = shouldShowNgnEstimate(browserLocaleEvidence());
   return visibility;
 }
 
@@ -65,12 +66,14 @@ export function NgnEstimate({
         ≈ {estimate.formatted}
       </span>
       <span className="text-[0.625rem] font-normal text-muted">
-        {showRate ? `at ₦${estimate.rate.toLocaleString("en-NG")}/$1` : "est. NGN"}
+        {showRate
+          ? `at ₦${estimate.rate.toLocaleString("en-NG")}/$1`
+          : "est. NGN"}
       </span>
       <span className="sr-only">
-        Estimated at {estimate.rate.toLocaleString("en-NG")} naira per US dollar,
-        rounded to the nearest thousand naira. The USD figure is the recorded
-        amount.
+        Estimated at {estimate.rate.toLocaleString("en-NG")} naira per US
+        dollar, rounded to the nearest thousand naira. The USD figure is the
+        recorded amount.
       </span>
     </>
   );

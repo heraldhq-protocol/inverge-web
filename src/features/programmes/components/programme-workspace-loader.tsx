@@ -61,8 +61,8 @@ export function ProgrammeWorkspaceLoader({
       <div className="mx-auto max-w-lg rounded-2xl border border-border bg-surface p-6 text-center">
         <h1 className="text-xl font-bold text-ink">Programme not found</h1>
         <p className="mt-2 text-sm leading-6 text-muted">
-          This programme is not in the server catalogue and no local draft exists
-          in this browser.
+          This programme is not in the server catalogue and no local draft
+          exists in this browser.
         </p>
         <Link
           href="/admin/programmes"

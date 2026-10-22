@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { previewAnalytics, type AnalyticsPoint } from "@/features/analytics/content/preview-analytics";
+import {
+  previewAnalytics,
+  type AnalyticsPoint,
+} from "@/features/analytics/content/preview-analytics";
 import {
   analyticsWindow,
   parseAnalyticsPeriod,
@@ -76,16 +79,18 @@ describe("recommendIdeaActions", () => {
   it("names the real gate shortfall for an idea below the threshold", () => {
     const recommendations = recommendIdeaActions(detail("farmlink-coldbox"));
 
-    expect(
-      recommendations.some((item) => item.key === "supporters"),
-    ).toBe(true);
+    expect(recommendations.some((item) => item.key === "supporters")).toBe(
+      true,
+    );
     expect(recommendations.length).toBeLessThanOrEqual(3);
   });
 
   it("does not invent a shortfall for an idea that met both thresholds", () => {
     const recommendations = recommendIdeaActions(detail("campus-konekt"));
 
-    expect(recommendations.some((item) => item.key === "supporters")).toBe(false);
+    expect(recommendations.some((item) => item.key === "supporters")).toBe(
+      false,
+    );
     expect(recommendations.some((item) => item.key === "interest")).toBe(false);
     expect(recommendations.some((item) => item.key === "convert")).toBe(true);
   });

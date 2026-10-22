@@ -23,9 +23,7 @@ function record(
 
 describe("toActivityItems", () => {
   it("projects notification kinds onto activity kinds", () => {
-    const [item] = toActivityItems([
-      record({ id: "m", kind: "milestones" }),
-    ]);
+    const [item] = toActivityItems([record({ id: "m", kind: "milestones" })]);
 
     expect(item).toMatchObject({
       href: "/d/notifications",
@@ -59,7 +57,10 @@ describe("toActivityItems", () => {
       record({ id: "c", occurredAt: "2026-10-03T09:00:00.000Z" }),
     ];
 
-    expect(toActivityItems(input, 2).map((item) => item.id)).toEqual(["c", "b"]);
+    expect(toActivityItems(input, 2).map((item) => item.id)).toEqual([
+      "c",
+      "b",
+    ]);
     expect(input.map((item) => item.id)).toEqual(["a", "b", "c"]);
   });
 

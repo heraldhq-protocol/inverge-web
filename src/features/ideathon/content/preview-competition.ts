@@ -46,7 +46,9 @@ function allocate(total: number, shares: readonly number[]): TierBucket {
 
 /** Allocate an engagement total, never exceeding that tier's supporter count. */
 function allocateWithin(total: number, supporters: TierBucket): TierBucket {
-  const shares = TIER_ORDER.map((tier) => supporters[tier] / Math.max(1, totalSupporters(supporters)));
+  const shares = TIER_ORDER.map(
+    (tier) => supporters[tier] / Math.max(1, totalSupporters(supporters)),
+  );
   const allocated = allocate(total, shares);
 
   return {

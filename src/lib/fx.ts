@@ -41,11 +41,15 @@ export function estimateNgn(
   rate: number = ILLUSTRATIVE_NGN_PER_USD,
 ): NgnEstimate {
   const usdCents = BigInt(amount.atomic);
-  const safeRate = Number.isFinite(rate) && rate > 0 ? Math.round(rate) : ILLUSTRATIVE_NGN_PER_USD;
+  const safeRate =
+    Number.isFinite(rate) && rate > 0
+      ? Math.round(rate)
+      : ILLUSTRATIVE_NGN_PER_USD;
 
   // cents / 100 * rate = whole naira
   const wholeNaira = (usdCents * BigInt(safeRate)) / 100n;
-  const rounded = ((wholeNaira + NGN_ROUNDING / 2n) / NGN_ROUNDING) * NGN_ROUNDING;
+  const rounded =
+    ((wholeNaira + NGN_ROUNDING / 2n) / NGN_ROUNDING) * NGN_ROUNDING;
 
   return {
     atomic: rounded.toString(),

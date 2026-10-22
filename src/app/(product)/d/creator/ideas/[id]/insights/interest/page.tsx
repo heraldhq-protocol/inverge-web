@@ -29,7 +29,9 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function InterestAnalyticsPage({ searchParams }: PageProps) {
+export default async function InterestAnalyticsPage({
+  searchParams,
+}: PageProps) {
   const params = await searchParams;
   const period = parseAnalyticsPeriod(params.period);
   const range = analyticsWindow(previewAnalytics.series, period);
@@ -69,8 +71,8 @@ export default async function InterestAnalyticsPage({ searchParams }: PageProps)
             Interest and feedback
           </p>
           <p className="mt-1 max-w-2xl text-sm text-muted">
-            Estimated interest is a weighted, non-binding signal. It is not money
-            raised, a pledge, or proof that anyone will contribute.
+            Estimated interest is a weighted, non-binding signal. It is not
+            money raised, a pledge, or proof that anyone will contribute.
           </p>
         </div>
         <Suspense

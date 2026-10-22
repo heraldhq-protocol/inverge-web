@@ -35,7 +35,9 @@ function renderText(node: TiptapNode, key: number): ReactNode {
 }
 
 function renderNode(node: TiptapNode, key: number): ReactNode {
-  const children = node.content?.map((child, index) => renderNode(child, index));
+  const children = node.content?.map((child, index) =>
+    renderNode(child, index),
+  );
 
   switch (node.type) {
     case "doc":

@@ -1,6 +1,9 @@
 import type { ReactNode } from "react";
 
-import { LineChart, type ChartPoint } from "@/features/analytics/components/line-chart";
+import {
+  LineChart,
+  type ChartPoint,
+} from "@/features/analytics/components/line-chart";
 import { formatSeriesDate } from "@/features/analytics/lib/analytics";
 
 /**

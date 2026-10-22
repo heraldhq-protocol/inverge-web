@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  within,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vitest";
 
 import { IdeaActions } from "@/features/ideas/components/idea-actions";
@@ -108,7 +114,9 @@ describe("IdeaActions", () => {
       }),
     ).toBeInTheDocument();
     expect(
-      screen.getByRole("radiogroup", { name: "What best describes your interest?" }),
+      screen.getByRole("radiogroup", {
+        name: "What best describes your interest?",
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("group", { name: "What would stop you backing this?" }),
@@ -142,7 +150,9 @@ describe("IdeaActions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Submit feedback" }));
 
     expect(
-      screen.getByRole("heading", { name: "Thanks for sharing your thoughts." }),
+      screen.getByRole("heading", {
+        name: "Thanks for sharing your thoughts.",
+      }),
     ).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: "Continue exploring ideas" }),

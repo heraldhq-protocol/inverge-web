@@ -88,7 +88,10 @@ export function validateFeedbackForm(
     }
     seenLabels.add(normalized);
 
-    if (question.helpText && question.helpText.length > FEEDBACK_LIMITS.maxHelpLength) {
+    if (
+      question.helpText &&
+      question.helpText.length > FEEDBACK_LIMITS.maxHelpLength
+    ) {
       issues.push({
         field: prefix,
         message: `Help text can be at most ${FEEDBACK_LIMITS.maxHelpLength} characters.`,
@@ -168,7 +171,9 @@ export function emptyAnswerFor(type: FeedbackQuestionType) {
   }
 }
 
-export function isAnswered(value: FeedbackAnswers[string] | undefined): boolean {
+export function isAnswered(
+  value: FeedbackAnswers[string] | undefined,
+): boolean {
   if (value === undefined || value === null) return false;
   if (typeof value === "string") return value.trim().length > 0;
   if (Array.isArray(value)) return value.length > 0;
@@ -200,7 +205,12 @@ export function validateFeedbackAnswers(
 
     switch (question.type) {
       case "rating": {
-        if (typeof value !== "number" || !Number.isInteger(value) || value < 1 || value > 5) {
+        if (
+          typeof value !== "number" ||
+          !Number.isInteger(value) ||
+          value < 1 ||
+          value > 5
+        ) {
           issues[question.id] = "Choose a rating from 1 to 5.";
         }
         break;
@@ -213,7 +223,8 @@ export function validateFeedbackAnswers(
           value < scale.min ||
           value > scale.max
         ) {
-          issues[question.id] = `Choose a value from ${scale.min} to ${scale.max}.`;
+          issues[question.id] =
+            `Choose a value from ${scale.min} to ${scale.max}.`;
         }
         break;
       }
@@ -247,7 +258,8 @@ export function validateFeedbackAnswers(
         if (typeof value !== "string") {
           issues[question.id] = "Enter a text answer.";
         } else if (value.length > FEEDBACK_LIMITS.maxAnswerLength) {
-          issues[question.id] = `Keep your answer under ${FEEDBACK_LIMITS.maxAnswerLength} characters.`;
+          issues[question.id] =
+            `Keep your answer under ${FEEDBACK_LIMITS.maxAnswerLength} characters.`;
         }
         break;
       }
@@ -292,7 +304,9 @@ export function newQuestion(type: FeedbackQuestionType): FeedbackQuestion {
   return base;
 }
 
-export function duplicateQuestion(question: FeedbackQuestion): FeedbackQuestion {
+export function duplicateQuestion(
+  question: FeedbackQuestion,
+): FeedbackQuestion {
   return {
     ...question,
     id: createId("q"),
@@ -304,8 +318,18 @@ export function duplicateQuestion(question: FeedbackQuestion): FeedbackQuestion 
     scale: question.scale ? { ...question.scale } : undefined,
   };
 }
-export function moveItem<T>(items: readonly T[], from: number, to: number): T[] {
-  if (from === to || from < 0 || to < 0 || from >= items.length || to >= items.length) {
+export function moveItem<T>(
+  items: readonly T[],
+  from: number,
+  to: number,
+): T[] {
+  if (
+    from === to ||
+    from < 0 ||
+    to < 0 ||
+    from >= items.length ||
+    to >= items.length
+  ) {
     return [...items];
   }
   const next = [...items];

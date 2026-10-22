@@ -51,8 +51,8 @@ export function AiInsightsPanel({
       </h2>
       <p className="mt-1 text-xs leading-5 text-muted">
         Go deeper into the feedback your idea has already received. AI analysis
-        works from the responses and signals on this page, and separates what was
-        observed from what the model interprets.
+        works from the responses and signals on this page, and separates what
+        was observed from what the model interprets.
       </p>
 
       <ul className="mt-3 space-y-1.5">

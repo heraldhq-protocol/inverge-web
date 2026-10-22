@@ -35,8 +35,10 @@ function formatRange(startsAt: string, endsAt: string): string {
 
 function ctaHref(programme: Programme, label: string): string {
   if (label === "Submit your idea") return "/d/creator/ideas/new";
-  if (label === "Register") return `/sign-up?next=${encodeURIComponent("/d/creator/ideas/new")}`;
-  if (label === "See results" || label === "Results under review") return "#results";
+  if (label === "Register")
+    return `/auth?next=${encodeURIComponent("/d/creator/ideas/new")}`;
+  if (label === "See results" || label === "Results under review")
+    return "#results";
   if (label === "View leaderboard") return "#standings";
   if (label === "View archive") return "/ideathon/past";
   return "#about";
@@ -71,7 +73,10 @@ export function CompetitionHero({
                 ? "Monthly ideathon"
                 : programme.type.replace(/_/g, " ")}
             </Pill>
-            <Pill tone={cta.kind === "disabled" ? "neutral" : "accent"} size="xs">
+            <Pill
+              tone={cta.kind === "disabled" ? "neutral" : "accent"}
+              size="xs"
+            >
               {cta.kind === "disabled" ? "Closed" : "Open"}
             </Pill>
             <span
@@ -97,7 +102,12 @@ export function CompetitionHero({
                 className="flex items-center gap-2 text-xs leading-5 text-ink-soft sm:block"
               >
                 <span className="grid size-7 shrink-0 place-items-center rounded-full border border-brand/15 bg-brand-soft text-brand-strong">
-                  <HugeiconsIcon icon={icon} size={15} strokeWidth={1.8} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={icon}
+                    size={15}
+                    strokeWidth={1.8}
+                    aria-hidden="true"
+                  />
                 </span>
                 <span className="sm:mt-1.5 sm:block">{text}</span>
               </li>
@@ -123,7 +133,9 @@ export function CompetitionHero({
               How it works
             </Link>
           </div>
-          <p className="mt-2 text-[0.6875rem] leading-4 text-muted">{cta.note}</p>
+          <p className="mt-2 text-[0.6875rem] leading-4 text-muted">
+            {cta.note}
+          </p>
 
           <div className="mt-5 flex flex-wrap items-center gap-x-5 gap-y-3">
             <p className="inline-flex items-center gap-1.5 text-xs text-ink-soft">
@@ -157,7 +169,12 @@ export function CompetitionHero({
             ) : (
               <div className="grid h-full min-h-[15rem] place-items-center bg-gradient-to-br from-brand-soft via-surface to-surface-muted">
                 <span className="grid size-16 place-items-center rounded-2xl bg-surface text-brand-strong shadow-sm">
-                  <HugeiconsIcon icon={TrophyIcon} size={30} strokeWidth={1.5} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={TrophyIcon}
+                    size={30}
+                    strokeWidth={1.5}
+                    aria-hidden="true"
+                  />
                 </span>
               </div>
             )}
@@ -170,7 +187,12 @@ export function CompetitionHero({
           <div className="relative mt-3 rounded-2xl border border-border bg-surface p-4 shadow-xl shadow-ink/[0.08] sm:p-5 lg:absolute lg:bottom-4 lg:right-4 lg:mt-0 lg:w-[20rem]">
             <div className="flex items-center gap-2">
               <span className="grid size-8 place-items-center rounded-lg bg-brand-soft text-brand-strong">
-                <HugeiconsIcon icon={TrophyIcon} size={17} strokeWidth={1.7} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={TrophyIcon}
+                  size={17}
+                  strokeWidth={1.7}
+                  aria-hidden="true"
+                />
               </span>
               <Eyebrow className="text-muted">Theme</Eyebrow>
             </div>

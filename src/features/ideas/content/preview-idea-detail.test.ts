@@ -22,9 +22,7 @@ describe("preview feedback configuration", () => {
 
   it("does not attach funding intent to an idea that is not seeking funding", () => {
     expect(getPreviewIdeaDetail("skill-circle")?.fundingIntent).toBeUndefined();
-    expect(
-      getPreviewIdeaDetail("campus-konekt")?.fundingIntent,
-    ).toBeDefined();
+    expect(getPreviewIdeaDetail("campus-konekt")?.fundingIntent).toBeDefined();
   });
 
   it("only exposes community destinations that are valid", () => {
@@ -32,15 +30,16 @@ describe("preview feedback configuration", () => {
 
     expect(community?.enabled).toBe(true);
     for (const destination of community?.destinations ?? []) {
-      expect(destination.url.startsWith("https://") || destination.url.startsWith("/")).toBe(true);
+      expect(
+        destination.url.startsWith("https://") ||
+          destination.url.startsWith("/"),
+      ).toBe(true);
     }
   });
 
   it("summarises the analytics idea's own form and current-version answers", () => {
     const form = getPreviewFeedbackForm("skill-circle");
-    const summary = form
-      ? summariseFeedback(form, [])
-      : undefined;
+    const summary = form ? summariseFeedback(form, []) : undefined;
 
     expect(form?.questions.length).toBeGreaterThan(0);
     expect(summary?.configured).toBe(true);

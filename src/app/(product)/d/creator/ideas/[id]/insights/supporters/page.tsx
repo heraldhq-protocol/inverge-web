@@ -22,14 +22,17 @@ import {
 
 export const metadata: Metadata = {
   title: "Supporters | Idea analytics",
-  description: "Support growth and the verification mix behind an idea's supporters.",
+  description:
+    "Support growth and the verification mix behind an idea's supporters.",
 };
 
 type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function SupportersAnalyticsPage({ searchParams }: PageProps) {
+export default async function SupportersAnalyticsPage({
+  searchParams,
+}: PageProps) {
   const params = await searchParams;
   const period = parseAnalyticsPeriod(params.period);
   const range = analyticsWindow(previewAnalytics.series, period);

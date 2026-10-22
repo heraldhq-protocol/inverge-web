@@ -3,7 +3,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 export default function AnalyticsLoading() {
   return (
-    <Container className="py-5 sm:py-6" role="status" aria-label="Loading analytics">
+    <Container
+      className="py-5 sm:py-6"
+      role="status"
+      aria-label="Loading analytics"
+    >
       <Skeleton className="h-3 w-64 rounded-full" />
       <div className="mt-4 rounded-2xl border border-border bg-surface p-5">
         <div className="flex gap-4">

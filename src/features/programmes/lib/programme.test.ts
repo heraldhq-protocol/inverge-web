@@ -55,7 +55,9 @@ describe("publicCta", () => {
   });
 
   it("marks a draft programme as unavailable", () => {
-    expect(publicCta({ ...programme(), status: "draft" }).kind).toBe("disabled");
+    expect(publicCta({ ...programme(), status: "draft" }).kind).toBe(
+      "disabled",
+    );
   });
 });
 
@@ -77,7 +79,9 @@ describe("money separation", () => {
 
   it("keeps paid promotion out of validation by construction", () => {
     const value = programme();
-    expect(value.rewards.every((reward) => !("promotion" in reward))).toBe(true);
+    expect(value.rewards.every((reward) => !("promotion" in reward))).toBe(
+      true,
+    );
   });
 });
 
@@ -86,7 +90,9 @@ describe("judging", () => {
     const rubric = programme().rubric;
     const score = weightedJudgeScore(
       rubric,
-      Object.fromEntries(rubric.criteria.map((criterion) => [criterion.id, 10])),
+      Object.fromEntries(
+        rubric.criteria.map((criterion) => [criterion.id, 10]),
+      ),
     );
     expect(score).toBe(100);
   });
@@ -105,8 +111,12 @@ describe("judging", () => {
   it("does not let a disqualified or draft submission rank", () => {
     const value = programme();
     const leaderboard = computeLeaderboard(value);
-    const draft = value.submissions.find((submission) => submission.status === "draft");
-    expect(leaderboard.some((entry) => entry.submissionId === draft?.id)).toBe(false);
+    const draft = value.submissions.find(
+      (submission) => submission.status === "draft",
+    );
+    expect(leaderboard.some((entry) => entry.submissionId === draft?.id)).toBe(
+      false,
+    );
   });
 
   it("returns zero rather than inventing a score for an unscored entry", () => {
@@ -122,34 +132,53 @@ describe("validation and publish checklist", () => {
       ...value,
       rubric: {
         ...value.rubric,
-        criteria: value.rubric.criteria.map((criterion) => ({ ...criterion, weight: 10 })),
+        criteria: value.rubric.criteria.map((criterion) => ({
+          ...criterion,
+          weight: 10,
+        })),
       },
     });
-    expect(issues.some((issue) => issue.field === "rubric.criteria")).toBe(true);
+    expect(issues.some((issue) => issue.field === "rubric.criteria")).toBe(
+      true,
+    );
   });
 
   it("rejects a schedule whose dates run backwards", () => {
     const value = programme();
     const issues = validateProgramme({
       ...value,
-      schedule: { ...value.schedule, submissionClosesAt: value.schedule.registrationOpensAt },
+      schedule: {
+        ...value.schedule,
+        submissionClosesAt: value.schedule.registrationOpensAt,
+      },
     });
-    expect(issues.some((issue) => issue.field.startsWith("schedule"))).toBe(true);
+    expect(issues.some((issue) => issue.field.startsWith("schedule"))).toBe(
+      true,
+    );
   });
 
   it("requires a reward owner", () => {
     const value = programme();
     const issues = validateProgramme({
       ...value,
-      rewards: value.rewards.map((reward) => ({ ...reward, fulfilmentOwner: "" })),
+      rewards: value.rewards.map((reward) => ({
+        ...reward,
+        fulfilmentOwner: "",
+      })),
     });
-    expect(issues.some((issue) => issue.field.startsWith("reward."))).toBe(true);
+    expect(issues.some((issue) => issue.field.startsWith("reward."))).toBe(
+      true,
+    );
   });
 
   it("produces a complete checklist for the live programme", () => {
     const checks = publishChecklist(programme());
-    expect(checks.find((check) => check.key === "identity")?.complete).toBe(true);
-    expect(checks.find((check) => check.key === "judging")?.complete).toBe(true);
+    expect(checks.find((check) => check.key === "identity")?.complete).toBe(
+      true,
+    );
+    expect(checks.find((check) => check.key === "judging")?.complete).toBe(
+      true,
+    );
   });
 });
 

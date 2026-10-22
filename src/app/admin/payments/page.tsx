@@ -41,7 +41,12 @@ function Ledger({
           <p className="mt-0.5 text-xs leading-5 text-muted">{description}</p>
         </div>
         <span className="grid size-9 place-items-center rounded-xl bg-brand-soft text-brand-strong">
-          <HugeiconsIcon icon={icon} size={17} strokeWidth={1.8} aria-hidden="true" />
+          <HugeiconsIcon
+            icon={icon}
+            size={17}
+            strokeWidth={1.8}
+            aria-hidden="true"
+          />
         </span>
       </div>
       <div className="mt-3">{children}</div>
@@ -80,8 +85,9 @@ export default function AdminPaymentsPage() {
         </h1>
         <p className="mt-1.5 max-w-3xl text-sm leading-6 text-muted">
           Subscriptions, promotions, sponsor invoices, workshop tickets, prize
-          fulfilment, and crowdfunding contributions are separate flows. They are
-          shown side by side for operations, never merged into one transaction.
+          fulfilment, and crowdfunding contributions are separate flows. They
+          are shown side by side for operations, never merged into one
+          transaction.
         </p>
       </header>
 
@@ -90,10 +96,11 @@ export default function AdminPaymentsPage() {
           No payment provider is connected to this workspace
         </p>
         <p className="mt-1 text-[0.6875rem] leading-5 text-warning-strong/85">
-          A payment cannot be marked successful from this page. Provider selection,
-          recurring billing, webhooks, refunds, and settlement must be recorded as a
-          technical decision first. Crowdfunding contributions remain in the
-          existing escrow architecture and are not operating revenue.
+          A payment cannot be marked successful from this page. Provider
+          selection, recurring billing, webhooks, refunds, and settlement must
+          be recorded as a technical decision first. Crowdfunding contributions
+          remain in the existing escrow architecture and are not operating
+          revenue.
         </p>
       </div>
 
@@ -101,20 +108,40 @@ export default function AdminPaymentsPage() {
         <div className="rounded-2xl border border-border bg-surface p-4">
           <dt className="text-xs text-muted">Sponsor funding secured</dt>
           <dd className="mt-1 text-xl font-bold tabular-nums text-ink">
-            <Amount value={{ atomic: secured.toString(), currency: "USD", decimals: 2 }} compact />
+            <Amount
+              value={{
+                atomic: secured.toString(),
+                currency: "USD",
+                decimals: 2,
+              }}
+              compact
+            />
           </dd>
-          <p className="mt-0.5 text-[0.625rem] text-muted">Provider-confirmed invoices only</p>
+          <p className="mt-0.5 text-[0.625rem] text-muted">
+            Provider-confirmed invoices only
+          </p>
         </div>
         <div className="rounded-2xl border border-border bg-surface p-4">
           <dt className="text-xs text-muted">Promised prize pool</dt>
           <dd className="mt-1 text-xl font-bold tabular-nums text-ink">
-            <Amount value={{ atomic: prizePool.toString(), currency: "USD", decimals: 2 }} compact />
+            <Amount
+              value={{
+                atomic: prizePool.toString(),
+                currency: "USD",
+                decimals: 2,
+              }}
+              compact
+            />
           </dd>
           <p className="mt-0.5 text-[0.625rem] text-muted">
             Commitment, not money received
           </p>
           <NgnEstimate
-            amount={{ atomic: prizePool.toString(), currency: "USD", decimals: 2 }}
+            amount={{
+              atomic: prizePool.toString(),
+              currency: "USD",
+              decimals: 2,
+            }}
             block
             className="mt-0.5 text-[0.625rem] text-muted"
             showRate
@@ -126,7 +153,9 @@ export default function AdminPaymentsPage() {
             {PLANS.pro.price ? <Amount value={PLANS.pro.price} /> : "—"}
             <span className="text-xs font-normal text-muted"> / month</span>
           </dd>
-          <p className="mt-0.5 text-[0.625rem] text-muted">Illustrative price, not a confirmed decision</p>
+          <p className="mt-0.5 text-[0.625rem] text-muted">
+            Illustrative price, not a confirmed decision
+          </p>
         </div>
       </dl>
 
@@ -139,11 +168,18 @@ export default function AdminPaymentsPage() {
         >
           <ul className="space-y-2">
             {sponsors.map(({ programme, sponsor }) => (
-              <li key={`${programme.id}-${sponsor.id}`} className="rounded-xl border border-border p-3">
+              <li
+                key={`${programme.id}-${sponsor.id}`}
+                className="rounded-xl border border-border p-3"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-2">
                   <div>
-                    <p className="text-xs font-semibold text-ink">{sponsor.name}</p>
-                    <p className="text-[0.625rem] text-muted">{programme.title}</p>
+                    <p className="text-xs font-semibold text-ink">
+                      {sponsor.name}
+                    </p>
+                    <p className="text-[0.625rem] text-muted">
+                      {programme.title}
+                    </p>
                     <p className="mt-1 text-[0.625rem] text-muted">
                       {sponsor.deliverables.join(" · ")}
                     </p>
@@ -185,16 +221,34 @@ export default function AdminPaymentsPage() {
         >
           <ul className="space-y-2">
             {rewards.map(({ programme, reward }) => (
-              <li key={`${programme.id}-${reward.id}`} className="flex items-start justify-between gap-2 rounded-xl border border-border p-3">
+              <li
+                key={`${programme.id}-${reward.id}`}
+                className="flex items-start justify-between gap-2 rounded-xl border border-border p-3"
+              >
                 <div>
-                  <p className="text-xs font-semibold text-ink">{reward.title}</p>
-                  <p className="text-[0.625rem] text-muted">{programme.title} · {reward.fulfilmentOwner}</p>
+                  <p className="text-xs font-semibold text-ink">
+                    {reward.title}
+                  </p>
+                  <p className="text-[0.625rem] text-muted">
+                    {programme.title} · {reward.fulfilmentOwner}
+                  </p>
                 </div>
                 <div className="text-right">
                   <p className="text-sm font-bold tabular-nums text-ink">
-                    {reward.amount ? <Amount value={reward.amount} compact /> : "Non-cash"}
+                    {reward.amount ? (
+                      <Amount value={reward.amount} compact />
+                    ) : (
+                      "Non-cash"
+                    )}
                   </p>
-                  <Pill size="xs" tone={reward.fulfilmentStatus === "delivered" ? "accent" : "neutral"}>
+                  <Pill
+                    size="xs"
+                    tone={
+                      reward.fulfilmentStatus === "delivered"
+                        ? "accent"
+                        : "neutral"
+                    }
+                  >
                     {reward.fulfilmentStatus}
                   </Pill>
                 </div>
@@ -212,23 +266,35 @@ export default function AdminPaymentsPage() {
           {workshops.length > 0 ? (
             <ul className="space-y-2">
               {workshops.map(({ programme, workshop }) => (
-                <li key={`${programme.id}-${workshop.id}`} className="rounded-xl border border-border p-3">
+                <li
+                  key={`${programme.id}-${workshop.id}`}
+                  className="rounded-xl border border-border p-3"
+                >
                   <div className="flex items-start justify-between gap-2">
                     <div>
-                      <p className="text-xs font-semibold text-ink">{workshop.title}</p>
+                      <p className="text-xs font-semibold text-ink">
+                        {workshop.title}
+                      </p>
                       <p className="text-[0.625rem] text-muted">
-                        {formatProgrammeDate(workshop.startsAt, true)} · {workshop.seatsTaken}/{workshop.capacity} seats
+                        {formatProgrammeDate(workshop.startsAt, true)} ·{" "}
+                        {workshop.seatsTaken}/{workshop.capacity} seats
                       </p>
                     </div>
                     <Pill size="xs" tone="neutral">
-                      {workshop.price ? <Amount value={workshop.price} /> : "Free"}
+                      {workshop.price ? (
+                        <Amount value={workshop.price} />
+                      ) : (
+                        "Free"
+                      )}
                     </Pill>
                   </div>
                 </li>
               ))}
             </ul>
           ) : (
-            <p className="text-xs text-muted">No workshop sessions configured.</p>
+            <p className="text-xs text-muted">
+              No workshop sessions configured.
+            </p>
           )}
         </Ledger>
 
@@ -241,7 +307,9 @@ export default function AdminPaymentsPage() {
           <div className="rounded-xl border border-border p-3">
             <div className="flex items-center justify-between gap-2">
               <p className="text-xs font-semibold text-ink">Pro</p>
-              <Pill size="xs" tone="warning">Incomplete · provider not connected</Pill>
+              <Pill size="xs" tone="warning">
+                Incomplete · provider not connected
+              </Pill>
             </div>
             <p className="mt-1 text-[0.625rem] leading-4 text-muted">
               10 AI analyses per month, feedback themes, evidence gaps, and
@@ -264,8 +332,12 @@ export default function AdminPaymentsPage() {
         >
           <div className="rounded-xl border border-border p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-ink">CampusKonekt · Featured</p>
-              <Pill size="xs" tone="promoted">Promoted</Pill>
+              <p className="text-xs font-semibold text-ink">
+                CampusKonekt · Featured
+              </p>
+              <Pill size="xs" tone="promoted">
+                Promoted
+              </Pill>
             </div>
             <p className="mt-1 text-[0.625rem] text-muted">
               Fixed placement, labelled publicly. No per-view pricing.
@@ -283,9 +355,10 @@ export default function AdminPaymentsPage() {
           note="Not operating revenue. Inverge holds no key that can move escrowed funds; refunds remain claimable without backend uptime."
         >
           <p className="text-xs leading-5 text-muted">
-            Campaign contributions stay in the campaign and milestone flows. They
-            are not imported into this ledger, and no programme action can point a
-            contribution at a prize, ticket, subscription, or sponsorship.
+            Campaign contributions stay in the campaign and milestone flows.
+            They are not imported into this ledger, and no programme action can
+            point a contribution at a prize, ticket, subscription, or
+            sponsorship.
           </p>
           <Link
             href="/d"

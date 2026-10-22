@@ -18,7 +18,10 @@ type UseGsapOptions = {
 };
 
 export function useGsap(
-  callback: (args: { gsap: typeof gsap; ctx: gsap.Context }) => void | (() => void),
+  callback: (args: {
+    gsap: typeof gsap;
+    ctx: gsap.Context;
+  }) => void | (() => void),
   options: UseGsapOptions = {},
 ) {
   const defaultScope = useRef<HTMLElement>(null);

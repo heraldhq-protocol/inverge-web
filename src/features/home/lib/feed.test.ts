@@ -95,8 +95,9 @@ describe("bestFeedbackOpportunity", () => {
 
   it("returns null when no idea can accept feedback", () => {
     expect(
-      bestFeedbackOpportunity([idea("disabled", { supporters: 400 })], (id) =>
-        forms[id],
+      bestFeedbackOpportunity(
+        [idea("disabled", { supporters: 400 })],
+        (id) => forms[id],
       ),
     ).toBeNull();
   });

@@ -29,7 +29,8 @@ export function LineChart({
 }) {
   const reactId = `chart-${tone}-${summary.length}-${summary.charCodeAt(0) || 0}`;
   const gradientId = reactId.replace(/[^a-zA-Z0-9-]/g, "");
-  const stroke = tone === "chain" ? "var(--inverge-chain)" : "var(--inverge-brand)";
+  const stroke =
+    tone === "chain" ? "var(--inverge-chain)" : "var(--inverge-brand)";
   const width = 640;
   const padding = { top: 16, right: 14, bottom: 28, left: 52 };
   const plotWidth = width - padding.left - padding.right;
@@ -39,8 +40,8 @@ export function LineChart({
     return (
       <div className="grid h-48 place-items-center rounded-xl border border-dashed border-border bg-canvas text-center">
         <p className="max-w-xs px-4 text-xs leading-5 text-muted">
-          Not enough history yet to draw a trend. Daily snapshots start after the
-          idea is published.
+          Not enough history yet to draw a trend. Daily snapshots start after
+          the idea is published.
         </p>
       </div>
     );
@@ -55,15 +56,24 @@ export function LineChart({
     padding.top + (1 - value / ceiling) * plotHeight;
 
   const line = points
-    .map((point, index) => `${index === 0 ? "M" : "L"}${xFor(index).toFixed(2)},${yFor(point.value).toFixed(2)}`)
+    .map(
+      (point, index) =>
+        `${index === 0 ? "M" : "L"}${xFor(index).toFixed(2)},${yFor(point.value).toFixed(2)}`,
+    )
     .join(" ");
   const area = `${line} L${xFor(points.length - 1).toFixed(2)},${(padding.top + plotHeight).toFixed(2)} L${padding.left},${(padding.top + plotHeight).toFixed(2)} Z`;
 
   const tickCount = 4;
-  const ticks = Array.from({ length: tickCount + 1 }, (_, index) =>
-    ceiling * (index / tickCount),
+  const ticks = Array.from(
+    { length: tickCount + 1 },
+    (_, index) => ceiling * (index / tickCount),
   );
-  const labelIndices = [0, Math.floor((points.length - 1) / 3), Math.floor(((points.length - 1) * 2) / 3), points.length - 1];
+  const labelIndices = [
+    0,
+    Math.floor((points.length - 1) / 3),
+    Math.floor(((points.length - 1) * 2) / 3),
+    points.length - 1,
+  ];
   const lastPoint = points[points.length - 1];
 
   return (
@@ -132,7 +142,13 @@ export function LineChart({
               key={index}
               x={xFor(index)}
               y={height - 6}
-              textAnchor={index === 0 ? "start" : index === points.length - 1 ? "end" : "middle"}
+              textAnchor={
+                index === 0
+                  ? "start"
+                  : index === points.length - 1
+                    ? "end"
+                    : "middle"
+              }
               className="fill-[var(--inverge-muted)] text-[10px]"
             >
               {formatDate(point.date)}

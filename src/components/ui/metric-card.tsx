@@ -1,6 +1,10 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
-import { ArrowDown01Icon, ArrowUp01Icon, MinusSignIcon } from "@hugeicons/core-free-icons";
+import {
+  ArrowDown01Icon,
+  ArrowUp01Icon,
+  MinusSignIcon,
+} from "@hugeicons/core-free-icons";
 import type { ReactNode } from "react";
 
 import { IconTile } from "@/components/ui/icon-tile";
@@ -20,7 +24,11 @@ function Delta({ delta }: { delta: MetricDelta }) {
   const isFlat = delta.value === 0;
   const isPositive = delta.value > 0;
   const isGood = delta.higherIsBetter === false ? !isPositive : isPositive;
-  const icon = isFlat ? MinusSignIcon : isPositive ? ArrowUp01Icon : ArrowDown01Icon;
+  const icon = isFlat
+    ? MinusSignIcon
+    : isPositive
+      ? ArrowUp01Icon
+      : ArrowDown01Icon;
 
   return (
     <p
@@ -28,7 +36,12 @@ function Delta({ delta }: { delta: MetricDelta }) {
         isFlat ? "text-muted" : isGood ? "text-brand-strong" : "text-danger"
       }`}
     >
-      <HugeiconsIcon icon={icon} size={14} strokeWidth={1.9} aria-hidden="true" />
+      <HugeiconsIcon
+        icon={icon}
+        size={14}
+        strokeWidth={1.9}
+        aria-hidden="true"
+      />
       <span className="tabular-nums">
         {isPositive ? "+" : ""}
         {delta.value.toLocaleString("en-US")}
@@ -73,7 +86,9 @@ export function MetricCard({
         <p className="mt-2 text-xs leading-5 text-muted">{unavailable}</p>
       ) : null}
       {delta ? <Delta delta={delta} /> : null}
-      {hint ? <p className="mt-2 text-xs leading-5 text-muted">{hint}</p> : null}
+      {hint ? (
+        <p className="mt-2 text-xs leading-5 text-muted">{hint}</p>
+      ) : null}
       {footer ? <div className="mt-auto pt-3">{footer}</div> : null}
     </div>
   );

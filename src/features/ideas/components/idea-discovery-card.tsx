@@ -1,8 +1,5 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  ArrowUpRight01Icon,
-  MapPinIcon,
-} from "@hugeicons/core-free-icons";
+import { ArrowUpRight01Icon, MapPinIcon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Avatar } from "@/components/ui/avatar";
@@ -159,7 +156,11 @@ export function IdeaDiscoveryCard({
           aria-hidden="true"
           className="absolute bottom-3 right-3 grid size-8 place-items-center rounded-full bg-surface/95 text-ink shadow-sm transition-colors group-hover:bg-brand group-hover:text-white"
         >
-          <HugeiconsIcon icon={ArrowUpRight01Icon} size={14} strokeWidth={1.9} />
+          <HugeiconsIcon
+            icon={ArrowUpRight01Icon}
+            size={14}
+            strokeWidth={1.9}
+          />
         </span>
       </div>
 

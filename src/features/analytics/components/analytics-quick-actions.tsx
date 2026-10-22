@@ -103,7 +103,9 @@ export function AnalyticsQuickActions({ ideaId }: { ideaId: string }) {
               size={16}
               strokeWidth={1.8}
               aria-hidden="true"
-              className={status === "shared" ? "text-brand-strong" : "text-muted"}
+              className={
+                status === "shared" ? "text-brand-strong" : "text-muted"
+              }
             />
             <span className="flex-1">
               {status === "shared" ? "Link copied" : "Copy link"}

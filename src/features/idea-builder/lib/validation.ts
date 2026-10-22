@@ -1,5 +1,11 @@
-import { discoveryCategories, isDiscoveryCategory } from "@/features/home/discovery-categories";
-import { validateCommunityUrl, validateFeedbackForm } from "@/features/feedback/lib/feedback";
+import {
+  discoveryCategories,
+  isDiscoveryCategory,
+} from "@/features/home/discovery-categories";
+import {
+  validateCommunityUrl,
+  validateFeedbackForm,
+} from "@/features/feedback/lib/feedback";
 import type { BuilderStep } from "@/features/idea-builder/types";
 import type { IdeaDraft } from "@/features/idea-builder/types";
 
@@ -16,12 +22,18 @@ export function validateDraftStep(
       if (!draft.title.trim()) {
         issues.push({ field: "title", message: "Add an idea title." });
       } else if (draft.title.trim().length > 140) {
-        issues.push({ field: "title", message: "Keep the title under 140 characters." });
+        issues.push({
+          field: "title",
+          message: "Keep the title under 140 characters.",
+        });
       }
       if (!draft.summary.trim()) {
         issues.push({ field: "summary", message: "Add a short summary." });
       } else if (draft.summary.length > 300) {
-        issues.push({ field: "summary", message: "Keep the summary under 300 characters." });
+        issues.push({
+          field: "summary",
+          message: "Keep the summary under 300 characters.",
+        });
       }
       if (!draft.category || !isDiscoveryCategory(draft.category)) {
         issues.push({ field: "category", message: "Choose a category." });
@@ -29,7 +41,10 @@ export function validateDraftStep(
       if (draft.coverUrl.trim()) {
         const cover = new URL(draft.coverUrl, "https://placeholder.invalid");
         if (cover.protocol !== "https:") {
-          issues.push({ field: "coverUrl", message: "Use an https:// image link." });
+          issues.push({
+            field: "coverUrl",
+            message: "Use an https:// image link.",
+          });
         }
       }
       break;
@@ -39,7 +54,10 @@ export function validateDraftStep(
         issues.push({ field: "problem", message: "Describe the problem." });
       }
       if (!draft.targetUser.trim()) {
-        issues.push({ field: "targetUser", message: "Name who the problem affects." });
+        issues.push({
+          field: "targetUser",
+          message: "Name who the problem affects.",
+        });
       }
       if (!draft.currentAlternative.trim()) {
         issues.push({
@@ -51,7 +69,10 @@ export function validateDraftStep(
 
     case "solution":
       if (!draft.solution.trim()) {
-        issues.push({ field: "solution", message: "Describe the proposed solution." });
+        issues.push({
+          field: "solution",
+          message: "Describe the proposed solution.",
+        });
       }
       break;
 
@@ -88,7 +109,8 @@ export function validateDraftStep(
         if (!Number.isFinite(amount) || amount <= 0) {
           issues.push({
             field: "funding.askAmount",
-            message: "Enter an indicative amount, or turn the funding goal off.",
+            message:
+              "Enter an indicative amount, or turn the funding goal off.",
           });
         }
       }
@@ -114,7 +136,8 @@ export function validateDraftStep(
         if (destinations.length === 0) {
           issues.push({
             field: "community.destinations",
-            message: "Add at least one community link, or turn the invitation off.",
+            message:
+              "Add at least one community link, or turn the invitation off.",
           });
         }
         for (const destination of destinations) {

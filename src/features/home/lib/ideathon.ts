@@ -33,7 +33,10 @@ export function nextProgrammeMilestone(
 ): { at: string; label: string } | null {
   switch (status) {
     case "registration_open":
-      return { at: schedule.registrationClosesAt, label: "Registration closes" };
+      return {
+        at: schedule.registrationClosesAt,
+        label: "Registration closes",
+      };
     case "submission_open":
       return { at: schedule.submissionClosesAt, label: "Submissions close" };
     case "judging":
@@ -74,7 +77,10 @@ export function formatMilestoneDate(
  * registered — that fact lives with the backend.
  */
 export function toHomeIdeathon(programme: Programme): HomeIdeathon {
-  const milestone = nextProgrammeMilestone(programme.status, programme.schedule);
+  const milestone = nextProgrammeMilestone(
+    programme.status,
+    programme.schedule,
+  );
   const formatted = milestone
     ? formatMilestoneDate(milestone.at, programme.schedule.timezone)
     : null;

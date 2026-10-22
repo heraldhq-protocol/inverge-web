@@ -20,7 +20,11 @@ export default async function NewProgrammePage({ searchParams }: PageProps) {
   const params = await searchParams;
   const from = Array.isArray(params.from) ? params.from[0] : params.from;
   const source =
-    from === "latest" ? previewProgrammes[0] : from ? getPreviewProgramme(from) : undefined;
+    from === "latest"
+      ? previewProgrammes[0]
+      : from
+        ? getPreviewProgramme(from)
+        : undefined;
 
   return <ProgrammeWizard duplicateFrom={source} />;
 }

@@ -73,7 +73,8 @@ export const FEEDBACK_QUESTION_META: Readonly<
   },
   rating: {
     label: "Star rating",
-    description: "A 1 to 5 rating. Only these questions contribute to the average rating.",
+    description:
+      "A 1 to 5 rating. Only these questions contribute to the average rating.",
     supportsOptions: false,
   },
   boolean: {

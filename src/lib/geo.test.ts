@@ -13,9 +13,7 @@ describe("shouldShowNgnEstimate", () => {
   });
 
   it("shows the estimate when any browser language is Nigerian", () => {
-    expect(
-      shouldShowNgnEstimate({ languages: ["en-GB", "yo-NG"] }),
-    ).toBe(true);
+    expect(shouldShowNgnEstimate({ languages: ["en-GB", "yo-NG"] })).toBe(true);
   });
 
   it("stays quiet for an unrelated locale and timezone", () => {

@@ -131,9 +131,9 @@ describe("validateFeedbackForm", () => {
       }),
     );
 
-    expect(
-      issues.some((issue) => issue.message.includes("lower number")),
-    ).toBe(true);
+    expect(issues.some((issue) => issue.message.includes("lower number"))).toBe(
+      true,
+    );
   });
 });
 
@@ -211,7 +211,9 @@ describe("overallRating", () => {
   });
 });
 
-function invite(destinations: CommunityInvite["destinations"]): CommunityInvite {
+function invite(
+  destinations: CommunityInvite["destinations"],
+): CommunityInvite {
   return {
     description: "",
     destinations,
@@ -269,7 +271,9 @@ describe("enabledDestinations", () => {
 
     const destinations = enabledDestinations(community);
 
-    expect(destinations.map((destination) => destination.id)).toEqual(["valid"]);
+    expect(destinations.map((destination) => destination.id)).toEqual([
+      "valid",
+    ]);
     expect(primaryDestination(community)?.id).toBe("valid");
   });
 

@@ -60,10 +60,12 @@ const STEPS = [
 
 type StepId = (typeof STEPS)[number]["id"];
 
-const typeOptions = Object.entries(PROGRAMME_TYPE_LABELS).map(([value, label]) => ({
-  label,
-  value,
-}));
+const typeOptions = Object.entries(PROGRAMME_TYPE_LABELS).map(
+  ([value, label]) => ({
+    label,
+    value,
+  }),
+);
 
 const typeIcons = {
   monthly_ideathon: TrophyIcon,
@@ -110,7 +112,12 @@ function blankProgramme(): Programme {
     heroCopy: "",
     id: createId("prog"),
     modules: [
-      { availability: "plan", enabled: true, key: "ai_analytics", note: "Pro plan only." },
+      {
+        availability: "plan",
+        enabled: true,
+        key: "ai_analytics",
+        note: "Pro plan only.",
+      },
       { availability: "preview", enabled: true, key: "community_followup" },
       { availability: "coming_soon", enabled: false, key: "showcase" },
       { availability: "coming_soon", enabled: false, key: "mentorship" },
@@ -123,9 +130,24 @@ function blankProgramme(): Programme {
     rubric: {
       communityWeight: 0,
       criteria: [
-        { guidance: "Is the problem specific and evidenced?", id: createId("crit"), label: "Problem clarity", weight: 40 },
-        { guidance: "Does the solution fit the problem?", id: createId("crit"), label: "Solution fit", weight: 40 },
-        { guidance: "Can the team execute?", id: createId("crit"), label: "Feasibility", weight: 20 },
+        {
+          guidance: "Is the problem specific and evidenced?",
+          id: createId("crit"),
+          label: "Problem clarity",
+          weight: 40,
+        },
+        {
+          guidance: "Does the solution fit the problem?",
+          id: createId("crit"),
+          label: "Solution fit",
+          weight: 40,
+        },
+        {
+          guidance: "Can the team execute?",
+          id: createId("crit"),
+          label: "Feasibility",
+          weight: 20,
+        },
       ],
       judges: [],
       resultsVisibility: "public",
@@ -154,7 +176,8 @@ function blankProgramme(): Programme {
       allowTeams: true,
       attachments: [],
       requiredFields: ["Problem", "Target audience", "Solution", "Roadmap"],
-      template: "Use an existing Inverge idea, or create one during registration.",
+      template:
+        "Use an existing Inverge idea, or create one during registration.",
     },
     submissions: [],
     tagline: "",
@@ -170,7 +193,10 @@ function duplicate(source: Programme): Programme {
     ...source,
     id: createId("prog"),
     registrations: [],
-    rewards: source.rewards.map((reward) => ({ ...reward, id: createId("reward") })),
+    rewards: source.rewards.map((reward) => ({
+      ...reward,
+      id: createId("reward"),
+    })),
     rubric: {
       ...source.rubric,
       criteria: source.rubric.criteria.map((criterion) => ({
@@ -215,7 +241,9 @@ function Field({
           </span>
         )}
       </span>
-      {hint ? <span className="mt-0.5 block text-[0.6875rem] text-muted">{hint}</span> : null}
+      {hint ? (
+        <span className="mt-0.5 block text-[0.6875rem] text-muted">{hint}</span>
+      ) : null}
       <span className="mt-1 block">{children}</span>
       {error ? (
         <span className="mt-1 block text-xs text-danger" role="alert">
@@ -226,7 +254,10 @@ function Field({
   );
 }
 
-function issueFor(issues: ReturnType<typeof validateProgramme>, prefix: string) {
+function issueFor(
+  issues: ReturnType<typeof validateProgramme>,
+  prefix: string,
+) {
   return issues.find(
     (issue) => issue.field === prefix || issue.field.startsWith(`${prefix}.`),
   )?.message;
@@ -288,7 +319,9 @@ export function ProgrammeWizard({
 
   function saveDraft() {
     saveLocalProgramme({ ...programme, status: "draft" });
-    setStatus("Draft saved in this browser and listed on the dashboard. It is not on the server.");
+    setStatus(
+      "Draft saved in this browser and listed on the dashboard. It is not on the server.",
+    );
   }
 
   function publish() {
@@ -323,16 +356,21 @@ export function ProgrammeWizard({
       <div className="mx-auto max-w-2xl">
         <div className="rounded-2xl border border-border bg-surface p-6 text-center">
           <span className="mx-auto grid size-14 place-items-center rounded-full bg-brand-soft text-brand-strong">
-            <HugeiconsIcon icon={CheckmarkCircle02Icon} size={28} strokeWidth={1.8} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={CheckmarkCircle02Icon}
+              size={28}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
           </span>
           <h1 className="mt-3 text-2xl font-bold tracking-[-0.04em] text-ink">
             Programme saved for scheduling
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
             It appears on the dashboard and in the local workspace with status{" "}
-            <strong>{PROGRAMME_STATUS_LABELS[programme.status]}</strong>. Because
-            no API session is connected, this is a browser preview, not a server
-            publication.
+            <strong>{PROGRAMME_STATUS_LABELS[programme.status]}</strong>.
+            Because no API session is connected, this is a browser preview, not
+            a server publication.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
             <Link
@@ -358,7 +396,10 @@ export function ProgrammeWizard({
       <nav aria-label="Breadcrumb" className="text-xs text-muted">
         <ol className="flex flex-wrap items-center gap-1.5">
           <li>
-            <Link href="/admin/programmes" className="font-medium hover:text-ink">
+            <Link
+              href="/admin/programmes"
+              className="font-medium hover:text-ink"
+            >
               Programmes
             </Link>
           </li>
@@ -384,24 +425,36 @@ export function ProgrammeWizard({
             Save draft
           </Button>
           <Button type="button" size="md" onClick={publish}>
-            <HugeiconsIcon icon={Calendar03Icon} size={16} strokeWidth={1.9} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Calendar03Icon}
+              size={16}
+              strokeWidth={1.9}
+              aria-hidden="true"
+            />
             Schedule programme
           </Button>
         </div>
       </header>
 
       {status ? (
-        <p className="mt-3 rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs leading-5 text-brand-strong" role="status">
+        <p
+          className="mt-3 rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs leading-5 text-brand-strong"
+          role="status"
+        >
           {status}
         </p>
       ) : null}
 
       <div className="mt-5 grid gap-5 xl:grid-cols-[14rem_minmax(0,1fr)_18rem]">
-        <aside aria-label="Programme steps" className="xl:sticky xl:top-24 xl:self-start">
+        <aside
+          aria-label="Programme steps"
+          className="xl:sticky xl:top-24 xl:self-start"
+        >
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Steps</Eyebrow>
             <span className="text-[0.625rem] tabular-nums text-muted">
-              {checks.filter((check) => check.complete).length}/{checks.length} ready
+              {checks.filter((check) => check.complete).length}/{checks.length}{" "}
+              ready
             </span>
           </div>
           <ol className="mt-2 flex gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible">
@@ -462,7 +515,10 @@ export function ProgrammeWizard({
           <div className="mt-4 space-y-4">
             {step === "identity" ? (
               <>
-                <Field label="Programme title" error={showValidation ? issueFor(issues, "title") : undefined}>
+                <Field
+                  label="Programme title"
+                  error={showValidation ? issueFor(issues, "title") : undefined}
+                >
                   <Input
                     value={programme.title}
                     maxLength={120}
@@ -470,12 +526,19 @@ export function ProgrammeWizard({
                     onChange={(event) => update({ title: event.target.value })}
                   />
                 </Field>
-                <Field label="One-line description" error={showValidation ? issueFor(issues, "tagline") : undefined}>
+                <Field
+                  label="One-line description"
+                  error={
+                    showValidation ? issueFor(issues, "tagline") : undefined
+                  }
+                >
                   <Input
                     value={programme.tagline}
                     maxLength={140}
                     placeholder="Big ideas. Real impact."
-                    onChange={(event) => update({ tagline: event.target.value })}
+                    onChange={(event) =>
+                      update({ tagline: event.target.value })
+                    }
                   />
                 </Field>
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -493,7 +556,9 @@ export function ProgrammeWizard({
                     <Input
                       value={programme.category}
                       placeholder="Sustainable solutions"
-                      onChange={(event) => update({ category: event.target.value })}
+                      onChange={(event) =>
+                        update({ category: event.target.value })
+                      }
                     />
                   </Field>
                 </div>
@@ -501,7 +566,9 @@ export function ProgrammeWizard({
                   <Field label="Organiser">
                     <Input
                       value={programme.organiser}
-                      onChange={(event) => update({ organiser: event.target.value })}
+                      onChange={(event) =>
+                        update({ organiser: event.target.value })
+                      }
                     />
                   </Field>
                   <Field label="Language">
@@ -520,7 +587,11 @@ export function ProgrammeWizard({
                 </div>
                 <Field
                   label="Who is this for"
-                  error={showValidation ? issueFor(issues, "audience.who") : undefined}
+                  error={
+                    showValidation
+                      ? issueFor(issues, "audience.who")
+                      : undefined
+                  }
                 >
                   <Textarea
                     rows={2}
@@ -528,7 +599,10 @@ export function ProgrammeWizard({
                     placeholder="Early-stage African builders working on climate, food, or energy."
                     onChange={(event) =>
                       update({
-                        audience: { ...programme.audience, who: event.target.value },
+                        audience: {
+                          ...programme.audience,
+                          who: event.target.value,
+                        },
                       })
                     }
                   />
@@ -563,7 +637,8 @@ export function ProgrammeWizard({
                         update({
                           audience: {
                             ...programme.audience,
-                            ideaSource: value as Programme["audience"]["ideaSource"],
+                            ideaSource:
+                              value as Programme["audience"]["ideaSource"],
                           },
                         })
                       }
@@ -613,19 +688,31 @@ export function ProgrammeWizard({
 
             {step === "branding" ? (
               <>
-                <Field label="Full description" error={showValidation ? issueFor(issues, "description") : undefined}>
+                <Field
+                  label="Full description"
+                  error={
+                    showValidation ? issueFor(issues, "description") : undefined
+                  }
+                >
                   <Textarea
                     rows={4}
                     value={programme.description}
                     placeholder="What the programme is, who should enter, and why it exists."
-                    onChange={(event) => update({ description: event.target.value })}
+                    onChange={(event) =>
+                      update({ description: event.target.value })
+                    }
                   />
                 </Field>
-                <Field label="Hero copy" hint="One sentence shown on the public banner.">
+                <Field
+                  label="Hero copy"
+                  hint="One sentence shown on the public banner."
+                >
                   <Input
                     value={programme.heroCopy}
                     placeholder="Build something the community wants to exist."
-                    onChange={(event) => update({ heroCopy: event.target.value })}
+                    onChange={(event) =>
+                      update({ heroCopy: event.target.value })
+                    }
                   />
                 </Field>
                 <Field
@@ -634,13 +721,22 @@ export function ProgrammeWizard({
                 >
                   <Input
                     type="url"
-                    value={programme.assets.find((asset) => asset.kind === "banner")?.url ?? ""}
+                    value={
+                      programme.assets.find((asset) => asset.kind === "banner")
+                        ?.url ?? ""
+                    }
                     placeholder="https://images.example.com/banner.jpg"
                     onChange={(event) =>
                       update({
                         assets: [
-                          ...programme.assets.filter((asset) => asset.kind !== "banner"),
-                          { alt: `${programme.title} banner`, kind: "banner", url: event.target.value },
+                          ...programme.assets.filter(
+                            (asset) => asset.kind !== "banner",
+                          ),
+                          {
+                            alt: `${programme.title} banner`,
+                            kind: "banner",
+                            url: event.target.value,
+                          },
                         ],
                       })
                     }
@@ -649,12 +745,22 @@ export function ProgrammeWizard({
                 <Field label="Thumbnail image URL" optional>
                   <Input
                     type="url"
-                    value={programme.assets.find((asset) => asset.kind === "thumbnail")?.url ?? ""}
+                    value={
+                      programme.assets.find(
+                        (asset) => asset.kind === "thumbnail",
+                      )?.url ?? ""
+                    }
                     onChange={(event) =>
                       update({
                         assets: [
-                          ...programme.assets.filter((asset) => asset.kind !== "thumbnail"),
-                          { alt: `${programme.title} thumbnail`, kind: "thumbnail", url: event.target.value },
+                          ...programme.assets.filter(
+                            (asset) => asset.kind !== "thumbnail",
+                          ),
+                          {
+                            alt: `${programme.title} thumbnail`,
+                            kind: "thumbnail",
+                            url: event.target.value,
+                          },
                         ],
                       })
                     }
@@ -663,21 +769,31 @@ export function ProgrammeWizard({
                 <Field label="Partner logo URL" optional>
                   <Input
                     type="url"
-                    value={programme.assets.find((asset) => asset.kind === "partner_logo")?.url ?? ""}
+                    value={
+                      programme.assets.find(
+                        (asset) => asset.kind === "partner_logo",
+                      )?.url ?? ""
+                    }
                     onChange={(event) =>
                       update({
                         assets: [
-                          ...programme.assets.filter((asset) => asset.kind !== "partner_logo"),
-                          { alt: "Partner logo", kind: "partner_logo", url: event.target.value },
+                          ...programme.assets.filter(
+                            (asset) => asset.kind !== "partner_logo",
+                          ),
+                          {
+                            alt: "Partner logo",
+                            kind: "partner_logo",
+                            url: event.target.value,
+                          },
                         ],
                       })
                     }
                   />
                 </Field>
                 <p className="rounded-xl bg-canvas px-3 py-2 text-[0.6875rem] leading-4 text-muted">
-                  Uploads are not connected. A URL is stored in this preview so a
-                  broken image never ships silently: the public page falls back to
-                  a branded panel when the URL is empty or invalid.
+                  Uploads are not connected. A URL is stored in this preview so
+                  a broken image never ships silently: the public page falls
+                  back to a branded panel when the URL is empty or invalid.
                 </p>
               </>
             ) : null}
@@ -705,7 +821,11 @@ export function ProgrammeWizard({
                     <Field
                       key={key}
                       label={label}
-                      error={showValidation ? issueFor(issues, `schedule.${key}`) : undefined}
+                      error={
+                        showValidation
+                          ? issueFor(issues, `schedule.${key}`)
+                          : undefined
+                      }
                     >
                       <Input
                         type="datetime-local"
@@ -727,7 +847,10 @@ export function ProgrammeWizard({
                     value={programme.schedule.timezone}
                     onChange={(event) =>
                       update({
-                        schedule: { ...programme.schedule, timezone: event.target.value },
+                        schedule: {
+                          ...programme.schedule,
+                          timezone: event.target.value,
+                        },
                       })
                     }
                   />
@@ -737,7 +860,10 @@ export function ProgrammeWizard({
 
             {step === "submissions" ? (
               <>
-                <Field label="Submission template" hint="How an entrant starts.">
+                <Field
+                  label="Submission template"
+                  hint="How an entrant starts."
+                >
                   <Textarea
                     rows={3}
                     value={programme.submissionRequirements.template}
@@ -754,26 +880,39 @@ export function ProgrammeWizard({
                 <Field label="Required fields" hint="One per line">
                   <Textarea
                     rows={4}
-                    value={programme.submissionRequirements.requiredFields.join("\n")}
+                    value={programme.submissionRequirements.requiredFields.join(
+                      "\n",
+                    )}
                     onChange={(event) =>
                       update({
                         submissionRequirements: {
                           ...programme.submissionRequirements,
-                          requiredFields: event.target.value.split("\n").map((value) => value.trim()).filter(Boolean),
+                          requiredFields: event.target.value
+                            .split("\n")
+                            .map((value) => value.trim())
+                            .filter(Boolean),
                         },
                       })
                     }
                   />
                 </Field>
-                <Field label="Attachments" hint="One per line. Declarations only; uploads are not connected.">
+                <Field
+                  label="Attachments"
+                  hint="One per line. Declarations only; uploads are not connected."
+                >
                   <Textarea
                     rows={3}
-                    value={programme.submissionRequirements.attachments.join("\n")}
+                    value={programme.submissionRequirements.attachments.join(
+                      "\n",
+                    )}
                     onChange={(event) =>
                       update({
                         submissionRequirements: {
                           ...programme.submissionRequirements,
-                          attachments: event.target.value.split("\n").map((value) => value.trim()).filter(Boolean),
+                          attachments: event.target.value
+                            .split("\n")
+                            .map((value) => value.trim())
+                            .filter(Boolean),
                         },
                       })
                     }
@@ -815,11 +954,20 @@ export function ProgrammeWizard({
                           type="button"
                           aria-label={`Remove rule ${index + 1}`}
                           onClick={() =>
-                            update({ rules: programme.rules.filter((_, itemIndex) => itemIndex !== index) })
+                            update({
+                              rules: programme.rules.filter(
+                                (_, itemIndex) => itemIndex !== index,
+                              ),
+                            })
                           }
                           className="grid size-11 shrink-0 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
                         >
-                          <HugeiconsIcon icon={Delete02Icon} size={15} strokeWidth={1.8} aria-hidden="true" />
+                          <HugeiconsIcon
+                            icon={Delete02Icon}
+                            size={15}
+                            strokeWidth={1.8}
+                            aria-hidden="true"
+                          />
                         </button>
                       </li>
                     ))}
@@ -831,7 +979,12 @@ export function ProgrammeWizard({
                     className="mt-2"
                     onClick={() => update({ rules: [...programme.rules, ""] })}
                   >
-                    <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} aria-hidden="true" />
+                    <HugeiconsIcon
+                      icon={Add01Icon}
+                      size={14}
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
                     Add rule
                   </Button>
                 </div>
@@ -839,7 +992,12 @@ export function ProgrammeWizard({
             ) : null}
 
             {step === "rewards" ? (
-              <RewardsEditor programme={programme} update={update} showValidation={showValidation} issues={issues} />
+              <RewardsEditor
+                programme={programme}
+                update={update}
+                showValidation={showValidation}
+                issues={issues}
+              />
             ) : null}
 
             {step === "judging" ? (
@@ -850,10 +1008,14 @@ export function ProgrammeWizard({
               <div className="space-y-2">
                 <p className="text-xs leading-5 text-muted">
                   Optional modules never block publication. A module marked
-                  coming soon cannot be presented as available on the public page.
+                  coming soon cannot be presented as available on the public
+                  page.
                 </p>
                 {programme.modules.map((module) => (
-                  <div key={module.key} className="rounded-xl border border-border p-3">
+                  <div
+                    key={module.key}
+                    className="rounded-xl border border-border p-3"
+                  >
                     <div className="flex items-start justify-between gap-3">
                       <div>
                         <p className="text-sm font-semibold text-ink">
@@ -871,7 +1033,9 @@ export function ProgrammeWizard({
                         onCheckedChange={(enabled) =>
                           update({
                             modules: programme.modules.map((item) =>
-                              item.key === module.key ? { ...item, enabled } : item,
+                              item.key === module.key
+                                ? { ...item, enabled }
+                                : item,
                             ),
                           })
                         }
@@ -902,13 +1066,22 @@ export function ProgrammeWizard({
                         }`}
                       >
                         {check.complete ? (
-                          <span className="text-[0.625rem]" aria-hidden="true">✓</span>
+                          <span className="text-[0.625rem]" aria-hidden="true">
+                            ✓
+                          </span>
                         ) : (
-                          <span className="text-[0.625rem] font-bold" aria-hidden="true">!</span>
+                          <span
+                            className="text-[0.625rem] font-bold"
+                            aria-hidden="true"
+                          >
+                            !
+                          </span>
                         )}
                       </span>
                       <div>
-                        <p className="text-xs font-semibold text-ink">{check.label}</p>
+                        <p className="text-xs font-semibold text-ink">
+                          {check.label}
+                        </p>
                         <p className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
                           {check.detail}
                         </p>
@@ -917,13 +1090,20 @@ export function ProgrammeWizard({
                   ))}
                 </ul>
                 {issues.length > 0 ? (
-                  <div className="rounded-xl border border-danger/30 bg-danger/5 p-3" role="alert">
+                  <div
+                    className="rounded-xl border border-danger/30 bg-danger/5 p-3"
+                    role="alert"
+                  >
                     <p className="text-xs font-semibold text-danger">
-                      {issues.length} issue{issues.length === 1 ? "" : "s"} to resolve
+                      {issues.length} issue{issues.length === 1 ? "" : "s"} to
+                      resolve
                     </p>
                     <ul className="mt-1 space-y-0.5">
                       {issues.slice(0, 8).map((issue) => (
-                        <li key={`${issue.field}-${issue.message}`} className="text-[0.6875rem] text-danger">
+                        <li
+                          key={`${issue.field}-${issue.message}`}
+                          className="text-[0.6875rem] text-danger"
+                        >
                           {issue.message}
                         </li>
                       ))}
@@ -931,9 +1111,9 @@ export function ProgrammeWizard({
                   </div>
                 ) : (
                   <p className="rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs text-brand-strong">
-                    Ready to schedule. Publishing here stores the programme in this
-                    browser; the API will run the authoritative validation when it
-                    is connected.
+                    Ready to schedule. Publishing here stores the programme in
+                    this browser; the API will run the authoritative validation
+                    when it is connected.
                   </p>
                 )}
                 <div className="rounded-xl border border-border p-3">
@@ -948,7 +1128,8 @@ export function ProgrammeWizard({
                     }).format(Number(BigInt(pool.atomic) / 100n))}
                   </p>
                   <p className="mt-0.5 text-[0.6875rem] text-muted">
-                    Every reward needs a named fulfilment owner before publication.
+                    Every reward needs a named fulfilment owner before
+                    publication.
                   </p>
                 </div>
               </div>
@@ -966,35 +1147,62 @@ export function ProgrammeWizard({
                 setStepIndex((index) => Math.max(0, index - 1));
               }}
             >
-              <HugeiconsIcon icon={ArrowLeft02Icon} size={15} strokeWidth={1.9} aria-hidden="true" />
+              <HugeiconsIcon
+                icon={ArrowLeft02Icon}
+                size={15}
+                strokeWidth={1.9}
+                aria-hidden="true"
+              />
               Back
             </Button>
             <div className="flex flex-wrap gap-2">
-              <Button type="button" variant="ghost" size="md" onClick={saveDraft}>
+              <Button
+                type="button"
+                variant="ghost"
+                size="md"
+                onClick={saveDraft}
+              >
                 Save draft
               </Button>
               {step === "review" ? (
                 <Button type="button" size="md" onClick={publish}>
-                  <HugeiconsIcon icon={Calendar03Icon} size={16} strokeWidth={1.9} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={Calendar03Icon}
+                    size={16}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
                   Schedule programme
                 </Button>
               ) : (
                 <Button type="button" size="md" onClick={goNext}>
                   Next
-                  <HugeiconsIcon icon={ArrowRight02Icon} size={15} strokeWidth={1.9} aria-hidden="true" />
+                  <HugeiconsIcon
+                    icon={ArrowRight02Icon}
+                    size={15}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
                 </Button>
               )}
             </div>
           </div>
         </div>
 
-        <aside aria-label="Programme preview" className="space-y-3 xl:sticky xl:top-24 xl:self-start">
+        <aside
+          aria-label="Programme preview"
+          className="space-y-3 xl:sticky xl:top-24 xl:self-start"
+        >
           <div className="overflow-hidden rounded-2xl border border-border bg-surface">
             <div className="relative aspect-[16/9] bg-brand-soft">
-              {programme.assets.find((asset) => asset.kind === "banner")?.url ? (
+              {programme.assets.find((asset) => asset.kind === "banner")
+                ?.url ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={programme.assets.find((asset) => asset.kind === "banner")?.url}
+                  src={
+                    programme.assets.find((asset) => asset.kind === "banner")
+                      ?.url
+                  }
                   alt=""
                   className="h-full w-full object-cover"
                 />
@@ -1050,14 +1258,20 @@ export function ProgrammeWizard({
             <p className="text-xs font-semibold text-ink">Public page</p>
             <p className="mt-1 text-[0.6875rem] leading-4 text-muted">
               The live ideathon page reads the active monthly ideathon. Other
-              programme types have no public route until their module is enabled.
+              programme types have no public route until their module is
+              enabled.
             </p>
             {programme.type === "monthly_ideathon" ? (
               <Link
                 href="/ideathon"
                 className="mt-2 inline-flex min-h-9 items-center gap-1 text-[0.6875rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
               >
-                <HugeiconsIcon icon={ViewIcon} size={13} strokeWidth={1.9} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={ViewIcon}
+                  size={13}
+                  strokeWidth={1.9}
+                  aria-hidden="true"
+                />
                 Open ideathon page
               </Link>
             ) : null}
@@ -1073,21 +1287,31 @@ function issuesForStep(programme: Programme, step: StepId): string[] {
   if (step === "identity") {
     return issues
       .filter((issue) =>
-        ["title", "tagline", "description", "audience.who"].includes(issue.field),
+        ["title", "tagline", "description", "audience.who"].includes(
+          issue.field,
+        ),
       )
       .map((issue) => issue.message);
   }
   if (step === "branding") {
-    return issues.filter((issue) => issue.field === "description").map((issue) => issue.message);
+    return issues
+      .filter((issue) => issue.field === "description")
+      .map((issue) => issue.message);
   }
   if (step === "schedule") {
-    return issues.filter((issue) => issue.field.startsWith("schedule")).map((issue) => issue.message);
+    return issues
+      .filter((issue) => issue.field.startsWith("schedule"))
+      .map((issue) => issue.message);
   }
   if (step === "rewards") {
-    return issues.filter((issue) => issue.field.startsWith("reward")).map((issue) => issue.message);
+    return issues
+      .filter((issue) => issue.field.startsWith("reward"))
+      .map((issue) => issue.message);
   }
   if (step === "judging") {
-    return issues.filter((issue) => issue.field.startsWith("rubric")).map((issue) => issue.message);
+    return issues
+      .filter((issue) => issue.field.startsWith("rubric"))
+      .map((issue) => issue.message);
   }
   return [];
 }
@@ -1121,23 +1345,36 @@ function RewardsEditor({
         {programme.rewards.map((reward, index) => (
           <li key={reward.id} className="rounded-xl border border-border p-3">
             <div className="flex items-center justify-between gap-2">
-              <p className="text-xs font-semibold text-ink">Reward {index + 1}</p>
+              <p className="text-xs font-semibold text-ink">
+                Reward {index + 1}
+              </p>
               <button
                 type="button"
                 aria-label={`Remove reward ${index + 1}`}
                 onClick={() =>
-                  update({ rewards: programme.rewards.filter((_, rewardIndex) => rewardIndex !== index) })
+                  update({
+                    rewards: programme.rewards.filter(
+                      (_, rewardIndex) => rewardIndex !== index,
+                    ),
+                  })
                 }
                 className="grid size-8 place-items-center rounded-md text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
               >
-                <HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={1.8} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={Delete02Icon}
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
               </button>
             </div>
             <div className="mt-2 grid gap-2 sm:grid-cols-2">
               <Field label="Title">
                 <Input
                   value={reward.title}
-                  onChange={(event) => updateReward(index, { title: event.target.value })}
+                  onChange={(event) =>
+                    updateReward(index, { title: event.target.value })
+                  }
                 />
               </Field>
               <Field label="Placement">
@@ -1145,7 +1382,11 @@ function RewardsEditor({
                   type="number"
                   min={1}
                   value={reward.placement}
-                  onChange={(event) => updateReward(index, { placement: Number(event.target.value) })}
+                  onChange={(event) =>
+                    updateReward(index, {
+                      placement: Number(event.target.value),
+                    })
+                  }
                 />
               </Field>
             </div>
@@ -1167,7 +1408,11 @@ function RewardsEditor({
               <Field label="Amount (USD)">
                 <Input
                   inputMode="decimal"
-                  value={reward.amount ? String(Number(BigInt(reward.amount.atomic) / 100n)) : ""}
+                  value={
+                    reward.amount
+                      ? String(Number(BigInt(reward.amount.atomic) / 100n))
+                      : ""
+                  }
                   disabled={reward.kind === "non_cash"}
                   onChange={(event) => {
                     const atomic = parseUsdAmount(event.target.value);
@@ -1192,12 +1437,18 @@ function RewardsEditor({
             <Field label="Description">
               <Input
                 value={reward.description}
-                onChange={(event) => updateReward(index, { description: event.target.value })}
+                onChange={(event) =>
+                  updateReward(index, { description: event.target.value })
+                }
               />
             </Field>
-            {showValidation && issues.some((issue) => issue.field === `reward.${reward.id}`) ? (
+            {showValidation &&
+            issues.some((issue) => issue.field === `reward.${reward.id}`) ? (
               <p className="mt-1 text-xs text-danger" role="alert">
-                {issues.find((issue) => issue.field === `reward.${reward.id}`)?.message}
+                {
+                  issues.find((issue) => issue.field === `reward.${reward.id}`)
+                    ?.message
+                }
               </p>
             ) : null}
           </li>
@@ -1226,7 +1477,12 @@ function RewardsEditor({
           })
         }
       >
-        <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} aria-hidden="true" />
+        <HugeiconsIcon
+          icon={Add01Icon}
+          size={14}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         Add reward
       </Button>
     </div>
@@ -1240,9 +1496,15 @@ function JudgingEditor({
   programme: Programme;
   update: (patch: Partial<Programme>) => void;
 }) {
-  const total = programme.rubric.criteria.reduce((sum, criterion) => sum + criterion.weight, 0);
+  const total = programme.rubric.criteria.reduce(
+    (sum, criterion) => sum + criterion.weight,
+    0,
+  );
 
-  function updateCriterion(index: number, patch: Partial<Programme["rubric"]["criteria"][number]>) {
+  function updateCriterion(
+    index: number,
+    patch: Partial<Programme["rubric"]["criteria"][number]>,
+  ) {
     update({
       rubric: {
         ...programme.rubric,
@@ -1256,8 +1518,8 @@ function JudgingEditor({
   return (
     <div className="space-y-4">
       <p className="text-xs leading-5 text-muted">
-        Judging is separate from community support. A paid promotion never enters
-        a score. Weights must total 100 before publication.
+        Judging is separate from community support. A paid promotion never
+        enters a score. Weights must total 100 before publication.
       </p>
       <div className="flex items-center justify-between rounded-lg bg-canvas px-3 py-2">
         <span className="text-xs font-medium text-ink">Weight total</span>
@@ -1271,11 +1533,16 @@ function JudgingEditor({
       </div>
       <ul className="space-y-2">
         {programme.rubric.criteria.map((criterion, index) => (
-          <li key={criterion.id} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[minmax(0,1fr)_5rem_auto]">
+          <li
+            key={criterion.id}
+            className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[minmax(0,1fr)_5rem_auto]"
+          >
             <Input
               aria-label={`Criterion ${index + 1} label`}
               value={criterion.label}
-              onChange={(event) => updateCriterion(index, { label: event.target.value })}
+              onChange={(event) =>
+                updateCriterion(index, { label: event.target.value })
+              }
             />
             <Input
               aria-label={`Criterion ${index + 1} weight`}
@@ -1283,7 +1550,9 @@ function JudgingEditor({
               min={0}
               max={100}
               value={criterion.weight}
-              onChange={(event) => updateCriterion(index, { weight: Number(event.target.value) })}
+              onChange={(event) =>
+                updateCriterion(index, { weight: Number(event.target.value) })
+              }
             />
             <button
               type="button"
@@ -1292,13 +1561,20 @@ function JudgingEditor({
                 update({
                   rubric: {
                     ...programme.rubric,
-                    criteria: programme.rubric.criteria.filter((_, criterionIndex) => criterionIndex !== index),
+                    criteria: programme.rubric.criteria.filter(
+                      (_, criterionIndex) => criterionIndex !== index,
+                    ),
                   },
                 })
               }
               className="grid size-11 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
             >
-              <HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={1.8} aria-hidden="true" />
+              <HugeiconsIcon
+                icon={Delete02Icon}
+                size={14}
+                strokeWidth={1.8}
+                aria-hidden="true"
+              />
             </button>
           </li>
         ))}
@@ -1319,7 +1595,12 @@ function JudgingEditor({
           })
         }
       >
-        <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} aria-hidden="true" />
+        <HugeiconsIcon
+          icon={Add01Icon}
+          size={14}
+          strokeWidth={2}
+          aria-hidden="true"
+        />
         Add criterion
       </Button>
 
@@ -1334,7 +1615,12 @@ function JudgingEditor({
             ]}
             value={programme.rubric.tieBreak}
             onValueChange={(value) =>
-              update({ rubric: { ...programme.rubric, tieBreak: value as Programme["rubric"]["tieBreak"] } })
+              update({
+                rubric: {
+                  ...programme.rubric,
+                  tieBreak: value as Programme["rubric"]["tieBreak"],
+                },
+              })
             }
           />
         </Field>
@@ -1348,7 +1634,13 @@ function JudgingEditor({
             ]}
             value={programme.rubric.resultsVisibility}
             onValueChange={(value) =>
-              update({ rubric: { ...programme.rubric, resultsVisibility: value as Programme["rubric"]["resultsVisibility"] } })
+              update({
+                rubric: {
+                  ...programme.rubric,
+                  resultsVisibility:
+                    value as Programme["rubric"]["resultsVisibility"],
+                },
+              })
             }
           />
         </Field>
@@ -1358,7 +1650,10 @@ function JudgingEditor({
         <p className="text-xs font-medium text-ink">Judges</p>
         <ul className="mt-1.5 space-y-2">
           {programme.rubric.judges.map((judge, index) => (
-            <li key={judge.id} className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-3">
+            <li
+              key={judge.id}
+              className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-3"
+            >
               <Input
                 aria-label={`Judge ${index + 1} name`}
                 value={judge.name}
@@ -1368,7 +1663,9 @@ function JudgingEditor({
                     rubric: {
                       ...programme.rubric,
                       judges: programme.rubric.judges.map((item) =>
-                        item.id === judge.id ? { ...item, name: event.target.value } : item,
+                        item.id === judge.id
+                          ? { ...item, name: event.target.value }
+                          : item,
                       ),
                     },
                   })
@@ -1383,7 +1680,9 @@ function JudgingEditor({
                     rubric: {
                       ...programme.rubric,
                       judges: programme.rubric.judges.map((item) =>
-                        item.id === judge.id ? { ...item, affiliation: event.target.value } : item,
+                        item.id === judge.id
+                          ? { ...item, affiliation: event.target.value }
+                          : item,
                       ),
                     },
                   })
@@ -1396,13 +1695,20 @@ function JudgingEditor({
                   update({
                     rubric: {
                       ...programme.rubric,
-                      judges: programme.rubric.judges.filter((item) => item.id !== judge.id),
+                      judges: programme.rubric.judges.filter(
+                        (item) => item.id !== judge.id,
+                      ),
                     },
                   })
                 }
                 className="grid size-11 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
               >
-                <HugeiconsIcon icon={Delete02Icon} size={14} strokeWidth={1.8} aria-hidden="true" />
+                <HugeiconsIcon
+                  icon={Delete02Icon}
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
               </button>
             </li>
           ))}
@@ -1418,13 +1724,23 @@ function JudgingEditor({
                 ...programme.rubric,
                 judges: [
                   ...programme.rubric.judges,
-                  { affiliation: "", conflict: "none", id: createId("judge"), name: "" },
+                  {
+                    affiliation: "",
+                    conflict: "none",
+                    id: createId("judge"),
+                    name: "",
+                  },
                 ],
               },
             })
           }
         >
-          <HugeiconsIcon icon={Add01Icon} size={14} strokeWidth={2} aria-hidden="true" />
+          <HugeiconsIcon
+            icon={Add01Icon}
+            size={14}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
           Add judge
         </Button>
       </div>

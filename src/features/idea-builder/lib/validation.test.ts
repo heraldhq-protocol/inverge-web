@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { draftCompleteness, validateDraft, validateDraftStep } from "@/features/idea-builder/lib/validation";
+import {
+  draftCompleteness,
+  validateDraft,
+  validateDraftStep,
+} from "@/features/idea-builder/lib/validation";
 import { emptyIdeaDraft, type IdeaDraft } from "@/features/idea-builder/types";
 
 function draft(overrides: Partial<IdeaDraft> = {}): IdeaDraft {
@@ -106,7 +110,9 @@ describe("validateDraftStep", () => {
 
   it("treats the roadmap as optional but validates a started step", () => {
     // #given no roadmap at all
-    expect(validateDraftStep(draft({ roadmapSteps: [] }), "roadmap")).toEqual([]);
+    expect(validateDraftStep(draft({ roadmapSteps: [] }), "roadmap")).toEqual(
+      [],
+    );
 
     // #when a step is started with only a description
     const issues = validateDraftStep(

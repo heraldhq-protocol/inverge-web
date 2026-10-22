@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Archive02Icon,
-  TrophyIcon,
-} from "@hugeicons/core-free-icons";
+import { Archive02Icon, TrophyIcon } from "@hugeicons/core-free-icons";
 
 import { Pill } from "@/components/ui/pill";
 import { previewProgrammes } from "@/features/programmes/content/preview-programmes";
@@ -61,16 +58,22 @@ export default function PastIdeathonsPage() {
         <ul className="mt-5 space-y-4">
           {archived.map((programme) => {
             const counts = programmeCounts(programme);
-            const winners = programme.snapshot?.entries
-              .slice()
-              .sort((left, right) => left.rank - right.rank)
-              .slice(0, 3) ?? [];
+            const winners =
+              programme.snapshot?.entries
+                .slice()
+                .sort((left, right) => left.rank - right.rank)
+                .slice(0, 3) ?? [];
             return (
-              <li key={programme.id} className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
+              <li
+                key={programme.id}
+                className="rounded-2xl border border-border bg-surface p-4 sm:p-5"
+              >
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
                     <div className="flex flex-wrap items-center gap-2">
-                      <Pill tone="neutral" size="xs">Archived</Pill>
+                      <Pill tone="neutral" size="xs">
+                        Archived
+                      </Pill>
                       <span className="text-[0.625rem] uppercase tracking-[0.1em] text-muted">
                         {programme.category}
                       </span>
@@ -79,13 +82,21 @@ export default function PastIdeathonsPage() {
                       {programme.title}
                     </h3>
                     <p className="mt-1 text-xs text-muted">
-                      {formatProgrammeDate(programme.schedule.registrationOpensAt)} to{" "}
-                      {formatProgrammeDate(programme.schedule.eventEndsAt)} ·{" "}
-                      {counts.submissions} entries · {counts.registrations} registered
+                      {formatProgrammeDate(
+                        programme.schedule.registrationOpensAt,
+                      )}{" "}
+                      to {formatProgrammeDate(programme.schedule.eventEndsAt)} ·{" "}
+                      {counts.submissions} entries · {counts.registrations}{" "}
+                      registered
                     </p>
                   </div>
                   <span className="grid size-10 place-items-center rounded-xl bg-brand-soft text-brand-strong">
-                    <HugeiconsIcon icon={Archive02Icon} size={19} strokeWidth={1.8} aria-hidden="true" />
+                    <HugeiconsIcon
+                      icon={Archive02Icon}
+                      size={19}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
                   </span>
                 </div>
 
@@ -109,9 +120,13 @@ export default function PastIdeathonsPage() {
                           (item) => item.id === entry.submissionId,
                         );
                         return (
-                          <li key={entry.submissionId} className="flex items-center justify-between gap-3 text-xs">
+                          <li
+                            key={entry.submissionId}
+                            className="flex items-center justify-between gap-3 text-xs"
+                          >
                             <span className="text-ink">
-                              {entry.rank}. {submission?.title ?? entry.submissionId}
+                              {entry.rank}.{" "}
+                              {submission?.title ?? entry.submissionId}
                             </span>
                             <span className="tabular-nums text-muted">
                               {entry.judgeScore.toFixed(2)}
@@ -121,7 +136,12 @@ export default function PastIdeathonsPage() {
                       })}
                     </ol>
                     <p className="mt-2 text-[0.625rem] text-muted">
-                      Frozen {formatProgrammeDate(programme.snapshot?.capturedAt ?? programme.schedule.resultsAt)} · checksum {programme.snapshot?.checksum}
+                      Frozen{" "}
+                      {formatProgrammeDate(
+                        programme.snapshot?.capturedAt ??
+                          programme.schedule.resultsAt,
+                      )}{" "}
+                      · checksum {programme.snapshot?.checksum}
                     </p>
                   </div>
                 ) : (
@@ -132,7 +152,10 @@ export default function PastIdeathonsPage() {
 
                 {programme.sponsors.length > 0 ? (
                   <p className="mt-2 text-[0.625rem] text-muted">
-                    Supported by {programme.sponsors.map((sponsor) => sponsor.name).join(", ")}
+                    Supported by{" "}
+                    {programme.sponsors
+                      .map((sponsor) => sponsor.name)
+                      .join(", ")}
                   </p>
                 ) : null}
               </li>

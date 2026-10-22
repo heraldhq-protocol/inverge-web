@@ -2,10 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import {
-  Analytics01Icon,
-  ArrowRight02Icon,
-} from "@hugeicons/core-free-icons";
+import { Analytics01Icon, ArrowRight02Icon } from "@hugeicons/core-free-icons";
 
 import { Pill } from "@/components/ui/pill";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
@@ -30,8 +27,8 @@ export default function IdeaAnalyticsIndexPage() {
       </h1>
       <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
         Understand how an idea is performing, what the community is telling you,
-        and which next step is available. Basic analytics stay available without a
-        paid plan.
+        and which next step is available. Basic analytics stay available without
+        a paid plan.
       </p>
 
       <section aria-labelledby="analytics-ideas" className="mt-6">
@@ -89,8 +86,8 @@ export default function IdeaAnalyticsIndexPage() {
 
       <p className="mt-5 max-w-3xl text-xs leading-5 text-muted">
         This preview repository includes one complete analytics workspace. Other
-        preview ideas have no analytics dataset yet, so they are not listed with a
-        dead link. Analytics is created per idea and remains private to its
+        preview ideas have no analytics dataset yet, so they are not listed with
+        a dead link. Analytics is created per idea and remains private to its
         creator.
       </p>
     </div>

@@ -65,7 +65,12 @@ function Kpi({
       <div className="flex items-start justify-between gap-2">
         <p className="text-xs font-medium text-muted">{label}</p>
         <span className="grid size-8 place-items-center rounded-lg bg-brand-soft text-brand-strong">
-          <HugeiconsIcon icon={icon} size={16} strokeWidth={1.8} aria-hidden="true" />
+          <HugeiconsIcon
+            icon={icon}
+            size={16}
+            strokeWidth={1.8}
+            aria-hidden="true"
+          />
         </span>
       </div>
       <p className="mt-2 text-2xl font-bold tabular-nums tracking-[-0.035em] text-ink">
@@ -81,7 +86,8 @@ function ProgrammeCard({ programme }: { programme: Programme }) {
   const deadline = nextDeadline(programme);
   const days = deadline ? daysUntil(deadline.at) : null;
   const typeIcon = typeIcons[programme.type];
-  const isPublic = programme.status !== "draft" && programme.status !== "archived";
+  const isPublic =
+    programme.status !== "draft" && programme.status !== "archived";
   const publicHref = programme.type === "monthly_ideathon" ? "/ideathon" : null;
 
   return (
@@ -89,7 +95,12 @@ function ProgrammeCard({ programme }: { programme: Programme }) {
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2">
           <span className="grid size-8 place-items-center rounded-lg bg-canvas text-muted">
-            <HugeiconsIcon icon={typeIcon} size={16} strokeWidth={1.8} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={typeIcon}
+              size={16}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
           </span>
           <p className="text-[0.625rem] font-medium uppercase tracking-[0.1em] text-muted">
             {PROGRAMME_TYPE_LABELS[programme.type]}
@@ -149,7 +160,12 @@ function ProgrammeCard({ programme }: { programme: Programme }) {
           className="inline-flex min-h-9 items-center gap-1.5 rounded-lg bg-contrast px-3 text-xs font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           Manage
-          <HugeiconsIcon icon={ArrowRight02Icon} size={13} strokeWidth={2} aria-hidden="true" />
+          <HugeiconsIcon
+            icon={ArrowRight02Icon}
+            size={13}
+            strokeWidth={2}
+            aria-hidden="true"
+          />
         </Link>
         {isPublic && publicHref ? (
           <Link
@@ -192,7 +208,8 @@ function outstandingTasks(programmes: readonly Programme[]): Task[] {
       tasks.push({
         detail: `${programme.title} has not been published.`,
         href: `/admin/programmes/${programme.id}`,
-        label: issues.length > 0 ? "Draft needs work" : "Draft ready to schedule",
+        label:
+          issues.length > 0 ? "Draft needs work" : "Draft ready to schedule",
         tone: issues.length > 0 ? "warning" : "neutral",
       });
     }
@@ -294,12 +311,17 @@ export function ProgrammeDashboard({
   const deadlines = programmes
     .map((programme) => ({ programme, deadline: nextDeadline(programme) }))
     .filter(
-      (entry): entry is { programme: Programme; deadline: { at: string; label: string } } =>
-        Boolean(entry.deadline),
+      (
+        entry,
+      ): entry is {
+        programme: Programme;
+        deadline: { at: string; label: string };
+      } => Boolean(entry.deadline),
     )
     .toSorted(
       (left, right) =>
-        new Date(left.deadline.at).getTime() - new Date(right.deadline.at).getTime(),
+        new Date(left.deadline.at).getTime() -
+        new Date(right.deadline.at).getTime(),
     )
     .slice(0, 5);
 
@@ -321,7 +343,8 @@ export function ProgrammeDashboard({
           </h1>
           <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
             Ideathons, sponsor challenges, showcases, workshops, and expert
-            sessions share one lifecycle, one judging model, and one audit trail.
+            sessions share one lifecycle, one judging model, and one audit
+            trail.
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -335,7 +358,12 @@ export function ProgrammeDashboard({
             href="/admin/programmes/new"
             className="inline-flex min-h-11 items-center gap-1.5 rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            <HugeiconsIcon icon={Add01Icon} size={16} strokeWidth={2} aria-hidden="true" />
+            <HugeiconsIcon
+              icon={Add01Icon}
+              size={16}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
             Create programme
           </Link>
         </div>
@@ -365,7 +393,11 @@ export function ProgrammeDashboard({
           label="Sponsor funding secured"
           value={
             <Amount
-              value={{ atomic: secured.toString(), currency: "USD", decimals: 2 }}
+              value={{
+                atomic: secured.toString(),
+                currency: "USD",
+                decimals: 2,
+              }}
               compact
             />
           }
@@ -377,14 +409,19 @@ export function ProgrammeDashboard({
         <div className="space-y-5">
           {groups.length === 0 ? (
             <div className="rounded-2xl border border-dashed border-border-strong bg-surface p-8 text-center">
-              <p className="text-sm font-semibold text-ink">No programmes yet</p>
+              <p className="text-sm font-semibold text-ink">
+                No programmes yet
+              </p>
               <p className="mt-1 text-xs text-muted">
                 Create a draft to schedule the next ideathon or challenge.
               </p>
             </div>
           ) : (
             groups.map((group) => (
-              <section key={group.label} aria-labelledby={`group-${group.label}`}>
+              <section
+                key={group.label}
+                aria-labelledby={`group-${group.label}`}
+              >
                 <div className="flex items-center justify-between gap-3">
                   <h2
                     id={`group-${group.label}`}
@@ -485,8 +522,8 @@ export function ProgrammeDashboard({
             <h2 className="text-sm font-bold text-ink">Preview boundary</h2>
             <p className="mt-1 text-[0.6875rem] leading-4 text-muted">
               Programme records, registrations, scores, and sponsor invoices in
-              this workspace are sample data. Local edits disappear on reload and
-              nothing is sent to the API.
+              this workspace are sample data. Local edits disappear on reload
+              and nothing is sent to the API.
             </p>
           </section>
         </aside>

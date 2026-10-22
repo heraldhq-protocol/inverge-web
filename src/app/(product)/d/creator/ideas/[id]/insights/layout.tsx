@@ -50,7 +50,9 @@ export default async function AnalyticsLayout({
 
       <div className="mt-4">
         <Suspense
-          fallback={<div className="h-11 border-b border-border" aria-hidden="true" />}
+          fallback={
+            <div className="h-11 border-b border-border" aria-hidden="true" />
+          }
         >
           <AnalyticsTabs basePath={basePath} />
         </Suspense>

@@ -34,11 +34,7 @@ export type AiUsage = {
 };
 
 export type SubscriptionStatus =
-  | "trialing"
-  | "active"
-  | "past_due"
-  | "canceled"
-  | "incomplete";
+  "trialing" | "active" | "past_due" | "canceled" | "incomplete";
 
 export type Subscription = {
   id: string;
@@ -52,10 +48,7 @@ export type Subscription = {
 };
 
 export type PromotionStatus =
-  | "pending_payment"
-  | "active"
-  | "expired"
-  | "refunded";
+  "pending_payment" | "active" | "expired" | "refunded";
 
 export type Promotion = {
   id: string;
@@ -70,11 +63,7 @@ export type Promotion = {
 };
 
 export type WorkshopBookingStatus =
-  | "reserved"
-  | "pending_payment"
-  | "confirmed"
-  | "cancelled"
-  | "refunded";
+  "reserved" | "pending_payment" | "confirmed" | "cancelled" | "refunded";
 
 export type WorkshopBooking = {
   id: string;
@@ -170,7 +159,10 @@ export function canTransitionSubscription(
  * A subscription becomes active only when the provider confirms it. A local
  * "upgrade" click produces `incomplete`, never `active`.
  */
-export function beginSubscription(accountId: string, plan: PlanId): Subscription {
+export function beginSubscription(
+  accountId: string,
+  plan: PlanId,
+): Subscription {
   return {
     accountId,
     id: `sub_${accountId}_${plan}`,
@@ -325,15 +317,16 @@ export function markInvoicePaid(
   return "paid";
 }
 
-const PRIZE_TRANSITIONS: Readonly<Record<PrizeStatus, readonly PrizeStatus[]>> = {
-  committed: ["funded", "failed"],
-  funded: ["eligibility_pending", "failed"],
-  eligibility_pending: ["approved", "failed"],
-  approved: ["processing", "failed"],
-  processing: ["delivered", "failed"],
-  delivered: [],
-  failed: [],
-};
+const PRIZE_TRANSITIONS: Readonly<Record<PrizeStatus, readonly PrizeStatus[]>> =
+  {
+    committed: ["funded", "failed"],
+    funded: ["eligibility_pending", "failed"],
+    eligibility_pending: ["approved", "failed"],
+    approved: ["processing", "failed"],
+    processing: ["delivered", "failed"],
+    delivered: [],
+    failed: [],
+  };
 
 export function canAdvancePrize(from: PrizeStatus, to: PrizeStatus): boolean {
   return PRIZE_TRANSITIONS[from].includes(to);

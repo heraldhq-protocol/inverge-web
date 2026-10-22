@@ -15,7 +15,12 @@ const usd = (dollars: number): MoneyAmount => ({
 });
 
 const MODULES: readonly ProgrammeModule[] = [
-  { availability: "plan", enabled: true, key: "ai_analytics", note: "AI synthesis requires Pro. Basic analytics stay free." },
+  {
+    availability: "plan",
+    enabled: true,
+    key: "ai_analytics",
+    note: "AI synthesis requires Pro. Basic analytics stay free.",
+  },
   { availability: "preview", enabled: true, key: "community_followup" },
   { availability: "coming_soon", enabled: false, key: "showcase" },
   { availability: "coming_soon", enabled: false, key: "mentorship" },
@@ -26,15 +31,50 @@ const MODULES: readonly ProgrammeModule[] = [
 const rubric = {
   communityWeight: 0,
   criteria: [
-    { guidance: "Is the problem specific and evidenced?", id: "problem", label: "Problem clarity", weight: 25 },
-    { guidance: "Does the solution answer the problem?", id: "solution", label: "Solution fit", weight: 30 },
-    { guidance: "Can this team execute in the stated window?", id: "feasibility", label: "Feasibility", weight: 25 },
-    { guidance: "Would the target user actually use it?", id: "evidence", label: "Community evidence", weight: 20 },
+    {
+      guidance: "Is the problem specific and evidenced?",
+      id: "problem",
+      label: "Problem clarity",
+      weight: 25,
+    },
+    {
+      guidance: "Does the solution answer the problem?",
+      id: "solution",
+      label: "Solution fit",
+      weight: 30,
+    },
+    {
+      guidance: "Can this team execute in the stated window?",
+      id: "feasibility",
+      label: "Feasibility",
+      weight: 25,
+    },
+    {
+      guidance: "Would the target user actually use it?",
+      id: "evidence",
+      label: "Community evidence",
+      weight: 20,
+    },
   ],
   judges: [
-    { affiliation: "Inverge", conflict: "none" as const, id: "judge-1", name: "Amara Okonkwo" },
-    { affiliation: "Sahel Energy", conflict: "none" as const, id: "judge-2", name: "Tunde Balogun" },
-    { affiliation: "Lagos Innovation Lab", conflict: "none" as const, id: "judge-3", name: "Ngozi Eze" },
+    {
+      affiliation: "Inverge",
+      conflict: "none" as const,
+      id: "judge-1",
+      name: "Amara Okonkwo",
+    },
+    {
+      affiliation: "Sahel Energy",
+      conflict: "none" as const,
+      id: "judge-2",
+      name: "Tunde Balogun",
+    },
+    {
+      affiliation: "Lagos Innovation Lab",
+      conflict: "none" as const,
+      id: "judge-3",
+      name: "Ngozi Eze",
+    },
   ],
   resultsVisibility: "public" as const,
   scores: [] as {
@@ -53,7 +93,10 @@ function scoreFor(seed: number, criterion: string): number {
     evidence: 7,
   };
   const base = offsets[criterion] ?? 7;
-  return Math.max(3, Math.min(10, base + ((seed * 7 + criterion.length * 3) % 4) - 1));
+  return Math.max(
+    3,
+    Math.min(10, base + ((seed * 7 + criterion.length * 3) % 4) - 1),
+  );
 }
 
 const submissionSeed: readonly {
@@ -65,16 +108,96 @@ const submissionSeed: readonly {
   status: Submission["status"];
   submittedAt: string;
 }[] = [
-  { category: "Clean energy", creator: "Amaka Nwosu", ideaId: "sungrid-community-power", status: "shortlisted", submittedAt: "2026-10-05T10:00:00.000Z", supporters: 286, title: "SunGrid Community Power" },
-  { category: "Agriculture", creator: "Ibrahim Musa", ideaId: "farmlink-coldbox", status: "submitted", submittedAt: "2026-10-06T11:30:00.000Z", supporters: 193, title: "FarmLink ColdBox" },
-  { category: "Campus technology", creator: "Tobi Adeyemi", ideaId: "campus-konekt", status: "submitted", submittedAt: "2026-10-04T09:15:00.000Z", supporters: 412, title: "CampusKonekt" },
-  { category: "Education technology", creator: "Zainab Bello", ideaId: "studymate-ng", status: "under_review", submittedAt: "2026-10-07T14:10:00.000Z", supporters: 112, title: "StudyMate NG" },
-  { category: "Logistics", creator: "Chinedu Eze", ideaId: "zippy-campus", status: "submitted", submittedAt: "2026-10-08T08:40:00.000Z", supporters: 76, title: "ZippyCampus" },
-  { category: "Agriculture", creator: "Morenike Afolabi", ideaId: "crop-circle", status: "submitted", submittedAt: "2026-10-09T12:05:00.000Z", supporters: 104, title: "CropCircle" },
-  { category: "Agriculture", creator: "Femi Danladi", ideaId: "agroroute", status: "accepted", submittedAt: "2026-10-03T16:20:00.000Z", supporters: 127, title: "AgroRoute" },
-  { category: "Clean energy", creator: "Efe Ighalo", ideaId: "ecocharge-kiosks", status: "submitted", submittedAt: "2026-10-10T09:00:00.000Z", supporters: 149, title: "EcoCharge Kiosks" },
-  { category: "Clean energy", creator: "Yusuf Lawal", ideaId: "solarchill", status: "submitted", submittedAt: "2026-10-02T13:35:00.000Z", supporters: 171, title: "SolarChill" },
-  { category: "Food & retail", creator: "Tolu Martins", ideaId: "kitchen-collective", status: "draft", submittedAt: "2026-10-11T07:50:00.000Z", supporters: 132, title: "Kitchen Collective" },
+  {
+    category: "Clean energy",
+    creator: "Amaka Nwosu",
+    ideaId: "sungrid-community-power",
+    status: "shortlisted",
+    submittedAt: "2026-10-05T10:00:00.000Z",
+    supporters: 286,
+    title: "SunGrid Community Power",
+  },
+  {
+    category: "Agriculture",
+    creator: "Ibrahim Musa",
+    ideaId: "farmlink-coldbox",
+    status: "submitted",
+    submittedAt: "2026-10-06T11:30:00.000Z",
+    supporters: 193,
+    title: "FarmLink ColdBox",
+  },
+  {
+    category: "Campus technology",
+    creator: "Tobi Adeyemi",
+    ideaId: "campus-konekt",
+    status: "submitted",
+    submittedAt: "2026-10-04T09:15:00.000Z",
+    supporters: 412,
+    title: "CampusKonekt",
+  },
+  {
+    category: "Education technology",
+    creator: "Zainab Bello",
+    ideaId: "studymate-ng",
+    status: "under_review",
+    submittedAt: "2026-10-07T14:10:00.000Z",
+    supporters: 112,
+    title: "StudyMate NG",
+  },
+  {
+    category: "Logistics",
+    creator: "Chinedu Eze",
+    ideaId: "zippy-campus",
+    status: "submitted",
+    submittedAt: "2026-10-08T08:40:00.000Z",
+    supporters: 76,
+    title: "ZippyCampus",
+  },
+  {
+    category: "Agriculture",
+    creator: "Morenike Afolabi",
+    ideaId: "crop-circle",
+    status: "submitted",
+    submittedAt: "2026-10-09T12:05:00.000Z",
+    supporters: 104,
+    title: "CropCircle",
+  },
+  {
+    category: "Agriculture",
+    creator: "Femi Danladi",
+    ideaId: "agroroute",
+    status: "accepted",
+    submittedAt: "2026-10-03T16:20:00.000Z",
+    supporters: 127,
+    title: "AgroRoute",
+  },
+  {
+    category: "Clean energy",
+    creator: "Efe Ighalo",
+    ideaId: "ecocharge-kiosks",
+    status: "submitted",
+    submittedAt: "2026-10-10T09:00:00.000Z",
+    supporters: 149,
+    title: "EcoCharge Kiosks",
+  },
+  {
+    category: "Clean energy",
+    creator: "Yusuf Lawal",
+    ideaId: "solarchill",
+    status: "submitted",
+    submittedAt: "2026-10-02T13:35:00.000Z",
+    supporters: 171,
+    title: "SolarChill",
+  },
+  {
+    category: "Food & retail",
+    creator: "Tolu Martins",
+    ideaId: "kitchen-collective",
+    status: "draft",
+    submittedAt: "2026-10-11T07:50:00.000Z",
+    supporters: 132,
+    title: "Kitchen Collective",
+  },
 ];
 
 const submissions: Submission[] = submissionSeed.map((entry) => ({
@@ -105,19 +228,40 @@ for (const [index, submission] of submissions.entries()) {
 
 const registrations = Array.from({ length: 14 }, (_, index) => {
   const names = [
-    "Aisha Bello", "Tunde Adeyemi", "Zainab Yusuf", "Daniel Okoro", "Chidinma Eze",
-    "Ibrahim Sani", "Ngozi Okafor", "Femi Adeola", "Ada Nwosu", "Emeka Nwankwo",
-    "Bola Adekunle", "Amina Sadiq", "Kelechi Nnamani", "Tolu Martins",
+    "Aisha Bello",
+    "Tunde Adeyemi",
+    "Zainab Yusuf",
+    "Daniel Okoro",
+    "Chidinma Eze",
+    "Ibrahim Sani",
+    "Ngozi Okafor",
+    "Femi Adeola",
+    "Ada Nwosu",
+    "Emeka Nwankwo",
+    "Bola Adekunle",
+    "Amina Sadiq",
+    "Kelechi Nnamani",
+    "Tolu Martins",
   ];
   const name = names[index] ?? `Participant ${index + 1}`;
   return {
     eligibilityNote: index === 11 ? "Awaiting student verification" : undefined,
     handle: `@${name.toLowerCase().replace(/[^a-z]+/g, "")}`,
     id: `reg-${index + 1}`,
-    location: index % 3 === 0 ? "Lagos, Nigeria" : index % 3 === 1 ? "Abuja, Nigeria" : "Accra, Ghana",
+    location:
+      index % 3 === 0
+        ? "Lagos, Nigeria"
+        : index % 3 === 1
+          ? "Abuja, Nigeria"
+          : "Accra, Ghana",
     participantName: name,
     registeredAt: `2026-10-${String(2 + (index % 9)).padStart(2, "0")}T09:00:00.000Z`,
-    status: index === 11 ? ("pending" as const) : index === 13 ? ("withdrawn" as const) : ("eligible" as const),
+    status:
+      index === 11
+        ? ("pending" as const)
+        : index === 13
+          ? ("withdrawn" as const)
+          : ("eligible" as const),
   };
 });
 
@@ -237,7 +381,10 @@ const baseSchedule = {
   timezone: "Africa/Lagos",
 };
 
-function programme(overrides: Partial<Programme> & Pick<Programme, "id" | "slug" | "title" | "type" | "status">): Programme {
+function programme(
+  overrides: Partial<Programme> &
+    Pick<Programme, "id" | "slug" | "title" | "type" | "status">,
+): Programme {
   return {
     assets: [],
     audience: {
@@ -272,7 +419,8 @@ function programme(overrides: Partial<Programme> & Pick<Programme, "id" | "slug"
       allowTeams: true,
       attachments: ["Pitch deck (PDF, optional)"],
       requiredFields: ["Problem", "Target audience", "Solution", "Roadmap"],
-      template: "Use an existing Inverge idea, or create one during registration.",
+      template:
+        "Use an existing Inverge idea, or create one during registration.",
     },
     submissions: [],
     tagline: "Big ideas. Real impact.",
@@ -329,7 +477,8 @@ export const previewProgrammes: readonly Programme[] = [
         question: "Can I enter a private idea?",
       },
     ],
-    heroCopy: "Ideas that tackle climate, food, energy, and environmental challenges in Africa.",
+    heroCopy:
+      "Ideas that tackle climate, food, energy, and environmental challenges in Africa.",
     id: "prog-ideathon-oct-2026",
     modules: MODULES.map((module) =>
       module.key === "workshops"
@@ -351,7 +500,11 @@ export const previewProgrammes: readonly Programme[] = [
       capacity: 120,
       format: "online",
       id: "showcase-oct",
-      presenterIdeaIds: ["sungrid-community-power", "farmlink-coldbox", "solarchill"],
+      presenterIdeaIds: [
+        "sungrid-community-power",
+        "farmlink-coldbox",
+        "solarchill",
+      ],
       rsvps: 64,
       startsAt: "2026-11-01T15:00:00.000Z",
       title: "Sustainable Solutions demo day",
@@ -379,7 +532,8 @@ export const previewProgrammes: readonly Programme[] = [
       },
       {
         capacity: 30,
-        description: "How to present a hardware or energy idea to a judging panel.",
+        description:
+          "How to present a hardware or energy idea to a judging panel.",
         durationMinutes: 45,
         facilitator: "Tunde Balogun",
         id: "workshop-pitch",
@@ -405,7 +559,8 @@ export const previewProgrammes: readonly Programme[] = [
     rewards: [
       {
         amount: usd(15000),
-        description: "Pilot funding plus a place in the sponsor's accelerator shortlist.",
+        description:
+          "Pilot funding plus a place in the sponsor's accelerator shortlist.",
         fulfilmentOwner: "Sahel Energy partnerships",
         fulfilmentStatus: "committed",
         fundingStatus: "committed",
@@ -571,8 +726,7 @@ export function getPreviewActiveIdeathon(): Programme {
   const programme =
     previewProgrammes.find(
       (entry) =>
-        entry.type === "monthly_ideathon" &&
-        entry.status === "submission_open",
+        entry.type === "monthly_ideathon" && entry.status === "submission_open",
     ) ?? previewProgrammes[0];
 
   if (!programme) {

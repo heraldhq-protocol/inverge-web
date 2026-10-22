@@ -34,11 +34,7 @@ export type StandingEntry = {
 };
 
 export type CompetitionStatus =
-  | "archived"
-  | "closed"
-  | "open"
-  | "published"
-  | "upcoming";
+  "archived" | "closed" | "open" | "published" | "upcoming";
 
 export type Ideathon = {
   id: string;

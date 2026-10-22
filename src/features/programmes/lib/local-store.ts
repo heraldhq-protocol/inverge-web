@@ -103,7 +103,10 @@ export function getServerWizardDraftSnapshot(): Programme | null {
   return DRAFT_NONE;
 }
 
-export function subscribeWizardDraft(id: string, listener: () => void): () => void {
+export function subscribeWizardDraft(
+  id: string,
+  listener: () => void,
+): () => void {
   if (!canUseStorage()) return () => {};
   const key = `${DRAFT_PREFIX}${id}`;
   const onStorage = (event: StorageEvent) => {

@@ -63,7 +63,5 @@ export function bestFeedbackOpportunity(
     return Boolean(form?.enabled && form.questions.length > 0);
   });
 
-  return (
-    eligible.sort((a, b) => b.supporters - a.supporters).at(0) ?? null
-  );
+  return eligible.sort((a, b) => b.supporters - a.supporters).at(0) ?? null;
 }

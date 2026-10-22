@@ -24,9 +24,21 @@ function signals(
   prePledge: [number, number, number] = [0, 0, 0],
 ): EntrySignals {
   return {
-    supporters: { EMAIL: supporters[0], SOCIAL: supporters[1], VERIFIED: supporters[2] },
-    feedback: { EMAIL: feedback[0], SOCIAL: feedback[1], VERIFIED: feedback[2] },
-    prePledge: { EMAIL: prePledge[0], SOCIAL: prePledge[1], VERIFIED: prePledge[2] },
+    supporters: {
+      EMAIL: supporters[0],
+      SOCIAL: supporters[1],
+      VERIFIED: supporters[2],
+    },
+    feedback: {
+      EMAIL: feedback[0],
+      SOCIAL: feedback[1],
+      VERIFIED: feedback[2],
+    },
+    prePledge: {
+      EMAIL: prePledge[0],
+      SOCIAL: prePledge[1],
+      VERIFIED: prePledge[2],
+    },
   };
 }
 
@@ -46,7 +58,11 @@ function idea({
     creatorInitials: "C",
     artwork: "food" as const,
     discoveryCategory,
-    prePledged: { atomic: prePledgedAtomic, currency: "USD" as const, decimals: 2 as const },
+    prePledged: {
+      atomic: prePledgedAtomic,
+      currency: "USD" as const,
+      decimals: 2 as const,
+    },
     supporters,
     validationPercent: 50,
     feedbackResponses: 0,
@@ -92,13 +108,20 @@ describe("rankEntries", () => {
         score: entryScore(signals([10, 0, 0])),
       },
       {
-        idea: idea({ id: "few-verified", supporters: 4, prePledgedAtomic: "0" }),
+        idea: idea({
+          id: "few-verified",
+          supporters: 4,
+          prePledgedAtomic: "0",
+        }),
         signals: signals([0, 0, 4]),
         score: entryScore(signals([0, 0, 4])),
       },
     ]);
 
-    expect(ranked.map((entry) => entry.idea.id)).toEqual(["few-verified", "many-email"]);
+    expect(ranked.map((entry) => entry.idea.id)).toEqual([
+      "few-verified",
+      "many-email",
+    ]);
     expect(ranked.map((entry) => entry.rank)).toEqual([1, 2]);
   });
 

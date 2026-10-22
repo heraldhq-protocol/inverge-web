@@ -62,7 +62,9 @@ export function rankEntries(
     .map((entry, index) => ({ ...entry, rank: index + 1 }));
 }
 
-export function competitionTotals(entries: readonly StandingEntry[]): CompetitionTotals {
+export function competitionTotals(
+  entries: readonly StandingEntry[],
+): CompetitionTotals {
   return {
     supporters: entries.reduce(
       (total, entry) => total + totalSupporters(entry.signals.supporters),

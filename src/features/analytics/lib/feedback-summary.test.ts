@@ -36,7 +36,10 @@ const form: FeedbackForm = {
   ],
 };
 
-const submissions: readonly { answers: FeedbackAnswers; formVersion: number }[] = [
+const submissions: readonly {
+  answers: FeedbackAnswers;
+  formVersion: number;
+}[] = [
   {
     formVersion: 3,
     answers: {

@@ -112,7 +112,9 @@ export function summariseFeedback(
 
     if (question.type === "single-choice" || question.type === "multi-choice") {
       const options = question.options ?? [];
-      const counts = new Map<string, number>(options.map((option) => [option.label, 0]));
+      const counts = new Map<string, number>(
+        options.map((option) => [option.label, 0]),
+      );
 
       for (const value of values) {
         const picks = Array.isArray(value) ? value : [value];
@@ -145,7 +147,11 @@ export function summariseFeedback(
         question,
         answered,
         tallies: [
-          { label: "Yes", count: yes, share: answered > 0 ? yes / answered : 0 },
+          {
+            label: "Yes",
+            count: yes,
+            share: answered > 0 ? yes / answered : 0,
+          },
           { label: "No", count: no, share: answered > 0 ? no / answered : 0 },
         ],
         ratingAverage: null,

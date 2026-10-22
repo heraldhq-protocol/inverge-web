@@ -27,7 +27,12 @@ function SnapshotItem({
   return (
     <div className="min-w-0">
       <span className="grid size-8 place-items-center rounded-lg bg-brand-soft text-brand-strong">
-        <HugeiconsIcon icon={icon} size={16} strokeWidth={1.8} aria-hidden="true" />
+        <HugeiconsIcon
+          icon={icon}
+          size={16}
+          strokeWidth={1.8}
+          aria-hidden="true"
+        />
       </span>
       <p className="mt-2 truncate text-base font-bold tabular-nums text-ink">
         {value}

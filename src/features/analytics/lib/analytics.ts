@@ -61,18 +61,25 @@ export function analyticsWindow(
     latest && baseline ? latest.supporters - baseline.supporters : null;
   const interestChangeAtomic =
     latest && baseline
-      ? (BigInt(latest.estimatedInterestAtomic) - BigInt(baseline.estimatedInterestAtomic)).toString()
+      ? (
+          BigInt(latest.estimatedInterestAtomic) -
+          BigInt(baseline.estimatedInterestAtomic)
+        ).toString()
       : null;
 
   const previousSupporterChange =
     hasComparison && baseline && series[previousStart]
-      ? baseline.supporters - (series[previousStart]?.supporters ?? baseline.supporters)
+      ? baseline.supporters -
+        (series[previousStart]?.supporters ?? baseline.supporters)
       : null;
   const previousInterestChangeAtomic =
     hasComparison && baseline && series[previousStart]
       ? (
           BigInt(baseline.estimatedInterestAtomic) -
-          BigInt(series[previousStart]?.estimatedInterestAtomic ?? baseline.estimatedInterestAtomic)
+          BigInt(
+            series[previousStart]?.estimatedInterestAtomic ??
+              baseline.estimatedInterestAtomic,
+          )
         ).toString()
       : null;
 
@@ -131,7 +138,8 @@ export function recommendIdeaActions(idea: IdeaDetail): Recommendation[] {
     (check) => check.requirement === "pre-pledged",
   );
   if (interest && !interest.met) {
-    const remaining = BigInt(interest.required.atomic) - BigInt(interest.current.atomic);
+    const remaining =
+      BigInt(interest.required.atomic) - BigInt(interest.current.atomic);
     recommendations.push({
       body: `Estimated interest is ${formatMoney(interest.current)} against a ${formatMoney(interest.required)} threshold. A pre-pledge is non-binding, so make it clear that recording intent moves no money.`,
       key: "interest",
