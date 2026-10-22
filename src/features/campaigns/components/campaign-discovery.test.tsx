@@ -51,16 +51,25 @@ const candidates = publicCampaigns.filter(
 const categoryCounts = campaignCategoryCounts(candidates);
 const subcategoryCounts = campaignSubcategoryCountsByCategory(candidates);
 
-function view(filters: CampaignFilters = defaultCampaignFilters) {
+function view(
+  filters: CampaignFilters = defaultCampaignFilters,
+  {
+    list = candidates,
+    sponsoredSlot = false,
+  }: { list?: readonly Campaign[]; sponsoredSlot?: boolean } = {},
+) {
   return (
     <CampaignDiscovery
-      candidates={candidates}
+      candidates={list}
       categoryCounts={categoryCounts}
       featuredCandidates={featured ? [featured] : []}
       subcategoryCounts={subcategoryCounts}
       initialFilters={filters}
       nowIso={NOW}
-      totalPublic={candidates.length}
+      {...(sponsoredSlot
+        ? { sponsoredSlot: <div data-testid="sponsored-slot">Sponsored</div> }
+        : {})}
+      totalPublic={list.length}
     />
   );
 }
@@ -278,6 +287,33 @@ describe("CampaignDiscovery", () => {
     );
 
     expect(screen.getByText("Same subcategory")).toBeInTheDocument();
+  });
+
+  it("places the sponsored slot after the sixth organic result, outside the filters", () => {
+    render(view(defaultCampaignFilters, { sponsoredSlot: true }));
+
+    const results = document.getElementById("campaign-results");
+    expect(results).not.toBeNull();
+
+    const slot = screen.getByTestId("sponsored-slot");
+    const children = Array.from(results!.children);
+    expect(children.indexOf(slot.parentElement as Element)).toBe(6);
+
+    const filters = screen.getByRole("complementary", {
+      name: "Campaign filters",
+    });
+    expect(filters).not.toContainElement(slot);
+  });
+
+  it("does not render a sponsored slot for fewer than six organic results", () => {
+    render(
+      view(defaultCampaignFilters, {
+        list: candidates.slice(0, 5),
+        sponsoredSlot: true,
+      }),
+    );
+
+    expect(screen.queryByTestId("sponsored-slot")).not.toBeInTheDocument();
   });
 });
 
