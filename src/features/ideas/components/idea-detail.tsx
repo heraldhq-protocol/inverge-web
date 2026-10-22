@@ -28,13 +28,12 @@ import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { IconTile } from "@/components/ui/icon-tile";
 import { Pill } from "@/components/ui/pill";
+import { AdSlot } from "@/features/advertising/components/ad-slot";
 import { IdeaActions } from "@/features/ideas/components/idea-actions";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";
 import { IdeaDiscussion } from "@/features/ideas/components/idea-discussion";
-import {
-  CommunityInvite,
-} from "@/features/feedback/components/community-invite";
+import { CommunityInvite } from "@/features/feedback/components/community-invite";
 import { IdeaFollow } from "@/features/ideas/components/idea-follow";
 import { IdeaGoalsStrip } from "@/features/feedback/components/idea-goals-strip";
 import {
@@ -482,16 +481,18 @@ export function IdeaDetail({
                 </p>
               </section>
 
+              <AdSlot
+                page={{ category: idea.discoveryCategory, kind: "idea" }}
+                placementId="idea-detail-inline"
+              />
+
               <section aria-labelledby="idea-roadmap">
                 <StoryHeading icon={Route01Icon} id="idea-roadmap">
                   Roadmap
                 </StoryHeading>
                 <ol className="relative mt-4 max-w-2xl space-y-5 border-l border-border pl-6">
                   {idea.roadmapSteps.map((step) => (
-                    <li
-                      key={step.date + step.description}
-                      className="relative"
-                    >
+                    <li key={step.date + step.description} className="relative">
                       <span
                         aria-hidden="true"
                         className="absolute -left-[1.875rem] top-0.5 grid size-4 place-items-center rounded-full border-2 border-brand bg-surface"
@@ -541,8 +542,8 @@ export function IdeaDetail({
                     </p>
                   ) : (
                     <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-[0.6875rem] leading-4 text-muted">
-                      This idea is not seeking funding. The figures above describe
-                      the work, not a campaign target or money raised.
+                      This idea is not seeking funding. The figures above
+                      describe the work, not a campaign target or money raised.
                     </p>
                   )}
                 </div>
@@ -778,6 +779,11 @@ export function IdeaDetail({
                 <GateMeter idea={idea} />
               </div>
             </div>
+
+            <AdSlot
+              page={{ category: idea.discoveryCategory, kind: "idea" }}
+              placementId="idea-detail-rail"
+            />
 
             <div className="mt-3">
               <IdeaActions idea={idea} />

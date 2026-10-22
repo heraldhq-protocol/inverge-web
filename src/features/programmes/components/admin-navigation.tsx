@@ -8,6 +8,7 @@ import {
   CheckListIcon,
   Home01Icon,
   Invoice01Icon,
+  Megaphone01Icon,
   Note01Icon,
   TrophyIcon,
 } from "@hugeicons/core-free-icons";
@@ -18,6 +19,7 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
   [
     { href: "/admin", icon: Home01Icon, label: "Overview" },
     { href: "/admin/campaigns", icon: CheckListIcon, label: "Campaign review" },
+    { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
     { href: "/admin/audit", icon: Note01Icon, label: "Audit log" },

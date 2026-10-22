@@ -2,6 +2,7 @@ import { ArrowLeft, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 import { Container } from "@/features/marketing/components/container";
+import { AdSlot } from "@/features/advertising/components/ad-slot";
 import {
   getGuideAudience,
   GuideIcon,
@@ -128,6 +129,12 @@ export function GuideArticle({ entry }: { entry: EditorialEntry }) {
               </li>
             ))}
           </ol>
+
+          <AdSlot
+            className="mt-10"
+            page={{ kind: "guide" }}
+            placementId="content-inline"
+          />
 
           {previous || next ? (
             <nav

@@ -16,7 +16,7 @@ import {
 } from "@hugeicons/core-free-icons";
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { Fragment, useEffect, useMemo, useState, type ReactNode } from "react";
 
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -290,12 +290,18 @@ export function IdeasDashboard({
   data,
   initialState = defaultIdeaFilters,
   primaryAction,
+  sponsoredSlot,
   topics,
   viewer = "authenticated",
 }: {
   data: IdeasDiscoveryData;
   initialState?: IdeaFilterState;
   primaryAction?: { href: string; label: string };
+  /**
+   * A server-selected, labelled paid placement. It is rendered after the sixth
+   * organic idea and never enters filtering, sorting, pagination, or counts.
+   */
+  sponsoredSlot?: ReactNode;
   topics: readonly Topic[];
   viewer?: "authenticated" | "visitor";
 }) {
@@ -521,10 +527,17 @@ export function IdeasDashboard({
                         : "grid gap-3"
                     }
                   >
-                    {visibleIdeas.map((idea) => (
-                      <li key={idea.id} className="grid">
-                        <IdeaDiscoveryCard idea={idea} variant={state.view} />
-                      </li>
+                    {visibleIdeas.map((idea, index) => (
+                      <Fragment key={idea.id}>
+                        <li className="grid">
+                          <IdeaDiscoveryCard idea={idea} variant={state.view} />
+                        </li>
+                        {index === 5 &&
+                        sponsoredSlot &&
+                        visibleIdeas.length >= 6 ? (
+                          <li className="grid">{sponsoredSlot}</li>
+                        ) : null}
+                      </Fragment>
                     ))}
                   </ul>
                 </section>

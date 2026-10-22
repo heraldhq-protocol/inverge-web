@@ -2,6 +2,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 
 import { Container } from "@/components/ui/container";
+import { AdSlot } from "@/features/advertising/components/ad-slot";
 import { CampaignBreadcrumbs } from "@/features/campaigns/components/campaign-breadcrumbs";
 import { CampaignDetailHero } from "@/features/campaigns/components/campaign-detail-hero";
 import { CampaignDiscussion } from "@/features/campaigns/components/campaign-discussion";
@@ -126,6 +127,16 @@ export function CampaignDetail({
                 slug={campaign.slug}
               />
             </div>
+
+            {/* After the decision content, never inside the funding panel or
+                between a metric and its explanation. It renders nothing when
+                no approved creative is in schedule. */}
+            <AdSlot
+              className="mt-8"
+              now={now}
+              page={{ category: campaign.category, kind: "campaign" }}
+              placementId="campaign-detail-inline"
+            />
           </div>
 
           <aside
@@ -136,6 +147,11 @@ export function CampaignDetail({
             <CampaignSupportTiers campaign={campaign} variant="rail" />
             <CampaignFacts campaign={campaign} variant="rail" />
             <CampaignEscrowCard campaign={campaign} />
+            <AdSlot
+              now={now}
+              page={{ category: campaign.category, kind: "campaign" }}
+              placementId="campaign-detail-rail"
+            />
             <CampaignFaq campaign={campaign} variant="rail" />
           </aside>
         </div>

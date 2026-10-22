@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 
 import { Container } from "@/components/ui/container";
+import { AdSlot } from "@/features/advertising/components/ad-slot";
 import { CampaignDiscovery } from "@/features/campaigns/components/campaign-discovery";
 import { CampaignDiscoveryHero } from "@/features/campaigns/components/campaign-discovery-hero";
 import { CampaignFeaturedCarousel } from "@/features/campaigns/components/campaign-featured-carousel";
@@ -46,6 +47,16 @@ export default async function CampaignsPage({ searchParams }: PageProps) {
           subcategoryCounts={view.subcategoryCounts}
           initialFilters={parseCampaignFilters(params)}
           nowIso={view.now}
+          sponsoredSlot={
+            <AdSlot
+              now={view.now}
+              page={{
+                kind: "campaigns",
+                organicResultCount: view.candidates.length,
+              }}
+              placementId="campaign-feed-inline"
+            />
+          }
           totalPublic={view.candidates.length}
         />
       </section>

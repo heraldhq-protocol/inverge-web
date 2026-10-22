@@ -20,12 +20,14 @@ import {
 import Link from "next/link";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import {
+  Fragment,
   useCallback,
   useEffect,
   useMemo,
   useRef,
   useState,
   useTransition,
+  type ReactNode,
 } from "react";
 
 import { Container } from "@/components/ui/container";
@@ -620,6 +622,7 @@ export function CampaignDiscovery({
   scope,
   searchPlaceholder = "Search campaigns, creators, or places",
   showCategoryShortcuts = true,
+  sponsoredSlot,
   subcategoryCounts,
   totalPublic,
 }: {
@@ -638,6 +641,12 @@ export function CampaignDiscovery({
   scope?: DiscoveryScope;
   searchPlaceholder?: string;
   showCategoryShortcuts?: boolean;
+  /**
+   * A server-selected, labelled paid placement. It is rendered after the sixth
+   * organic result and never enters `filterCampaigns`, the result count, or the
+   * sort order.
+   */
+  sponsoredSlot?: ReactNode;
   subcategoryCounts: Readonly<Record<string, Readonly<Record<string, number>>>>;
   totalPublic: number;
 }) {
@@ -1029,7 +1038,6 @@ export function CampaignDiscovery({
                 ? "1 campaign matches"
                 : `${results.length} campaigns match`}
             </p>
-
             {results.length > 0 ? (
               <>
                 <div
@@ -1041,16 +1049,20 @@ export function CampaignDiscovery({
                   }`}
                 >
                   {visible.map((campaign, index) => (
-                    <CampaignCard
-                      key={campaign.id}
-                      campaign={campaign}
-                      nowIso={nowIso}
-                      recommendationReason={
-                        recommendationReasons?.[campaign.id]
-                      }
-                      view={filters.view}
-                      priority={index === 0}
-                    />
+                    <Fragment key={campaign.id}>
+                      <CampaignCard
+                        campaign={campaign}
+                        nowIso={nowIso}
+                        recommendationReason={
+                          recommendationReasons?.[campaign.id]
+                        }
+                        view={filters.view}
+                        priority={index === 0}
+                      />
+                      {index === 5 && sponsoredSlot && results.length >= 6 ? (
+                        <div className="grid">{sponsoredSlot}</div>
+                      ) : null}
+                    </Fragment>
                   ))}
                 </div>
 

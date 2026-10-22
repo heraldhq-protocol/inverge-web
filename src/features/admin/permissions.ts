@@ -25,6 +25,8 @@ export type AdminPermission =
   | "sponsors:manage"
   | "payments:confirm"
   | "campaign:review"
+  | "advertising:manage"
+  | "advertising:approve"
   | "settings:manage";
 
 export const ROLE_PERMISSIONS: Readonly<
@@ -42,6 +44,8 @@ export const ROLE_PERMISSIONS: Readonly<
     "sponsors:manage",
     "payments:confirm",
     "campaign:review",
+    "advertising:manage",
+    "advertising:approve",
     "settings:manage",
   ],
   organiser: [
@@ -50,6 +54,7 @@ export const ROLE_PERMISSIONS: Readonly<
     "submission:moderate",
     "rewards:fulfil",
     "sponsors:manage",
+    "advertising:manage",
   ],
   judge: ["judging:score"],
 };

@@ -31,6 +31,7 @@ const groups = [
     links: [
       ["Privacy", "/privacy"],
       ["Terms", "/terms"],
+      ["Advertising choices", "/advertising-preferences"],
     ],
   },
 ] as const;

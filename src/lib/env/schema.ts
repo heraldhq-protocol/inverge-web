@@ -15,6 +15,19 @@ const environmentSchema = z.object({
   NEXT_PUBLIC_SITE_URL: z.url().optional(),
   /** Displayed X/Twitter handle. Omitted from share tags when unset. */
   NEXT_PUBLIC_TWITTER_HANDLE: z.string().optional(),
+  /**
+   * Advertising switches. The flags module is authoritative for defaults; this
+   * schema only keeps malformed deployment values from being silently treated
+   * as "on".
+   */
+  INVERGE_ADS_ENABLED: z.enum(["true", "false"]).optional(),
+  INVERGE_ADS_THIRD_PARTY_ENABLED: z.enum(["true", "false"]).optional(),
+  INVERGE_ADS_ANALYTICS_ENABLED: z.enum(["true", "false"]).optional(),
+  NEXT_PUBLIC_INVERGE_ADS_ANALYTICS_ENABLED: z
+    .enum(["true", "false"])
+    .optional(),
+  NEXT_PUBLIC_INVERGE_ADSENSE_CLIENT_ID: z.string().optional(),
+  NEXT_PUBLIC_INVERGE_ADSENSE_SLOT_ID: z.string().optional(),
 });
 
 export function parseEnvironment(

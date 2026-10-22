@@ -4,6 +4,8 @@ import Link from "next/link";
 import { Container } from "@/features/marketing/components/container";
 import { JournalCover } from "@/features/marketing/components/journal-cover";
 import { Prose } from "@/features/marketing/components/prose";
+import { AdSlot } from "@/features/advertising/components/ad-slot";
+import { ThirdPartyEditorialSlot } from "@/features/advertising/components/third-party-editorial-slot";
 import type { EditorialEntry } from "@/features/marketing/content/editorial";
 
 export function EditorialArticle({ entry }: { entry: EditorialEntry }) {
@@ -103,6 +105,16 @@ export function EditorialArticle({ entry }: { entry: EditorialEntry }) {
                 </Link>
               </div>
             </div>
+
+            <div className="mt-8">
+              <AdSlot
+                page={{ kind: "journal" }}
+                placementId="content-sidebar"
+              />
+            </div>
+            <div className="mt-4">
+              <ThirdPartyEditorialSlot />
+            </div>
           </aside>
 
           {/* Right Column: Article Prose Content */}
@@ -134,6 +146,12 @@ export function EditorialArticle({ entry }: { entry: EditorialEntry }) {
                 );
               })}
             </Prose>
+
+            <AdSlot
+              className="mt-10"
+              page={{ kind: "journal" }}
+              placementId="content-inline"
+            />
 
             {/* Editorial Note */}
             <div className="mt-14 rounded-xl border border-border/80 border-l-4 border-l-brand bg-surface/80 p-5 shadow-xs transition-colors hover:border-border hover:bg-surface">

@@ -254,6 +254,7 @@ export function AdminOverview({
               {[
                 "Authenticated admin session",
                 "Campaign review API",
+                "Advertising inventory API",
                 "KYC provider status",
                 "Application-fee confirmation",
                 "Escrow indexer",

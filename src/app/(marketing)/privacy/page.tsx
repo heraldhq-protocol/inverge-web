@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 
+import { Container } from "@/features/marketing/components/container";
 import {
   LegalDocument,
   type LegalSection,
@@ -85,6 +87,20 @@ const sections: LegalSection[] = [
     ],
   },
   {
+    heading: "Advertising and measurement",
+    paragraphs: [
+      "Some Inverge pages may carry a clearly labelled first-party sponsorship. A Sponsored label names the advertiser, and a paid placement never changes organic ranking, validation signals, funding figures, or a review decision. Those placements are part of the page and do not depend on an optional advertising choice.",
+      "Inverge may measure whether a labelled placement was seen, clicked, dismissed, or opened, but only after you explicitly allow advertising measurement in your advertising choices. Measurement uses a random identifier for the browser tab and records the creative, placement, event type, and time. It does not store an IP address, user agent, account identifier, wallet address, or free text. Measurements are kept separately from campaign analytics and are retained for no longer than 90 days.",
+      "Third-party personalised advertising is off by default and is not configured in this build. Where it is enabled, it runs only on editorial pages, only after you explicitly allow personalised advertising, and the vendor may set cookies or read device identifiers under its own privacy notice. Refusing personalised advertising does not reduce access to Inverge.",
+      "Depending on where you live, the legal basis and your rights differ. Under Nigeria's Data Protection Act 2023, processing relies on an applicable lawful basis such as consent or legitimate interest, and you may withdraw consent and complain to the Nigeria Data Protection Commission. In the EEA and the UK, personalised advertising and non-essential measurement rely on consent under the GDPR and ePrivacy rules, which you can withdraw at any time; essential page delivery and security do not. In Switzerland, the revised FADP requires explicit consent for profiling and gives you rights to information, correction, deletion, and objection. Inverge will identify the responsible entity and any representative before launch.",
+    ],
+    bullets: [
+      "Change or withdraw advertising choices at any time at /advertising-preferences.",
+      "Withdrawing measurement stops new advertising events; it does not delete aggregate counts already produced.",
+      "Refusing a third-party vendor prevents its script from loading on your next page view.",
+    ],
+  },
+  {
     heading: "Children",
     paragraphs: [
       "The launch service is intended for people aged 18 or older. Inverge does not intend to knowingly open accounts for children. The final policy will document the deletion and escalation process if child data is identified.",
@@ -109,6 +125,23 @@ export default function PrivacyPage() {
         note="Pre-launch draft · Not yet in force · Nigerian legal review required"
       />
       <LegalDocument sections={sections} />
+      <Container className="max-w-3xl pb-16">
+        <div className="rounded-2xl border border-border bg-surface p-5">
+          <h2 className="text-base font-bold tracking-[-0.02em] text-ink">
+            Advertising choices
+          </h2>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            Review or withdraw optional advertising measurement and third-party
+            personalisation for this browser.
+          </p>
+          <Link
+            href="/advertising-preferences"
+            className="mt-3 inline-flex min-h-11 items-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            Open advertising choices
+          </Link>
+        </div>
+      </Container>
     </main>
   );
 }
