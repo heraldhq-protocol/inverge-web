@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { campaignCategories } from "@/features/campaigns/lib/taxonomy";
+import { ideasPreviewData } from "@/features/ideas/content/preview-data";
 import {
   findIdeaSubcategory,
   ideaCategories,
@@ -49,5 +50,20 @@ describe("idea taxonomy", () => {
     expect(ideaSubcategoryLabel("food", "farmers-markets")).toBe(
       "Farmer's Markets",
     );
+  });
+
+  it("assigns every public preview idea a valid campaign pair", () => {
+    for (const idea of [
+      ...ideasPreviewData.featured,
+      ...ideasPreviewData.ideas,
+    ]) {
+      if (!idea.taxonomyCategory || !idea.taxonomySubcategory) {
+        throw new Error(`Preview idea ${idea.id} has no taxonomy pair`);
+      }
+
+      expect(
+        isIdeaSubcategoryOf(idea.taxonomyCategory, idea.taxonomySubcategory),
+      ).toBe(true);
+    }
   });
 });
