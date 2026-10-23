@@ -38,16 +38,21 @@ export type SessionUser = {
 };
 
 /**
- * The API origin, or `null` when this deployment has no API to talk to.
+ * The versioned API base, or `null` when this deployment has no API to talk to.
  *
  * There is deliberately no default: guessing a port would either point the web
  * app at the wrong service or, worse, at itself. A missing value is reported as
  * "unavailable" instead of failing open.
+ *
+ * `INVERGE_API_URL` is documented as an origin. The API serves every route under
+ * `/api/v1`, so append the prefix here rather than at each call site; an operator
+ * who already supplied the versioned base is accepted without doubling it.
  */
 export function apiBaseUrl(): string | null {
   const raw = process.env.INVERGE_API_URL?.trim();
   if (!raw) return null;
-  return raw.replace(/\/+$/, "");
+  const base = raw.replace(/\/+$/, "");
+  return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
 }
 
 const SESSION_LOOKUP_TIMEOUT_MS = 3_000;

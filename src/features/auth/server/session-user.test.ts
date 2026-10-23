@@ -1,13 +1,42 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/features/auth/server/session", () => ({
   readSessionToken: vi.fn(async () => null),
 }));
 
 import {
+  apiBaseUrl,
   toPreviewSessionUser,
   toSessionUser,
 } from "@/features/auth/server/session-user";
+
+describe("apiBaseUrl", () => {
+  afterEach(() => vi.unstubAllEnvs());
+
+  it("appends the API version to an origin", () => {
+    vi.stubEnv("INVERGE_API_URL", "http://127.0.0.1:3001");
+
+    expect(apiBaseUrl()).toBe("http://127.0.0.1:3001/api/v1");
+  });
+
+  it("tolerates a trailing slash on the origin", () => {
+    vi.stubEnv("INVERGE_API_URL", "http://127.0.0.1:3001/");
+
+    expect(apiBaseUrl()).toBe("http://127.0.0.1:3001/api/v1");
+  });
+
+  it("does not double the prefix when the base is already versioned", () => {
+    vi.stubEnv("INVERGE_API_URL", "http://127.0.0.1:3001/api/v1/");
+
+    expect(apiBaseUrl()).toBe("http://127.0.0.1:3001/api/v1");
+  });
+
+  it("reports a missing configuration instead of guessing a port", () => {
+    vi.stubEnv("INVERGE_API_URL", "   ");
+
+    expect(apiBaseUrl()).toBeNull();
+  });
+});
 
 describe("toSessionUser", () => {
   it("projects the identity the shell needs", () => {

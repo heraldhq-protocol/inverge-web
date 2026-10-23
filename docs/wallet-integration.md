@@ -301,7 +301,8 @@ WALLET_ONRAMP_PROVIDER   WALLET_ONRAMP_API_KEY   WALLET_REFUND_SERVICE_URL
 ```
 
 `INVERGE_API_URL` is **server-only** and has no default. It must point at the
-Inverge API (which cannot share a port with the web app); when it is unset, the
+Inverge API origin (which cannot share a port with the web app); the BFF appends
+the API's `/api/v1` prefix. When it is unset, the
 auth page reports that the account service is not configured and the dashboard
 stays on preview data. `INVERGE_API_URL` and the API's `WALLET_PROVIDER=web3auth`
 plus a matching `WEB3AUTH_CLIENT_ID` are the three values that turn live sign-in

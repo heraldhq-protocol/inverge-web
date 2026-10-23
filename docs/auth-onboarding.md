@@ -136,8 +136,9 @@ The account step is the first onboarding write that is real in live mode.
 
 Server-only:
 
-- `INVERGE_API_URL` — no default; unset means the BFF reports
-  `api_not_configured` (503) instead of guessing a port.
+- `INVERGE_API_URL` - no default; unset means the BFF reports
+  `api_not_configured` (503) instead of guessing a port. Set the API origin; the
+  BFF appends the `/api/v1` prefix (an already-versioned base is also accepted).
 - `INVERGE_AUTH_MODE` — `preview` keeps the real provider sign-in and stores a
   local preview identity instead of calling the API. Ignored in production.
   Unset (or `api`) uses the live BFF exchange.
