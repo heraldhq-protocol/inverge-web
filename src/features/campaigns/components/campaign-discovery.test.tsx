@@ -22,6 +22,14 @@ import {
 import { isPublicPhase } from "@/features/campaigns/lib/status";
 import type { Campaign, CampaignFilters } from "@/features/campaigns/types";
 
+vi.mock("@/components/ui/country-flag", () => ({
+  CountryFlag: ({ code }: { code: string }) => (
+    <span aria-hidden="true" data-testid="country-flag">
+      {code}
+    </span>
+  ),
+}));
+
 const NOW = "2026-10-19T00:00:00.000Z";
 
 const { navigation } = vi.hoisted(() => ({
@@ -219,6 +227,8 @@ describe("CampaignDiscovery", () => {
     });
     expect(lagos).toHaveLength(2);
     for (const radio of lagos) expect(radio).toBeChecked();
+
+    expect(screen.getAllByTestId("country-flag").length).toBeGreaterThan(0);
   });
 
   it("offers Projects We Love only from the featured set", () => {

@@ -31,6 +31,7 @@ import {
 } from "react";
 
 import { Container } from "@/components/ui/container";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { FilterSection } from "@/components/ui/filter-section";
 import { Input } from "@/components/ui/input";
 import { Meter } from "@/components/ui/meter";
@@ -167,6 +168,8 @@ function ViewToggle({
 
 type FilterOption = {
   count?: number;
+  /** ISO country code when the option is a country, so the row can show a flag. */
+  countryCode?: string | undefined;
   disabled?: boolean | undefined;
   hint?: string | undefined;
   label: string;
@@ -230,6 +233,9 @@ function FilterRadioGroup({
                   aria-describedby={option.hint ? hintId : undefined}
                   className="size-4 shrink-0 accent-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 />
+                {option.countryCode ? (
+                  <CountryFlag code={option.countryCode} />
+                ) : null}
                 <span className="min-w-0">
                   <span className="block truncate">{option.label}</span>
                   {option.hint ? (
@@ -396,6 +402,7 @@ function DiscoveryFilters({
     { count: totalPublic, label: "All countries", value: "all" },
     ...countryCounts.map((country) => ({
       count: country.count,
+      countryCode: country.code,
       label: country.name,
       value: country.code,
     })),
