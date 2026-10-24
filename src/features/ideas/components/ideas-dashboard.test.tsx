@@ -5,11 +5,19 @@ import {
   screen,
   within,
 } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { IdeasDashboard } from "@/features/ideas/components/ideas-dashboard";
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
 import { previewTopics } from "@/features/ideas/content/topics";
+
+vi.mock("@/components/ui/country-flag", () => ({
+  CountryFlag: ({ code }: { code: string }) => (
+    <span aria-hidden="true" data-testid="country-flag">
+      {code}
+    </span>
+  ),
+}));
 
 afterEach(cleanup);
 
@@ -161,5 +169,29 @@ describe("IdeasDashboard", () => {
 
     expect(campusLife).toHaveAttribute("href", "/topics/campus-life");
     expect(within(campusLife).getByText("3 ideas")).toBeInTheDocument();
+  });
+
+  it("falls back to the hero image when a live idea has no cover", () => {
+    const first = ideasPreviewData.ideas[0];
+    expect(first).toBeDefined();
+
+    render(
+      <IdeasDashboard
+        data={{
+          featured: [],
+          ideas: [{ ...first!, cover: null, artwork: "campus" }],
+        }}
+        topics={previewTopics}
+      />,
+    );
+
+    expect(
+      screen.getByRole("heading", {
+        name: /Real ideas\. Real people\./,
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByAltText("Students collaborating on a project together"),
+    ).toBeInTheDocument();
   });
 });

@@ -1,18 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
 import { CampaignCategoryHeader } from "@/features/campaigns/components/campaign-category-header";
 import { CampaignDiscovery } from "@/features/campaigns/components/campaign-discovery";
 import { CampaignTrustStrip } from "@/features/campaigns/components/campaign-trust-strip";
+import { LiveCampaignCategoryListing } from "@/features/campaigns/components/live-campaign-category-listing";
 import { defaultCampaignFilters } from "@/features/campaigns/lib/filters";
-import { campaignCategoryRoutes } from "@/features/campaigns/lib/taxonomy";
-import { getCampaignCategoryView } from "@/features/campaigns/server/campaigns";
+import { campaignPageFromParam } from "@/features/campaigns/lib/live-page";
+import {
+  campaignCategoryRoutes,
+  findCampaignCategory,
+  findCampaignSubcategory,
+} from "@/features/campaigns/lib/taxonomy";
+import { getCampaignCategorySurface } from "@/features/campaigns/server/category-views";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type PageProps = {
   params: Promise<{ categorySlug: string; subcategorySlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export function generateStaticParams() {
@@ -28,13 +36,16 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { categorySlug, subcategorySlug } = await params;
-  const view = getCampaignCategoryView(categorySlug, subcategorySlug);
-  if (!view?.subcategory) return {};
+  const category = findCampaignCategory(categorySlug);
+  const subcategory = category
+    ? findCampaignSubcategory(category.slug, subcategorySlug)
+    : null;
+  if (!category || !subcategory) return {};
 
   return buildPageMetadata({
-    description: `Campaigns in ${view.subcategory.label}, part of ${view.category.label} on Inverge. Search and filter by status.`,
-    path: `/campaigns/categories/${view.category.slug}/${view.subcategory.slug}`,
-    title: `${view.subcategory.label} campaigns`,
+    description: `Campaigns in ${subcategory.label}, part of ${category.label} on Inverge.`,
+    path: `/campaigns/categories/${category.slug}/${subcategory.slug}`,
+    title: `${subcategory.label} campaigns`,
   });
 }
 
@@ -42,10 +53,61 @@ export async function generateMetadata({
  * One subcategory. An unknown child under a known parent is a 404, not an
  * empty page that looks like a real category with nothing in it.
  */
-export default async function CampaignSubcategoryRoute({ params }: PageProps) {
-  const { categorySlug, subcategorySlug } = await params;
-  const view = getCampaignCategoryView(categorySlug, subcategorySlug);
-  if (!view?.subcategory) notFound();
+export default async function CampaignSubcategoryRoute({
+  params,
+  searchParams,
+}: PageProps) {
+  await connection();
+
+  const [{ categorySlug, subcategorySlug }, query] = await Promise.all([
+    params,
+    searchParams,
+  ]);
+  const surface = await getCampaignCategorySurface(
+    categorySlug,
+    subcategorySlug,
+  );
+  if (!surface) notFound();
+
+  if (surface.dataSource === "live") {
+    const { view } = surface;
+    const { category, subcategory } = view;
+    if (!subcategory) notFound();
+    return (
+      <>
+        <JsonLd
+          data={breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Campaigns", path: "/campaigns" },
+            {
+              name: category.label,
+              path: `/campaigns/categories/${category.slug}`,
+            },
+            {
+              name: subcategory.label,
+              path: `/campaigns/categories/${category.slug}/${subcategory.slug}`,
+            },
+          ])}
+        />
+        <CampaignCategoryHeader
+          category={category}
+          subcategory={subcategory}
+          count={view.campaigns.length}
+          subcategoryCounts={view.subcategoryCounts}
+        />
+        <LiveCampaignCategoryListing
+          basePath={`/campaigns/categories/${category.slug}/${subcategory.slug}`}
+          page={campaignPageFromParam(query.page)}
+          view={view}
+        />
+        <CampaignTrustStrip />
+      </>
+    );
+  }
+
+  const { view } = surface;
+  const { category, subcategory } = view;
+  if (!subcategory) notFound();
 
   return (
     <>
@@ -54,18 +116,18 @@ export default async function CampaignSubcategoryRoute({ params }: PageProps) {
           { name: "Home", path: "/" },
           { name: "Campaigns", path: "/campaigns" },
           {
-            name: view.category.label,
-            path: `/campaigns/categories/${view.category.slug}`,
+            name: category.label,
+            path: `/campaigns/categories/${category.slug}`,
           },
           {
-            name: view.subcategory.label,
-            path: `/campaigns/categories/${view.category.slug}/${view.subcategory.slug}`,
+            name: subcategory.label,
+            path: `/campaigns/categories/${category.slug}/${subcategory.slug}`,
           },
         ])}
       />
       <CampaignCategoryHeader
-        category={view.category}
-        subcategory={view.subcategory}
+        category={category}
+        subcategory={subcategory}
         count={view.campaigns.length}
         subcategoryCounts={view.subcategoryCounts}
       />
@@ -75,15 +137,15 @@ export default async function CampaignSubcategoryRoute({ params }: PageProps) {
           candidates={view.campaigns}
           categoryCounts={view.categoryCounts}
           subcategoryCounts={{
-            [view.category.slug]: view.subcategoryCounts,
+            [category.slug]: view.subcategoryCounts,
           }}
           initialFilters={defaultCampaignFilters}
-          scope={{ category: view.category, subcategory: view.subcategory }}
+          scope={{ category, subcategory }}
           heading={null}
           showCategoryShortcuts={false}
-          searchPlaceholder={`Search in ${view.subcategory.label}`}
-          emptyTitle={`No public campaigns in ${view.subcategory.label} yet`}
-          emptyDescription={`No campaign in ${view.subcategory.label} matches the current search and status. Clear the filters, or browse all of ${view.category.label}.`}
+          searchPlaceholder={`Search in ${subcategory.label}`}
+          emptyTitle={`No public campaigns in ${subcategory.label} yet`}
+          emptyDescription={`No campaign in ${subcategory.label} matches the current search and status. Clear the filters, or browse all of ${category.label}.`}
           nowIso={view.now}
           totalPublic={view.totalPublic}
         />

@@ -53,12 +53,15 @@ import type {
 import type { MoneyAmount } from "@/lib/money";
 
 function formatDate(iso: string): string {
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return iso;
+
   return new Intl.DateTimeFormat("en-GB", {
     day: "numeric",
     month: "long",
     timeZone: "UTC",
     year: "numeric",
-  }).format(new Date(iso));
+  }).format(date);
 }
 
 function formatScore(score: number): string {
@@ -264,14 +267,17 @@ function MetricStrip({ idea }: { idea: IdeaDetailModel }) {
 }
 
 export function IdeaDetail({
+  dataSource = "preview",
   idea,
   ideas,
   topics,
 }: {
+  dataSource?: "live" | "preview";
   idea: IdeaDetailModel;
   ideas: readonly DiscoveryIdea[];
   topics: readonly Topic[];
 }) {
+  const live = dataSource === "live";
   const ideaTopics = topicsForIdea(topics, idea.id);
   const related = relatedIdeas({ idea, ideas, topics });
   const firstTopic = ideaTopics[0];
@@ -353,14 +359,17 @@ export function IdeaDetail({
                   {stage}
                 </Pill>
                 <span className="text-muted">
-                  Published {formatDate(idea.publishedAt)}
+                  {live ? "On Inverge since" : "Published"}{" "}
+                  {formatDate(idea.publishedAt)}
                 </span>
-                <span
-                  className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
-                  title="This page is populated from preview data, not the live API"
-                >
-                  Preview data
-                </span>
+                {live ? null : (
+                  <span
+                    className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
+                    title="This page is populated from preview data, not the live API"
+                  >
+                    Preview data
+                  </span>
+                )}
               </div>
               <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-[2.5rem] sm:leading-[1.08]">
                 {idea.title}
@@ -485,34 +494,41 @@ export function IdeaDetail({
                 </p>
               </section>
 
-              <AdSlot
-                page={{ category: idea.discoveryCategory, kind: "idea" }}
-                placementId="idea-detail-inline"
-              />
+              {live ? null : (
+                <AdSlot
+                  page={{ category: idea.discoveryCategory, kind: "idea" }}
+                  placementId="idea-detail-inline"
+                />
+              )}
 
-              <section aria-labelledby="idea-roadmap">
-                <StoryHeading icon={Route01Icon} id="idea-roadmap">
-                  Roadmap
-                </StoryHeading>
-                <ol className="relative mt-4 max-w-2xl space-y-5 border-l border-border pl-6">
-                  {idea.roadmapSteps.map((step) => (
-                    <li key={step.date + step.description} className="relative">
-                      <span
-                        aria-hidden="true"
-                        className="absolute -left-[1.875rem] top-0.5 grid size-4 place-items-center rounded-full border-2 border-brand bg-surface"
+              {idea.roadmapSteps.length > 0 ? (
+                <section aria-labelledby="idea-roadmap">
+                  <StoryHeading icon={Route01Icon} id="idea-roadmap">
+                    Roadmap
+                  </StoryHeading>
+                  <ol className="relative mt-4 max-w-2xl space-y-5 border-l border-border pl-6">
+                    {idea.roadmapSteps.map((step) => (
+                      <li
+                        key={step.date + step.description}
+                        className="relative"
                       >
-                        <span className="size-1.5 rounded-full bg-brand" />
-                      </span>
-                      <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">
-                        {formatDate(step.date)}
-                      </p>
-                      <p className="mt-1 text-sm leading-6 text-ink">
-                        {step.description}
-                      </p>
-                    </li>
-                  ))}
-                </ol>
-              </section>
+                        <span
+                          aria-hidden="true"
+                          className="absolute -left-[1.875rem] top-0.5 grid size-4 place-items-center rounded-full border-2 border-brand bg-surface"
+                        >
+                          <span className="size-1.5 rounded-full bg-brand" />
+                        </span>
+                        <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.1em] text-muted">
+                          {formatDate(step.date)}
+                        </p>
+                        <p className="mt-1 text-sm leading-6 text-ink">
+                          {step.description}
+                        </p>
+                      </li>
+                    ))}
+                  </ol>
+                </section>
+              ) : null}
 
               <section aria-labelledby="idea-ask">
                 <StoryHeading icon={Coins01Icon} id="idea-ask">
@@ -527,19 +543,21 @@ export function IdeaDetail({
                     to validate and build this. It is not money raised and not
                     an approved campaign budget.
                   </p>
-                  <dl className="mt-4 divide-y divide-border rounded-xl border border-border bg-surface">
-                    {idea.askBreakdown.map((item) => (
-                      <div
-                        key={item.label}
-                        className="flex items-baseline justify-between gap-4 px-4 py-2.5"
-                      >
-                        <dt className="text-sm text-ink">{item.label}</dt>
-                        <dd className="whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
-                          <Amount value={item.amount} />
-                        </dd>
-                      </div>
-                    ))}
-                  </dl>
+                  {idea.askBreakdown.length > 0 ? (
+                    <dl className="mt-4 divide-y divide-border rounded-xl border border-border bg-surface">
+                      {idea.askBreakdown.map((item) => (
+                        <div
+                          key={item.label}
+                          className="flex items-baseline justify-between gap-4 px-4 py-2.5"
+                        >
+                          <dt className="text-sm text-ink">{item.label}</dt>
+                          <dd className="whitespace-nowrap text-sm font-semibold tabular-nums text-ink">
+                            <Amount value={item.amount} />
+                          </dd>
+                        </div>
+                      ))}
+                    </dl>
+                  ) : null}
                   {idea.fundingIntent ? (
                     <p className="mt-3 rounded-lg bg-surface px-3 py-2 text-[0.6875rem] leading-4 text-muted">
                       {idea.fundingIntent.nextStep}
@@ -663,7 +681,9 @@ export function IdeaDetail({
               </section>
             ) : null}
 
-            <IdeaDiscussion comments={previewComments[idea.id] ?? []} />
+            {live ? null : (
+              <IdeaDiscussion comments={previewComments[idea.id] ?? []} />
+            )}
           </div>
 
           <aside className="min-w-0 lg:self-start">
@@ -722,9 +742,13 @@ export function IdeaDetail({
                 <Eyebrow className="text-muted">Validation signals</Eyebrow>
                 <span
                   className="text-[0.625rem] text-muted"
-                  title="Idea figures are preview data"
+                  title={
+                    live
+                      ? "Idea figures come from the Inverge API"
+                      : "Idea figures are preview data"
+                  }
                 >
-                  Preview
+                  {live ? "Live" : "Preview"}
                 </span>
               </div>
               <dl className="mt-4 space-y-4">
@@ -784,14 +808,18 @@ export function IdeaDetail({
               </div>
             </div>
 
-            <AdSlot
-              page={{ category: idea.discoveryCategory, kind: "idea" }}
-              placementId="idea-detail-rail"
-            />
+            {live ? null : (
+              <AdSlot
+                page={{ category: idea.discoveryCategory, kind: "idea" }}
+                placementId="idea-detail-rail"
+              />
+            )}
 
-            <div className="mt-3">
-              <IdeaActions idea={idea} />
-            </div>
+            {live ? null : (
+              <div className="mt-3">
+                <IdeaActions idea={idea} />
+              </div>
+            )}
 
             {idea.community?.enabled && idea.community.showOnIdeaPage ? (
               <div className="mt-3">
@@ -799,34 +827,38 @@ export function IdeaDetail({
               </div>
             ) : null}
 
-            <div className="mt-3 rounded-2xl border border-border bg-brand-tint p-4">
-              <div className="flex items-start gap-3">
-                <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand-strong">
-                  <HugeiconsIcon
-                    icon={Target02Icon}
-                    size={16}
-                    strokeWidth={1.8}
-                    aria-hidden="true"
-                  />
-                </span>
-                <div>
-                  <p className="text-sm font-bold text-ink">
-                    {gate.convertible
-                      ? "Ready for a campaign"
-                      : "This idea is in early access"}
-                  </p>
-                  <p className="mt-1 text-xs leading-5 text-muted">
-                    {gate.convertible
-                      ? "The creator has reached the validation threshold. Supporters will be notified first if a campaign opens."
-                      : "The creator is still gathering signal. Once they publish updates, supporters see them here first."}
-                  </p>
+            {live ? null : (
+              <div className="mt-3 rounded-2xl border border-border bg-brand-tint p-4">
+                <div className="flex items-start gap-3">
+                  <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand-strong">
+                    <HugeiconsIcon
+                      icon={Target02Icon}
+                      size={16}
+                      strokeWidth={1.8}
+                      aria-hidden="true"
+                    />
+                  </span>
+                  <div>
+                    <p className="text-sm font-bold text-ink">
+                      {gate.convertible
+                        ? "Ready for a campaign"
+                        : "This idea is in early access"}
+                    </p>
+                    <p className="mt-1 text-xs leading-5 text-muted">
+                      {gate.convertible
+                        ? "The creator has reached the validation threshold. Supporters will be notified first if a campaign opens."
+                        : "The creator is still gathering signal. Once they publish updates, supporters see them here first."}
+                    </p>
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
 
-            <div className="mt-3">
-              <ViewerToggle />
-            </div>
+            {live ? null : (
+              <div className="mt-3">
+                <ViewerToggle />
+              </div>
+            )}
 
             <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
               <Link

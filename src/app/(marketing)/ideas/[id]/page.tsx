@@ -1,20 +1,14 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
-import { allPublicIdeas } from "@/features/ideas/lib/catalog";
-import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-detail";
-import { ideasPreviewData } from "@/features/ideas/content/preview-data";
-import { previewTopics } from "@/features/ideas/content/topics";
 import { IdeaDetail } from "@/features/ideas/components/idea-detail";
+import { getIdeaDetailView } from "@/features/ideas/server/views";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 type PageProps = { params: Promise<{ id: string }> };
-
-export function generateStaticParams() {
-  return allPublicIdeas(ideasPreviewData).map(({ id }) => ({ id }));
-}
 
 export async function generateMetadata({
   params,
@@ -23,8 +17,9 @@ export async function generateMetadata({
 
   // The same merged record the page renders, so a title and description can
   // never describe an idea other than the one on screen.
-  const idea = getPreviewIdeaDetail(id);
-  if (!idea) return {};
+  const view = await getIdeaDetailView(id);
+  if (!view) return {};
+  const { idea } = view;
 
   return buildPageMetadata({
     description: idea.description,
@@ -42,9 +37,13 @@ export async function generateMetadata({
 }
 
 export default async function IdeaDetailPage({ params }: PageProps) {
+  await connection();
+
   const { id } = await params;
-  const idea = getPreviewIdeaDetail(id);
-  if (!idea) notFound();
+  const view = await getIdeaDetailView(id);
+  if (!view) notFound();
+
+  const { idea } = view;
 
   return (
     <>
@@ -56,9 +55,10 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         ])}
       />
       <IdeaDetail
+        dataSource={view.dataSource}
         idea={idea}
-        ideas={allPublicIdeas(ideasPreviewData)}
-        topics={previewTopics}
+        ideas={view.ideas}
+        topics={view.topics}
       />
     </>
   );

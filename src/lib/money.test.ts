@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   atomicToWholeInput,
+  decimalToUsdAmount,
   formatCompactMoney,
   formatMoney,
   parseUsdAmount,
@@ -90,5 +91,24 @@ describe("atomicToWholeInput", () => {
     expect(
       atomicToWholeInput({ atomic: "25000", currency: "USD", decimals: 2 }),
     ).toBe("250");
+  });
+});
+
+describe("decimalToUsdAmount", () => {
+  it("keeps a whole API amount exact", () => {
+    expect(decimalToUsdAmount("5000")).toEqual(usd("500000"));
+  });
+
+  it("pads a one-decimal API amount", () => {
+    expect(decimalToUsdAmount("5000.5")).toEqual(usd("500050"));
+  });
+
+  it("represents a zero amount without inventing one", () => {
+    expect(decimalToUsdAmount("0.00")).toEqual(usd("0"));
+    expect(decimalToUsdAmount(null)).toEqual(usd("0"));
+  });
+
+  it("rejects a malformed amount instead of rounding it", () => {
+    expect(() => decimalToUsdAmount("12,000")).toThrow(RangeError);
   });
 });

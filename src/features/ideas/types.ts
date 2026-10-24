@@ -12,7 +12,7 @@ import type {
 } from "@/features/ideas/lib/taxonomy";
 import type { MoneyAmount } from "@/lib/money";
 
-export type IdeaRegion = "ghana" | "nigeria" | "senegal";
+export type IdeaRegion = "ghana" | "nigeria" | "other" | "senegal";
 
 /**
  * Whether an idea is listed in discovery.

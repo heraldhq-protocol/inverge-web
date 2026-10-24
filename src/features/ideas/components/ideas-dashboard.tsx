@@ -51,7 +51,7 @@ import {
 import type { IdeasDiscoveryData, Topic } from "@/features/ideas/types";
 
 const HERO_IMAGE =
-  "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1600&h=1000&fit=crop&q=80";
+  "/images/hero/collaborative-creative-workspace.png";
 
 const benefits = [
   {
@@ -110,8 +110,12 @@ function DiscoveryHero({ idea }: { idea: HeroFeaturedIdea | undefined }) {
         <div className="relative">
           <div className="relative min-h-[16rem] overflow-hidden rounded-2xl bg-surface-muted sm:min-h-[20rem] lg:min-h-[21rem]">
             <Image
-              src={HERO_IMAGE}
-              alt="Students collaborating on a project together"
+              src={idea?.cover || HERO_IMAGE}
+              alt={
+                idea?.cover
+                  ? `${idea.title} cover image`
+                  : "Students collaborating on a project together"
+              }
               fill
               priority
               sizes="(min-width: 1024px) 620px, 100vw"
@@ -290,13 +294,16 @@ function Pagination({
  */
 export function IdeasDashboard({
   data,
+  dataSource = "preview",
   initialState = defaultIdeaFilters,
   primaryAction,
   sponsoredSlot,
   topics,
+  truncated = false,
   viewer = "authenticated",
 }: {
   data: IdeasDiscoveryData;
+  dataSource?: "live" | "preview";
   initialState?: IdeaFilterState;
   primaryAction?: { href: string; label: string };
   /**
@@ -305,6 +312,12 @@ export function IdeasDashboard({
    */
   sponsoredSlot?: ReactNode;
   topics: readonly Topic[];
+  /**
+   * The newest-N live window ended with more rows still available. Filters and
+   * counts then describe the window, not the whole catalogue, and the page says
+   * so.
+   */
+  truncated?: boolean;
   viewer?: "authenticated" | "visitor";
 }) {
   const [state, setState] = useState<IdeaFilterState>(initialState);
@@ -447,7 +460,10 @@ export function IdeasDashboard({
                 >
                   {filteredIdeas.length.toLocaleString("en-US")}{" "}
                   {filteredIdeas.length === 1 ? "idea" : "ideas"}
-                  <span className="hidden sm:inline"> · Preview data</span>
+                  <span className="hidden sm:inline">
+                    {" "}
+                    · {dataSource === "live" ? "Live data" : "Preview data"}
+                  </span>
                 </p>
                 <div className="flex items-center gap-2">
                   <ResultViewToggle
@@ -495,6 +511,13 @@ export function IdeasDashboard({
                 );
               })}
             </div>
+
+            {dataSource === "live" && truncated ? (
+              <p className="mt-2 text-xs leading-5 text-muted" role="status">
+                Showing the newest {publicIdeas.length.toLocaleString("en-US")}{" "}
+                ideas. Search, filters and sorting apply within that window.
+              </p>
+            ) : null}
 
             {chips.length > 0 ? (
               <div className="mt-3 flex flex-wrap items-center gap-2">

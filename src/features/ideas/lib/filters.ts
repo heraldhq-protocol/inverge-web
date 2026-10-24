@@ -35,7 +35,7 @@ export const defaultIdeaFilters: IdeaFilterState = {
   view: "grid",
 };
 
-const regions = ["all", "nigeria", "ghana", "senegal"] as const;
+const regions = ["all", "nigeria", "ghana", "senegal", "other"] as const;
 const stages = ["all", "early", "growing", "near"] as const;
 const sorts = ["most-validated", "most-supported", "newest"] as const;
 const views = ["grid", "list"] as const;
@@ -178,6 +178,7 @@ export type ActiveFilterChip = {
 const regionLabels: Record<Exclude<IdeaRegion, never>, string> = {
   ghana: "Ghana",
   nigeria: "Nigeria",
+  other: "Other regions",
   senegal: "Senegal",
 };
 
@@ -290,6 +291,7 @@ export function countIdeasByRegion<Idea extends { region: IdeaRegion }>(
     all: ideas.length,
     ghana: ideas.filter((idea) => idea.region === "ghana").length,
     nigeria: ideas.filter((idea) => idea.region === "nigeria").length,
+    other: ideas.filter((idea) => idea.region === "other").length,
     senegal: ideas.filter((idea) => idea.region === "senegal").length,
   };
 }

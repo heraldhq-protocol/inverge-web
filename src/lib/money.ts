@@ -96,3 +96,38 @@ export function parseUsdAmount(input: string): string | null {
 export function atomicToWholeInput(amount: MoneyAmount): string {
   return (BigInt(amount.atomic) / 10n ** BigInt(amount.decimals)).toString();
 }
+
+/**
+ * Convert an API decimal string ("5000", "5000.5", "0.00") into atomic cents.
+ *
+ * The API serialises Prisma `Decimal` values as strings. This is the only
+ * supported direction and it is string/BigInt maths: a malformed value throws
+ * rather than becoming a plausible-looking amount nobody agreed to.
+ */
+export function decimalToUsdAmount(
+  value: string | number | null | undefined,
+): MoneyAmount {
+  if (value === null || value === undefined || value === "") {
+    return { atomic: "0", currency: "USD", decimals: 2 };
+  }
+
+  const raw =
+    typeof value === "number"
+      ? Number.isFinite(value)
+        ? value.toFixed(2)
+        : ""
+      : value.trim();
+  const match = /^(\d+)(?:\.(\d+))?$/.exec(raw);
+  if (!match) {
+    throw new RangeError(`Expected a non-negative USD decimal, got "${raw}"`);
+  }
+
+  const whole = BigInt(match[1] ?? "0");
+  const fraction = (match[2] ?? "").padEnd(2, "0").slice(0, 2);
+
+  return {
+    atomic: (whole * 100n + BigInt(fraction)).toString(),
+    currency: "USD",
+    decimals: 2,
+  };
+}

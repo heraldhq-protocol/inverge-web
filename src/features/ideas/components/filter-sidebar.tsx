@@ -14,6 +14,7 @@ import Link from "next/link";
 import { useEffect, useId, useRef, useState } from "react";
 
 import { Button } from "@/components/ui/button";
+import { CountryFlag } from "@/components/ui/country-flag";
 import { FilterSection } from "@/components/ui/filter-section";
 import type { IdeaFilterState } from "@/features/ideas/lib/filters";
 import {
@@ -25,6 +26,8 @@ import type { IdeaRegion, IdeaValidationStage } from "@/features/ideas/types";
 
 type Option<Value extends string> = {
   count?: number;
+  /** ISO country code when the option is a country, so the row can show a flag. */
+  countryCode?: string;
   label: string;
   value: Value;
 };
@@ -38,9 +41,10 @@ const stageOptions: readonly Option<IdeaValidationStage | "all">[] = [
 
 const regionOptions: readonly Option<IdeaRegion | "all">[] = [
   { value: "all", label: "All locations" },
-  { value: "nigeria", label: "Nigeria" },
-  { value: "ghana", label: "Ghana" },
-  { value: "senegal", label: "Senegal" },
+  { value: "nigeria", label: "Nigeria", countryCode: "NG" },
+  { value: "ghana", label: "Ghana", countryCode: "GH" },
+  { value: "senegal", label: "Senegal", countryCode: "SN" },
+  { value: "other", label: "Other regions" },
 ];
 
 function RadioGroup<Value extends string>({
@@ -98,6 +102,9 @@ function RadioGroup<Value extends string>({
                   <span className="size-1.5 rounded-full bg-white" />
                 ) : null}
               </span>
+              {option.countryCode ? (
+                <CountryFlag code={option.countryCode} />
+              ) : null}
               <span className="min-w-0 flex-1 truncate">{option.label}</span>
               {option.count !== undefined ? (
                 <span

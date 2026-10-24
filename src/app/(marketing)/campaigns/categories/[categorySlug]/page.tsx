@@ -1,17 +1,26 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
+import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
 import { CampaignCategoryHeader } from "@/features/campaigns/components/campaign-category-header";
 import { CampaignDiscovery } from "@/features/campaigns/components/campaign-discovery";
 import { CampaignTrustStrip } from "@/features/campaigns/components/campaign-trust-strip";
+import { LiveCampaignCategoryListing } from "@/features/campaigns/components/live-campaign-category-listing";
 import { defaultCampaignFilters } from "@/features/campaigns/lib/filters";
-import { campaignCategories } from "@/features/campaigns/lib/taxonomy";
-import { getCampaignCategoryView } from "@/features/campaigns/server/campaigns";
+import { campaignPageFromParam } from "@/features/campaigns/lib/live-page";
+import {
+  campaignCategories,
+  findCampaignCategory,
+} from "@/features/campaigns/lib/taxonomy";
+import { getCampaignCategorySurface } from "@/features/campaigns/server/category-views";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-type PageProps = { params: Promise<{ categorySlug: string }> };
+type PageProps = {
+  params: Promise<{ categorySlug: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export function generateStaticParams() {
   return campaignCategories.map((category) => ({
@@ -23,29 +32,66 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { categorySlug } = await params;
-  const view = getCampaignCategoryView(categorySlug);
-  if (!view) return {};
+  const category = findCampaignCategory(categorySlug);
+  if (!category) return {};
 
   return buildPageMetadata({
-    description: `Campaigns in ${view.category.label} on Inverge. Browse subcategories, search, and filter by status.`,
-    path: `/campaigns/categories/${view.category.slug}`,
-    title: `${view.category.label} campaigns`,
+    description: `Campaigns in ${category.label} on Inverge. Browse subcategories and discover live campaign records.`,
+    path: `/campaigns/categories/${category.slug}`,
+    title: `${category.label} campaigns`,
   });
 }
 
 /**
  * One parent category of the discovery surface.
  *
- * The route owns the category. The grid receives only this category's public
- * campaigns, and the component hides the parent control, so the heading count
- * and the result set cannot drift apart. Subcategories are real routes rather
- * than query state, which gives each one a shareable URL and a stable sitemap
- * entry.
+ * The route owns the category. In preview mode the grid receives only this
+ * category's fixtures and filters them in the browser. In live mode the reduced
+ * API projection is rendered directly, because `GET /campaigns` cannot honour
+ * the preview discovery controls.
  */
-export default async function CampaignCategoryRoute({ params }: PageProps) {
-  const { categorySlug } = await params;
-  const view = getCampaignCategoryView(categorySlug);
-  if (!view) notFound();
+export default async function CampaignCategoryRoute({
+  params,
+  searchParams,
+}: PageProps) {
+  await connection();
+
+  const [{ categorySlug }, query] = await Promise.all([params, searchParams]);
+  const surface = await getCampaignCategorySurface(categorySlug);
+  if (!surface) notFound();
+
+  if (surface.dataSource === "live") {
+    const { view } = surface;
+    const category = view.category;
+    return (
+      <>
+        <JsonLd
+          data={breadcrumbJsonLd([
+            { name: "Home", path: "/" },
+            { name: "Campaigns", path: "/campaigns" },
+            {
+              name: category.label,
+              path: `/campaigns/categories/${category.slug}`,
+            },
+          ])}
+        />
+        <CampaignCategoryHeader
+          category={category}
+          count={view.campaigns.length}
+          subcategoryCounts={view.subcategoryCounts}
+        />
+        <LiveCampaignCategoryListing
+          basePath={`/campaigns/categories/${category.slug}`}
+          page={campaignPageFromParam(query.page)}
+          view={view}
+        />
+        <CampaignTrustStrip />
+      </>
+    );
+  }
+
+  const { view } = surface;
+  const category = view.category;
 
   return (
     <>
@@ -54,13 +100,13 @@ export default async function CampaignCategoryRoute({ params }: PageProps) {
           { name: "Home", path: "/" },
           { name: "Campaigns", path: "/campaigns" },
           {
-            name: view.category.label,
-            path: `/campaigns/categories/${view.category.slug}`,
+            name: category.label,
+            path: `/campaigns/categories/${category.slug}`,
           },
         ])}
       />
       <CampaignCategoryHeader
-        category={view.category}
+        category={category}
         count={view.campaigns.length}
         subcategoryCounts={view.subcategoryCounts}
       />
@@ -70,15 +116,15 @@ export default async function CampaignCategoryRoute({ params }: PageProps) {
           candidates={view.campaigns}
           categoryCounts={view.categoryCounts}
           subcategoryCounts={{
-            [view.category.slug]: view.subcategoryCounts,
+            [category.slug]: view.subcategoryCounts,
           }}
           initialFilters={defaultCampaignFilters}
-          scope={{ category: view.category, subcategory: null }}
+          scope={{ category, subcategory: null }}
           heading={null}
           showCategoryShortcuts={false}
-          searchPlaceholder={`Search in ${view.category.label}`}
-          emptyTitle={`No public campaigns in ${view.category.label} yet`}
-          emptyDescription={`No campaign in ${view.category.label} matches the current search and status. Clear the filters, or browse a subcategory.`}
+          searchPlaceholder={`Search in ${category.label}`}
+          emptyTitle={`No public campaigns in ${category.label} yet`}
+          emptyDescription={`No campaign in ${category.label} matches the current search and status. Clear the filters, or browse a subcategory.`}
           nowIso={view.now}
           totalPublic={view.totalPublic}
         />

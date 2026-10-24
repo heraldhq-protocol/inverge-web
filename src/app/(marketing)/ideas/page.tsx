@@ -1,11 +1,10 @@
 import type { Metadata } from "next";
+import { connection } from "next/server";
 
 import { AdSlot } from "@/features/advertising/components/ad-slot";
 import { IdeasDashboard } from "@/features/ideas/components/ideas-dashboard";
-import { ideasPreviewData } from "@/features/ideas/content/preview-data";
-import { previewTopics } from "@/features/ideas/content/topics";
-import { allPublicIdeas } from "@/features/ideas/lib/catalog";
 import { parseIdeaFilters } from "@/features/ideas/lib/filters";
+import { getIdeasDiscoveryView } from "@/features/ideas/server/views";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -21,20 +20,31 @@ type PageProps = {
 };
 
 export default async function IdeasPage({ searchParams }: PageProps) {
-  const params = await searchParams;
-  const publicIdeaCount = allPublicIdeas(ideasPreviewData).length;
+  // Discovery reads the live API, so it must render per request rather than
+  // capture whatever the API held during `next build`.
+  await connection();
+
+  const [params, view] = await Promise.all([
+    searchParams,
+    getIdeasDiscoveryView(),
+  ]);
+  const publicIdeaCount = view.data.featured.length + view.data.ideas.length;
 
   return (
     <IdeasDashboard
-      data={ideasPreviewData}
+      data={view.data}
+      dataSource={view.dataSource}
       initialState={parseIdeaFilters(params)}
       sponsoredSlot={
-        <AdSlot
-          page={{ kind: "ideas", organicResultCount: publicIdeaCount }}
-          placementId="idea-feed-inline"
-        />
+        view.dataSource === "preview" ? (
+          <AdSlot
+            page={{ kind: "ideas", organicResultCount: publicIdeaCount }}
+            placementId="idea-feed-inline"
+          />
+        ) : undefined
       }
-      topics={previewTopics}
+      topics={view.topics}
+      truncated={view.truncated}
       viewer="visitor"
     />
   );

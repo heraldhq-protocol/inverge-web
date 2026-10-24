@@ -9,6 +9,9 @@ import {
   type PreviewSession,
 } from "@/features/auth/server/preview-session";
 import { readSessionToken } from "@/features/auth/server/session";
+import { apiBaseUrl } from "@/lib/api/server";
+
+export { apiBaseUrl } from "@/lib/api/server";
 
 export type SessionUser = {
   id: string;
@@ -40,20 +43,9 @@ export type SessionUser = {
 /**
  * The versioned API base, or `null` when this deployment has no API to talk to.
  *
- * There is deliberately no default: guessing a port would either point the web
- * app at the wrong service or, worse, at itself. A missing value is reported as
- * "unavailable" instead of failing open.
- *
- * `INVERGE_API_URL` is documented as an origin. The API serves every route under
- * `/api/v1`, so append the prefix here rather than at each call site; an operator
- * who already supplied the versioned base is accepted without doubling it.
+ * Re-exported from `@/lib/api/server` so the auth surface keeps its existing
+ * import while every feature shares one normaliser.
  */
-export function apiBaseUrl(): string | null {
-  const raw = process.env.INVERGE_API_URL?.trim();
-  if (!raw) return null;
-  const base = raw.replace(/\/+$/, "");
-  return base.endsWith("/api/v1") ? base : `${base}/api/v1`;
-}
 
 const SESSION_LOOKUP_TIMEOUT_MS = 3_000;
 
