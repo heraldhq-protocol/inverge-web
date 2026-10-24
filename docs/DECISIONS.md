@@ -1696,6 +1696,104 @@ Revisit when: The API owns the taxonomy, ideas routinely need a category that
 campaign discovery should not carry, or a child needs to move between parents.
 A move requires migrating stored slugs and keeping old filter URLs working.
 
+### D-042: Live idea and campaign discovery are read-only projections
+
+- Date: 2026-10-24
+- Status: Accepted
+- Owner: Web engineering
+
+Context: `GET /api/v1/ideas` and `GET /api/v1/campaigns` are live, but their
+projections are narrower than the preview fixtures. The API has no campaign
+slug, story, media, reward tiers, or published escrow terms, and its idea list
+supports taxonomy filters, `mine`, `limit`, and `cursor` only. Rendering a live
+record through the preview `Campaign` model would require inventing the missing
+fields; falling back to fixtures when the API fails would make an outage look
+like a catalogue. The preview discovery grid also offers search, country, money,
+and sort controls that the live endpoints cannot honour.
+
+Decision: public idea discovery and detail read the API when
+`INVERGE_API_URL` is configured, and both routes call `await connection()` so a
+build never needs a running API. Fixtures are returned only when no API is
+configured at all. A configured API that fails surfaces an error rather than
+silently switching data sources.
+
+Live reads are bounded windows: idea discovery follows cursor pages up to 300
+rows, and a campaign category loads the newest 300 campaigns in that parent.
+When the cap is reached, the page says the window is partial instead of
+presenting it as a total. Category and subcategory counts are computed from the
+same window the grid renders, so a heading and its cards cannot disagree.
+
+The live idea region mapping adds `"other"` for API regions outside Nigeria,
+Ghana, and Senegal; it never invents a country. The live campaign card renders
+only the API fields that exist and links to the source idea (`/ideas/{ideaId}`),
+never to `/campaigns/{slug}`, which has no live slug to resolve. Campaign
+categories keep the taxonomy header and trust strip, replace the preview
+discovery controls with the reduced card grid, and state that search and
+advanced filters are unavailable. A live category with no public campaigns
+shows an explicit empty state.
+
+Alternatives: map the API into the full preview `Campaign` model (fabricates
+missing content); keep fixtures when the API fails (hides outages); add a live
+campaign detail route that renders the same reduced card (no new information,
+and still no slug); keep the preview filter controls (they would silently do
+nothing); paginate a category without a cap (unbounded server work per request).
+
+Consequences: the two discovery surfaces are honest about what the API owns and
+can ship before the campaign workspace endpoints exist. The cost is a reduced
+campaign card, no live campaign detail page, no live search or advanced filters,
+and a windowed rather than exhaustive catalogue. Live campaign cards are not
+saved, shared, or backed from the card, because those actions need the campaign
+workspace and wallet flows that remain deferred.
+
+Revisit when: the API exposes campaign slugs and the full campaign workspace, a
+search/sort contract lands, or the window cap becomes a real discovery
+constraint. At that point the reduced card and the preview/live split should be
+retired together, not one surface at a time.
+
+### D-043: Country and region entry uses one ISO country list and a global region dataset
+
+- Date: 2026-10-24
+- Status: Accepted
+- Owner: Web engineering
+
+Context: Profile and campaign location was a free-text field. Creators in the
+launch markets write "Lagos, Nigeria", but the same field has to accept "Delta,
+Nigeria", "Greater Accra, Ghana", and eventually "Bavaria, Germany" without a
+hand-maintained country-by-country table. `countries-list` was considered, but
+it carries country metadata only; it has no states or provinces. A city database
+would be larger and still not the shape an address form needs.
+
+Decision: `src/lib/countries.ts` remains the single source of ISO 3166-1 alpha-2
+codes and CLDR display names. `src/lib/locations.ts` sources first-level regions
+from `country-region-data` v4.1.0 (MIT, ~130 KB ESM, ISO-3166-2), keyed by the
+same country code. The stored value stays one display string
+("Ikeja, Lagos, Nigeria"); `parseLocation` and `formatLocation` split and compose
+it, and `LocationPicker` owns the three inputs while the creator is typing.
+
+The ECOWAS member states are the first validation target
+(`WEST_AFRICA_COUNTRY_CODES`), but every country in the shared list remains
+selectable. A country with no regions in the dataset falls back to a free-text
+region input; the city is always free text. Region display overrides correct a
+small number of awkward or unaccented ISO labels, and aliases keep old stored
+values resolvable.
+
+Alternatives: keep a curated NG/GH/SN map (correct for the launch trio, but
+every new country becomes a data-entry project); use `countries-list` (no
+subdivisions); use a city-level database (larger, more maintenance, and more
+precision than the product stores); store country, region, and city as three
+separate API fields (a schema change the API does not have yet).
+
+Consequences: The forms cover West Africa now and upscale without a new
+dependency or a second country-name table. The cost is ~130 KB of region data in
+the settings and campaign-wizard chunks, and ISO-3166-2 can lag local
+reorganisations (for example, Côte d'Ivoire's dataset still lists older
+regions). The picker is honest about that: it never invents a region, and it
+keeps a legacy value editable when it cannot resolve one.
+
+Revisit when: The API stores structured country, region, and city fields, the
+region dataset is materially stale for a launch market, or the bundle budget
+makes a lazy-loaded region chunk necessary.
+
 ## Decision template
 
 Copy this section for a new decision.
