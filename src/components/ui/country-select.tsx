@@ -1,9 +1,13 @@
 "use client";
 
 import { HugeiconsIcon } from "@hugeicons/react";
-import { CheckmarkCircle02Icon } from "@hugeicons/core-free-icons";
+import {
+  CheckmarkCircle02Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from "react";
 
+import { CountryFlag } from "@/components/ui/country-flag";
 import { controlClass } from "@/components/ui/field";
 import { countryName, searchCountries, type Country } from "@/lib/countries";
 
@@ -122,6 +126,23 @@ export function CountrySelect({
 
   return (
     <div className="relative">
+      {open || value ? (
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-muted"
+        >
+          {open ? (
+            <HugeiconsIcon
+              icon={Search01Icon}
+              size={16}
+              strokeWidth={2}
+              aria-hidden="true"
+            />
+          ) : (
+            <CountryFlag code={value} />
+          )}
+        </span>
+      ) : null}
       <input
         id={inputId}
         type="text"
@@ -153,7 +174,7 @@ export function CountrySelect({
             close();
           }
         }}
-        className={controlClass(invalid)}
+        className={controlClass(invalid, open || value ? "pl-10" : "")}
       />
 
       {open ? (
@@ -188,9 +209,12 @@ export function CountrySelect({
                     active ? "bg-brand/8 text-ink" : "text-ink hover:bg-canvas"
                   }`}
                 >
-                  <span>
-                    {country.name}{" "}
-                    <span className="text-xs text-muted">{country.code}</span>
+                  <span className="flex min-w-0 items-center gap-2">
+                    <CountryFlag code={country.code} />
+                    <span className="truncate">
+                      {country.name}{" "}
+                      <span className="text-xs text-muted">{country.code}</span>
+                    </span>
                   </span>
                   <HugeiconsIcon
                     icon={CheckmarkCircle02Icon}

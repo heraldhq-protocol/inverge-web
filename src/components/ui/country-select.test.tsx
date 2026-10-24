@@ -4,6 +4,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { CountrySelect } from "@/components/ui/country-select";
 
+vi.mock("@/components/ui/country-flag", () => ({
+  CountryFlag: ({ code }: { code: string }) => (
+    <span aria-hidden="true" data-testid="country-flag">
+      {code}
+    </span>
+  ),
+}));
+
 /**
  * The destination picker's keyboard and search contract.
  *
@@ -167,6 +175,15 @@ describe("CountrySelect", () => {
 
     expect(screen.getByText(/No countries match/)).toBeInTheDocument();
     expect(screen.queryAllByRole("option")).toHaveLength(0);
+  });
+
+  it("shows a decorative flag for the chosen country", () => {
+    render(<Harness />);
+    fireEvent.focus(box());
+    fireEvent.change(box(), { target: { value: "gh" } });
+    fireEvent.keyDown(box(), { key: "Enter" });
+
+    expect(screen.getByTestId("country-flag")).toHaveTextContent("GH");
   });
 
   it("carries the caller's invalid state and description onto the input", () => {

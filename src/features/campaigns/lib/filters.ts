@@ -34,7 +34,11 @@ import {
   discoveryCategories,
   type DiscoveryCategory,
 } from "@/features/home/discovery-categories";
-import { countries, countryName, normaliseCountryCode } from "@/lib/countries";
+import {
+  countryCodeFromName,
+  countryName,
+  normaliseCountryCode,
+} from "@/lib/countries";
 import type { MoneyAmount } from "@/lib/money";
 
 /** The label for the obsolete six-value campaign category. Compatibility only. */
@@ -44,10 +48,6 @@ export function legacyCategoryLabel(value: DiscoveryCategory): string {
     value
   );
 }
-
-const COUNTRY_BY_NAME = new Map(
-  countries().map((country) => [foldCountryName(country.name), country.code]),
-);
 
 function foldCountryName(value: string): string {
   return value
@@ -78,7 +78,7 @@ export function campaignCountryCode(location: string): string | null {
   const direct = normaliseCountryCode(candidate);
   if (direct) return direct;
 
-  return COUNTRY_BY_NAME.get(foldCountryName(candidate)) ?? null;
+  return countryCodeFromName(candidate);
 }
 
 /** A country filter label, including the honest bucket for unmatched locations. */

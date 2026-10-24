@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   countries,
+  countryCodeFromName,
   countryName,
   isCountryCode,
   normaliseCountryCode,
@@ -95,6 +96,25 @@ describe("normaliseCountryCode", () => {
     expect(normaliseCountryCode("ZZ")).toBeNull();
     expect(normaliseCountryCode("Nigeria")).toBeNull();
     expect(normaliseCountryCode("")).toBeNull();
+  });
+});
+
+describe("countryCodeFromName", () => {
+  it("finds a country by its English name", () => {
+    expect(countryCodeFromName("Nigeria")).toBe("NG");
+    expect(countryCodeFromName("  ghana  ")).toBe("GH");
+    expect(countryCodeFromName("United Kingdom")).toBe("GB");
+  });
+
+  it("does not require the creator to spell an accent or a curly apostrophe", () => {
+    expect(countryCodeFromName("Côte d’Ivoire")).toBe("CI");
+    expect(countryCodeFromName("Cote d'Ivoire")).toBe("CI");
+  });
+
+  it("refuses a label that is not a country name", () => {
+    expect(countryCodeFromName("Lagos")).toBeNull();
+    expect(countryCodeFromName("NG")).toBeNull();
+    expect(countryCodeFromName("")).toBeNull();
   });
 });
 

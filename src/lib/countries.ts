@@ -114,7 +114,25 @@ function fold(value: string): string {
   return value
     .normalize("NFD")
     .replace(/\p{Diacritic}/gu, "")
+    .replace(/[’‘]/g, "'")
+    .trim()
     .toLowerCase();
+}
+
+const BY_NAME = new Map(
+  ORDERED.map((country) => [fold(country.name), country.code]),
+);
+
+/**
+ * A country code from a country's English CLDR name.
+ *
+ * Used where a stored location is a display string ("Lagos, Nigeria") rather
+ * than a code. Matching ignores case, accents, surrounding whitespace, and the
+ * typographic apostrophe, so a creator who typed "Cote d'Ivoire" is understood.
+ * Returns `null` rather than guessing when the label is not a country.
+ */
+export function countryCodeFromName(value: string): string | null {
+  return BY_NAME.get(fold(value)) ?? null;
 }
 
 /**

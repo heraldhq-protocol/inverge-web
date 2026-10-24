@@ -22,6 +22,7 @@ export type SelectOption = {
 };
 
 type SelectProps = {
+  "aria-describedby"?: string | undefined;
   "aria-label"?: string;
   "aria-labelledby"?: string;
   className?: string;
@@ -44,6 +45,7 @@ type MenuPosition = {
 };
 
 export function Select({
+  "aria-describedby": ariaDescribedBy,
   "aria-label": ariaLabel,
   "aria-labelledby": ariaLabelledBy,
   className = "",
@@ -230,6 +232,7 @@ export function Select({
         disabled={disabled}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
+        aria-describedby={ariaDescribedBy}
         aria-haspopup="listbox"
         aria-autocomplete="none"
         aria-controls={listboxId}

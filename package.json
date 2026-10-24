@@ -35,6 +35,8 @@
     "@tiptap/react": "3.32.0",
     "@tiptap/starter-kit": "3.32.0",
     "@web3auth/modal": "11.4.3",
+    "country-flag-icons": "1.6.20",
+    "country-region-data": "4.1.0",
     "gsap": "^3.15.0",
     "lucide-react": "^1.45.0",
     "next": "16.3.5",

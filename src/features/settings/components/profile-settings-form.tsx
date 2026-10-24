@@ -6,10 +6,12 @@ import { type ChangeEvent, type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { LocationPicker } from "@/components/ui/location-picker";
 import type { SettingsProfile } from "@/features/settings/types";
 
 export function ProfileSettingsForm({ profile }: { profile: SettingsProfile }) {
   const [photoName, setPhotoName] = useState("");
+  const [location, setLocation] = useState(profile.location);
   const [saved, setSaved] = useState(false);
 
   function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
@@ -100,22 +102,15 @@ export function ProfileSettingsForm({ profile }: { profile: SettingsProfile }) {
           />
           <p className="text-xs text-muted">inverge.com/u/{profile.username}</p>
         </div>
-        <div className="space-y-1.5 md:col-span-2">
-          <label
-            htmlFor="settings-location"
-            className="text-sm font-semibold text-ink"
-          >
-            Where you&apos;re based
-          </label>
-          <Input
+        <div className="md:col-span-2">
+          <LocationPicker
             id="settings-location"
-            name="location"
-            defaultValue={profile.location}
-            autoComplete="address-level2"
+            label="Where you're based"
+            help="Only share location detail you are comfortable making public."
+            value={location}
+            onChange={setLocation}
           />
-          <p className="text-xs text-muted">
-            Only share location detail you are comfortable making public.
-          </p>
+          <input type="hidden" name="location" value={location} />
         </div>
       </div>
 
