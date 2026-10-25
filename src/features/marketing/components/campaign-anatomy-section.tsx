@@ -98,7 +98,7 @@ export function CampaignAnatomySection() {
               {/* 3. Milestone Under Review */}
               <div className="flex items-start justify-between gap-3">
                 <div className="w-full">
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between max-md:flex-wrap max-md:gap-x-3 max-md:gap-y-2">
                     <div className="flex items-center gap-2">
                       <svg
                         className="size-4 text-ink"
@@ -117,7 +117,7 @@ export function CampaignAnatomySection() {
                         Milestone 2 of 4
                       </span>
                     </div>
-                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-amber-50 px-2.5 py-0.5 text-xs font-semibold text-amber-700 max-md:shrink-0 max-md:whitespace-nowrap">
                       <span>⚠</span> Under review
                     </span>
                   </div>

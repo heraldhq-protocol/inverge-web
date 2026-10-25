@@ -81,7 +81,7 @@ export function CampaignFeaturedBand({
           </div>
         </div>
 
-        <div className="relative order-1 min-h-56 max-md:min-w-0 lg:order-2 lg:min-h-full">
+        <div className="relative order-1 min-h-56 min-w-0 lg:order-2 lg:min-h-full">
           <Cover
             seed={campaign.slug}
             label={campaignCategoryText(campaign)}
