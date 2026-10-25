@@ -130,7 +130,7 @@ export function CampaignCard({
           {campaign.summary}
         </p>
 
-        <div className="mt-4 flex min-w-0 items-start gap-2.5">
+        <div className="py-4 flex min-w-0 items-start gap-2.5">
           <Avatar name={campaign.creator.name} size={32} />
           <div className="min-w-0">
             <p className="truncate text-sm font-medium text-ink">

@@ -170,7 +170,7 @@ export function CampaignAnatomySection() {
                     <h4 className="text-sm font-bold text-ink">
                       Target in USDC
                     </h4>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-0.5 pb-3 sm:pb-0 text-xs text-muted">
                       Shows the funding goal for the campaign.
                     </p>
                   </div>
@@ -186,7 +186,7 @@ export function CampaignAnatomySection() {
                     <h4 className="text-sm font-bold text-ink">
                       Working-capital tranche
                     </h4>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-0.5 pb-3 sm:pb-0 text-xs text-muted">
                       Disclosed before you back. Not refundable.
                     </p>
                   </div>
@@ -202,7 +202,7 @@ export function CampaignAnatomySection() {
                     <h4 className="text-sm font-bold text-ink">
                       Milestone under review
                     </h4>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-0.5 pb-3 sm:pb-0 text-xs text-muted">
                       Shows the current milestone and objection window.
                     </p>
                   </div>
@@ -216,7 +216,7 @@ export function CampaignAnatomySection() {
                   <span className="mt-1 size-2 shrink-0 rounded-full bg-brand" />
                   <div>
                     <h4 className="text-sm font-bold text-ink">Receipt link</h4>
-                    <p className="mt-0.5 text-xs text-muted">
+                    <p className="mt-0.5 pb-3 sm:pb-0 text-xs text-muted">
                       View the public receipt for this campaign.
                     </p>
                   </div>
