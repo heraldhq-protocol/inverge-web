@@ -52,7 +52,7 @@ const DEFAULT_TIMEOUT_MS = 5_000;
  */
 export async function fetchApiJson<Payload>(
   path: string,
-  options: { timeoutMs?: number } = {},
+  options: { timeoutMs?: number; token?: string | null } = {},
 ): Promise<Payload> {
   const base = apiBaseUrl();
   if (!base) {
@@ -64,11 +64,15 @@ export async function fetchApiJson<Payload>(
   }
 
   const url = `${base}${path.startsWith("/") ? path : `/${path}`}`;
+  const headers = new Headers();
+  if (options.token) headers.set("authorization", `Bearer ${options.token}`);
+
   let response: Response;
 
   try {
     response = await fetch(url, {
       cache: "no-store",
+      headers,
       signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
     });
   } catch {
