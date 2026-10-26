@@ -50,8 +50,11 @@ choices.
 | D-039 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
 | D-040 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
 | D-041 | 2026-10-22 | Accepted | Idea discovery reuses the campaign category/subcategory taxonomy; the taxonomy fields are optional on a record and a child is URL-valid only under its selected parent. |
+| D-042 | 2026-10-24 | Accepted | Live idea and campaign discovery are read-only projections with bounded windows; fixtures are used only when the API is unconfigured. |
+| D-043 | 2026-10-24 | Accepted | Country and region entry uses one ISO/CLDR country list, global first-level regions, West Africa first, and flags from `country-flag-icons`. |
 | D-044 | 2026-10-25 | Accepted | Product analytics is produced server-side after the response by the signed web producer, keyed by an anonymous HttpOnly session or internal user id; no browser beacon, IP address, or device fingerprint. |
 | D-045 | 2026-10-25 | Accepted | The working-capital tranche is fixed at 20% of the original target and does not grow with overfunding; milestone weights total 100% of `eligibleRaised - initialTranche` on their own, and any surplus stays in escrow under the same milestone rules. |
+| D-046 | 2026-10-26 | Accepted | Live creator analytics reuses existing API reports, gates premium reports server-side, and falls back to preview only when auth is preview or the API is unconfigured. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -1830,8 +1833,7 @@ need an explicit dynamic decision before they can be measured. The secret must
 match the API's `ANALYTICS_INGEST_SECRET`, and `INVERGE_ANALYTICS_ENABLED` must
 be `true`; otherwise the producer is inert. `/d/creator/analytics` also reads the
 account's `analytics.premium` entitlement and submits a request through a server
-action, while the idea workspace remains preview data until the live creator
-dashboard lands.
+action. D-046 wires the live reports into the creator insights pages.
 
 Revisit when: Phase 2 privacy approval adds consent, referrer, device, region, or
 returning-visitor measurement; a static surface needs view analytics; or the
@@ -1881,6 +1883,59 @@ this decision does not by itself make live escrow releases work.
 
 Revisit when: Overfunding refund policy changes, Flexible Funding becomes
 deployable, or the programme needs a different initial-tranche rule.
+### D-046: Live creator analytics reuses existing reports with explicit fallback
+
+- Date: 2026-10-26
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The creator insights pages rendered fixture data even after the API
+gained creator-only reports. Adding web-specific analytics endpoints would
+duplicate the API's query budgets, date-boundary handling, and privacy rules.
+The web also needed a fallback that could not be mistaken for live data.
+
+Decision: `src/features/analytics/server/workspace.ts` resolves one creator idea
+through `GET /ideas/{id}` and the creator-only `GET /ideas/{id}/insights` in
+parallel. The insights read is the ownership check: a `403` or `404` becomes
+`notFound()`, a `401` becomes signed out, and a timeout or `5xx` becomes an
+explicit unavailable state. The shell and data tabs map those reads plus the
+existing `summary`, `timeseries`, `validation`, `acquisition`, and `geography`
+reports into one `AnalyticsWorkspaceView`, so a page cannot mix a live total
+with a fixture series.
+
+Summary and timeseries are read for any authenticated owner. The premium
+reports are fetched only after `GET /analytics/access` returns
+`analytics.premium`, and acquisition/geography only on the traffic tab. The
+access read is request-cached so the pages and workspace do not repeat it.
+Preview fixtures are used only when `INVERGE_AUTH_MODE=preview` or
+`INVERGE_API_URL` is unset; an API-configured signed-out visitor sees the
+signed-out state, not a fixture. The analytics index reads
+`GET /ideas?mine=true` with a 100-idea bound rather than assembling an owner
+list from the public catalogue.
+
+The referral tab remains unavailable because the API stores no referrer or UTM
+data. `follows` and `saves` remain `null` until the product has those models.
+Pre-pledges are the current all-time total, not a range-bound count. Supporter
+identities and written feedback text are not exposed; the pages show aggregate
+counts and say when text is unavailable.
+
+Alternatives: add web-only analytics endpoints (rejected: duplicate query
+budgets, date handling, and privacy rules); assemble the creator index from the
+public idea list (rejected: the public catalogue is not an ownership source);
+show fixtures when the API is configured but the visitor is signed out
+(rejected: fixture numbers look live); fetch premium reports and hide them in
+the client (rejected: access must be enforced before the read); infer referral
+sources from absent data (rejected: no such data is collected).
+
+Consequences: One view model serves live and preview data, and premium access is
+enforced server-side without inventing a plan or price. The pages depend on the
+API's existing report field names and UTC date conventions. Live campaign
+backing is still indexer-owned and is not shown as creator analytics. Preview
+analytics remains limited to the `skill-circle` fixture.
+
+Revisit when: the API adds follow/save models, referrer/UTM capture, supporter
+identity, challenge/ideathon reports, or a paid billing integration; or a report
+field changes shape.
 
 ## Decision template
 
