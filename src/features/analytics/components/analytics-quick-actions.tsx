@@ -11,6 +11,8 @@ import {
 import Link from "next/link";
 import { useState } from "react";
 
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
+
 /**
  * Quick actions. Each performs its own function: the copy button writes the
  * public idea URL, share opens a real share target, and the two links point at
@@ -55,7 +57,7 @@ export function AnalyticsQuickActions({ ideaId }: { ideaId: string }) {
     {
       icon: LinkSquare02Icon,
       label: "Open public page",
-      href: `/ideas/${ideaId}`,
+      href: ideaViewHref(ideaId, "internal"),
     },
   ] as const;
 

@@ -4,6 +4,10 @@ import Link from "next/link";
 
 import { Avatar } from "@/components/ui/avatar";
 import { Pill } from "@/components/ui/pill";
+import {
+  ideaViewHref,
+  type IdeaLinkSource,
+} from "@/features/ideas/lib/idea-link";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
 import type { DiscoveryIdea } from "@/features/ideas/types";
@@ -116,18 +120,24 @@ export function IdeaDiscoveryCard({
   idea,
   variant = "grid",
   priority = false,
+  source = "feed",
 }: {
   idea: DiscoveryIdea;
   /** `featured` and `lead` are legacy aliases for the standard grid card. */
   variant?: "grid" | "list" | "featured" | "lead";
   priority?: boolean;
+  /**
+   * Where the reader found the card. The idea page records this closed value
+   * with the view; it is never a referrer or UTM string.
+   */
+  source?: IdeaLinkSource;
 }) {
   const isList = variant === "list";
   const categoryText = ideaTaxonomyText(idea);
 
   return (
     <Link
-      href={`/ideas/${idea.id}`}
+      href={ideaViewHref(idea.id, source)}
       className={`group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg hover:shadow-ink/[0.06] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand motion-reduce:hover:translate-y-0 ${
         isList ? "sm:grid sm:grid-cols-[12rem_minmax(0,1fr)] sm:flex-row" : ""
       }`}

@@ -3,6 +3,10 @@ import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Pill } from "@/components/ui/pill";
+import {
+  ideaViewHref,
+  type IdeaLinkSource,
+} from "@/features/ideas/lib/idea-link";
 import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 import { formatCompactMoney } from "@/lib/money";
@@ -17,10 +21,16 @@ export type HeroFeaturedIdea = DiscoveryIdea;
  * card says `Promoted` instead, because FR-206a requires that distinction to be
  * explicit.
  */
-export function DiscoveryHeroFeatured({ idea }: { idea: HeroFeaturedIdea }) {
+export function DiscoveryHeroFeatured({
+  idea,
+  source = "feed",
+}: {
+  idea: HeroFeaturedIdea;
+  source?: IdeaLinkSource;
+}) {
   return (
     <Link
-      href={`/ideas/${idea.id}`}
+      href={ideaViewHref(idea.id, source)}
       className="group block rounded-2xl border border-border bg-surface p-4 shadow-xl shadow-ink/[0.08] transition-[border-color,box-shadow] hover:border-brand/30 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
     >
       <div className="flex items-center justify-between gap-3">

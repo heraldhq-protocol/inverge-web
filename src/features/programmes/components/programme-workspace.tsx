@@ -12,6 +12,7 @@ import { NgnEstimate } from "@/components/ui/ngn-estimate";
 import { Pill } from "@/components/ui/pill";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import type {
   AuditEntry,
   Programme,
@@ -786,7 +787,7 @@ export function ProgrammeWorkspace({
                       />
                     </div>
                     <Link
-                      href={`/ideas/${submission.ideaId}`}
+                      href={ideaViewHref(submission.ideaId, "internal")}
                       className="inline-flex min-h-9 items-center gap-1 rounded-lg px-2 text-xs font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
                     >
                       Open idea

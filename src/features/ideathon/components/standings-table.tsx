@@ -14,6 +14,7 @@ import { Amount } from "@/components/ui/amount";
 import { Avatar } from "@/components/ui/avatar";
 import { Pill } from "@/components/ui/pill";
 import { Select } from "@/components/ui/select";
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import type {
   CompetitionCategoryBreakdown,
@@ -322,7 +323,7 @@ export function StandingsTable({
                   </td>
                   <td className="px-3 py-3 text-right align-middle">
                     <Link
-                      href={`/ideas/${entry.idea.id}`}
+                      href={ideaViewHref(entry.idea.id, "internal")}
                       className="inline-flex min-h-9 items-center justify-center rounded-lg border border-border bg-surface px-2.5 text-xs font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       View

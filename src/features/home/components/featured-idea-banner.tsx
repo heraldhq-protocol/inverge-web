@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 
@@ -47,7 +48,7 @@ export function FeaturedIdeaBanner({ idea }: { idea: DiscoveryIdea }) {
               {idea.category}
             </p>
             <Link
-              href={`/ideas/${idea.id}`}
+              href={ideaViewHref(idea.id, "feed")}
               className="mt-1 inline-flex text-base font-bold tracking-[-0.02em] text-ink underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand sm:text-lg"
             >
               {idea.title}
@@ -60,7 +61,7 @@ export function FeaturedIdeaBanner({ idea }: { idea: DiscoveryIdea }) {
 
           <div className="mt-5 flex flex-wrap items-center gap-3 pt-1">
             <Link
-              href={`/ideas/${idea.id}`}
+              href={ideaViewHref(idea.id, "feed")}
               className="inline-flex min-h-11 items-center gap-2 rounded-xl bg-contrast px-5 text-sm font-semibold text-white transition-colors hover:bg-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
               Explore this idea

@@ -2,6 +2,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowUpRight01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import type { DiscoveryIdea } from "@/features/ideas/types";
 import { formatCompactMoney } from "@/lib/money";
@@ -45,7 +46,7 @@ export function RecommendedIdeas({
               className="border-b border-border/70 last:border-b-0"
             >
               <Link
-                href={`/ideas/${idea.id}`}
+                href={ideaViewHref(idea.id, "internal")}
                 className="group flex items-center gap-3 px-3 py-2.5 transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-[-2px] focus-visible:outline-brand"
               >
                 <span className="relative size-12 shrink-0 overflow-hidden rounded-lg bg-surface-muted">

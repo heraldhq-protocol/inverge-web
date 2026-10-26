@@ -10,6 +10,7 @@ import { Avatar } from "@/components/ui/avatar";
 import { Cover } from "@/components/ui/cover";
 import { Meter } from "@/components/ui/meter";
 import { Pill, type PillTone } from "@/components/ui/pill";
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import type {
   LiveCampaign,
   LiveCampaignStatus,
@@ -53,7 +54,7 @@ function milestoneLabel(milestones: LiveCampaign["milestones"]): string {
  */
 export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
   const href = campaign.ideaId
-    ? `/ideas/${encodeURIComponent(campaign.ideaId)}`
+    ? ideaViewHref(campaign.ideaId, "internal")
     : null;
 
   return (
@@ -63,7 +64,9 @@ export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
           href={href}
           className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          <span className="sr-only">Read the source idea for {campaign.title}</span>
+          <span className="sr-only">
+            Read the source idea for {campaign.title}
+          </span>
         </Link>
       ) : null}
 
@@ -141,9 +144,13 @@ export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
                 aria-hidden="true"
                 className="shrink-0"
               />
-              <span className="truncate">{deadlineLabel(campaign.deadline)}</span>
+              <span className="truncate">
+                {deadlineLabel(campaign.deadline)}
+              </span>
             </span>
-            <span className="shrink-0">{milestoneLabel(campaign.milestones)}</span>
+            <span className="shrink-0">
+              {milestoneLabel(campaign.milestones)}
+            </span>
           </div>
         </div>
 
