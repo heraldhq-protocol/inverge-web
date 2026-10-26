@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 
 import { Coins01Icon, Comment01Icon } from "@hugeicons/core-free-icons";
 
@@ -8,15 +9,19 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { AiInsightsPanel } from "@/features/analytics/components/ai-insights-panel";
 import { AnalyticsChartPanel } from "@/features/analytics/components/analytics-chart-panel";
 import { AnalyticsPeriodSelect } from "@/features/analytics/components/analytics-period";
-import { ConfiguredFeedbackBreakdown } from "@/features/analytics/components/configured-feedback-breakdown";
-import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
+import {
+  AnalyticsServiceUnavailable,
+  AnalyticsSignedOut,
+} from "@/features/analytics/components/analytics-state";
+import { AnalyticsUnavailable } from "@/features/analytics/components/analytics-unavailable";
+import { FeedbackBreakdown } from "@/features/analytics/components/feedback-breakdown";
 import {
   analyticsWindow,
   formatSeriesDate,
   parseAnalyticsPeriod,
 } from "@/features/analytics/lib/analytics";
 import { getAiInsightsEntitlement } from "@/features/analytics/lib/entitlements";
-import { summariseFeedback } from "@/features/analytics/lib/feedback-summary";
+import { getIdeaAnalyticsWorkspace } from "@/features/analytics/server/workspace";
 import { formatCompactMoney, formatMoney } from "@/lib/money";
 
 export const metadata: Metadata = {
@@ -26,15 +31,34 @@ export const metadata: Metadata = {
 };
 
 type PageProps = {
+  params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function InterestAnalyticsPage({
+  params,
   searchParams,
 }: PageProps) {
-  const params = await searchParams;
-  const period = parseAnalyticsPeriod(params.period);
-  const range = analyticsWindow(previewAnalytics.series, period);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const period = parseAnalyticsPeriod(query.period);
+  const result = await getIdeaAnalyticsWorkspace(id, period);
+  if (result.status === "not_found") notFound();
+  if (result.status === "signed_out") {
+    return (
+      <AnalyticsSignedOut next={`/d/creator/ideas/${id}/insights/interest`} />
+    );
+  }
+  if (result.status === "unavailable") {
+    return (
+      <AnalyticsServiceUnavailable
+        description={result.reason}
+        retryHref={`/d/creator/ideas/${id}/insights/interest`}
+      />
+    );
+  }
+
+  const view = result.view;
+  const range = analyticsWindow(view.series, period);
   const first = range.points[0];
   const last = range.points[range.points.length - 1];
   const points = range.points.map((point) => ({
@@ -58,10 +82,7 @@ export default async function InterestAnalyticsPage({
         })
       : null;
   const entitlement = getAiInsightsEntitlement();
-  const feedbackSummary = summariseFeedback(
-    previewAnalytics.idea.feedbackForm,
-    previewAnalytics.demoSubmissions,
-  );
+  const feedback = view.feedback;
 
   return (
     <div className="space-y-5">
@@ -88,8 +109,12 @@ export default async function InterestAnalyticsPage({
         <MetricCard
           label="Estimated interest"
           icon={Coins01Icon}
-          value={<Amount value={previewAnalytics.idea.prePledged} compact />}
-          hint="Weighted by verification tier. Same figure as the public page."
+          value={<Amount value={view.summary.estimatedInterest} compact />}
+          hint={
+            view.idea.status === "draft"
+              ? "Weighted by verification tier. This draft is not public yet."
+              : "Weighted by verification tier. Same figure as the public page."
+          }
         />
         <MetricCard
           label={`Change, ${period} days`}
@@ -103,11 +128,23 @@ export default async function InterestAnalyticsPage({
         <MetricCard
           label="Feedback received"
           icon={Comment01Icon}
-          value={feedbackSummary.responseCount.toLocaleString("en-US")}
+          value={
+            feedback
+              ? feedback.responseCount.toLocaleString("en-US")
+              : "Not available"
+          }
+          unavailable={
+            feedback
+              ? undefined
+              : "Feedback analytics are not available for this workspace."
+          }
           hint={
-            feedbackSummary.hasRating && feedbackSummary.ratingAverage !== null
-              ? `Average ${feedbackSummary.ratingAverage.toFixed(1)} / 5. Structured responses only.`
-              : "No overall rating question is configured. Choice and written answers are reported separately."
+            feedback?.ratingAverage !== null &&
+            feedback?.ratingAverage !== undefined
+              ? `Average ${feedback.ratingAverage.toFixed(1)} / 5. Structured responses only.`
+              : view.dataSource === "preview"
+                ? "No overall rating question is configured. Choice and written answers are reported separately."
+                : "No overall rating question is configured. Choice answers are reported separately; written text is not exposed in the live report."
           }
         />
       </dl>
@@ -141,10 +178,22 @@ export default async function InterestAnalyticsPage({
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <ConfiguredFeedbackBreakdown
-          form={previewAnalytics.idea.feedbackForm}
-          submissions={previewAnalytics.demoSubmissions}
-        />
+        {feedback ? (
+          <FeedbackBreakdown
+            feedback={feedback}
+            formVersion={
+              view.dataSource === "preview"
+                ? view.idea.feedbackForm?.version
+                : undefined
+            }
+          />
+        ) : (
+          <AnalyticsUnavailable
+            icon={Comment01Icon}
+            title="Feedback breakdown"
+            description="Feedback analytics are not available for this workspace yet."
+          />
+        )}
         <AiInsightsPanel entitlement={entitlement} />
       </div>
 
@@ -155,7 +204,7 @@ export default async function InterestAnalyticsPage({
         <p className="mt-1.5 max-w-3xl text-xs leading-5 text-muted">
           A high rating means people found the idea promising in the context you
           described. It does not mean they would pay, switch tools, or back a
-          campaign. Read the written responses alongside the score, and treat
+          campaign. Read the structured answers alongside the score, and treat
           the estimate as intent rather than revenue.
         </p>
       </section>

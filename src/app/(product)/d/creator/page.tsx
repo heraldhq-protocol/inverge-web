@@ -207,7 +207,7 @@ export default function CreatorStudioPage() {
             </p>
             <p className="mt-1 text-xs leading-5 text-muted">
               Support growth, estimated interest, and feedback breakdowns per
-              idea. Basic analytics stay available without a paid plan.
+              idea. Basic analytics stay available without premium access.
             </p>
             <Link
               href="/d/creator/analytics"

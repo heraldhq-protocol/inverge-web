@@ -33,7 +33,7 @@ export function AnalyticsUnavailable({
           <div className="flex flex-wrap items-center gap-2">
             <h2 className="text-sm font-bold text-ink">{title}</h2>
             <span className="rounded-full bg-surface px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.08em] text-muted">
-              Not connected
+              Unavailable
             </span>
           </div>
           <p className="mt-1 text-xs leading-5 text-muted">{description}</p>

@@ -18,9 +18,8 @@ import {
 import { requestAnalyticsAccess } from "@/features/analytics/server/actions";
 
 const premiumReports = [
-  "Acquisition sources and campaign reach",
+  "Acquisition sources for this idea",
   "Country-level view distribution",
-  "Campaign creator-flow funnel",
   "Conversion rates with their denominators",
 ] as const;
 
@@ -114,9 +113,9 @@ function AccessBody({ access }: { access: AnalyticsAccessView }) {
       };
     case "not_configured":
       return {
-        body: "Analytics is not enabled on this deployment. Basic idea analytics still work when the API is configured.",
+        body: "Premium access is not checked in this environment. Basic reports follow the data source configured for this deployment.",
         icon: Analytics01Icon,
-        title: "Analytics is not configured",
+        title: "Premium access is not configured",
       };
     case "unavailable":
       return {
@@ -144,6 +143,7 @@ export function PremiumAccessPanel({
 }) {
   const status = statusLabel(access);
   const content = AccessBody({ access });
+  const canRequest = "access" in access && access.access.canRequest;
 
   return (
     <section
@@ -172,8 +172,8 @@ export function PremiumAccessPanel({
             </div>
             <p className="mt-1 max-w-2xl text-xs leading-5 text-muted">
               Basic reports cover views, support, estimated interest, and
-              structured feedback. Premium adds reach, geography, campaign
-              funnels, and conversion rates.
+              structured feedback. Premium adds acquisition sources, geography,
+              and conversion rates.
             </p>
           </div>
         </div>
@@ -232,9 +232,10 @@ export function PremiumAccessPanel({
       </ul>
 
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        {access.status === "available" ||
-        access.status === "rejected" ||
-        access.status === "expired" ? (
+        {canRequest &&
+        (access.status === "available" ||
+          access.status === "rejected" ||
+          access.status === "expired") ? (
           <RequestButton>
             {access.status === "available"
               ? "Request premium access"
