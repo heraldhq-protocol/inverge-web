@@ -5,8 +5,11 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Analytics01Icon, ArrowRight02Icon } from "@hugeicons/core-free-icons";
 
 import { Pill } from "@/components/ui/pill";
-import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import { PremiumAccessPanel } from "@/features/analytics/components/premium-access-panel";
 import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
+import { accessNotice } from "@/features/analytics/lib/access";
+import { getAnalyticsAccess } from "@/features/analytics/server/access";
+import { IdeaCover } from "@/features/ideas/components/idea-cover";
 
 export const metadata: Metadata = {
   title: "Idea analytics",
@@ -14,7 +17,17 @@ export const metadata: Metadata = {
     "Private analytics for your published ideas: support, estimated interest, feedback, and next steps.",
 };
 
-export default function IdeaAnalyticsIndexPage() {
+type PageProps = {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
+
+export default async function IdeaAnalyticsIndexPage({
+  searchParams,
+}: PageProps) {
+  const [access, params] = await Promise.all([
+    getAnalyticsAccess(),
+    searchParams,
+  ]);
   const idea = previewAnalytics.idea;
 
   return (
@@ -84,11 +97,17 @@ export default function IdeaAnalyticsIndexPage() {
         </ul>
       </section>
 
+      <PremiumAccessPanel
+        access={access}
+        notice={accessNotice(params.access)}
+      />
+
       <p className="mt-5 max-w-3xl text-xs leading-5 text-muted">
-        This preview repository includes one complete analytics workspace. Other
-        preview ideas have no analytics dataset yet, so they are not listed with
-        a dead link. Analytics is created per idea and remains private to its
-        creator.
+        The premium request panel reads the signed-in account&apos;s entitlement
+        from the API when a session is configured. The idea workspace below is
+        still preview data: other preview ideas have no analytics dataset yet,
+        so they are not listed with a dead link. Analytics is created per idea
+        and remains private to its creator.
       </p>
     </div>
   );

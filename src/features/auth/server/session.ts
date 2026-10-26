@@ -3,10 +3,16 @@ import "server-only";
 import { cookies } from "next/headers";
 
 import {
+  ONBOARDING_INTENT_COOKIE_NAME,
+  SESSION_COOKIE_NAME,
+} from "@/features/auth/lib/cookies";
+import {
   DEFAULT_ONBOARDING_INTENT,
   type OnboardingIntent,
   safeOnboardingIntent,
 } from "@/features/auth/lib/onboarding";
+
+export { ONBOARDING_INTENT_COOKIE_NAME, SESSION_COOKIE_NAME };
 
 /**
  * The Inverge session, kept server-side.
@@ -14,10 +20,7 @@ import {
  * The API issues a one-hour HS256 session JWT. The browser never reads it: it
  * lives in an HttpOnly cookie and is attached to API calls by the server, so no
  * XSS on the page can copy a bearer token out of JavaScript or local storage.
- */
-export const SESSION_COOKIE_NAME = "inverge_session";
-
-/**
+ *
  * The API's session lives for one hour (`SessionService` signs `1h`). The cookie
  * must not outlive it, or the browser would keep sending a token the API has
  * already rejected — and the next request would look like a surprise sign-out.
@@ -56,8 +59,6 @@ export async function clearSessionCookie(): Promise<void> {
  * routes to choose a destination, and deleted as soon as the shared profile is
  * stored. It never selects a role, tier or capability.
  */
-export const ONBOARDING_INTENT_COOKIE_NAME = "inverge_onboarding_intent";
-
 export async function readOnboardingIntent(): Promise<OnboardingIntent> {
   const value = (await cookies()).get(ONBOARDING_INTENT_COOKIE_NAME)?.value;
   return value ? safeOnboardingIntent(value) : DEFAULT_ONBOARDING_INTENT;

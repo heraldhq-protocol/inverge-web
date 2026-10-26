@@ -3,12 +3,20 @@ import { notFound } from "next/navigation";
 import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
+import {
+  parseAnalyticsSource,
+  recordIdeaView,
+  recordPageView,
+} from "@/features/analytics/server/ingest";
 import { IdeaDetail } from "@/features/ideas/components/idea-detail";
 import { getIdeaDetailView } from "@/features/ideas/server/views";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
-type PageProps = { params: Promise<{ id: string }> };
+type PageProps = {
+  params: Promise<{ id: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+};
 
 export async function generateMetadata({
   params,
@@ -36,14 +44,20 @@ export async function generateMetadata({
   });
 }
 
-export default async function IdeaDetailPage({ params }: PageProps) {
+export default async function IdeaDetailPage({
+  params,
+  searchParams,
+}: PageProps) {
   await connection();
 
-  const { id } = await params;
+  const [{ id }, query] = await Promise.all([params, searchParams]);
   const view = await getIdeaDetailView(id);
   if (!view) notFound();
 
   const { idea } = view;
+  const source = parseAnalyticsSource(query.source);
+  recordPageView("idea-detail", { source });
+  recordIdeaView(idea.id, { source });
 
   return (
     <>
