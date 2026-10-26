@@ -80,13 +80,33 @@ function EscrowLedgerTable({ campaign }: { campaign: Campaign }) {
           </tr>
         </thead>
         <tbody>
+          {ledger.initial ? (
+            <tr
+              key={ledger.initial.milestoneId}
+              className="border-b border-border/70"
+            >
+              <th scope="row" className="px-3.5 py-2.5 font-normal text-ink">
+                <span className="text-muted">
+                  {ledger.initial.sequenceLabel}
+                </span>{" "}
+                {ledger.initial.title}
+              </th>
+              <td className="px-3.5 py-2.5 tabular-nums text-ink">
+                <Amount value={ledger.initial.tranche} />
+              </td>
+              <td className="px-3.5 py-2.5 capitalize text-muted">
+                {ledger.initial.bucket}
+              </td>
+            </tr>
+          ) : null}
           {ledger.rows.map((row) => (
             <tr
               key={row.milestoneId}
               className="border-b border-border/70 last:border-0"
             >
               <th scope="row" className="px-3.5 py-2.5 font-normal text-ink">
-                <span className="text-muted">{row.sequence}.</span> {row.title}
+                <span className="text-muted">{row.sequenceLabel}.</span>{" "}
+                {row.title}
               </th>
               <td className="px-3.5 py-2.5 tabular-nums text-ink">
                 <Amount value={row.tranche} />
@@ -98,6 +118,21 @@ function EscrowLedgerTable({ campaign }: { campaign: Campaign }) {
           ))}
         </tbody>
       </table>
+
+      {ledger.projected ? (
+        <p className="border-t border-border px-3.5 py-2.5 text-xs leading-5 text-muted">
+          Projected at the target. The indexer has not reported what this
+          campaign actually raised yet.
+        </p>
+      ) : null}
+
+      {ledger.surplus !== null && BigInt(ledger.surplus.atomic) > 0n ? (
+        <p className="border-t border-border px-3.5 py-2.5 text-xs leading-5 text-muted">
+          This campaign raised above its target. The{" "}
+          <Amount value={ledger.surplus} /> surplus stays in escrow and is
+          released by the same milestone plan; it is not paid out up front.
+        </p>
+      ) : null}
 
       <p className="border-t border-border px-3.5 py-2.5 text-xs leading-5 text-muted">
         Released funds have left escrow. Approved funds are decided but not yet

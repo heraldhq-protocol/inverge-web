@@ -186,7 +186,7 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
 
       <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
         <MetricCard
-          label="Raised"
+          label="Raised (gross)"
           icon={MoneyBag02Icon}
           value={escrow.raised ? <Amount value={escrow.raised} /> : "—"}
           hint={`Target ${formatMoney(escrow.target)}`}
@@ -201,7 +201,7 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
           label="Released"
           icon={Coins01Icon}
           value={<Amount value={escrow.totalReleased} />}
-          hint="Out of escrow, held as USDC in your wallet."
+          hint="Recorded as out of escrow. Off-ramp to fiat is not part of this build."
         />
         <MetricCard
           label="Approved, awaiting release"
@@ -234,7 +234,8 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
 
           <table className="mt-3 w-full text-left text-sm">
             <caption className="sr-only">
-              Each milestone tranche and where it currently sits.
+              The initial working tranche, each milestone tranche, and where
+              each currently sits.
             </caption>
             <thead>
               <tr className="border-b border-border text-xs uppercase tracking-[0.08em] text-muted">
@@ -250,13 +251,32 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
               </tr>
             </thead>
             <tbody>
+              {ledger.initial ? (
+                <tr
+                  key={ledger.initial.milestoneId}
+                  className="border-b border-border/70"
+                >
+                  <th scope="row" className="py-2.5 font-normal text-ink">
+                    <span className="text-muted">
+                      {ledger.initial.sequenceLabel}
+                    </span>{" "}
+                    {ledger.initial.title}
+                  </th>
+                  <td className="py-2.5 tabular-nums text-ink">
+                    <Amount value={ledger.initial.tranche} />
+                  </td>
+                  <td className="py-2.5 capitalize text-muted">
+                    {ledger.initial.bucket}
+                  </td>
+                </tr>
+              ) : null}
               {ledger.rows.map((row) => (
                 <tr
                   key={row.milestoneId}
                   className="border-b border-border/70 last:border-0"
                 >
                   <th scope="row" className="py-2.5 font-normal text-ink">
-                    <span className="text-muted">{row.sequence}.</span>{" "}
+                    <span className="text-muted">{row.sequenceLabel}.</span>{" "}
                     {row.title}
                   </th>
                   <td className="py-2.5 tabular-nums text-ink">
@@ -267,6 +287,55 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
               ))}
             </tbody>
           </table>
+
+          {ledger.projected ? (
+            <p className="mt-2 text-xs text-muted">
+              Projected at the target until the indexer reports what the
+              campaign actually raised.
+            </p>
+          ) : null}
+
+          <dl className="mt-4 grid grid-cols-2 gap-x-4 gap-y-3 border-t border-border pt-3 text-sm">
+            <div>
+              <dt className="text-xs text-muted">
+                Initial tranche (20% of target)
+              </dt>
+              <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                {escrow.initialTranche ? (
+                  <Amount value={escrow.initialTranche} />
+                ) : (
+                  <span className="font-normal text-muted">Not published</span>
+                )}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted">Remaining for milestones</dt>
+              <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                <Amount value={escrow.remaining} />
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-muted">Still in escrow</dt>
+              <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                <Amount value={escrow.stillHeld} />
+              </dd>
+            </div>
+            {escrow.surplus !== null && BigInt(escrow.surplus.atomic) > 0n ? (
+              <div>
+                <dt className="text-xs text-muted">Surplus above target</dt>
+                <dd className="mt-0.5 font-medium tabular-nums text-ink">
+                  <Amount value={escrow.surplus} />
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+
+          <p className="mt-3 text-xs leading-5 text-muted">
+            Released is money recorded as transferred out of escrow. Still in
+            escrow covers approved, unreleased and refundable balances. Any
+            surplus above target is part of the milestone pool, not a separate
+            payout.
+          </p>
         </section>
 
         <section

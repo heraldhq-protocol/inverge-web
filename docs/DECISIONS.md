@@ -28,7 +28,7 @@ choices.
 | D-017 | 2026-10-17 | Accepted | Move every creator surface from `/d/ideas*` to `/d/creator/*` (overview, list, create, per-idea workspace, feedback setup, insights, analytics home, feedback inbox) with redirects from the old paths. |
 | D-018 | 2026-10-18 | Accepted | Build the campaign experience as one preview feature (`src/features/campaigns`) whose only data seam knows the data is preview: no wallet, no chain, no fabricated transaction, and every fixture carries `demo: true`. |
 | D-019 | 2026-10-18 | Accepted | Campaign media is a creator-supplied link, never an upload in this build: a video is preferred at the top but optional, hosted players are addressed by a parsed id rather than by the creator's string, and no fixture ships a video. |
-| D-020 | 2026-10-18 | Accepted (widens FR-503a, SRS to be reconciled) | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. |
+| D-020 | 2026-10-18 | Accepted; working-capital half superseded by D-045 | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. The band is superseded: D-045 fixes the tranche at 20% of the original target. |
 | D-021 | 2026-10-19 | Accepted | The campaign detail page is tabbed, not one scroll: tab state lives in `?tab=`, the panel is chosen on the server, and the desktop rail repeats the most-scanned cards. |
 | D-022 | 2026-10-19 | Accepted | The creator's story is a closed, typed block vocabulary rendered as data; the schema has no `html` member and the page never injects creator markup. |
 | D-023 | 2026-10-19 | Accepted | Saved campaigns live in this browser behind a `SavedCampaignsStore` boundary and every surface says so; no surface may claim account synchronisation. |
@@ -50,6 +50,8 @@ choices.
 | D-039 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
 | D-040 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
 | D-041 | 2026-10-22 | Accepted | Idea discovery reuses the campaign category/subcategory taxonomy; the taxonomy fields are optional on a record and a child is URL-valid only under its selected parent. |
+| D-044 | 2026-10-25 | Accepted | Product analytics is produced server-side after the response by the signed web producer, keyed by an anonymous HttpOnly session or internal user id; no browser beacon, IP address, or device fingerprint. |
+| D-045 | 2026-10-25 | Accepted | The working-capital tranche is fixed at 20% of the original target and does not grow with overfunding; milestone weights total 100% of `eligibleRaised - initialTranche` on their own, and any surplus stays in escrow under the same milestone rules. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -565,7 +567,7 @@ point `upload` becomes reachable and the fixtures can carry one clip.
 ### D-020: The success fee is Inverge's, and the first tranche is a band
 
 - Date: 2026-10-18
-- Status: Accepted (widens FR-503a; the SRS needs reconciling)
+- Status: Accepted; working-capital half superseded by D-045
 - Owner: Product owner and web engineering
 
 Context: The creator wizard exposed the success fee as an editable percentage
@@ -601,8 +603,11 @@ the one-percent steps make the allowed band obvious before submission. The band
 is now a platform setting with two sources of truth until the SRS is updated,
 which is why the divergence is recorded here.
 
-Revisit when: The SRS is reconciled, the settings API can supply these
-parameters, or a campaign type needs a different fee or band.
+Superseded: D-045 fixes the initial tranche at 20% of the original target and
+removes the creator's band. The success-fee rule stands.
+
+Revisit when: The settings API can supply these parameters, or a campaign type
+needs a different fee.
 
 ### D-021: The campaign detail page is tabbed, with a rail beside it
 
@@ -1831,6 +1836,51 @@ dashboard lands.
 Revisit when: Phase 2 privacy approval adds consent, referrer, device, region, or
 returning-visitor measurement; a static surface needs view analytics; or the
 API changes the wire vocabulary.
+
+### D-045: Fix the working tranche at 20% of target and divide the remainder by milestone weights
+
+- Date: 2026-10-25
+- Status: Accepted (supersedes the working-capital half of D-020)
+- Owner: Product, escrow programme, API and web
+
+Context: The earlier band treated the tranche as a creator-selected 20-25% slice of
+the same escrow base as the milestones (`workingCapitalBps + Σ trancheBps = 10_000`).
+That pays an overfunded campaign more before verification than its original plan was
+worth: at 150% funding, a 25% tranche releases 37.5% of the target instead of 25%.
+The product owner has fixed the rule for this iteration: the initial tranche is 20%
+of the **original target**, the milestone weights divide what is left, and the
+surplus stays in escrow.
+
+Decision: `initialTranche = targetAmount x 2_000 / 10_000`. Milestone weights sum
+to exactly 10,000 independently and each milestone receives
+`(eligibleRaised - initialTranche) x weight / 10_000`; the last milestone absorbs
+the integer remainder. `eligibleRaised` is the gross `total_raised`; the 5% fee is
+deducted from each gross release, so the creator receives 95% of it. A release that
+would exceed eligible funds fails with an explicit validation error rather than
+clamping. Surplus is not a separate release stage: it is part of the milestone pool
+and remains subject to the same milestone, objection and refund rules. The wizard
+no longer offers a working-capital choice; the API draft DTO accepts exactly `20`;
+readiness requires the fixed tranche and a milestone total of 10,000. The creator
+workspace and public escrow section show the initial tranche, remaining pool,
+released, still-held and surplus separately. Fixtures keep their authored 10,000
+milestone weights instead of being rescaled.
+
+Alternatives: Keep the proportional tranche (overpays overfunded campaigns and was
+the reason for the change); cap all payouts at the target and refund the surplus
+(a different product promise, not requested); keep the 20-25% creator choice
+(rejected by the product owner for this iteration); rescale milestone weights on
+the client (hides a money decision and changes published terms).
+
+Consequences: The programme, API readiness, draft validation, wizard, fixtures and
+copy now agree on one rule. A draft saved with a 25% tranche under the old band is
+blocked until re-created under the fixed rule; there is no live data to migrate
+because the contract is not deployed. Milestone display is a projection until the
+indexer exists; only confirmed on-chain releases may be described as released. The
+release endpoints, confirmation/reconciliation and indexer are still not built, so
+this decision does not by itself make live escrow releases work.
+
+Revisit when: Overfunding refund policy changes, Flexible Funding becomes
+deployable, or the programme needs a different initial-tranche rule.
 
 ## Decision template
 

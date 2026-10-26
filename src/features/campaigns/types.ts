@@ -478,15 +478,14 @@ export type CampaignDisclosures = {
 /**
  * The escrow rules a campaign publishes.
  *
- * Held per campaign rather than as module constants: the SRS gives ranges, and
- * a UI that prints a platform-wide "20%" would be inventing a term. A campaign
- * that has not published a term uses `null` and the UI says so.
+ * The working-capital tranche is fixed at 20% of the target by FR-503a. It is
+ * still stored per campaign so a campaign that predates the rule, or has not
+ * published terms, remains distinguishable from one that applies it; `null`
+ * means "not published", not "zero".
  */
 export type EscrowTerms = {
-  /** Working-capital advance against milestone one, sized to its budget (FR-503a). */
+  /** Fixed share of the original target released at funding close (FR-503a). */
   workingCapitalBps: number | null;
-  /** The cap the advance may not exceed. */
-  workingCapitalCapBps: number | null;
   /** Backer objection window in days (FR-602). */
   objectionWindowDays: number | null;
   /** Objection weight that fails a claim (FR-603). */
@@ -641,9 +640,17 @@ export type CreatorEscrowSummary = {
   campaignId: string;
   target: MoneyAmount;
   raised: MoneyAmount | null;
+  /** The fixed 20% tranche, when the campaign has published terms. */
+  initialTranche: MoneyAmount | null;
+  /** What the milestone weights divide, after the initial tranche. */
+  remaining: MoneyAmount;
+  /** Raised above target and still held under the milestone plan. */
+  surplus: MoneyAmount | null;
   totalReleased: MoneyAmount;
   totalPending: MoneyAmount;
   totalRefunded: MoneyAmount;
+  /** Unreleased balances (including approved) plus refundable balances. */
+  stillHeld: MoneyAmount;
   payout: {
     state: PayoutState;
     /** Non-identifying destination label, e.g. "Your connected wallet". */

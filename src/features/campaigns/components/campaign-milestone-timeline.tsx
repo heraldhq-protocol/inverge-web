@@ -11,6 +11,7 @@ import {
 import { Amount } from "@/components/ui/amount";
 import { MilestonePill } from "@/features/campaigns/components/campaign-status-pill";
 import { formatBps } from "@/features/campaigns/lib/amounts";
+import { allocationFor } from "@/features/campaigns/lib/allocation";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
 import {
   currentMilestone,
@@ -182,10 +183,11 @@ function MilestoneItem({
   milestone: CampaignMilestone;
   now: Date;
 }) {
-  const tranche = milestoneTranche(
-    campaign.funding.target,
-    milestone.allocationBps,
-  );
+  const allocation = allocationFor(campaign);
+  const tranche =
+    allocation.milestones.find((item) => item.milestoneId === milestone.id)
+      ?.amount ??
+    milestoneTranche(allocation.remaining, milestone.allocationBps);
   const outcome = objectionOutcome(
     milestone,
     campaign.escrow.objectionThresholdBps,
