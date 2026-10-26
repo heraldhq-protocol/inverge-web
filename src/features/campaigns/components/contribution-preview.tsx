@@ -1177,9 +1177,10 @@ export function ContributionPreview({
                   <li>{campaign.disclosures.risks}</li>
                   <li>
                     Your contribution is refundable in full if the campaign
-                    fails to reach its target by the funding deadline, unless it
-                    has already been released as the working-capital tranche
-                    described above.
+                    fails to reach its target by the funding deadline. After a
+                    successful funding close, the released working-capital
+                    tranche is not refundable, but the remaining escrow stays
+                    subject to the milestone and refund rules.
                   </li>
                   {tier ? (
                     <li>

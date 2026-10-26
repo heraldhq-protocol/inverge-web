@@ -1,7 +1,7 @@
 import { formatLongDate } from "@/features/campaigns/lib/dates";
 import {
   PLATFORM_SUCCESS_FEE_BPS,
-  WORKING_CAPITAL_MAX_BPS,
+  WORKING_CAPITAL_BPS,
 } from "@/features/campaigns/lib/escrow";
 import {
   campaignCategoryLabel,
@@ -141,7 +141,6 @@ const DEFAULT_ESCROW: EscrowTerms = {
   objectionWindowDays: 7,
   perWalletObjectionCapBps: 1_500,
   successFeeBps: PLATFORM_SUCCESS_FEE_BPS,
-  workingCapitalCapBps: WORKING_CAPITAL_MAX_BPS,
   workingCapitalBps: null,
 };
 
@@ -165,18 +164,25 @@ function buildMilestones(
   }));
 }
 
+/** The fixed share of the target released at funding (FR-503a). */
+const DEFAULT_WORKING_CAPITAL_BPS = WORKING_CAPITAL_BPS;
+
 function buildCampaign(seed: Seed): Campaign {
+  const declaredWorkingCapital = seed.escrow?.workingCapitalBps;
+  // A fixture that declares no published terms keeps `null`, because "unknown"
+  // must not become a number. The rest use the fixed 20% of target.
+  const workingCapitalBps =
+    declaredWorkingCapital === null
+      ? null
+      : (declaredWorkingCapital ?? DEFAULT_WORKING_CAPITAL_BPS);
   const milestones = buildMilestones(seed.slug, seed.milestones);
-  const firstBps = milestones.at(0)?.allocationBps ?? 0;
   const escrow: EscrowTerms = {
     ...DEFAULT_ESCROW,
-    // Sized to milestone one's own budget and never above the published cap
-    // (FR-503a). Every fixture's first tranche is inside the platform range, so
-    // the clamp is a guard rather than a silent correction. A draft with no plan
-    // yet publishes no figure.
-    workingCapitalBps:
-      firstBps > 0 ? Math.min(firstBps, WORKING_CAPITAL_MAX_BPS) : null,
     ...seed.escrow,
+    // Working capital is a separate stage sized from the target; the milestone
+    // weights divide what remains and sum to 100% on their own. They are not
+    // rescaled to make a combined total.
+    workingCapitalBps,
   };
 
   const taxonomy = seed.taxonomy
@@ -269,7 +275,7 @@ function defaultFaqs(): readonly CampaignFaq[] {
     },
     {
       answer:
-        "Only after a milestone's evidence is approved. A working-capital tranche sized to milestone one is released at funding success, and every later tranche waits for its own approval.",
+        "Only after a milestone's evidence is approved. A fixed 20% working-capital tranche of the target is released at funding success; the milestone weights divide what remains, and every later tranche waits for its own approval.",
       id: "when-released",
       question: "When are funds released?",
     },

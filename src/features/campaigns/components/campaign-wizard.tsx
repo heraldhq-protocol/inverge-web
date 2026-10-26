@@ -13,11 +13,12 @@ import {
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Amount } from "@/components/ui/amount";
 import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { LocationPicker } from "@/components/ui/location-picker";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { MediaImage } from "@/features/campaigns/components/media-image";
@@ -35,6 +36,7 @@ import {
   createDraftTier,
   draftTarget,
   draftUseOfFundsTotal,
+  draftWorkingCapitalFor,
   nextDraftId,
   submissionPreconditions,
   tierNeedsShipping,
@@ -48,9 +50,7 @@ import {
 import { formatBps, parsePercentToBps } from "@/features/campaigns/lib/amounts";
 import {
   PLATFORM_SUCCESS_FEE_BPS,
-  WORKING_CAPITAL_MAX_BPS,
-  WORKING_CAPITAL_MIN_BPS,
-  workingCapitalChoices,
+  WORKING_CAPITAL_BPS,
 } from "@/features/campaigns/lib/escrow";
 import {
   campaignCategories,
@@ -61,12 +61,18 @@ import {
   campaignWizardSteps,
   type CampaignWizardStepId,
 } from "@/features/campaigns/lib/wizard";
+import {
+  useCampaignDraftAutosave,
+  type DraftSaveInitial,
+  type DraftSaveState,
+} from "@/features/campaigns/lib/use-campaign-draft-autosave";
 
 /**
  * The campaign authoring wizard.
  *
  * It validates the things the product actually enforces — a target, a future
- * deadline, a 2–6 milestone plan whose tranches total 100% (FR-301, FR-302),
+ * deadline, a 2–6 milestone plan whose weights total 100% of the post-tranche
+ * pool (FR-301, FR-302),
  * media whose links parse and whose descriptions are written, and published
  * disclosures — and it refuses to pretend the campaign was submitted.
  * Submission needs identity verification and a paid application fee (FR-103,
@@ -75,13 +81,67 @@ import {
  *
  * In edit mode the plan is locked (FR-303): a published campaign's milestones and
  * their evidence definitions cannot be rewritten, because backers agreed to them.
+ *
+ * In create mode the draft is autosaved to Inverge once it is a document the API
+ * can create (the plan, funding and milestones steps are complete). The save
+ * carries a version, so a second tab cannot silently overwrite this one.
  */
 
-const AUTOSAVE_NOTE =
-  "This build has no storage, so nothing here is saved. Closing the page loses your draft.";
+/** What the save indicator says while the draft is not yet persistable. */
+const UNSAVED_NOTE =
+  "Saving starts once the funding and milestone steps are complete. Until then this draft lives in this tab.";
 
-/** The first-tranche shares Inverge allows, one percent at a time (FR-503a). */
-const WORKING_CAPITAL_OPTIONS = workingCapitalChoices();
+function SaveStatus({ save }: { save: DraftSaveState }) {
+  const text =
+    save.status === "saved"
+      ? `Draft saved${save.version === null ? "" : ` · version ${save.version}`}`
+      : save.status === "saving"
+        ? "Saving…"
+        : save.status === "waiting"
+          ? (save.message ?? UNSAVED_NOTE)
+          : save.status === "conflict" ||
+              save.status === "error" ||
+              save.status === "signed-out"
+            ? (save.message ?? "This draft could not be saved.")
+            : UNSAVED_NOTE;
+
+  const tone =
+    save.status === "saved"
+      ? "text-brand-strong"
+      : save.status === "conflict" ||
+          save.status === "error" ||
+          save.status === "signed-out"
+        ? "text-warning-strong"
+        : "text-muted";
+
+  return (
+    <p
+      className={`mt-3 hidden text-xs leading-5 lg:block ${tone}`}
+      role="status"
+      aria-live="polite"
+    >
+      {text}
+      {save.status === "conflict" ? (
+        <>
+          {" "}
+          <Link
+            href=""
+            className="font-semibold underline underline-offset-2"
+            onClick={(event) => {
+              event.preventDefault();
+              window.location.reload();
+            }}
+          >
+            Reload
+          </Link>
+        </>
+      ) : null}
+    </p>
+  );
+}
+
+/** The fixed working-capital share (FR-503a). */
+const WORKING_CAPITAL_LABEL = formatBps(WORKING_CAPITAL_BPS);
 
 /**
  * What a reward sends. "Not stated" is the empty value rather than a label, so
@@ -152,9 +212,13 @@ function BlockingNote({
 export function CampaignWizard({
   draft: initialDraft,
   mode = "create",
+  saved = null,
+  loadError = null,
 }: {
   draft: CampaignDraft;
   mode?: "create" | "edit";
+  saved?: DraftSaveInitial;
+  loadError?: string | null;
 }) {
   const locked = mode === "edit";
   const [draft, setDraft] = useState<CampaignDraft>(() =>
@@ -162,6 +226,21 @@ export function CampaignWizard({
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [issues, setIssues] = useState<readonly DraftIssue[]>([]);
+
+  const handleCreated = useCallback((id: string) => {
+    // Shallow address-bar update: the draft is resumable by URL without a
+    // navigation that would remount this form and drop in-flight edits.
+    const url = new URL(window.location.href);
+    url.searchParams.set("draft", id);
+    window.history.replaceState(null, "", url);
+  }, []);
+
+  const save = useCampaignDraftAutosave({
+    draft,
+    enabled: !locked,
+    initial: saved,
+    onCreated: handleCreated,
+  });
 
   const step = campaignWizardSteps[stepIndex] ?? campaignWizardSteps[0];
   if (!step) throw new Error("Wizard step index out of range");
@@ -217,6 +296,7 @@ export function CampaignWizard({
   const target = draftTarget(draft);
   const useOfFundsTotal = draftUseOfFundsTotal(draft);
   const allocationTotal = draftAllocationTotalBps(draft);
+  const workingCapital = draftWorkingCapitalFor(draft);
   const preconditions = submissionPreconditions();
   const heroMedia = toCampaignMedia(draft.heroMedia);
   const storyMedia = toCampaignMedia(draft.storyMedia);
@@ -239,13 +319,16 @@ export function CampaignWizard({
             onGoTo={(index) => setStepIndex(index)}
             steps={campaignWizardSteps}
           />
-          <p className="mt-3 hidden text-xs leading-5 text-muted lg:block">
-            {AUTOSAVE_NOTE}
-          </p>
+          <SaveStatus save={save} />
         </div>
       </div>
 
       <div className="min-w-0">
+        {loadError ? (
+          <div className="mb-4 rounded-2xl border border-warning/30 bg-warning/[0.07] p-4 text-sm leading-6 text-ink">
+            {loadError}
+          </div>
+        ) : null}
         <div className="rounded-3xl border border-border bg-surface p-5 sm:p-7">
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-strong">
             Step {stepIndex + 1} of {campaignWizardSteps.length}
@@ -360,21 +443,15 @@ export function CampaignWizard({
                   ) : null}
                 </div>
 
-                <Field label="Where you are" error={errorFor("location")}>
-                  {({ describedBy, id, invalid }) => (
-                    <Input
-                      id={id}
-                      value={draft.location}
-                      autoComplete="off"
-                      placeholder="Lagos, Nigeria"
-                      aria-describedby={describedBy || undefined}
-                      aria-invalid={invalid || undefined}
-                      onChange={(event) =>
-                        patch({ location: event.target.value })
-                      }
-                    />
-                  )}
-                </Field>
+                <div className="sm:col-span-2">
+                  <LocationPicker
+                    label="Where you are"
+                    help="Country and region help backers find you. Add a city if you want."
+                    error={errorFor("location")}
+                    value={draft.location}
+                    onChange={(value) => patch({ location: value })}
+                  />
+                </div>
               </div>
 
               <Field
@@ -720,6 +797,20 @@ export function CampaignWizard({
                 </p>
               ) : null}
 
+              <div className="rounded-xl border border-border bg-canvas p-3.5">
+                <p className="text-sm font-medium text-ink">
+                  Working capital · {WORKING_CAPITAL_LABEL} of the target
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted">
+                  {workingCapital
+                    ? `${formatMoney(workingCapital.amount)} is released to you at funding close, before any milestone is verified, and is never refundable (FR-503a, FR-506).`
+                    : "Enter a target to see the amount released at funding close."}{" "}
+                  It is fixed, separate from the milestone plan, and it does not
+                  grow when a campaign overfunds. The weights below divide
+                  whatever remains after it.
+                </p>
+              </div>
+
               <ul className="space-y-3">
                 {draft.milestones.map((milestone, index) => (
                   <li
@@ -931,7 +1022,7 @@ export function CampaignWizard({
                 )}
 
                 <p className="text-sm text-muted">
-                  Tranches total{" "}
+                  Milestone weights total{" "}
                   <span
                     className={
                       allocationTotal === 10000
@@ -941,7 +1032,7 @@ export function CampaignWizard({
                   >
                     {formatBps(allocationTotal)}
                   </span>{" "}
-                  of 100%.
+                  of 100% of the post-tranche pool.
                 </p>
               </div>
             </div>
@@ -1353,59 +1444,25 @@ export function CampaignWizard({
                 )}
               </Field>
 
-              <div className="grid gap-5 sm:grid-cols-2">
-                <div className="space-y-1.5">
-                  <label
-                    id="campaign-working-capital-label"
-                    htmlFor="campaign-working-capital"
-                    className="text-sm font-medium text-ink"
-                  >
-                    First tranche
-                  </label>
-                  <Select
-                    id="campaign-working-capital"
-                    aria-labelledby="campaign-working-capital-label"
-                    placeholder="Choose a share"
-                    value={draft.workingCapitalPercent}
-                    options={WORKING_CAPITAL_OPTIONS}
-                    onValueChange={(value) =>
-                      patch({ workingCapitalPercent: value })
+              <Field
+                label="Objection window"
+                help="Days backers have to object to a claim (FR-602)."
+                error={errorFor("objectionWindowDays")}
+              >
+                {({ describedBy, id, invalid }) => (
+                  <Input
+                    id={id}
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={draft.objectionWindowDays}
+                    aria-describedby={describedBy || undefined}
+                    aria-invalid={invalid || undefined}
+                    onChange={(event) =>
+                      patch({ objectionWindowDays: event.target.value })
                     }
                   />
-                  <p className="text-xs leading-5 text-muted">
-                    Released to you at funding close, before any milestone is
-                    verified, and never refundable (FR-503a, FR-506). Inverge
-                    allows {formatBps(WORKING_CAPITAL_MIN_BPS)} to{" "}
-                    {formatBps(WORKING_CAPITAL_MAX_BPS)}, and it cannot exceed
-                    milestone one&apos;s share.
-                  </p>
-                  {errorFor("workingCapitalPercent") ? (
-                    <p className="text-xs font-medium text-danger">
-                      {errorFor("workingCapitalPercent")}
-                    </p>
-                  ) : null}
-                </div>
-
-                <Field
-                  label="Objection window"
-                  help="Days backers have to object to a claim (FR-602)."
-                  error={errorFor("objectionWindowDays")}
-                >
-                  {({ describedBy, id, invalid }) => (
-                    <Input
-                      id={id}
-                      inputMode="numeric"
-                      autoComplete="off"
-                      value={draft.objectionWindowDays}
-                      aria-describedby={describedBy || undefined}
-                      aria-invalid={invalid || undefined}
-                      onChange={(event) =>
-                        patch({ objectionWindowDays: event.target.value })
-                      }
-                    />
-                  )}
-                </Field>
-              </div>
+                )}
+              </Field>
 
               <div className="rounded-xl border border-border bg-canvas px-3.5 py-3">
                 <div className="flex items-baseline justify-between gap-3">
@@ -1418,9 +1475,9 @@ export function CampaignWizard({
                 </div>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   Set by Inverge and taken from each released tranche at the
-                  moment it is released, including the first one (FR-505). It is
-                  not editable here, and it is never charged to a backer on top
-                  of their contribution.
+                  moment it is released, including the working-capital tranche
+                  (FR-505). It is not editable here, and it is never charged to
+                  a backer on top of their contribution.
                 </p>
               </div>
             </div>
@@ -1454,8 +1511,8 @@ export function CampaignWizard({
                 <div className="bg-surface px-4 py-3 text-sm">
                   <dt className="text-xs text-muted">Milestones</dt>
                   <dd className="mt-0.5 font-medium text-ink">
-                    {draft.milestones.length} milestones totalling{" "}
-                    {formatBps(allocationTotal)}
+                    {draft.milestones.length} milestones, weights totalling{" "}
+                    {formatBps(allocationTotal)} of the remainder
                   </dd>
                 </div>
                 <div className="bg-surface px-4 py-3 text-sm">
@@ -1492,9 +1549,9 @@ export function CampaignWizard({
                 <div className="bg-surface px-4 py-3 text-sm">
                   <dt className="text-xs text-muted">Working capital</dt>
                   <dd className="mt-0.5 font-medium text-ink">
-                    {draft.workingCapitalPercent
-                      ? `${draft.workingCapitalPercent}% released at funding close`
-                      : "Not set"}
+                    {workingCapital
+                      ? `${WORKING_CAPITAL_LABEL} of the target (${formatMoney(workingCapital.amount)}) released at funding close`
+                      : `${WORKING_CAPITAL_LABEL} of the target, released at funding close`}
                   </dd>
                 </div>
               </dl>
@@ -1517,16 +1574,34 @@ export function CampaignWizard({
                 </p>
               )}
 
+              {save.readiness && save.readiness.blockers.length > 0 ? (
+                <div className="rounded-2xl border border-warning/30 bg-warning/[0.07] p-4">
+                  <p className="text-sm font-semibold text-ink">
+                    What the escrow server still needs
+                  </p>
+                  <p className="mt-1 text-xs leading-5 text-muted">
+                    These are the server&apos;s checks against the escrow
+                    programme. The draft is saved; deployment cannot start until
+                    they pass.
+                  </p>
+                  <ul className="mt-2.5 list-disc space-y-1 pl-5 text-sm leading-6 text-muted">
+                    {save.readiness.blockers.map((blocker) => (
+                      <li key={blocker}>{blocker}</li>
+                    ))}
+                  </ul>
+                </div>
+              ) : null}
+
               <BlockingNote
                 items={preconditions}
                 title="Before this can enter the review queue"
               />
 
               <PrototypeNotice title="Submission is not connected">
-                This build has no account session, no payment provider for the
-                application fee, and no review queue, so a submitted campaign
-                could not be recorded. The button below stays disabled until
-                those exist rather than showing a success screen.
+                Your draft is saved to Inverge. This build still has no payment
+                provider for the application fee and no review queue, so the
+                button below stays disabled rather than showing a success
+                screen.
               </PrototypeNotice>
 
               <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">

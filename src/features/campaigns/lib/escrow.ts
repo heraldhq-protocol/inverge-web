@@ -5,10 +5,12 @@ import { formatMoney } from "@/lib/money";
 /**
  * The accountability story, derived from the campaign's own published terms.
  *
- * Every sentence is built from `EscrowTerms` rather than from a platform-wide
- * constant, so a campaign that has not published a term says "depends on this
- * campaign's published terms" instead of quoting a number the product does not
- * actually apply. Amounts come from `funding.target`.
+ * Objection windows, thresholds and the fee are read from `EscrowTerms`, so a
+ * campaign that has not published one says "depends on this campaign's published
+ * terms" instead of quoting a number the product does not apply. The
+ * working-capital tranche is the exception: D-045 fixes it at 20% of the target
+ * for every campaign, so it may be stated as a platform rule. Amounts come from
+ * `funding.target` and integer basis points.
  *
  * Two requirements drive the wording and are easy to lose in a UI rewrite:
  * the working-capital tranche is released before any milestone is verified and
@@ -31,30 +33,13 @@ export type AccountabilityIcon =
  */
 export const PLATFORM_SUCCESS_FEE_BPS = 500;
 
-/** The window FR-503a allows for the first tranche: 15–25% of the raise. */
-export const WORKING_CAPITAL_MIN_BPS = 1_500;
-export const WORKING_CAPITAL_MAX_BPS = 2_500;
-
 /**
- * The values a creator may set the first tranche to, as the draft holds them: a
- * percentage string without the sign. One-percent steps, because the floor and
- * ceiling are the point and sub-percent precision on a share of escrow is noise.
+ * The initial working tranche is fixed at 20% of the original target (FR-503a,
+ * as revised). It is not a creator choice and it does not grow when a campaign
+ * overfunds. The milestone weights divide what remains after it.
  */
-export function workingCapitalChoices(): readonly {
-  label: string;
-  value: string;
-}[] {
-  const steps = (WORKING_CAPITAL_MAX_BPS - WORKING_CAPITAL_MIN_BPS) / 100 + 1;
-
-  return Array.from({ length: steps }, (_, index) => {
-    const bps = WORKING_CAPITAL_MIN_BPS + index * 100;
-    return { label: formatBps(bps), value: String(bps / 100) };
-  });
-}
-
-export function isWorkingCapitalInRange(bps: number): boolean {
-  return bps >= WORKING_CAPITAL_MIN_BPS && bps <= WORKING_CAPITAL_MAX_BPS;
-}
+export const WORKING_CAPITAL_BPS = 2_000;
+export const WORKING_CAPITAL_PERCENT = "20";
 
 export type AccountabilityStep = {
   id: string;
@@ -64,19 +49,15 @@ export type AccountabilityStep = {
 };
 
 export function workingCapitalSentence(campaign: Campaign): string {
-  const { workingCapitalBps, workingCapitalCapBps } = campaign.escrow;
-  const first = campaign.milestones.at(0);
+  const { workingCapitalBps } = campaign.escrow;
 
-  if (workingCapitalBps === null || workingCapitalCapBps === null) {
+  if (workingCapitalBps === null) {
     return "Whether an early working-capital tranche is released depends on this campaign's published terms.";
   }
 
   const amount = bpsOf(campaign.funding.target, workingCapitalBps);
-  const sized = first
-    ? ` It is sized to milestone one's published budget (“${first.title}”).`
-    : "";
 
-  return `On successful funding, a working-capital tranche of ${formatBps(workingCapitalBps)} of the escrow (${formatMoney(amount)}) is released to the creator before any milestone is verified.${sized} That tranche is capped at ${formatBps(workingCapitalCapBps)} of the escrow and is not eligible for refund, because the creator has already spent it.`;
+  return `On successful funding, an initial working-capital tranche of ${formatBps(workingCapitalBps)} of the original target (${formatMoney(amount)}) is released to the creator before any milestone is verified. It is a separate stage, not part of milestone one, and it does not grow when a campaign overfunds: the milestone tranches divide whatever remains after it, under the same escrow, objection and refund rules. The tranche is not eligible for refund, because the creator has already spent it.`;
 }
 
 export function objectionSentence(campaign: Campaign): string {
@@ -175,7 +156,7 @@ export function escrowSummary(campaign: Campaign): string {
   const advance =
     workingCapitalBps === null
       ? "Any early working-capital tranche depends on the campaign's published terms."
-      : `An initial working-capital tranche of up to ${formatBps(workingCapitalBps)} of the escrow is released at funding success, before any milestone is verified.`;
+      : `An initial working-capital tranche of ${formatBps(workingCapitalBps)} of the target is released at funding success, before any milestone is verified.`;
 
   return `Your contribution is held in a secure, campaign-specific escrow. If the target is not reached by the deadline you can claim a full refund. ${advance} Further releases depend on milestone approval.`;
 }
@@ -191,16 +172,11 @@ export type TermRow = {
 export function campaignTermRows(campaign: Campaign): readonly TermRow[] {
   const { objectionWindowDays, successFeeBps, workingCapitalBps } =
     campaign.escrow;
-  const first = campaign.milestones.at(0);
 
   const workingCapitalValue =
     workingCapitalBps === null
       ? "Per published terms"
-      : `${formatBps(workingCapitalBps)} of escrow${
-          first
-            ? ` (sized to milestone one: ${formatBps(first.allocationBps)})`
-            : ""
-        } — not refundable`;
+      : `${formatBps(workingCapitalBps)} of the target — released at funding, not refundable`;
 
   return [
     { label: "Funding model", value: "All-or-Nothing" },
