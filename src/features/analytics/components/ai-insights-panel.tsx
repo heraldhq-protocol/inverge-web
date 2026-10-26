@@ -76,7 +76,7 @@ export function AiInsightsPanel({
       {!entitlement.allowed ? (
         <div className="mt-4">
           <Link
-            href="/contact"
+            href="/d/creator/analytics#premium-analytics"
             className="inline-flex min-h-11 w-full items-center justify-center rounded-lg bg-contrast px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
             Ask about Pro access

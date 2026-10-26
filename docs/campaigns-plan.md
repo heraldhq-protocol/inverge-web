@@ -95,7 +95,7 @@ backend that does not exist in this repository.
 
 | # | Item | Why |
 | --- | --- | --- |
-| V1 | The first tranche was a 15–25% choice. FR-503a now fixes it at 20% of the target. | Resolved by D-045: the tranche is fixed at 20% of the original target, does not grow with overfunding, and the milestone weights total 100% of the remainder on their own. D-044's 20–25% band is superseded. |
+| V1 | The first tranche was a 15–25% choice. FR-503a now fixes it at 20% of the target. | Resolved by D-045: the tranche is fixed at 20% of the original target, does not grow with overfunding, and the milestone weights total 100% of the remainder on their own. |
 | V2 | No fixture carries a video. | The repository vendors no clip and a fixture must not depend on a third-party host at render time. The video path is real and is covered by tests and by the wizard, where a creator can paste a genuine link and preview it. |
 | V3 | `/d/backing` and `/d/creator/campaigns` have no local `loading.tsx`/`error.tsx`. | D-016 renders every `/d` route inside one shared shell and `docs/DASHBOARD_PAGES.md` puts the fallbacks at the `d/` group level; the two new collections inherit those rather than duplicating them. The public `/campaigns` routes do ship their own loading, error, and not-found states. |
 | V4 | The discussion thread renders an unavailable state. | There is no comment model and no API; seeding comments would invent user content. |

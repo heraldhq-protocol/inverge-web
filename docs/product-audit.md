@@ -97,7 +97,7 @@ This audit records what exists, what only looks like it exists, and what cannot 
 
 | ID | Conflict or ambiguity | Current handling |
 | --- | --- | --- |
-| A-01 | FR-503a now fixes the working-capital tranche at 20% of the target; D-020's 15–25% choice and D-044's 20–25% band are superseded by D-045. | Resolved by D-045: the wizard has no tranche control, the API accepts exactly 20, and the milestone weights divide the remainder and total 10,000 on their own. |
+| A-01 | FR-503a now fixes the working-capital tranche at 20% of the target; D-020's 15–25% choice is superseded by D-045. | Resolved by D-045: the wizard has no tranche control, the API accepts exactly 20, and the milestone weights divide the remainder and total 10,000 on their own. |
 | A-02 | The SRS requires admin review to gate publication (FR-304) and prohibits review before KYC and the application fee (FR-103, FR-311). The API `submit()` does not enforce either precondition. | Treat this as a backend release blocker. The web wizard blocks locally; no admin approval may be described as a compliance check. |
 | A-03 | The web review model has `changes-requested` and `rejected`; Prisma `CampaignStatus` does not. | The preview can model the product states; the API needs a schema and migration before any real review decision. |
 | A-04 | FR-901 names KYC, reviewer-panel, and platform-parameter administration. The web has none of those, and the API has only params, boost prices, role changes, and user listing. | Keep them missing rather than drawing operational controls with no authority. |

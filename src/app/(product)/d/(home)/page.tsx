@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { recordPageView } from "@/features/analytics/server/ingest";
 import { getDashboardViewer } from "@/features/app-shell/server/viewer";
 import { getPreviewFeedbackForm } from "@/features/feedback/content/preview-feedback";
 import { toActivityItems } from "@/features/home/lib/activity";
@@ -40,6 +41,7 @@ export const dynamic = "force-dynamic";
  * shell's session seam rather than page data.
  */
 export default async function HomePage() {
+  recordPageView("creator-dashboard");
   const viewer = await getDashboardViewer();
   const publicIdeas = allPublicIdeas(ideasPreviewData);
 
