@@ -1794,6 +1794,44 @@ Revisit when: The API stores structured country, region, and city fields, the
 region dataset is materially stale for a launch market, or the bundle budget
 makes a lazy-loaded region chunk necessary.
 
+### D-044: Product analytics is a server-side, post-response producer
+
+- Date: 2026-10-25
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The API exposes a signed service-to-service ingest route and
+privacy-reviewed view events, but the web app never called it. A browser client
+would introduce a public ingest boundary, a client-visible identity, and a
+consent decision the Phase 1 privacy boundary does not have.
+
+Decision: `src/features/analytics/server/ingest.ts` observes the render on the
+Next.js server and signs one batch with `ANALYTICS_INGEST_SECRET`. It runs inside
+`after()` so no network call delays the response, and it never throws. Anonymous
+readers receive one short-lived, HttpOnly `inverge_analytics_session` cookie from
+`src/proxy.ts`; signed-in readers use the internal account id instead. Only
+the API's closed event vocabulary is sent, and the web never synthesizes a
+confirmed outcome such as support, feedback, or backing.
+
+Alternatives: a browser beacon (rejected: public ingest, client identity, and a
+consent surface Phase 1 does not have); calling the API during render (rejected:
+analytics would block the page and could fail a product action); a third-party
+analytics script (rejected: cross-site identifiers and no data ownership).
+
+Consequences: Views are collected without a client bundle, IP address, user
+agent, or device fingerprint. The producer starts with idea discovery and idea
+detail because those routes are already per-request; static marketing surfaces
+need an explicit dynamic decision before they can be measured. The secret must
+match the API's `ANALYTICS_INGEST_SECRET`, and `INVERGE_ANALYTICS_ENABLED` must
+be `true`; otherwise the producer is inert. `/d/creator/analytics` also reads the
+account's `analytics.premium` entitlement and submits a request through a server
+action, while the idea workspace remains preview data until the live creator
+dashboard lands.
+
+Revisit when: Phase 2 privacy approval adds consent, referrer, device, region, or
+returning-visitor measurement; a static surface needs view analytics; or the
+API changes the wire vocabulary.
+
 ## Decision template
 
 Copy this section for a new decision.
