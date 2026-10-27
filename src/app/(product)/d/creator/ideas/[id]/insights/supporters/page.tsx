@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
+import { notFound } from "next/navigation";
 
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
@@ -11,41 +12,60 @@ import { MetricCard } from "@/components/ui/metric-card";
 import { ActivityList } from "@/features/analytics/components/activity-list";
 import { AnalyticsChartPanel } from "@/features/analytics/components/analytics-chart-panel";
 import { AnalyticsPeriodSelect } from "@/features/analytics/components/analytics-period";
+import {
+  AnalyticsServiceUnavailable,
+  AnalyticsSignedOut,
+} from "@/features/analytics/components/analytics-state";
 import { AnalyticsUnavailable } from "@/features/analytics/components/analytics-unavailable";
 import { TierBreakdown } from "@/features/analytics/components/tier-breakdown";
-import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
 import {
   analyticsWindow,
   formatSeriesDate,
   parseAnalyticsPeriod,
 } from "@/features/analytics/lib/analytics";
+import { getIdeaAnalyticsWorkspace } from "@/features/analytics/server/workspace";
 
 export const metadata: Metadata = {
   title: "Supporters | Idea analytics",
   description:
-    "Support growth and the verification mix behind an idea's supporters.",
+    "Support growth and the pre-pledge verification mix behind an idea.",
 };
 
 type PageProps = {
+  params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function SupportersAnalyticsPage({
+  params,
   searchParams,
 }: PageProps) {
-  const params = await searchParams;
-  const period = parseAnalyticsPeriod(params.period);
-  const range = analyticsWindow(previewAnalytics.series, period);
+  const [{ id }, query] = await Promise.all([params, searchParams]);
+  const period = parseAnalyticsPeriod(query.period);
+  const result = await getIdeaAnalyticsWorkspace(id, period);
+  if (result.status === "not_found") notFound();
+  if (result.status === "signed_out") {
+    return (
+      <AnalyticsSignedOut next={`/d/creator/ideas/${id}/insights/supporters`} />
+    );
+  }
+  if (result.status === "unavailable") {
+    return (
+      <AnalyticsServiceUnavailable
+        description={result.reason}
+        retryHref={`/d/creator/ideas/${id}/insights/supporters`}
+      />
+    );
+  }
+
+  const view = result.view;
+  const range = analyticsWindow(view.series, period);
   const first = range.points[0];
   const last = range.points[range.points.length - 1];
   const points = range.points.map((point) => ({
     date: point.date,
     value: point.supporters,
   }));
-  const verified =
-    previewAnalytics.supportersByTier.find(
-      (tier) => tier.tier === "Identity verified",
-    )?.count ?? 0;
 
   return (
     <div className="space-y-5">
@@ -72,8 +92,12 @@ export default async function SupportersAnalyticsPage({
         <MetricCard
           label="Total supporters"
           icon={UserMultiple02Icon}
-          value={previewAnalytics.idea.supporters.toLocaleString("en-US")}
-          hint="All time. This is the same figure shown on the public idea page."
+          value={view.summary.supporters.toLocaleString("en-US")}
+          hint={
+            view.idea.status === "draft"
+              ? "All time. This draft is not public yet."
+              : "All time. This is the same figure shown on the public idea page."
+          }
         />
         <MetricCard
           label={`Net change, ${period} days`}
@@ -89,16 +113,29 @@ export default async function SupportersAnalyticsPage({
           }
         />
         <MetricCard
-          label="Identity verified"
+          label="Pre-pledges recorded"
           icon={CheckmarkBadge01Icon}
-          value={verified.toLocaleString("en-US")}
-          hint="Verified accounts carry a 1.0 ideathon weight. Email-only accounts carry 0.25."
+          value={
+            view.summary.prePledges === null
+              ? "Not measured"
+              : view.summary.prePledges.toLocaleString("en-US")
+          }
+          unavailable={
+            view.summary.prePledges === null
+              ? "The preview fixture does not include a pre-pledge count."
+              : undefined
+          }
+          hint="Current total, not limited to the selected period. A pre-pledge is intent, never a payment."
         />
       </dl>
 
       <AnalyticsChartPanel
         title="Supporter growth"
-        description="Cumulative supporters since publication. The line never counts a repeated support from the same account twice."
+        description={
+          view.idea.status === "draft"
+            ? "Cumulative supporters since the idea was created. The line never counts a repeated support from the same account twice."
+            : "Cumulative supporters since publication. The line never counts a repeated support from the same account twice."
+        }
         legend="Supporters"
         points={points}
         summary={
@@ -110,7 +147,7 @@ export default async function SupportersAnalyticsPage({
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]">
-        <TierBreakdown tiers={previewAnalytics.supportersByTier} />
+        <TierBreakdown tiers={view.tiers} />
         <AnalyticsUnavailable
           icon={UserMultiple02Icon}
           title="Supporter identities"
@@ -118,7 +155,7 @@ export default async function SupportersAnalyticsPage({
         />
       </div>
 
-      <ActivityList activity={previewAnalytics.activity} />
+      <ActivityList activity={view.activity} dataSource={view.dataSource} />
 
       <p className="text-[0.6875rem] leading-4 text-muted">
         <HugeiconsIcon
@@ -128,8 +165,9 @@ export default async function SupportersAnalyticsPage({
           aria-hidden="true"
           className="mr-1 inline align-[-1px]"
         />
-        Verification mix is preview data. In the API, it comes from the weighted
-        tier breakdown, never from a client-side calculation.
+        {view.dataSource === "live"
+          ? "The verification mix comes from the API's weighted pre-pledge report. It is not a client-side calculation, and it does not expose supporter identities."
+          : "Verification mix is preview data. In the API, it comes from the weighted pre-pledge report, never from a client-side calculation."}
       </p>
     </div>
   );

@@ -1,6 +1,6 @@
 import { evaluateGate } from "@/features/ideas/lib/gate";
 import type { IdeaDetail } from "@/features/ideas/types";
-import type { AnalyticsPoint } from "@/features/analytics/content/preview-analytics";
+import type { AnalyticsPoint } from "@/features/analytics/lib/types";
 import { formatMoney } from "@/lib/money";
 
 export const ANALYTICS_PERIODS = [7, 30, 90] as const;
@@ -16,6 +16,57 @@ export function parseAnalyticsPeriod(
   return parsed === 7 || parsed === 30 || parsed === 90
     ? parsed
     : defaultAnalyticsPeriod;
+}
+
+function utcDay(date: Date): string {
+  return date.toISOString().slice(0, 10);
+}
+
+function shiftUtcDay(day: string, days: number): string {
+  const date = new Date(`${day}T00:00:00.000Z`);
+  date.setUTCDate(date.getUTCDate() + days);
+  return utcDay(date);
+}
+
+/**
+ * The inclusive UTC day range for a period, plus the immediately preceding
+ * range.
+ *
+ * The API treats `from` and `to` as UTC calendar days. Sending the range from
+ * the browser would make the window depend on the reader's clock, so the server
+ * derives it once and passes the same dates to every report on the page.
+ */
+export type AnalyticsDateRange = {
+  from: string;
+  to: string;
+  previousFrom: string;
+  previousTo: string;
+};
+
+export function analyticsDateRange(
+  period: AnalyticsPeriod,
+  now: Date = new Date(),
+): AnalyticsDateRange {
+  const to = utcDay(now);
+  const from = shiftUtcDay(to, -(period - 1));
+  const previousTo = shiftUtcDay(from, -1);
+  const previousFrom = shiftUtcDay(previousTo, -(period - 1));
+
+  return { from, previousFrom, previousTo, to };
+}
+
+/**
+ * The current-period slice of a daily view series.
+ *
+ * The API zero-fills every day in the requested range. Slicing by the range
+ * boundary rather than by array length keeps the chart correct when the API
+ * adds a bucket or changes its interval.
+ */
+export function currentViewSeries<T extends { date: string }>(
+  points: readonly T[],
+  from: string,
+): T[] {
+  return points.filter((point) => point.date.slice(0, 10) >= from);
 }
 
 export type AnalyticsWindow = {

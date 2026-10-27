@@ -1,7 +1,16 @@
 import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-detail";
 import { previewFeedbackSubmissions } from "@/features/feedback/content/preview-feedback";
 import type { IdeaDetail } from "@/features/ideas/types";
+import type {
+  AnalyticsActivity,
+  AnalyticsPoint,
+} from "@/features/analytics/lib/types";
 import type { MoneyAmount } from "@/lib/money";
+
+export type {
+  AnalyticsActivity,
+  AnalyticsPoint,
+} from "@/features/analytics/lib/types";
 
 const DAY_MS = 86_400_000;
 const END = Date.UTC(2026, 9, 16);
@@ -90,19 +99,6 @@ function buildSeries({
 
   return points;
 }
-
-export type AnalyticsPoint = {
-  date: string;
-  supporters: number;
-  estimatedInterestAtomic: string;
-};
-
-export type AnalyticsActivity = {
-  date: string;
-  detail: string;
-  kind: "feedback" | "interest" | "published" | "supporter";
-  title: string;
-};
 
 export type AnalyticsDataset = {
   idea: IdeaDetail;

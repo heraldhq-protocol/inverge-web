@@ -1,25 +1,22 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import { Comment01Icon, QuoteDownIcon } from "@hugeicons/core-free-icons";
 
-import { summariseFeedback } from "@/features/analytics/lib/feedback-summary";
-import type { FeedbackAnswers, FeedbackForm } from "@/features/feedback/types";
+import type { AnalyticsFeedbackView } from "@/features/analytics/lib/types";
 
 /**
- * Feedback analytics derived from the creator's actual form configuration.
+ * Feedback analytics in the shape both the live and preview surfaces share.
  *
- * A rating average appears only when a rating question exists. Choice and text
- * questions get their own views instead of being collapsed into a score. No
- * respondent identity is exposed.
+ * The live API returns aggregate counts, so this component never renders an
+ * empty quote list as if nobody wrote anything. When written answers are not in
+ * the payload it says so. No respondent identity is exposed in either mode.
  */
-export function ConfiguredFeedbackBreakdown({
-  form,
-  submissions,
+export function FeedbackBreakdown({
+  feedback,
+  formVersion,
 }: {
-  form: FeedbackForm | undefined;
-  submissions: readonly { answers: FeedbackAnswers; formVersion: number }[];
+  feedback: AnalyticsFeedbackView;
+  formVersion?: number | undefined;
 }) {
-  const summary = summariseFeedback(form, submissions);
-
   return (
     <section
       aria-labelledby="feedback-insights"
@@ -45,12 +42,12 @@ export function ConfiguredFeedbackBreakdown({
         </span>
       </div>
 
-      {!summary.configured ? (
+      {!feedback.configured ? (
         <p className="mt-3 rounded-lg bg-canvas px-3 py-4 text-xs leading-5 text-muted">
           This idea has no feedback form configured. Feedback analytics stay
           empty rather than showing a rating nobody was asked for.
         </p>
-      ) : summary.responseCount === 0 ? (
+      ) : feedback.responseCount === 0 ? (
         <p className="mt-3 rounded-lg bg-canvas px-3 py-4 text-xs leading-5 text-muted">
           The form is live but has no responses yet. Figures appear after the
           first submission.
@@ -58,39 +55,41 @@ export function ConfiguredFeedbackBreakdown({
       ) : (
         <div className="mt-3 space-y-5">
           <p className="text-xs text-muted">
-            {summary.responseCount.toLocaleString("en-US")} response
-            {summary.responseCount === 1 ? "" : "s"} on form version{" "}
-            {form?.version}.
+            {feedback.responseCount.toLocaleString("en-US")} response
+            {feedback.responseCount === 1 ? "" : "s"}
+            {formVersion !== undefined ? ` on form version ${formVersion}` : ""}
+            .
           </p>
 
-          {summary.hasRating && summary.ratingAverage !== null ? (
+          {feedback.ratingAverage !== null ? (
             <div className="rounded-xl bg-canvas p-3">
               <div className="flex items-baseline gap-1.5">
                 <p className="text-2xl font-bold tabular-nums text-ink">
-                  {summary.ratingAverage.toFixed(1)}
+                  {feedback.ratingAverage.toFixed(1)}
                 </p>
                 <p className="text-xs text-muted">/ 5 overall rating</p>
               </div>
               <p className="mt-0.5 text-[0.6875rem] text-muted">
-                {summary.ratingCount} ratings. Only the configured rating
-                question contributes.
+                {feedback.ratingCount} rating
+                {feedback.ratingCount === 1 ? "" : "s"}. Only configured rating
+                questions contribute.
               </p>
             </div>
           ) : (
             <p className="rounded-xl bg-canvas px-3 py-2 text-[0.6875rem] leading-4 text-muted">
-              No overall rating question is configured. Choice and written
-              answers are shown below instead.
+              No overall rating question is configured. Choice answers are shown
+              below; written text is only shown where the report includes it.
             </p>
           )}
 
-          {summary.questions.map((question) => {
+          {feedback.questions.map((question) => {
             if (question.answered === 0) return null;
 
             if (question.tallies.length > 0) {
               return (
-                <div key={question.question.id}>
+                <div key={question.id}>
                   <h3 className="text-xs font-semibold text-ink">
-                    {question.question.label}
+                    {question.prompt}
                   </h3>
                   <p className="mt-0.5 text-[0.6875rem] text-muted">
                     {question.answered} answered
@@ -101,7 +100,7 @@ export function ConfiguredFeedbackBreakdown({
                         <div className="flex items-baseline justify-between gap-3 text-[0.6875rem]">
                           <span className="text-ink-soft">{tally.label}</span>
                           <span className="tabular-nums text-muted">
-                            {tally.count} · {Math.round(tally.share * 100)}%
+                            {tally.count} - {Math.round(tally.share * 100)}%
                           </span>
                         </div>
                         <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-ink/[0.06]">
@@ -121,9 +120,9 @@ export function ConfiguredFeedbackBreakdown({
 
             if (question.textAnswers.length > 0) {
               return (
-                <div key={question.question.id}>
+                <div key={question.id}>
                   <h3 className="text-xs font-semibold text-ink">
-                    {question.question.label}
+                    {question.prompt}
                   </h3>
                   <ul className="mt-2 space-y-2">
                     {question.textAnswers.slice(0, 4).map((answer) => (
@@ -149,22 +148,68 @@ export function ConfiguredFeedbackBreakdown({
               );
             }
 
-            if (question.ratingAverage !== null) {
+            if (question.average !== null) {
               return (
-                <div key={question.question.id}>
+                <div key={question.id}>
                   <h3 className="text-xs font-semibold text-ink">
-                    {question.question.label}
+                    {question.prompt}
                   </h3>
                   <p className="mt-1 text-xs tabular-nums text-muted">
-                    {question.ratingAverage.toFixed(1)} average across{" "}
+                    {question.average.toFixed(1)} average across{" "}
                     {question.answered} answers
                   </p>
+                  {question.distribution.length > 0 ? (
+                    <ul className="mt-2 space-y-1.5">
+                      {question.distribution.map((entry) => {
+                        const share =
+                          question.answered > 0
+                            ? entry.count / question.answered
+                            : 0;
+                        return (
+                          <li
+                            key={entry.rating}
+                            className="flex items-center gap-2 text-[0.6875rem] text-muted"
+                          >
+                            <span className="w-3 tabular-nums text-ink-soft">
+                              {entry.rating}
+                            </span>
+                            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-ink/[0.06]">
+                              <div
+                                className="h-full rounded-full bg-brand"
+                                style={{ width: `${Math.round(share * 100)}%` }}
+                              />
+                            </div>
+                            <span className="w-8 text-right tabular-nums">
+                              {entry.count}
+                            </span>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  ) : null}
                 </div>
               );
             }
 
-            return null;
+            return (
+              <div key={question.id}>
+                <h3 className="text-xs font-semibold text-ink">
+                  {question.prompt}
+                </h3>
+                <p className="mt-1 text-xs text-muted">
+                  {question.answered} answered. This question has no aggregate
+                  value to chart.
+                </p>
+              </div>
+            );
           })}
+
+          {!feedback.textAnswersAvailable ? (
+            <p className="text-[0.625rem] leading-4 text-muted">
+              This report includes aggregate counts. Written answers are not
+              included in the creator analytics response.
+            </p>
+          ) : null}
         </div>
       )}
     </section>

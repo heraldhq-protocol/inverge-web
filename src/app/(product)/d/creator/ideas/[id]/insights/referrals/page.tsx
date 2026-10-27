@@ -1,18 +1,31 @@
 import type { Metadata } from "next";
 
-import { ChartLineData02Icon } from "@hugeicons/core-free-icons";
+import { LinkSquare02Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { AnalyticsUnavailable } from "@/features/analytics/components/analytics-unavailable";
-import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
 
 export const metadata: Metadata = {
   title: "Referrals | Idea analytics",
   description:
-    "Referral performance for one idea. Referral tracking is not connected yet.",
+    "Referral attribution for one idea. Referrer and campaign parameters are not collected.",
 };
 
-export default function ReferralsAnalyticsPage() {
+type PageProps = {
+  params: Promise<{ id: string }>;
+};
+
+/**
+ * Referral attribution is deliberately not collected.
+ *
+ * The producer records a closed `pageKey` and a server-derived source; it never
+ * stores a referrer URL, UTM string, or free-text campaign value. This page says
+ * that plainly instead of presenting the acquisition source list as referral
+ * performance. The traffic tab shows the source mix that does exist.
+ */
+export default async function ReferralsAnalyticsPage({ params }: PageProps) {
+  const { id } = await params;
+
   return (
     <div className="max-w-3xl space-y-4">
       <div>
@@ -20,47 +33,38 @@ export default function ReferralsAnalyticsPage() {
           Referrals
         </p>
         <h2 className="mt-1 text-xl font-bold tracking-[-0.03em] text-ink">
-          Which communities bring readers
+          Referral attribution is not collected
         </h2>
         <p className="mt-1 text-sm leading-6 text-muted">
-          Referral data would show which link, community, or creator brought
-          someone to the idea. It is not connected yet.
+          The analytics pipeline records a server-derived source and a closed
+          page key. It does not store a referrer URL, UTM string, or free-text
+          campaign value, so there is no referral report to show.
         </p>
       </div>
 
       <AnalyticsUnavailable
-        icon={ChartLineData02Icon}
-        title="Referral tracking is not connected"
-        description="No referral attribution is recorded by the current API. This page explains the gap rather than showing an invented distribution."
+        icon={LinkSquare02Icon}
+        title="No referral attribution"
+        description="This is a privacy boundary, not a missing chart. Adding referrer or campaign tracking would require a privacy-policy change and a new consent surface before any data is collected."
         bullets={[
-          "Shares by creator, community, or partner link",
-          "Views and support conversion per source",
-          "The same view privacy rule as Traffic: no public counts",
+          "No referrer URL or UTM string is stored",
+          "No cross-site history or fingerprint is built",
+          "The traffic tab shows server-derived acquisition sources that do exist",
         ]}
       />
 
-      <section className="rounded-2xl border border-border bg-surface p-4">
-        <h3 className="text-sm font-bold text-ink">What is measured today</h3>
-        <p className="mt-1.5 text-sm leading-6 text-muted">
-          You can still see the signals that matter most: support growth,
-          estimated interest, structured feedback, and the launch-threshold
-          progress on the overview. Those figures are not dependent on referral
-          attribution.
-        </p>
-      </section>
-
       <div className="flex flex-wrap gap-3">
         <Link
-          href={`/d/creator/ideas/${previewAnalytics.idea.id}/insights`}
+          href={`/d/creator/ideas/${id}/insights/traffic`}
           className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          Back to overview
+          Open traffic sources
         </Link>
         <Link
-          href={`/d/creator/ideas/${previewAnalytics.idea.id}/insights/supporters`}
+          href={`/d/creator/ideas/${id}/insights`}
           className="inline-flex min-h-11 items-center rounded-xl px-4 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand-soft focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          View supporter growth
+          Back to overview
         </Link>
       </div>
     </div>

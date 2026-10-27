@@ -50,8 +50,7 @@ import {
 } from "@/features/ideas/lib/filters";
 import type { IdeasDiscoveryData, Topic } from "@/features/ideas/types";
 
-const HERO_IMAGE =
-  "/images/hero/collaborative-creative-workspace.png";
+const HERO_IMAGE = "/images/hero/collaborative-creative-workspace.png";
 
 const benefits = [
   {
@@ -564,7 +563,11 @@ export function IdeasDashboard({
                     {visibleIdeas.map((idea, index) => (
                       <Fragment key={idea.id}>
                         <li className="grid">
-                          <IdeaDiscoveryCard idea={idea} variant={state.view} />
+                          <IdeaDiscoveryCard
+                            idea={idea}
+                            variant={state.view}
+                            source={state.query.trim() ? "search" : "feed"}
+                          />
                         </li>
                         {index === 5 &&
                         sponsoredSlot &&

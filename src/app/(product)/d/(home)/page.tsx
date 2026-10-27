@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { recordPageView } from "@/features/analytics/server/ingest";
 import { getDashboardViewer } from "@/features/app-shell/server/viewer";
 import { getPreviewFeedbackForm } from "@/features/feedback/content/preview-feedback";
@@ -73,7 +74,9 @@ export default async function HomePage() {
     },
     {
       description: "Help creators improve",
-      href: feedbackIdea ? `/ideas/${feedbackIdea.id}` : "/d/discover",
+      href: feedbackIdea
+        ? ideaViewHref(feedbackIdea.id, "internal")
+        : "/d/discover",
       icon: "feedback",
       label: "Share feedback",
     },

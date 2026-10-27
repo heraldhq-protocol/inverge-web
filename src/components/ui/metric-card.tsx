@@ -67,10 +67,10 @@ export function MetricCard({
 }: {
   label: string;
   value: ReactNode;
-  hint?: string;
+  hint?: string | undefined;
   icon?: IconSvgElement;
   delta?: MetricDelta | null;
-  unavailable?: string;
+  unavailable?: string | undefined;
   footer?: ReactNode;
 }) {
   return (
