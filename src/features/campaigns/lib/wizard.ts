@@ -1254,20 +1254,50 @@ export function validateCampaignStep(
   }
 }
 
-/** Preconditions that must be true before a campaign may enter the review queue. */
-export function submissionPreconditions(): readonly {
+/** The API's answer to "may this creator submit a campaign?", as the wizard needs it. */
+export type SubmissionGate = {
+  eligible: boolean;
+  code: string | null;
+  blockers: readonly string[];
+};
+
+export type SubmissionPrecondition = {
   id: string;
   label: string;
   description: string;
   met: boolean;
-}[] {
+  /** Stable API code, shown as a support reference while the check is outstanding. */
+  code?: string;
+};
+
+const IDENTITY_PRECONDITION_DESCRIPTION =
+  "Creators complete identity verification before a campaign can be submitted (FR-103).";
+
+/**
+ * Preconditions that must be true before a campaign may enter the review queue.
+ *
+ * The identity entry mirrors the API's own gate when the server could read it, so the
+ * wizard never claims a creator is verified on its own authority. A missing gate is
+ * shown as outstanding, not as satisfied.
+ */
+export function submissionPreconditions(
+  gate: SubmissionGate | null = null,
+): readonly SubmissionPrecondition[] {
+  const identityCode =
+    gate && !gate.eligible && gate.code ? { code: gate.code } : {};
+
   return [
     {
       description:
-        "Creators complete identity verification before a campaign can be submitted (FR-103).",
+        gate === null
+          ? IDENTITY_PRECONDITION_DESCRIPTION
+          : gate.eligible
+            ? "Identity and AML checks are complete on this account (FR-103)."
+            : gate.blockers.join(" ") || IDENTITY_PRECONDITION_DESCRIPTION,
       id: "kyc",
       label: "Identity verification",
-      met: false,
+      met: gate?.eligible ?? false,
+      ...identityCode,
     },
     {
       description:

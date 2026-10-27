@@ -15,6 +15,7 @@ import {
   parseLines,
   parseQuantityLimit,
   shippingCoverageNote,
+  submissionPreconditions,
   tierNeedsShipping,
   toCampaignMedia,
   toSupportTiers,
@@ -1002,5 +1003,53 @@ describe("toSupportTiers", () => {
         reward({ description: "No amount.", title: "Untitled" }),
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("submissionPreconditions", () => {
+  it("reports an unreadable gate as outstanding rather than satisfied", () => {
+    // #given no server gate was available
+    // #when the review step computes its preconditions
+    const preconditions = submissionPreconditions();
+
+    // #then identity is not claimed as verified
+    expect(preconditions.map((item) => [item.id, item.met])).toEqual([
+      ["kyc", false],
+      ["application-fee", false],
+    ]);
+    expect(preconditions[0]?.code).toBeUndefined();
+  });
+
+  it("carries the API's stable code and blockers when verification is outstanding", () => {
+    // #given the API refused the gate
+    const gate = {
+      blockers: ["Creator: identity verification is pending"],
+      code: "VERIFICATION_REQUIRED",
+      eligible: false,
+    };
+
+    // #when the review step computes its preconditions
+    const [identity] = submissionPreconditions(gate);
+
+    // #then the refusal is repeated verbatim with its code
+    expect(identity?.met).toBe(false);
+    expect(identity?.code).toBe("VERIFICATION_REQUIRED");
+    expect(identity?.description).toBe(
+      "Creator: identity verification is pending",
+    );
+  });
+
+  it("marks identity done but never invents the application fee", () => {
+    // #given the API says the creator is verified
+    const [identity, fee] = submissionPreconditions({
+      blockers: [],
+      code: null,
+      eligible: true,
+    });
+
+    // #then only the fee remains outstanding
+    expect(identity?.met).toBe(true);
+    expect(identity?.code).toBeUndefined();
+    expect(fee?.met).toBe(false);
   });
 });
