@@ -7,6 +7,7 @@ import {
   ArrowLeft02Icon,
   CheckListIcon,
   Home01Icon,
+  IdentityCardIcon,
   Invoice01Icon,
   Megaphone01Icon,
   Note01Icon,
@@ -19,6 +20,11 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
   [
     { href: "/admin", icon: Home01Icon, label: "Overview" },
     { href: "/admin/campaigns", icon: CheckListIcon, label: "Campaign review" },
+    {
+      href: "/admin/verification",
+      icon: IdentityCardIcon,
+      label: "Verification",
+    },
     { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
