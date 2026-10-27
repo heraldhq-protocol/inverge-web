@@ -48,10 +48,10 @@ allowBuilds:
   '@prisma/engines': set this to true or false
 ```
 
-That makes `pnpm install` fail with `ERR_PNPM_IGNORED_BUILDS` on a clean
-checkout. It was corrected to explicit booleans in the API worktree (Prisma
-engines, esbuild, msgpackr-extract and unrs-resolver allowed; `@scarf/scarf`
-refused) so dependencies, tests and the OpenAPI emitter can run.
+That made `pnpm install` fail with `ERR_PNPM_IGNORED_BUILDS` on a clean
+checkout. It is corrected in the API branch (`416891d`) with explicit booleans
+(Prisma engines, esbuild, msgpackr-extract, prisma and unrs-resolver allowed;
+`@scarf/scarf` refused) so dependencies, tests and the OpenAPI emitter can run.
 
 ---
 
@@ -262,6 +262,12 @@ Classification follows the task's vocabulary.
 
 - Resolves through `getCampaignDetailSurface`: preview fixtures only when no API
   is configured; otherwise the live read, with a 404 for a non-public record.
+- Both campaign detail routes are explicitly dynamic (`force-dynamic`), because
+  the page and its metadata read a `no-store` API record. Metadata resolves the
+  record before the page render, so no campaign title/description is built for a
+  missing or draft slug. The body is the global not-found page, served with HTTP
+  200 because the segment's `loading.tsx` has already flushed headers; see the
+  caveat in §10.
 - Live layout keeps the existing design tokens and tab pattern. Tabs are limited
   to sections with data: Story, Milestones (only when a plan exists), Rewards.
   Updates, FAQ entities, receipts and the discussion are absent rather than
@@ -343,26 +349,38 @@ Classification follows the task's vocabulary.
 Commands and results for this change are recorded in the final task report. The
 short version:
 
-- `inverge-api`: typecheck, the platform-summary and campaign-detail unit specs,
-  the Nest production build, and the committed OpenAPI document
-  (`emit-openapi.ts --check` reported it up to date).
+- `inverge-api`: typecheck, the platform-summary and campaign-detail unit specs
+  (12 tests), the real-Postgres `test/campaigns.e2e-spec.ts` (5 tests: id/slug
+  parity, anonymous and cross-user 404s, owner reads), the Nest production
+  build, and the committed OpenAPI document (`emit-openapi.ts --check` reported
+  it up to date).
+- Local HTTP reads against the migrated scratch database: `GET /platform/summary`,
+  `GET /campaigns`, `GET /campaigns/{idea-slug}`, `GET /campaigns/{draft-id}`
+  (404), `GET /ideas` and `GET /ideas/{id}/comments` all returned the expected
+  shape and status.
 - `inverge-web`: typecheck, ESLint over every changed file, Prettier, the new
   live campaign detail/discussion/sitemap tests, and the existing
-  homepage/campaign/idea suites.
-- Local integration before the database went away: the API was booted against a
-  migrated and seeded scratch Postgres, and `GET /platform/summary`,
-  `GET /campaigns`, `GET /campaigns/{idea-slug}`, `GET /campaigns/{draft-id}`
-  (404), `GET /ideas` and `GET /ideas/{id}/comments` were read successfully.
-- `test/campaigns.e2e-spec.ts` is the reproducible form of those checks. It was
-  written and compiled, but could not be rerun to green because Docker Desktop
-  (which fronts the local Postgres on port 55432) stopped responding during this
-  session. That is an environment blocker, not a passing result; treat the suite
-  as pending until it is run with a healthy database.
-- The production build was run in preview mode in this Windows worktree. The
-  default Turbopack build rejects the `node_modules` junction this checkout
-  needs (the directory points outside the Turbopack root), so the build was run
-  with `--webpack`. CI with a normal install should use the repository's default
-  `next build`.
+  homepage/campaign/idea suites (10 files, 92 tests).
+- The production build succeeded with the default Turbopack compiler. This
+  Windows worktree's `node_modules` is a junction to the primary checkout, which
+  Turbopack rejects unless its root is widened; a temporary local
+  `turbopack.root` override was used for the build and reverted. The committed
+  config is unchanged, so CI with a normal install needs no override.
+- Live `next start` smoke against the same scratch database:
+  - `/` 200 and contains the live campaign;
+  - `/campaigns` 200 and contains the live campaign;
+  - `/campaigns/smoke-market-ledger` 200 with the live story and reward tier;
+  - `/campaigns/smoke-market-ledger/recommended` 200 with the related campaign;
+  - `/ideas/smoke-market-ledger` 200 with the live discussion;
+  - `/sitemap.xml` 200 with the live slug and **without** fixture slugs.
+- **Known Next caveat:** an unknown or non-public slug renders the not-found
+  body with HTTP 200 rather than 404. The `campaigns` and `ideas` segments have
+  `loading.tsx` boundaries, so the response headers are flushed before the page
+  can call `notFound()`; calling it from `generateMetadata` did not change that.
+  The body is the global not-found page, carries `<meta name="robots"
+  content="noindex">`, and never contains the draft title or payload. The API
+  itself still returns 404 for anonymous and cross-user reads, so this is a
+  status-code/SEO limitation, not a data exposure.
 
 ---
 
