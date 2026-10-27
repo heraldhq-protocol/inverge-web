@@ -10,6 +10,7 @@ import {
 import type {
   AskBreakdownItem,
   DiscoveryIdea,
+  IdeaComment,
   IdeaDetail,
   IdeaRegion,
   RoadmapStep,
@@ -93,36 +94,37 @@ type ApiListPage<Row> = {
 const PAGE_LIMIT = 50;
 const MAX_IDEAS = 300;
 
-const DISCOVERY_CATEGORY_BY_LEGACY: Readonly<Record<string, DiscoveryCategory>> =
-  {
-    agriculture: "agriculture",
-    agritech: "agriculture",
-    art: "creative",
-    cleantech: "clean-energy",
-    comics: "creative",
-    community: "community",
-    crafts: "creative",
-    dance: "creative",
-    design: "creative",
-    "e-commerce": "technology",
-    edtech: "technology",
-    fashion: "creative",
-    film: "creative",
-    fintech: "technology",
-    food: "food-retail",
-    games: "creative",
-    healthtech: "technology",
-    journalism: "creative",
-    logistics: "technology",
-    music: "creative",
-    other: "creative",
-    photography: "creative",
-    publishing: "creative",
-    software: "technology",
-    technology: "technology",
-    theater: "creative",
-    web3: "technology",
-  };
+const DISCOVERY_CATEGORY_BY_LEGACY: Readonly<
+  Record<string, DiscoveryCategory>
+> = {
+  agriculture: "agriculture",
+  agritech: "agriculture",
+  art: "creative",
+  cleantech: "clean-energy",
+  comics: "creative",
+  community: "community",
+  crafts: "creative",
+  dance: "creative",
+  design: "creative",
+  "e-commerce": "technology",
+  edtech: "technology",
+  fashion: "creative",
+  film: "creative",
+  fintech: "technology",
+  food: "food-retail",
+  games: "creative",
+  healthtech: "technology",
+  journalism: "creative",
+  logistics: "technology",
+  music: "creative",
+  other: "creative",
+  photography: "creative",
+  publishing: "creative",
+  software: "technology",
+  technology: "technology",
+  theater: "creative",
+  web3: "technology",
+};
 
 const DISCOVERY_CATEGORY_BY_TAXONOMY: Readonly<
   Record<IdeaCategorySlug, DiscoveryCategory>
@@ -155,7 +157,9 @@ const ARTWORK_BY_DISCOVERY: Readonly<
   technology: "campus",
 };
 
-function taxonomySlug(value: string | null | undefined): IdeaCategorySlug | undefined {
+function taxonomySlug(
+  value: string | null | undefined,
+): IdeaCategorySlug | undefined {
   return value && isIdeaCategorySlug(value) ? value : undefined;
 }
 
@@ -198,7 +202,9 @@ export function regionFor(region: string | null): IdeaRegion {
  * average would overstate readiness, so the card shows the weakest link. The
  * API does not expose one combined percent.
  */
-export function validationPercentFor(gate: ApiGateProgress | undefined): number {
+export function validationPercentFor(
+  gate: ApiGateProgress | undefined,
+): number {
   if (!gate) return 0;
   const values = Object.values(gate.criteria).map((criterion) => criterion.pct);
   if (values.length === 0) return 0;
@@ -226,7 +232,10 @@ export function toAskBreakdown(value: unknown): AskBreakdownItem[] {
       if (!entry || typeof entry !== "object") return [];
       const record = entry as Record<string, unknown>;
       if (typeof record.label !== "string" || !record.label.trim()) return [];
-      if (typeof record.amount !== "number" && typeof record.amount !== "string") {
+      if (
+        typeof record.amount !== "number" &&
+        typeof record.amount !== "string"
+      ) {
         return [];
       }
       try {
@@ -325,8 +334,7 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
     ...(taxonomySubcategory ? { taxonomySubcategory } : {}),
     title: idea.title,
     validationPercent: validationPercentFor(idea.gateProgress),
-    visibility:
-      idea.discoverabilityTier === "LINK_ONLY" ? "private" : "public",
+    visibility: idea.discoverabilityTier === "LINK_ONLY" ? "private" : "public",
   };
 }
 
@@ -395,10 +403,12 @@ async function fetchIdeaPage(options: {
  * says so instead of pretending the filtered counts cover the whole catalogue.
  * Server-side search and sorting are the follow-up that removes the cap.
  */
-export async function getLiveIdeasWindow(options: {
-  max?: number;
-  taxonomyCategory?: IdeaCategorySlug;
-} = {}): Promise<{ ideas: ApiIdea[]; truncated: boolean }> {
+export async function getLiveIdeasWindow(
+  options: {
+    max?: number;
+    taxonomyCategory?: IdeaCategorySlug;
+  } = {},
+): Promise<{ ideas: ApiIdea[]; truncated: boolean }> {
   const max = Math.max(PAGE_LIMIT, options.max ?? MAX_IDEAS);
   const ideas: ApiIdea[] = [];
   let cursor: string | null = null;
@@ -421,9 +431,7 @@ export async function getLiveIdeasWindow(options: {
   return { ideas, truncated: cursor !== null };
 }
 
-export async function getLiveIdea(
-  idOrSlug: string,
-): Promise<ApiIdea | null> {
+export async function getLiveIdea(idOrSlug: string): Promise<ApiIdea | null> {
   try {
     const idea = await fetchApiJson<ApiIdea>(
       `/ideas/${encodeURIComponent(idOrSlug)}`,
@@ -432,6 +440,70 @@ export async function getLiveIdea(
   } catch (error) {
     if (error instanceof Error && "status" in error && error.status === 404) {
       return null;
+    }
+    throw error;
+  }
+}
+
+type ApiIdeaComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  highlighted: boolean;
+  likeCount: number;
+  author: {
+    id: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isCreator: boolean;
+  };
+};
+
+type ApiCommentPage = {
+  data: ApiIdeaComment[];
+  page: { hasMore: boolean; nextCursor: string | null };
+};
+
+export const COMMENT_PAGE_LIMIT = 20;
+
+/**
+ * The public discussion thread.
+ *
+ * Comment bodies are public; author identity is the API's projection and never
+ * includes a wallet, email or internal user id beyond the opaque account id.
+ * A failed or missing thread is the caller's decision - this function throws so
+ * the page can distinguish "no comments" from "could not load".
+ */
+export async function getLiveIdeaComments(
+  idOrSlug: string,
+  limit = COMMENT_PAGE_LIMIT,
+): Promise<{ comments: IdeaComment[]; hasMore: boolean }> {
+  try {
+    const page = await fetchApiJson<ApiCommentPage>(
+      `/ideas/${encodeURIComponent(idOrSlug)}/comments?limit=${limit}`,
+    );
+
+    return {
+      comments: page.data.map((comment) => {
+        const author = creatorNameFor({
+          displayName: comment.author.displayName,
+          id: comment.author.id,
+          username: comment.author.id,
+        });
+        return {
+          author,
+          authorInitials: initialsFor(author),
+          body: comment.body,
+          createdAt: comment.createdAt,
+          id: comment.id,
+          pinned: comment.highlighted,
+        };
+      }),
+      hasMore: page.page.hasMore,
+    };
+  } catch (error) {
+    if (error instanceof Error && "status" in error && error.status === 404) {
+      return { comments: [], hasMore: false };
     }
     throw error;
   }

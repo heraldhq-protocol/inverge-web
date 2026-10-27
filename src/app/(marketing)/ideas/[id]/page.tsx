@@ -55,6 +55,8 @@ export default async function IdeaDetailPage({ params }: PageProps) {
         ])}
       />
       <IdeaDetail
+        comments={view.comments}
+        commentsState={view.commentsState}
         dataSource={view.dataSource}
         idea={idea}
         ideas={view.ideas}

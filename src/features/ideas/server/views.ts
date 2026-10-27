@@ -6,12 +6,14 @@ import { previewTopics } from "@/features/ideas/content/topics";
 import { allPublicIdeas } from "@/features/ideas/lib/catalog";
 import type {
   DiscoveryIdea,
+  IdeaComment,
   IdeaDetail,
   IdeasDiscoveryData,
   Topic,
 } from "@/features/ideas/types";
 import {
   getLiveIdea,
+  getLiveIdeaComments,
   getLiveIdeasWindow,
   toDiscoveryIdea,
   toIdeaDetail,
@@ -60,12 +62,20 @@ export const getIdeasDiscoveryView = cache(
   },
 );
 
+export type IdeaCommentsState = "live" | "preview" | "unavailable";
+
 export type IdeaDetailView = {
   dataSource: IdeasDataSource;
   idea: IdeaDetail;
   /** Candidates the related-ideas row may draw from. */
   ideas: readonly DiscoveryIdea[];
   topics: readonly Topic[];
+  comments: readonly IdeaComment[];
+  /**
+   * `unavailable` means the discussion failed to load while the idea itself is
+   * intact. The page keeps rendering and only the thread reports the failure.
+   */
+  commentsState: IdeaCommentsState;
 };
 
 export const getIdeaDetailView = cache(
@@ -74,6 +84,8 @@ export const getIdeaDetailView = cache(
       const idea = getPreviewIdeaDetail(idOrSlug);
       if (!idea) return null;
       return {
+        comments: [],
+        commentsState: "preview",
         dataSource: "preview",
         idea,
         ideas: allPublicIdeas(ideasPreviewData),
@@ -86,18 +98,24 @@ export const getIdeaDetailView = cache(
 
     const idea = toIdeaDetail(apiIdea);
     // Related ideas come from the same taxonomy parent. When the idea has no
-    // assignment, the newest window is the only honest fallback.
-    const relatedWindow = await getLiveIdeasWindow({
-      max: 100,
-      ...(idea.taxonomyCategory
-        ? { taxonomyCategory: idea.taxonomyCategory }
-        : {}),
-    });
+    // assignment, the newest window is the only honest fallback. The thread is
+    // independent: a comments outage must not take the idea page down.
+    const [relatedWindow, thread] = await Promise.all([
+      getLiveIdeasWindow({
+        max: 100,
+        ...(idea.taxonomyCategory
+          ? { taxonomyCategory: idea.taxonomyCategory }
+          : {}),
+      }),
+      getLiveIdeaComments(apiIdea.id).catch(() => null),
+    ]);
     const ideas = relatedWindow.ideas
       .map(toDiscoveryIdea)
       .filter((candidate) => candidate.visibility === "public");
 
     return {
+      comments: thread?.comments ?? [],
+      commentsState: thread ? "live" : "unavailable",
       dataSource: "live",
       idea,
       ideas,

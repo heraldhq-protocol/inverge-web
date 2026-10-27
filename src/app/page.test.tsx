@@ -1,11 +1,30 @@
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+// The page is a server component that opts into request-time rendering so the
+// live activity band is fresh. Outside a Next request there is no connection to
+// wait for; the data module itself falls back to labelled preview fixtures when
+// no API is configured, which is the state this test renders.
+vi.mock("next/server", () => ({
+  connection: async () => {},
+}));
+
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+    push: vi.fn(),
+    refresh: vi.fn(),
+    replace: vi.fn(),
+  }),
+}));
 
 import HomePage from "@/app/(marketing)/page";
 
 describe("HomePage", () => {
-  it("renders the marketing promise and primary actions", () => {
-    render(<HomePage />);
+  it("renders the marketing promise and primary actions", async () => {
+    render(await HomePage());
 
     expect(
       screen.getByRole("heading", {

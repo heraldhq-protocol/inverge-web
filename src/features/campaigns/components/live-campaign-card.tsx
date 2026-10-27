@@ -14,6 +14,7 @@ import type {
   LiveCampaign,
   LiveCampaignStatus,
 } from "@/features/campaigns/server/live-campaigns";
+import { campaignHref } from "@/features/campaigns/server/live-campaigns";
 import { formatMoney } from "@/lib/money";
 
 const STATUS_TONES: Readonly<Record<LiveCampaignStatus, PillTone>> = {
@@ -46,15 +47,21 @@ function milestoneLabel(milestones: LiveCampaign["milestones"]): string {
 /**
  * A live campaign card.
  *
- * The API does not yet expose a campaign slug or the full campaign workspace, so
- * the card links to the source idea when one exists and is otherwise not a link
- * at all. It never points at `/campaigns/[slug]`, which would 404 for a live
- * record.
+ * Discovery and category grids link to the live campaign detail route. The
+ * route resolves the campaign by its source idea slug (or id), so a card always
+ * points at a page that exists. `href` is overridable for the rare surface that
+ * wants to send a reader to the source idea instead.
  */
-export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
-  const href = campaign.ideaId
-    ? `/ideas/${encodeURIComponent(campaign.ideaId)}`
-    : null;
+export function LiveCampaignCard({
+  campaign,
+  href = campaignHref(campaign),
+}: {
+  campaign: LiveCampaign;
+  href?: string | null;
+}) {
+  const readLabel = href?.startsWith("/ideas/")
+    ? "Read the source idea"
+    : "View campaign";
 
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-surface transition-[border-color,box-shadow,transform] duration-200 hover:-translate-y-0.5 hover:border-brand/30 hover:shadow-lg hover:shadow-ink/6 motion-reduce:hover:translate-y-0">
@@ -63,7 +70,9 @@ export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
           href={href}
           className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          <span className="sr-only">Read the source idea for {campaign.title}</span>
+          <span className="sr-only">
+            {readLabel}: {campaign.title}
+          </span>
         </Link>
       ) : null}
 
@@ -141,15 +150,19 @@ export function LiveCampaignCard({ campaign }: { campaign: LiveCampaign }) {
                 aria-hidden="true"
                 className="shrink-0"
               />
-              <span className="truncate">{deadlineLabel(campaign.deadline)}</span>
+              <span className="truncate">
+                {deadlineLabel(campaign.deadline)}
+              </span>
             </span>
-            <span className="shrink-0">{milestoneLabel(campaign.milestones)}</span>
+            <span className="shrink-0">
+              {milestoneLabel(campaign.milestones)}
+            </span>
           </div>
         </div>
 
         {href ? (
           <p className="mt-3 flex items-center gap-1 text-xs font-semibold text-brand-strong">
-            Read the source idea
+            {readLabel}
             <HugeiconsIcon
               icon={ArrowUpRight01Icon}
               size={13}
