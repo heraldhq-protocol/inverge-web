@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 import Link from "next/link";
 
 import { JsonLd } from "@/components/shared/json-ld";
@@ -14,10 +13,8 @@ import { CampaignTrustStrip } from "@/features/campaigns/components/campaign-tru
 import { LiveCampaignCard } from "@/features/campaigns/components/live-campaign-card";
 import { parseCampaignFilters } from "@/features/campaigns/lib/filters";
 import { recommendationReason } from "@/features/campaigns/lib/recommendations";
-import { getPublicCampaignSlugs } from "@/features/campaigns/server/campaigns";
 import { getCampaignRecommendationsSurface } from "@/features/campaigns/server/campaign-surfaces";
 import type { LiveCampaign } from "@/features/campaigns/server/live-campaigns";
-import { isApiConfigured } from "@/lib/api/server";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -26,17 +23,18 @@ type PageProps = {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export function generateStaticParams() {
-  if (isApiConfigured()) return [];
-  return getPublicCampaignSlugs().map((slug) => ({ slug }));
-}
+/**
+ * See the detail route: metadata reads a no-store record, so the route must
+ * render per request rather than through a static pass.
+ */
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const surface = await getCampaignRecommendationsSurface(slug);
-  if (!surface) return {};
+  if (!surface) notFound();
 
   const source = surface.view.source;
 
@@ -138,8 +136,6 @@ export default async function CampaignRecommendationsRoute({
   params,
   searchParams,
 }: PageProps) {
-  if (isApiConfigured()) await connection();
-
   const { slug } = await params;
   const surface = await getCampaignRecommendationsSurface(slug);
   if (!surface) notFound();

@@ -18,7 +18,9 @@ export async function generateMetadata({
   // The same merged record the page renders, so a title and description can
   // never describe an idea other than the one on screen.
   const view = await getIdeaDetailView(id);
-  if (!view) return {};
+  // Resolve in metadata so a missing or hidden idea never produces metadata for
+  // a record the page will not render. The API remains the access boundary.
+  if (!view) notFound();
   const { idea } = view;
 
   return buildPageMetadata({

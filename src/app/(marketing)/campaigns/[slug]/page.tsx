@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
 import { CampaignDetail } from "@/features/campaigns/components/campaign-detail";
@@ -13,9 +12,7 @@ import {
   campaignCategoryHref,
   campaignTaxonomyText,
 } from "@/features/campaigns/lib/filters";
-import { getPublicCampaignSlugs } from "@/features/campaigns/server/campaigns";
 import { getCampaignDetailSurface } from "@/features/campaigns/server/campaign-surfaces";
-import { isApiConfigured } from "@/lib/api/server";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -25,21 +22,21 @@ type PageProps = {
 };
 
 /**
- * Preview fixtures have predictable slugs, so they can be pre-rendered. A live
- * catalogue cannot: listing fixture slugs here would ship pages for campaigns
- * the API does not have and omit the ones it does.
+ * The page and its metadata read a no-store API record. Static prerendering
+ * cannot resolve that record, and `connection()` inside `generateMetadata` does
+ * not opt the route out of the static pass, so the route is dynamic by design.
+ * Preview fixtures are cheap to render per request.
  */
-export function generateStaticParams() {
-  if (isApiConfigured()) return [];
-  return getPublicCampaignSlugs().map((slug) => ({ slug }));
-}
+export const dynamic = "force-dynamic";
 
 export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { slug } = await params;
   const surface = await getCampaignDetailSurface(slug);
-  if (!surface) return {};
+  // A missing or non-public record renders the global not-found page. The API is
+  // the access boundary; this read never sees a draft unless it owns it.
+  if (!surface) notFound();
 
   const { campaign } = surface.view;
 
@@ -71,8 +68,6 @@ export default async function CampaignPage({
   params,
   searchParams,
 }: PageProps) {
-  if (isApiConfigured()) await connection();
-
   const { slug } = await params;
   const surface = await getCampaignDetailSurface(slug);
   if (!surface) notFound();
