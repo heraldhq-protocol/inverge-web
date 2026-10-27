@@ -86,6 +86,14 @@ Expected product domains include `auth`, `kyc`, `ideas`, `campaigns`, `funding`,
 `admin`. Create a domain only when its implementation begins; do not generate an
 empty architecture in advance.
 
+Verification is implemented as `src/features/verification`: `types.ts` is the
+shared contract, `server/api.ts` is the only module that calls the API (with the
+HttpOnly session token), and `components/*` are the interactive client boundary.
+The route handlers under `src/app/api/verification/**` are a thin same-origin BFF
+that forwards to those server functions. The browser never holds provider
+credentials, never calls Didit, and never decides eligibility: it renders
+`status`, `blockers` and the stable `code` the API returned (D-047).
+
 The implemented public website is owned by `src/features/marketing`. App Router
 files under `src/app/(marketing)` remain thin, while the feature owns its shared
 navigation, page compositions, and editorial content. This boundary must not
