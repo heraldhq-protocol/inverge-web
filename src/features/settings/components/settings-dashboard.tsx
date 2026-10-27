@@ -2,7 +2,6 @@ import { KeyRound, ShieldCheck, Wallet } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 
-import { StatusBadge } from "@/components/ui/status-badge";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
 import { AccountSettings } from "@/features/settings/components/account-settings";
 import { FeedSettings } from "@/features/settings/components/feed-settings";
@@ -101,15 +100,20 @@ export function SettingsDashboard({
             <SettingsRow
               icon={ShieldCheck}
               title="Identity verification"
-              description="Not required right now. Inverge stores provider references and status, not raw identity documents."
+              description="Open the verification centre for the live status on this account. Inverge stores provider references and outcomes, not raw identity documents."
               action={
                 <div className="flex items-center gap-2 sm:gap-3">
-                  <StatusBadge>Not required</StatusBadge>
                   <Link
                     href="/guides/identity-verification"
+                    className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:bg-canvas hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                  >
+                    How it works
+                  </Link>
+                  <Link
+                    href="/d/settings/verification"
                     className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                   >
-                    Learn more
+                    Open verification
                   </Link>
                 </div>
               }

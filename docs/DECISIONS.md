@@ -55,6 +55,7 @@ choices.
 | D-044 | 2026-10-25 | Accepted | Product analytics is produced server-side after the response by the signed web producer, keyed by an anonymous HttpOnly session or internal user id; no browser beacon, IP address, or device fingerprint. |
 | D-045 | 2026-10-25 | Accepted | The working-capital tranche is fixed at 20% of the original target and does not grow with overfunding; milestone weights total 100% of `eligibleRaised - initialTranche` on their own, and any surplus stays in escrow under the same milestone rules. |
 | D-046 | 2026-10-26 | Accepted | Live creator analytics reuses existing API reports, gates premium reports server-side, and falls back to preview only when auth is preview or the API is unconfigured. |
+| D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -1936,6 +1937,60 @@ analytics remains limited to the `skill-circle` fixture.
 Revisit when: the API adds follow/save models, referrer/UTM capture, supporter
 identity, challenge/ideathon reports, or a paid billing integration; or a report
 field changes shape.
+
+### D-047: Verification is a server-owned domain; the browser never decides eligibility
+
+- Date: 2026-10-27
+- Status: Accepted
+- Owner: Platform, compliance, API and web
+
+Context: Identity, AML and business verification (FR-103, FR-104, FR-105) previously
+lived partly in the browser: the web could show a status and the creator flow assumed
+what "verified" meant. Didit can change a decision after a callback, callbacks can
+arrive twice or out of order, and a browser redirect proves nothing. A second source
+of truth would also let a business creator bypass representative or beneficial-owner
+checks by switching account type.
+
+Decision: The API owns one verification domain (`src/modules/kyc/`). Every hosted
+session, status, eligibility answer, submission gate and contribution authorisation
+is created or decided server-side; the web calls an Inverge BFF route and never
+Didit. The domain stores normalised `VerificationCase` and append-only
+`VerificationEvent` rows, keeps provider strings inside the adapter, and projects the
+legacy `User.kycStatus`/`amlStatus` and `BusinessProfile.kybStatus`/`amlStatus` fields
+from cases so already-verified accounts are not asked again. Business and individual
+are separate cases: a business approval requires KYB, its own AML screening, key
+people and the representative's personal identity. Campaign submission asks the
+domain before the transaction and re-checks inside it; contributions above the
+cumulative FR-104 threshold reserve headroom under a per-user advisory lock.
+
+Webhook bodies are never authoritative: signatures are verified against the raw body
+or canonical form per scheme, timestamps are bounded, duplicates are dropped on
+`providerEventReference`, the decision is re-fetched from the provider, and heavy work
+runs on a queue when one is configured. A reconciliation sweep covers dropped
+webhooks with bounded backoff; Redis is not the record. Unknown provider strings map
+to `ERROR` and route to support, never to an automatic decline. AML `REVIEW`/`FLAGGED`
+outcomes are resolved only by a permission-controlled human with a recorded reason.
+
+Alternatives: Keep the legacy per-field status pair as the source of truth (cannot
+represent re-submission, review or provider errors, and keeps two answers to the same
+question); let the web call Didit directly (exposes privileged credentials and makes
+the browser the authority); auto-decline on AML hits (treats a screening match as a
+finding and violates the no-auto-rejection rule); trust the webhook payload without
+re-fetching (a forged or stale body becomes an approval path); treat business KYB as
+covering the representative (lets a company account skip personal identity checks).
+
+Consequences: Existing `/kyc` and `/kyb` routes remain as a compatibility facade, so
+clients built before this change keep working. The web gained verification settings,
+admin queues and a case detail screen, and the campaign wizard now shows the live
+identity gate instead of a hard-coded `met: false`. Submission also still requires a
+paid application fee, which has no payment provider in this build, so the wizard
+continues to stop at a saved draft. Risk thresholds, country policy and which optional
+checks are mandatory are left as open compliance decisions; the domain implements the
+mechanism, not the values. Webhook registration and publishing the draft Didit
+workflow are console tasks and remain outstanding.
+
+Revisit when: Compliance supplies risk/country policy, the application-fee provider
+ships, ongoing AML monitoring is scheduled, or Didit changes its signature schemes.
 
 ## Decision template
 

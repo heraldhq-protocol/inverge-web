@@ -7,6 +7,8 @@ import type { DraftSaveInitial } from "@/features/campaigns/lib/use-campaign-dra
 import { readCampaignDraft } from "@/features/campaigns/server/drafts";
 import { readSessionToken } from "@/features/auth/server/session";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
+import { getVerificationEligibility } from "@/features/verification/server/api";
+import type { SubmissionGate } from "@/features/campaigns/lib/wizard";
 
 export const metadata: Metadata = {
   description:
@@ -32,6 +34,16 @@ export default async function NewCampaignPage({ searchParams }: PageProps) {
   let draft = emptyCampaignDraft;
   let saved: DraftSaveInitial = null;
   let loadError: string | null = null;
+  let gate: SubmissionGate | null = null;
+
+  const eligibility = await getVerificationEligibility("CAMPAIGN_CREATOR");
+  if (eligibility.ok) {
+    gate = {
+      blockers: eligibility.data.blockers,
+      code: eligibility.data.code,
+      eligible: eligibility.data.eligible,
+    };
+  }
 
   if (draftId) {
     const token = await readSessionToken();
@@ -82,6 +94,7 @@ export default async function NewCampaignPage({ searchParams }: PageProps) {
       <div className="mt-7">
         <CampaignWizard
           draft={draft}
+          gate={gate}
           loadError={loadError}
           mode="create"
           saved={saved}

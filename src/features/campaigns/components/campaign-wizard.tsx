@@ -46,6 +46,7 @@ import {
   type CampaignDraft,
   type DraftIssue,
   type DraftSupportTier,
+  type SubmissionGate,
 } from "@/features/campaigns/lib/wizard";
 import { formatBps, parsePercentToBps } from "@/features/campaigns/lib/amounts";
 import {
@@ -173,6 +174,7 @@ function BlockingNote({
     id: string;
     label: string;
     met: boolean;
+    code?: string;
   }[];
   title: string;
 }) {
@@ -201,6 +203,14 @@ function BlockingNote({
               <p className="mt-0.5 text-xs leading-5 text-muted">
                 {item.description}
               </p>
+              {!item.met && item.code ? (
+                <p className="mt-1 text-[0.6875rem] leading-5 text-muted">
+                  Support reference:{" "}
+                  <code className="rounded bg-canvas px-1 py-0.5 font-mono text-[0.6875rem] text-ink">
+                    {item.code}
+                  </code>
+                </p>
+              ) : null}
             </div>
           </li>
         ))}
@@ -211,11 +221,14 @@ function BlockingNote({
 
 export function CampaignWizard({
   draft: initialDraft,
+  gate = null,
   mode = "create",
   saved = null,
   loadError = null,
 }: {
   draft: CampaignDraft;
+  /** Live creator verification gate, read server-side. Null means "not readable". */
+  gate?: SubmissionGate | null;
   mode?: "create" | "edit";
   saved?: DraftSaveInitial;
   loadError?: string | null;
@@ -297,7 +310,8 @@ export function CampaignWizard({
   const useOfFundsTotal = draftUseOfFundsTotal(draft);
   const allocationTotal = draftAllocationTotalBps(draft);
   const workingCapital = draftWorkingCapitalFor(draft);
-  const preconditions = submissionPreconditions();
+  const preconditions = submissionPreconditions(gate);
+  const outstanding = preconditions.filter((item) => !item.met);
   const heroMedia = toCampaignMedia(draft.heroMedia);
   const storyMedia = toCampaignMedia(draft.storyMedia);
   /** What the reward tiers would publish as. Drives the review summary. */
@@ -1597,11 +1611,10 @@ export function CampaignWizard({
                 title="Before this can enter the review queue"
               />
 
-              <PrototypeNotice title="Submission is not connected">
+              <PrototypeNotice title="Application fee is not connected">
                 Your draft is saved to Inverge. This build still has no payment
-                provider for the application fee and no review queue, so the
-                button below stays disabled rather than showing a success
-                screen.
+                provider for the application fee, so the button below stays
+                disabled rather than showing a success screen.
               </PrototypeNotice>
 
               <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
@@ -1614,8 +1627,11 @@ export function CampaignWizard({
                   Submit for review
                 </button>
                 <p id="submit-blocked" className="text-xs leading-5 text-muted">
-                  Requires identity verification, the application fee, and a
-                  connected API.
+                  {outstanding.length === 0
+                    ? "Everything the server checks has passed."
+                    : `Still required: ${outstanding
+                        .map((item) => item.label.toLowerCase())
+                        .join(", ")}.`}
                 </p>
               </div>
             </div>
