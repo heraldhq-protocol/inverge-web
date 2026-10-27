@@ -5,6 +5,8 @@ import { CampaignWizard } from "@/features/campaigns/components/campaign-wizard"
 import { draftFromCampaign } from "@/features/campaigns/lib/wizard";
 import { getCampaignWorkspaceView } from "@/features/campaigns/server/creator";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
+import { getVerificationEligibility } from "@/features/verification/server/api";
+import type { SubmissionGate } from "@/features/campaigns/lib/wizard";
 
 type PageProps = { params: Promise<{ campaignId: string }> };
 
@@ -34,6 +36,15 @@ export default async function EditCampaignPage({ params }: PageProps) {
   const view = getCampaignWorkspaceView(campaignId);
   if (!view) notFound();
 
+  const eligibility = await getVerificationEligibility("CAMPAIGN_CREATOR");
+  const gate: SubmissionGate | null = eligibility.ok
+    ? {
+        blockers: eligibility.data.blockers,
+        code: eligibility.data.code,
+        eligible: eligibility.data.eligible,
+      }
+    : null;
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -52,7 +63,11 @@ export default async function EditCampaignPage({ params }: PageProps) {
       </div>
 
       <div className="mt-7">
-        <CampaignWizard draft={draftFromCampaign(view.campaign)} mode="edit" />
+        <CampaignWizard
+          draft={draftFromCampaign(view.campaign)}
+          gate={gate}
+          mode="edit"
+        />
       </div>
     </div>
   );

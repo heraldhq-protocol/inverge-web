@@ -6,9 +6,8 @@ import {
   TOTAL_BPS,
 } from "@/features/campaigns/lib/amounts";
 import {
-  isWorkingCapitalInRange,
-  WORKING_CAPITAL_MAX_BPS,
-  WORKING_CAPITAL_MIN_BPS,
+  WORKING_CAPITAL_BPS,
+  WORKING_CAPITAL_PERCENT,
 } from "@/features/campaigns/lib/escrow";
 import {
   MAX_HERO_MEDIA,
@@ -17,7 +16,6 @@ import {
   parseImageSource,
   parseVideoSource,
 } from "@/features/campaigns/lib/media";
-import { isAllocationComplete } from "@/features/campaigns/lib/milestones";
 import { hasPhysicalPart } from "@/features/campaigns/lib/shipping";
 import type {
   Campaign,
@@ -95,7 +93,7 @@ export const campaignWizardSteps: readonly CampaignWizardStep[] = [
   },
   {
     description:
-      "Two to six milestones. Each needs a deliverable and the evidence you will submit.",
+      "Two to six milestones, each with a deliverable and the evidence you will submit. The weights divide what remains after the fixed 20% working-capital tranche.",
     id: "milestones",
     title: "Milestone plan",
   },
@@ -386,7 +384,7 @@ export const emptyCampaignDraft: CampaignDraft = {
   title: "",
   updatedAt: "",
   useOfFunds: [],
-  workingCapitalPercent: "",
+  workingCapitalPercent: WORKING_CAPITAL_PERCENT,
 };
 
 /** Load a published campaign back into the wizard for editing (FR-303 locks the plan). */
@@ -421,40 +419,7 @@ export function draftFromCampaign(campaign: Campaign): CampaignDraft {
         ? ""
         : formatBpsNumber(campaign.escrow.successFeeBps),
     summary: campaign.summary,
-    supportTiers: campaign.supportTiers.map((tier) => ({
-      addOns: tier.addOns,
-      description: tier.description,
-      estimatedDelivery: tier.estimatedDelivery ?? "",
-      fulfilment: tier.fulfilment ?? "",
-      id: tier.id,
-      imageInput: tier.image ?? "",
-      includesInput: tier.includes.join("\n"),
-      minimumInput: wholeUnits(tier.minimum),
-      quantityLimitInput:
-        tier.quantityLimit === null ? "" : String(tier.quantityLimit),
-      shippingCustoms: tier.shipping?.customs ?? "",
-      shippingOriginCountry: tier.shipping?.originCountry ?? "",
-      shippingRules: (tier.shipping?.rules ?? []).map((rule) => ({
-        amountInput:
-          rule.rate.kind === "flat" ? wholeUnits(rule.rate.amount) : "",
-        basis: rule.rate.kind === "flat" ? rule.rate.basis : "order",
-        coverage: rule.coverage,
-        id: rule.id,
-        note:
-          rule.rate.kind === "deferred" || rule.rate.kind === "unavailable"
-            ? (rule.rate.note ?? "")
-            : "",
-        rateKind: rule.rate.kind,
-      })),
-      shippingTerms: tier.shipping?.terms ?? "",
-      shippingZones: (tier.shipping?.zones ?? []).map((zone) => ({
-        countries: [...zone.countries],
-        id: zone.id,
-        name: zone.name,
-      })),
-      title: tier.title,
-      variants: tier.variants,
-    })),
+    supportTiers: campaign.supportTiers.map(draftTierFrom),
     targetInput: wholeUnits(campaign.funding.target),
     title: campaign.title,
     updatedAt: campaign.publishedAt ?? "",
@@ -463,20 +428,59 @@ export function draftFromCampaign(campaign: Campaign): CampaignDraft {
       id: nextDraftId("funds"),
       label: line.label,
     })),
-    workingCapitalPercent:
-      campaign.escrow.workingCapitalBps === null
-        ? ""
-        : formatBpsNumber(campaign.escrow.workingCapitalBps),
+    workingCapitalPercent: WORKING_CAPITAL_PERCENT,
   };
 }
 
 /** A percentage string without a trailing `%`, e.g. "20" or "12.5". */
-function formatBpsNumber(bps: number): string {
+export function formatBpsNumber(bps: number): string {
   return (bps / 100).toFixed(2).replace(/\.?0+$/, "");
 }
 
-function wholeUnits(amount: MoneyAmount): string {
+export function wholeUnits(amount: MoneyAmount): string {
   return (BigInt(amount.atomic) / 10n ** BigInt(amount.decimals)).toString();
+}
+
+/**
+ * Loads a published or persisted reward tier back into the wizard's editable
+ * shape. The inverse of `toSupportTiers`; shared by edit mode and by resuming a
+ * saved draft so both paths round-trip through the same mapping.
+ */
+export function draftTierFrom(tier: SupportTier): DraftSupportTier {
+  return {
+    addOns: tier.addOns,
+    description: tier.description,
+    estimatedDelivery: tier.estimatedDelivery ?? "",
+    fulfilment: tier.fulfilment ?? "",
+    id: tier.id,
+    imageInput: tier.image ?? "",
+    includesInput: tier.includes.join("\n"),
+    minimumInput: wholeUnits(tier.minimum),
+    quantityLimitInput:
+      tier.quantityLimit === null ? "" : String(tier.quantityLimit),
+    shippingCustoms: tier.shipping?.customs ?? "",
+    shippingOriginCountry: tier.shipping?.originCountry ?? "",
+    shippingRules: (tier.shipping?.rules ?? []).map((rule) => ({
+      amountInput:
+        rule.rate.kind === "flat" ? wholeUnits(rule.rate.amount) : "",
+      basis: rule.rate.kind === "flat" ? rule.rate.basis : "order",
+      coverage: rule.coverage,
+      id: rule.id,
+      note:
+        rule.rate.kind === "deferred" || rule.rate.kind === "unavailable"
+          ? (rule.rate.note ?? "")
+          : "",
+      rateKind: rule.rate.kind,
+    })),
+    shippingTerms: tier.shipping?.terms ?? "",
+    shippingZones: (tier.shipping?.zones ?? []).map((zone) => ({
+      countries: [...zone.countries],
+      id: zone.id,
+      name: zone.name,
+    })),
+    title: tier.title,
+    variants: tier.variants,
+  };
 }
 
 function blankToNull(value: string): string | null {
@@ -721,22 +725,15 @@ export function draftAllocationTotalBps(draft: CampaignDraft): number {
 }
 
 export function isDraftAllocationComplete(draft: CampaignDraft): boolean {
-  return isAllocationComplete(
-    draft.milestones.map((milestone, index) => ({
-      allocationBps: draftMilestoneBps(draft)[index] ?? 0,
-      decision: null,
-      deliverable: milestone.deliverable,
-      evidence: milestone.evidence,
-      expectedAt: milestone.expectedAt || null,
-      id: milestone.id,
-      objectionBps: 0,
-      objectionClosesAt: null,
-      sequence: index + 1,
-      state: "upcoming" as const,
-      submission: null,
-      title: milestone.title,
-    })),
-  );
+  if (parsePercentToBps(draft.workingCapitalPercent) !== WORKING_CAPITAL_BPS) {
+    return false;
+  }
+  if (draft.milestones.length < 2 || draft.milestones.length > 6) return false;
+
+  const tranches = draftMilestoneBps(draft);
+  if (tranches.some((bps) => !Number.isInteger(bps) || bps <= 0)) return false;
+
+  return sumBps(tranches) === TOTAL_BPS;
 }
 
 export function draftUseOfFundsTotal(draft: CampaignDraft): MoneyAmount | null {
@@ -755,13 +752,13 @@ export function draftWorkingCapitalFor(
   draft: CampaignDraft,
 ): { bps: number; amount: MoneyAmount } | null {
   const target = draftTarget(draft);
-  const firstBps = draftMilestoneBps(draft).at(0) ?? 0;
-  const requested = parsePercentToBps(draft.workingCapitalPercent);
 
-  if (target === null || requested === null || firstBps <= 0) return null;
+  if (target === null) return null;
 
-  const bps = Math.min(requested, firstBps);
-  return { amount: bpsOf(target, bps), bps };
+  return {
+    amount: bpsOf(target, WORKING_CAPITAL_BPS),
+    bps: WORKING_CAPITAL_BPS,
+  };
 }
 
 /**
@@ -1108,18 +1105,33 @@ export function validateCampaignStep(
             message: `Milestone ${position} needs an evidence definition.`,
           });
         }
-        if (parsePercentToBps(milestone.allocationPercent) === null) {
+        const tranche = parsePercentToBps(milestone.allocationPercent);
+        if (tranche === null) {
           issues.push({
             field: `milestones.${milestone.id}`,
             message: `Milestone ${position} needs a tranche percentage.`,
           });
+        } else if (tranche <= 0) {
+          issues.push({
+            field: `milestones.${milestone.id}`,
+            message: `Milestone ${position} needs a tranche greater than zero.`,
+          });
         }
       });
+
+      const workingCapital = parsePercentToBps(draft.workingCapitalPercent);
+      if (workingCapital !== WORKING_CAPITAL_BPS) {
+        issues.push({
+          field: "workingCapitalPercent",
+          message:
+            "The working-capital tranche is fixed at 20% of the target (FR-503a).",
+        });
+      }
 
       if (!issues.length && draftAllocationTotalBps(draft) !== TOTAL_BPS) {
         issues.push({
           field: "milestones",
-          message: `Tranches have to total 100%. They currently total ${formatBps(draftAllocationTotalBps(draft))}.`,
+          message: `Milestone weights have to total 100% of the amount left after the fixed 20% tranche. They currently total ${formatBps(draftAllocationTotalBps(draft))}.`,
         });
       }
 
@@ -1219,27 +1231,6 @@ export function validateCampaignStep(
         });
       }
 
-      const workingCapital = parsePercentToBps(draft.workingCapitalPercent);
-      if (workingCapital === null) {
-        issues.push({
-          field: "workingCapitalPercent",
-          message: "Choose the share released as the first tranche.",
-        });
-      } else if (!isWorkingCapitalInRange(workingCapital)) {
-        issues.push({
-          field: "workingCapitalPercent",
-          message: `The first tranche has to be between ${formatBps(WORKING_CAPITAL_MIN_BPS)} and ${formatBps(WORKING_CAPITAL_MAX_BPS)} (FR-503a).`,
-        });
-      } else {
-        const firstBps = draftMilestoneBps(draft).at(0) ?? 0;
-        if (firstBps > 0 && workingCapital > firstBps) {
-          issues.push({
-            field: "workingCapitalPercent",
-            message: `The first tranche cannot exceed milestone one's ${formatBps(firstBps)}. Raise milestone one's share, or lower this one.`,
-          });
-        }
-      }
-
       const window = Number(draft.objectionWindowDays);
       if (!Number.isInteger(window) || window < 1 || window > 30) {
         issues.push({
@@ -1263,20 +1254,50 @@ export function validateCampaignStep(
   }
 }
 
-/** Preconditions that must be true before a campaign may enter the review queue. */
-export function submissionPreconditions(): readonly {
+/** The API's answer to "may this creator submit a campaign?", as the wizard needs it. */
+export type SubmissionGate = {
+  eligible: boolean;
+  code: string | null;
+  blockers: readonly string[];
+};
+
+export type SubmissionPrecondition = {
   id: string;
   label: string;
   description: string;
   met: boolean;
-}[] {
+  /** Stable API code, shown as a support reference while the check is outstanding. */
+  code?: string;
+};
+
+const IDENTITY_PRECONDITION_DESCRIPTION =
+  "Creators complete identity verification before a campaign can be submitted (FR-103).";
+
+/**
+ * Preconditions that must be true before a campaign may enter the review queue.
+ *
+ * The identity entry mirrors the API's own gate when the server could read it, so the
+ * wizard never claims a creator is verified on its own authority. A missing gate is
+ * shown as outstanding, not as satisfied.
+ */
+export function submissionPreconditions(
+  gate: SubmissionGate | null = null,
+): readonly SubmissionPrecondition[] {
+  const identityCode =
+    gate && !gate.eligible && gate.code ? { code: gate.code } : {};
+
   return [
     {
       description:
-        "Creators complete identity verification before a campaign can be submitted (FR-103).",
+        gate === null
+          ? IDENTITY_PRECONDITION_DESCRIPTION
+          : gate.eligible
+            ? "Identity and AML checks are complete on this account (FR-103)."
+            : gate.blockers.join(" ") || IDENTITY_PRECONDITION_DESCRIPTION,
       id: "kyc",
       label: "Identity verification",
-      met: false,
+      met: gate?.eligible ?? false,
+      ...identityCode,
     },
     {
       description:

@@ -13,6 +13,7 @@ import type {
   IdeaComment,
   IdeaDetail,
   IdeaRegion,
+  IdeaStatus,
   RoadmapStep,
 } from "@/features/ideas/types";
 import { fetchApiJson } from "@/lib/api/server";
@@ -93,6 +94,7 @@ type ApiListPage<Row> = {
 
 const PAGE_LIMIT = 50;
 const MAX_IDEAS = 300;
+const MAX_MY_IDEAS = 100;
 
 const DISCOVERY_CATEGORY_BY_LEGACY: Readonly<
   Record<string, DiscoveryCategory>
@@ -291,6 +293,21 @@ function publishedAtFor(idea: ApiIdea): string {
   return idea.validatingSince ?? idea.createdAt;
 }
 
+const STATUS_BY_API: Readonly<Record<string, IdeaStatus>> = {
+  ARCHIVED: "archived",
+  CONVERTED: "converted",
+  DRAFT: "draft",
+  THRESHOLD_MET: "threshold-met",
+  VALIDATING: "validating",
+};
+
+/** Maps the API workflow enum without guessing at an unknown future value. */
+export function ideaStatusFor(
+  status: string | null | undefined,
+): IdeaStatus | null {
+  return status ? (STATUS_BY_API[status] ?? null) : null;
+}
+
 export function isReadableIdea(idea: ApiIdea): boolean {
   // DRAFT is unpublished. LINK_ONLY is deliberately reachable by direct URL
   // (FR-272), so it is readable but marked private below.
@@ -341,6 +358,7 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
 export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
   const base = toDiscoveryIdea(idea);
   const askAmount = toAmount(idea.askAmount);
+  const status = ideaStatusFor(idea.status);
   const fundingIntent =
     BigInt(askAmount.atomic) > 0n
       ? {
@@ -374,6 +392,7 @@ export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
     ...(idea.risks?.trim() ? { risks: idea.risks.trim() } : {}),
     roadmapSteps: toRoadmapSteps(idea.roadmapSteps),
     solution: idea.solution,
+    ...(status ? { status } : {}),
     targetUser: idea.targetUser,
     currentAlternative: idea.currentAlternative,
   };
@@ -382,17 +401,22 @@ export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
 async function fetchIdeaPage(options: {
   cursor?: string | null;
   limit?: number;
+  mine?: boolean;
   taxonomyCategory?: IdeaCategorySlug;
+  token?: string | null;
 }): Promise<ApiListPage<ApiIdea>> {
   const params = new URLSearchParams({
     limit: String(options.limit ?? PAGE_LIMIT),
   });
   if (options.cursor) params.set("cursor", options.cursor);
+  if (options.mine) params.set("mine", "true");
   if (options.taxonomyCategory) {
     params.set("taxonomyCategory", options.taxonomyCategory);
   }
 
-  return fetchApiJson<ApiListPage<ApiIdea>>(`/ideas?${params.toString()}`);
+  return fetchApiJson<ApiListPage<ApiIdea>>(`/ideas?${params.toString()}`, {
+    ...(options.token ? { token: options.token } : {}),
+  });
 }
 
 /**
@@ -431,12 +455,18 @@ export async function getLiveIdeasWindow(
   return { ideas, truncated: cursor !== null };
 }
 
-export async function getLiveIdea(idOrSlug: string): Promise<ApiIdea | null> {
+export async function getLiveIdea(
+  idOrSlug: string,
+  options: { includeDraft?: boolean; token?: string | null } = {},
+): Promise<ApiIdea | null> {
   try {
     const idea = await fetchApiJson<ApiIdea>(
       `/ideas/${encodeURIComponent(idOrSlug)}`,
+      {
+        ...(options.token ? { token: options.token } : {}),
+      },
     );
-    return isReadableIdea(idea) ? idea : null;
+    return options.includeDraft || isReadableIdea(idea) ? idea : null;
   } catch (error) {
     if (error instanceof Error && "status" in error && error.status === 404) {
       return null;
@@ -509,4 +539,40 @@ export async function getLiveIdeaComments(
   }
 }
 
-export { MAX_IDEAS, PAGE_LIMIT };
+/**
+ * The signed-in creator's own ideas, newest first.
+ *
+ * This is the analytics index's read. `mine=true` is authenticated at the API,
+ * so the web never assembles an owner list from a public catalogue. The window
+ * is bounded; a creator with more than `MAX_MY_IDEAS` ideas gets the newest
+ * slice rather than an unbounded page loop.
+ */
+export async function getLiveMyIdeas(
+  token: string,
+  max = MAX_MY_IDEAS,
+): Promise<{ ideas: ApiIdea[]; truncated: boolean }> {
+  const limit = Math.min(Math.max(0, Math.trunc(max)), MAX_MY_IDEAS);
+  const ideas: ApiIdea[] = [];
+  let cursor: string | null = null;
+
+  if (limit === 0) return { ideas, truncated: false };
+
+  while (ideas.length < limit) {
+    const page = await fetchIdeaPage({
+      cursor,
+      limit: Math.min(PAGE_LIMIT, limit - ideas.length),
+      mine: true,
+      token,
+    });
+
+    ideas.push(...page.data);
+    cursor = page.page.nextCursor;
+    if (!cursor || page.data.length === 0) {
+      return { ideas, truncated: false };
+    }
+  }
+
+  return { ideas, truncated: cursor !== null };
+}
+
+export { MAX_IDEAS, MAX_MY_IDEAS, PAGE_LIMIT };

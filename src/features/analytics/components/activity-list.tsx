@@ -7,7 +7,10 @@ import {
   UserMultiple02Icon,
 } from "@hugeicons/core-free-icons";
 
-import type { AnalyticsActivity } from "@/features/analytics/content/preview-analytics";
+import type {
+  AnalyticsActivity,
+  AnalyticsDataSource,
+} from "@/features/analytics/lib/types";
 import { formatSeriesDate } from "@/features/analytics/lib/analytics";
 
 const icons: Record<AnalyticsActivity["kind"], IconSvgElement> = {
@@ -23,8 +26,10 @@ const icons: Record<AnalyticsActivity["kind"], IconSvgElement> = {
  */
 export function ActivityList({
   activity,
+  dataSource,
 }: {
   activity: readonly AnalyticsActivity[];
+  dataSource: AnalyticsDataSource;
 }) {
   return (
     <section
@@ -35,7 +40,9 @@ export function ActivityList({
         <h2 id="recent-activity" className="text-sm font-bold text-ink">
           Recent activity
         </h2>
-        <span className="text-[0.6875rem] text-muted">Preview data</span>
+        <span className="text-[0.6875rem] text-muted">
+          {dataSource === "live" ? "Live API" : "Preview data"}
+        </span>
       </div>
 
       {activity.length > 0 ? (

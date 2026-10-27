@@ -15,6 +15,7 @@ import {
   parseLines,
   parseQuantityLimit,
   shippingCoverageNote,
+  submissionPreconditions,
   tierNeedsShipping,
   toCampaignMedia,
   toSupportTiers,
@@ -164,52 +165,116 @@ describe("validateCampaignStep for media", () => {
   });
 });
 
+function plannedMilestone(percent: string, position: number) {
+  return {
+    ...createDraftMilestone(percent),
+    deliverable: `Deliverable for milestone ${position}`,
+    evidence: `Evidence for milestone ${position}`,
+    title: `Milestone ${position}`,
+  };
+}
+
+function planDraft(
+  workingCapitalPercent: string,
+  tranches: readonly string[],
+): CampaignDraft {
+  return {
+    ...emptyCampaignDraft,
+    milestones: tranches.map((percent, index) =>
+      plannedMilestone(percent, index + 1),
+    ),
+    workingCapitalPercent,
+  };
+}
+
+describe("validateCampaignStep for the milestone plan", () => {
+  it("accepts a fixed 20% tranche and milestone weights that total 100%", () => {
+    expect(
+      validateCampaignStep(planDraft("20", ["50", "50"]), "milestones"),
+    ).toEqual([]);
+  });
+
+  it("rejects a working-capital share other than the fixed 20%", () => {
+    for (const workingCapitalPercent of ["19", "25"]) {
+      const issues = validateCampaignStep(
+        planDraft(workingCapitalPercent, ["50", "50"]),
+        "milestones",
+      );
+
+      expect(issues).toHaveLength(1);
+      expect(issues[0]?.field).toBe("workingCapitalPercent");
+      expect(issues[0]?.message).toContain("fixed at 20%");
+    }
+  });
+
+  it("requires a choice when nothing is selected", () => {
+    const issues = validateCampaignStep(
+      planDraft("", ["50", "50"]),
+      "milestones",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.field).toBe("workingCapitalPercent");
+    expect(issues[0]?.message).toContain("fixed at 20%");
+  });
+
+  it("refuses a plan that leaves part of the pool unallocated", () => {
+    const issues = validateCampaignStep(
+      planDraft("20", ["40", "30"]),
+      "milestones",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.field).toBe("milestones");
+    expect(issues[0]?.message).toContain("70%");
+  });
+
+  it("refuses weights above 100% of the post-tranche pool", () => {
+    const issues = validateCampaignStep(
+      planDraft("20", ["60", "50"]),
+      "milestones",
+    );
+
+    expect(issues).toHaveLength(1);
+    expect(issues[0]?.message).toContain("110%");
+  });
+
+  it("refuses a milestone with no tranche, because it would never release", () => {
+    const issues = validateCampaignStep(
+      planDraft("20", ["50", "0", "30"]),
+      "milestones",
+    );
+
+    expect(
+      issues.some((issue) => issue.message.includes("greater than zero")),
+    ).toBe(true);
+  });
+});
+
 describe("validateCampaignStep for terms", () => {
-  function termsDraft(workingCapitalPercent: string): CampaignDraft {
+  function termsDraft(overrides: Partial<CampaignDraft> = {}): CampaignDraft {
     return {
       ...emptyCampaignDraft,
       eligibility: "Open to backers anywhere Inverge operates.",
       failurePlan: "The contribution becomes refundable in full.",
-      milestones: [createDraftMilestone("20"), createDraftMilestone("80")],
       risks:
         "Supplier lead times can move, so the plan dates the order rather than the delivery.",
-      workingCapitalPercent,
+      ...overrides,
     };
   }
 
-  it("accepts a share inside the published range", () => {
-    expect(validateCampaignStep(termsDraft("20"), "terms")).toEqual([]);
+  it("checks the disclosures and the objection window, not the plan allocation", () => {
+    expect(validateCampaignStep(termsDraft(), "terms")).toEqual([]);
   });
 
-  it("rejects a share below the floor", () => {
-    const issues = validateCampaignStep(termsDraft("10"), "terms");
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]?.field).toBe("workingCapitalPercent");
-    expect(issues[0]?.message).toContain("15%");
-  });
-
-  it("rejects a share above the ceiling", () => {
-    const issues = validateCampaignStep(termsDraft("30"), "terms");
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]?.message).toContain("25%");
-  });
-
-  it("requires a choice when nothing is selected", () => {
-    const issues = validateCampaignStep(termsDraft(""), "terms");
-
-    expect(issues).toHaveLength(1);
-    expect(issues[0]?.message).toBe(
-      "Choose the share released as the first tranche.",
+  it("requires an objection window between 1 and 30 days", () => {
+    const issues = validateCampaignStep(
+      termsDraft({ objectionWindowDays: "0" }),
+      "terms",
     );
-  });
-
-  it("rejects a share that is inside the range but above milestone one", () => {
-    const issues = validateCampaignStep(termsDraft("25"), "terms");
 
     expect(issues).toHaveLength(1);
-    expect(issues[0]?.message).toContain("milestone one");
+    expect(issues[0]?.field).toBe("objectionWindowDays");
   });
 });
 
@@ -938,5 +1003,53 @@ describe("toSupportTiers", () => {
         reward({ description: "No amount.", title: "Untitled" }),
       ]),
     ).toEqual([]);
+  });
+});
+
+describe("submissionPreconditions", () => {
+  it("reports an unreadable gate as outstanding rather than satisfied", () => {
+    // #given no server gate was available
+    // #when the review step computes its preconditions
+    const preconditions = submissionPreconditions();
+
+    // #then identity is not claimed as verified
+    expect(preconditions.map((item) => [item.id, item.met])).toEqual([
+      ["kyc", false],
+      ["application-fee", false],
+    ]);
+    expect(preconditions[0]?.code).toBeUndefined();
+  });
+
+  it("carries the API's stable code and blockers when verification is outstanding", () => {
+    // #given the API refused the gate
+    const gate = {
+      blockers: ["Creator: identity verification is pending"],
+      code: "VERIFICATION_REQUIRED",
+      eligible: false,
+    };
+
+    // #when the review step computes its preconditions
+    const [identity] = submissionPreconditions(gate);
+
+    // #then the refusal is repeated verbatim with its code
+    expect(identity?.met).toBe(false);
+    expect(identity?.code).toBe("VERIFICATION_REQUIRED");
+    expect(identity?.description).toBe(
+      "Creator: identity verification is pending",
+    );
+  });
+
+  it("marks identity done but never invents the application fee", () => {
+    // #given the API says the creator is verified
+    const [identity, fee] = submissionPreconditions({
+      blockers: [],
+      code: null,
+      eligible: true,
+    });
+
+    // #then only the fee remains outstanding
+    expect(identity?.met).toBe(true);
+    expect(identity?.code).toBeUndefined();
+    expect(fee?.met).toBe(false);
   });
 });

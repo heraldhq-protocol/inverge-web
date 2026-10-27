@@ -28,7 +28,7 @@ choices.
 | D-017 | 2026-10-17 | Accepted | Move every creator surface from `/d/ideas*` to `/d/creator/*` (overview, list, create, per-idea workspace, feedback setup, insights, analytics home, feedback inbox) with redirects from the old paths. |
 | D-018 | 2026-10-18 | Accepted | Build the campaign experience as one preview feature (`src/features/campaigns`) whose only data seam knows the data is preview: no wallet, no chain, no fabricated transaction, and every fixture carries `demo: true`. |
 | D-019 | 2026-10-18 | Accepted | Campaign media is a creator-supplied link, never an upload in this build: a video is preferred at the top but optional, hosted players are addressed by a parsed id rather than by the creator's string, and no fixture ships a video. |
-| D-020 | 2026-10-18 | Accepted (widens FR-503a, SRS to be reconciled) | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. |
+| D-020 | 2026-10-18 | Accepted; working-capital half superseded by D-045 | The platform success fee is Inverge's and is shown read-only; a creator chooses the first tranche from 15-25% of the raise instead of typing any figure. The band is superseded: D-045 fixes the tranche at 20% of the original target. |
 | D-021 | 2026-10-19 | Accepted | The campaign detail page is tabbed, not one scroll: tab state lives in `?tab=`, the panel is chosen on the server, and the desktop rail repeats the most-scanned cards. |
 | D-022 | 2026-10-19 | Accepted | The creator's story is a closed, typed block vocabulary rendered as data; the schema has no `html` member and the page never injects creator markup. |
 | D-023 | 2026-10-19 | Accepted | Saved campaigns live in this browser behind a `SavedCampaignsStore` boundary and every surface says so; no surface may claim account synchronisation. |
@@ -50,6 +50,12 @@ choices.
 | D-039 | 2026-10-20 | Accepted | Paginate and rank campaigns locally and deterministically until the API owns totals and recommendations; never present a page slice, count, or recommendation tier as live platform data. |
 | D-040 | 2026-10-21 | Accepted | Discovery filters are global, honest, and URL-serialised; country/region values use ISO codes, null totals stay unreported, saved/featured/open views are real, and personal recommendations stay unavailable rather than faked. |
 | D-041 | 2026-10-22 | Accepted | Idea discovery reuses the campaign category/subcategory taxonomy; the taxonomy fields are optional on a record and a child is URL-valid only under its selected parent. |
+| D-042 | 2026-10-24 | Accepted | Live idea and campaign discovery are read-only projections with bounded windows; fixtures are used only when the API is unconfigured. |
+| D-043 | 2026-10-24 | Accepted | Country and region entry uses one ISO/CLDR country list, global first-level regions, West Africa first, and flags from `country-flag-icons`. |
+| D-044 | 2026-10-25 | Accepted | Product analytics is produced server-side after the response by the signed web producer, keyed by an anonymous HttpOnly session or internal user id; no browser beacon, IP address, or device fingerprint. |
+| D-045 | 2026-10-25 | Accepted | The working-capital tranche is fixed at 20% of the original target and does not grow with overfunding; milestone weights total 100% of `eligibleRaised - initialTranche` on their own, and any surplus stays in escrow under the same milestone rules. |
+| D-046 | 2026-10-26 | Accepted | Live creator analytics reuses existing API reports, gates premium reports server-side, and falls back to preview only when auth is preview or the API is unconfigured. |
+| D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -565,7 +571,7 @@ point `upload` becomes reachable and the fixtures can carry one clip.
 ### D-020: The success fee is Inverge's, and the first tranche is a band
 
 - Date: 2026-10-18
-- Status: Accepted (widens FR-503a; the SRS needs reconciling)
+- Status: Accepted; working-capital half superseded by D-045
 - Owner: Product owner and web engineering
 
 Context: The creator wizard exposed the success fee as an editable percentage
@@ -601,8 +607,11 @@ the one-percent steps make the allowed band obvious before submission. The band
 is now a platform setting with two sources of truth until the SRS is updated,
 which is why the divergence is recorded here.
 
-Revisit when: The SRS is reconciled, the settings API can supply these
-parameters, or a campaign type needs a different fee or band.
+Superseded: D-045 fixes the initial tranche at 20% of the original target and
+removes the creator's band. The success-fee rule stands.
+
+Revisit when: The settings API can supply these parameters, or a campaign type
+needs a different fee.
 
 ### D-021: The campaign detail page is tabbed, with a rail beside it
 
@@ -1793,6 +1802,195 @@ keeps a legacy value editable when it cannot resolve one.
 Revisit when: The API stores structured country, region, and city fields, the
 region dataset is materially stale for a launch market, or the bundle budget
 makes a lazy-loaded region chunk necessary.
+
+### D-044: Product analytics is a server-side, post-response producer
+
+- Date: 2026-10-25
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The API exposes a signed service-to-service ingest route and
+privacy-reviewed view events, but the web app never called it. A browser client
+would introduce a public ingest boundary, a client-visible identity, and a
+consent decision the Phase 1 privacy boundary does not have.
+
+Decision: `src/features/analytics/server/ingest.ts` observes the render on the
+Next.js server and signs one batch with `ANALYTICS_INGEST_SECRET`. It runs inside
+`after()` so no network call delays the response, and it never throws. Anonymous
+readers receive one short-lived, HttpOnly `inverge_analytics_session` cookie from
+`src/proxy.ts`; signed-in readers use the internal account id instead. Only
+the API's closed event vocabulary is sent, and the web never synthesizes a
+confirmed outcome such as support, feedback, or backing.
+
+Alternatives: a browser beacon (rejected: public ingest, client identity, and a
+consent surface Phase 1 does not have); calling the API during render (rejected:
+analytics would block the page and could fail a product action); a third-party
+analytics script (rejected: cross-site identifiers and no data ownership).
+
+Consequences: Views are collected without a client bundle, IP address, user
+agent, or device fingerprint. The producer starts with idea discovery and idea
+detail because those routes are already per-request; static marketing surfaces
+need an explicit dynamic decision before they can be measured. The secret must
+match the API's `ANALYTICS_INGEST_SECRET`, and `INVERGE_ANALYTICS_ENABLED` must
+be `true`; otherwise the producer is inert. `/d/creator/analytics` also reads the
+account's `analytics.premium` entitlement and submits a request through a server
+action. D-046 wires the live reports into the creator insights pages.
+
+Revisit when: Phase 2 privacy approval adds consent, referrer, device, region, or
+returning-visitor measurement; a static surface needs view analytics; or the
+API changes the wire vocabulary.
+
+### D-045: Fix the working tranche at 20% of target and divide the remainder by milestone weights
+
+- Date: 2026-10-25
+- Status: Accepted (supersedes the working-capital half of D-020)
+- Owner: Product, escrow programme, API and web
+
+Context: The earlier band treated the tranche as a creator-selected 20-25% slice of
+the same escrow base as the milestones (`workingCapitalBps + Σ trancheBps = 10_000`).
+That pays an overfunded campaign more before verification than its original plan was
+worth: at 150% funding, a 25% tranche releases 37.5% of the target instead of 25%.
+The product owner has fixed the rule for this iteration: the initial tranche is 20%
+of the **original target**, the milestone weights divide what is left, and the
+surplus stays in escrow.
+
+Decision: `initialTranche = targetAmount x 2_000 / 10_000`. Milestone weights sum
+to exactly 10,000 independently and each milestone receives
+`(eligibleRaised - initialTranche) x weight / 10_000`; the last milestone absorbs
+the integer remainder. `eligibleRaised` is the gross `total_raised`; the 5% fee is
+deducted from each gross release, so the creator receives 95% of it. A release that
+would exceed eligible funds fails with an explicit validation error rather than
+clamping. Surplus is not a separate release stage: it is part of the milestone pool
+and remains subject to the same milestone, objection and refund rules. The wizard
+no longer offers a working-capital choice; the API draft DTO accepts exactly `20`;
+readiness requires the fixed tranche and a milestone total of 10,000. The creator
+workspace and public escrow section show the initial tranche, remaining pool,
+released, still-held and surplus separately. Fixtures keep their authored 10,000
+milestone weights instead of being rescaled.
+
+Alternatives: Keep the proportional tranche (overpays overfunded campaigns and was
+the reason for the change); cap all payouts at the target and refund the surplus
+(a different product promise, not requested); keep the 20-25% creator choice
+(rejected by the product owner for this iteration); rescale milestone weights on
+the client (hides a money decision and changes published terms).
+
+Consequences: The programme, API readiness, draft validation, wizard, fixtures and
+copy now agree on one rule. A draft saved with a 25% tranche under the old band is
+blocked until re-created under the fixed rule; there is no live data to migrate
+because the contract is not deployed. Milestone display is a projection until the
+indexer exists; only confirmed on-chain releases may be described as released. The
+release endpoints, confirmation/reconciliation and indexer are still not built, so
+this decision does not by itself make live escrow releases work.
+
+Revisit when: Overfunding refund policy changes, Flexible Funding becomes
+deployable, or the programme needs a different initial-tranche rule.
+### D-046: Live creator analytics reuses existing reports with explicit fallback
+
+- Date: 2026-10-26
+- Status: Accepted
+- Owner: Web engineering
+
+Context: The creator insights pages rendered fixture data even after the API
+gained creator-only reports. Adding web-specific analytics endpoints would
+duplicate the API's query budgets, date-boundary handling, and privacy rules.
+The web also needed a fallback that could not be mistaken for live data.
+
+Decision: `src/features/analytics/server/workspace.ts` resolves one creator idea
+through `GET /ideas/{id}` and the creator-only `GET /ideas/{id}/insights` in
+parallel. The insights read is the ownership check: a `403` or `404` becomes
+`notFound()`, a `401` becomes signed out, and a timeout or `5xx` becomes an
+explicit unavailable state. The shell and data tabs map those reads plus the
+existing `summary`, `timeseries`, `validation`, `acquisition`, and `geography`
+reports into one `AnalyticsWorkspaceView`, so a page cannot mix a live total
+with a fixture series.
+
+Summary and timeseries are read for any authenticated owner. The premium
+reports are fetched only after `GET /analytics/access` returns
+`analytics.premium`, and acquisition/geography only on the traffic tab. The
+access read is request-cached so the pages and workspace do not repeat it.
+Preview fixtures are used only when `INVERGE_AUTH_MODE=preview` or
+`INVERGE_API_URL` is unset; an API-configured signed-out visitor sees the
+signed-out state, not a fixture. The analytics index reads
+`GET /ideas?mine=true` with a 100-idea bound rather than assembling an owner
+list from the public catalogue.
+
+The referral tab remains unavailable because the API stores no referrer or UTM
+data. `follows` and `saves` remain `null` until the product has those models.
+Pre-pledges are the current all-time total, not a range-bound count. Supporter
+identities and written feedback text are not exposed; the pages show aggregate
+counts and say when text is unavailable.
+
+Alternatives: add web-only analytics endpoints (rejected: duplicate query
+budgets, date handling, and privacy rules); assemble the creator index from the
+public idea list (rejected: the public catalogue is not an ownership source);
+show fixtures when the API is configured but the visitor is signed out
+(rejected: fixture numbers look live); fetch premium reports and hide them in
+the client (rejected: access must be enforced before the read); infer referral
+sources from absent data (rejected: no such data is collected).
+
+Consequences: One view model serves live and preview data, and premium access is
+enforced server-side without inventing a plan or price. The pages depend on the
+API's existing report field names and UTC date conventions. Live campaign
+backing is still indexer-owned and is not shown as creator analytics. Preview
+analytics remains limited to the `skill-circle` fixture.
+
+Revisit when: the API adds follow/save models, referrer/UTM capture, supporter
+identity, challenge/ideathon reports, or a paid billing integration; or a report
+field changes shape.
+
+### D-047: Verification is a server-owned domain; the browser never decides eligibility
+
+- Date: 2026-10-27
+- Status: Accepted
+- Owner: Platform, compliance, API and web
+
+Context: Identity, AML and business verification (FR-103, FR-104, FR-105) previously
+lived partly in the browser: the web could show a status and the creator flow assumed
+what "verified" meant. Didit can change a decision after a callback, callbacks can
+arrive twice or out of order, and a browser redirect proves nothing. A second source
+of truth would also let a business creator bypass representative or beneficial-owner
+checks by switching account type.
+
+Decision: The API owns one verification domain (`src/modules/kyc/`). Every hosted
+session, status, eligibility answer, submission gate and contribution authorisation
+is created or decided server-side; the web calls an Inverge BFF route and never
+Didit. The domain stores normalised `VerificationCase` and append-only
+`VerificationEvent` rows, keeps provider strings inside the adapter, and projects the
+legacy `User.kycStatus`/`amlStatus` and `BusinessProfile.kybStatus`/`amlStatus` fields
+from cases so already-verified accounts are not asked again. Business and individual
+are separate cases: a business approval requires KYB, its own AML screening, key
+people and the representative's personal identity. Campaign submission asks the
+domain before the transaction and re-checks inside it; contributions above the
+cumulative FR-104 threshold reserve headroom under a per-user advisory lock.
+
+Webhook bodies are never authoritative: signatures are verified against the raw body
+or canonical form per scheme, timestamps are bounded, duplicates are dropped on
+`providerEventReference`, the decision is re-fetched from the provider, and heavy work
+runs on a queue when one is configured. A reconciliation sweep covers dropped
+webhooks with bounded backoff; Redis is not the record. Unknown provider strings map
+to `ERROR` and route to support, never to an automatic decline. AML `REVIEW`/`FLAGGED`
+outcomes are resolved only by a permission-controlled human with a recorded reason.
+
+Alternatives: Keep the legacy per-field status pair as the source of truth (cannot
+represent re-submission, review or provider errors, and keeps two answers to the same
+question); let the web call Didit directly (exposes privileged credentials and makes
+the browser the authority); auto-decline on AML hits (treats a screening match as a
+finding and violates the no-auto-rejection rule); trust the webhook payload without
+re-fetching (a forged or stale body becomes an approval path); treat business KYB as
+covering the representative (lets a company account skip personal identity checks).
+
+Consequences: Existing `/kyc` and `/kyb` routes remain as a compatibility facade, so
+clients built before this change keep working. The web gained verification settings,
+admin queues and a case detail screen, and the campaign wizard now shows the live
+identity gate instead of a hard-coded `met: false`. Submission also still requires a
+paid application fee, which has no payment provider in this build, so the wizard
+continues to stop at a saved draft. Risk thresholds, country policy and which optional
+checks are mandatory are left as open compliance decisions; the domain implements the
+mechanism, not the values. Webhook registration and publishing the draft Didit
+workflow are console tasks and remain outstanding.
+
+Revisit when: Compliance supplies risk/country policy, the application-fee provider
+ships, ongoing AML monitoring is scheduled, or Didit changes its signature schemes.
 
 ## Decision template
 

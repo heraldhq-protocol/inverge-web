@@ -126,8 +126,8 @@ export const guides = [
       {
         heading: "The first release is different",
         paragraphs: [
-          "When a campaign reaches its target, a working-capital tranche releases immediately. It is sized to the milestone-one budget and capped by platform configuration within the approved 20–25% range.",
-          "This amount lets a builder begin work. It is disclosed before contribution and is not refundable after release, even if a later milestone fails. Released tranches are never clawed back.",
+          "When a campaign reaches its target, a working-capital tranche releases immediately. It is fixed at 20% of the original target, not sized to milestone one and not a share of whatever the campaign raises. It is disclosed before contribution and is not refundable after release, even if a later milestone fails. If the campaign overfunds, the extra stays in escrow and the milestone weights divide it under the same rules.",
+          "This amount lets a builder begin work. Released tranches are never clawed back, and an overfunded campaign's surplus is not paid out early: it stays in the same escrow until a milestone is approved.",
         ],
       },
       {

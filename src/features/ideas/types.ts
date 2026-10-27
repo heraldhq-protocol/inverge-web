@@ -128,6 +128,11 @@ export type IdeaDetail = DiscoveryIdea & {
   risks?: string;
   /** FR-203: average survey rating 0–5, shown as feedback, never as demand. */
   feedbackScore: number;
+  /**
+   * API workflow status. Optional because fixtures may omit it; a missing value
+   * must not be read as "draft" or "published".
+   */
+  status?: IdeaStatus;
 
   // Quality and accountability signals. All optional so the fixture only
   // declares what it actually holds, and every section renders conditionally.

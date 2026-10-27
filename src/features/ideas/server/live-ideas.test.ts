@@ -145,6 +145,22 @@ describe("live idea mapping", () => {
     ]);
     expect(detail.publishedAt).toBe("2026-10-02T00:00:00.000Z");
     expect(detail.fundingIntent?.nextStep).toContain("validation gate");
+    expect(detail.status).toBe("validating");
+  });
+
+  it("keeps draft status distinct from an unlisted published idea", () => {
+    expect(toIdeaDetail(baseIdea({ status: "DRAFT" })).status).toBe("draft");
+    expect(
+      toIdeaDetail(
+        baseIdea({ discoverabilityTier: "LINK_ONLY", status: "VALIDATING" }),
+      ).status,
+    ).toBe("validating");
+  });
+
+  it("does not invent a status for an unknown API value", () => {
+    expect(
+      toIdeaDetail(baseIdea({ status: "FUTURE_STATUS" })).status,
+    ).toBeUndefined();
   });
 
   it("omits an ask breakdown with no numeric entries", () => {

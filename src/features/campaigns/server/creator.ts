@@ -3,6 +3,7 @@ import {
   previewCampaigns,
   viewerCampaignIds,
 } from "@/features/campaigns/content/preview-campaigns";
+import { allocationFor } from "@/features/campaigns/lib/allocation";
 import {
   currentMilestone,
   escrowLedger,
@@ -195,6 +196,10 @@ export function getCampaignWorkspaceView(
       },
       raised: campaign.funding.raised,
       target: campaign.funding.target,
+      initialTranche: ledger.initial?.tranche ?? null,
+      remaining: ledger.remaining,
+      surplus: ledger.surplus,
+      stillHeld: sumMoneyAmounts([ledger.unreleased, ledger.refundable]),
       totalPending: ledger.pending,
       totalRefunded: refunded,
       totalReleased: ledger.released,
@@ -217,12 +222,12 @@ export function milestoneWorkload(
 ): readonly MilestoneWorkload[] {
   const current = currentMilestone(campaign.milestones);
   const funded = campaign.phase === "delivering";
+  const allocation = allocationFor(campaign);
 
-  return campaign.milestones.map((milestone) => {
-    const tranche = milestoneTranche(
-      campaign.funding.target,
-      milestone.allocationBps,
-    );
+  return campaign.milestones.map((milestone, index) => {
+    const tranche =
+      allocation.milestones[index]?.amount ??
+      milestoneTranche(allocation.remaining, milestone.allocationBps);
 
     const isNext = funded && current?.id === milestone.id;
     const canSubmit = isNext && milestone.state === "upcoming";

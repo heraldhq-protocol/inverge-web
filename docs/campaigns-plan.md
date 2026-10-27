@@ -33,7 +33,7 @@ architecture → repo conventions).
 | C1 | Requested routes are `/dashboard/backing`, `/dashboard/creator/campaigns`. D-011 makes `/d` the product namespace. | Use `/d/backing` and `/d/creator/campaigns`. The request says the listed routes are "suggested route destinations, not a requirement to introduce duplicate or conflicting routes". |
 | C2 | Requested dashboard route prefix `/dashboard` also collides with the existing 308 redirects in `next.config.ts`. | Same as C1; no new redirects added. |
 | C3 | SRS denominates campaigns in USDC/cNGN; D-010 models all product money as USD atomic cents. | Campaign `target`/`raised` use `MoneyAmount` (USD = USDC, 1:1, no conversion invented) and carry an explicit `fundingAsset: "USDC"` label plus `supportedSettlementAssets`. No cNGN amount is ever derived from a rate. |
-| C4 | The request asks for "default success fee 5%", "working capital 20–25%", "7-day objection window", "30% threshold", "15% per-wallet cap" while also saying not to hard-code a universal percentage. | Percentages live in `EscrowTerms` **per campaign** in basis points (integer) and are rendered from that data. A campaign without a published term shows "depends on the campaign's published terms" rather than a default. |
+| C4 | The request asks for "default success fee 5%", "working capital 20–25%", "7-day objection window", "30% threshold", "15% per-wallet cap" while also saying not to hard-code a universal percentage. | Objection and fee terms live in `EscrowTerms` **per campaign** in basis points (integer) and are rendered from that data; a campaign without a published term says so. The working-capital tranche is the exception: D-045 fixes it at 20% of the original target, so the creator no longer chooses within a band. |
 | C5 | The request wants a quote/fee/total in the contribution flow; §1 forbids inventing exchange rates and fees. | The flow offers two settlement routes: direct USDC from the wallet (FR-401 — exact amount, no rate) which completes, and the fiat on-ramp (FR-402) which shows the quote structure with a live-quote-unavailable state and disables proceeding, as §9 requires. |
 | C6 | "Verified on-chain" badges are requested; no chain indexer is connected and no transaction hash may be fabricated. | `TransactionRef` exists in the model but every fixture leaves it `null`. Anywhere a signature or explorer link would appear, the UI states that the reference is unavailable in the preview. |
 | C7 | Self-attested creator campaigns need curation states ("in review", "changes requested") that are not in the SRS state list. | Modelled as a `CampaignReview` discriminated union alongside the funding `CampaignPhase`, matching D-005/§5 curation. |
@@ -95,7 +95,7 @@ backend that does not exist in this repository.
 
 | # | Item | Why |
 | --- | --- | --- |
-| V1 | The first tranche is a 15–25% choice. FR-503a states 20–25%. | The product owner directed the wider band. Implemented as directed and recorded as a divergence (D-020) rather than silently widening the SRS; `docs/Inverge_PRD_SRS_v1.2.md` should be reconciled or D-020 superseded. |
+| V1 | The first tranche was a 15–25% choice. FR-503a now fixes it at 20% of the target. | Resolved by D-045: the tranche is fixed at 20% of the original target, does not grow with overfunding, and the milestone weights total 100% of the remainder on their own. |
 | V2 | No fixture carries a video. | The repository vendors no clip and a fixture must not depend on a third-party host at render time. The video path is real and is covered by tests and by the wizard, where a creator can paste a genuine link and preview it. |
 | V3 | `/d/backing` and `/d/creator/campaigns` have no local `loading.tsx`/`error.tsx`. | D-016 renders every `/d` route inside one shared shell and `docs/DASHBOARD_PAGES.md` puts the fallbacks at the `d/` group level; the two new collections inherit those rather than duplicating them. The public `/campaigns` routes do ship their own loading, error, and not-found states. |
 | V4 | The discussion thread renders an unavailable state. | There is no comment model and no API; seeding comments would invent user content. |
@@ -107,3 +107,37 @@ backend that does not exist in this repository.
 plus targeted `prettier --check` and `eslint` over every file this branch adds
 or changes. Results are recorded in the pull request description and the final
 report.
+
+## 7. Server persistence (campaign deployment phase E)
+
+The new-campaign wizard now keeps its draft in the API instead of only in the tab.
+
+- **When saving starts.** The API's create contract needs a real title, story,
+  category, target, deadline, use of funds and 2–6 milestones. A draft is created
+  on the first change after the funding and milestone steps validate; before that
+  the status line says the draft is local to the tab. Nothing is invented to make
+  an earlier save possible (a placeholder target or deadline would show up as the
+  creator's own figure).
+- **Versioning.** Each save sends the `version` it read. The API applies it
+  conditionally and a stale save is `409 STALE_DRAFT_VERSION`; the editor stops
+  autosaving and asks for a reload instead of overwriting the other tab.
+- **Resuming.** The first successful create writes `?draft=<id>` into the URL with
+  `history.replaceState` (no remount). The page loads that draft server-side, so a
+  reload on another device continues from the API's copy.
+- **Boundary.** The BFF routes (`POST /api/campaigns`,
+  `PATCH /api/campaigns/[campaignId]`, `GET /api/campaigns/[campaignId]/draft`)
+  attach the HttpOnly session token and forward the API's error envelope
+  unchanged. The browser never receives the token, and no trusted state
+  (status, review, terms hash, deployment, fee) is sent from the client.
+- **Readiness is shown, not hidden.** Every save response carries the server's
+  readiness verdict; the review step lists its blockers.
+
+Known conflict this exposes: the wizard's old model treated the first tranche as
+*containing* working capital (milestones totalled 100% and the tranche was carved
+out of milestone one), while the escrow programme now fixes the tranche at 20% of
+the target and requires the milestone weights to total 10,000 on their own.
+Resolved by D-045: there is no working-capital control, the tranche is a separate
+stage, the milestones divide `eligibleRaised − initialTranche`, and the review step
+lists the server's remaining readiness blockers. Payloads are not rescaled silently;
+a draft whose weights do not total 100% is reported and blocked. The edit route
+remains fixture-backed; only the create flow persists.

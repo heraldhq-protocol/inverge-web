@@ -20,6 +20,13 @@ const environmentSchema = z.object({
    * schema only keeps malformed deployment values from being silently treated
    * as "on".
    */
+  /**
+   * Product analytics is server-observed and off unless an operator opts in.
+   * The secret is the same value the API verifies; a short value is a boot
+   * error rather than a silently disabled producer.
+   */
+  INVERGE_ANALYTICS_ENABLED: z.enum(["true", "false"]).optional(),
+  INVERGE_ANALYTICS_INGEST_SECRET: z.string().min(32).optional(),
   INVERGE_ADS_ENABLED: z.enum(["true", "false"]).optional(),
   INVERGE_ADS_THIRD_PARTY_ENABLED: z.enum(["true", "false"]).optional(),
   INVERGE_ADS_ANALYTICS_ENABLED: z.enum(["true", "false"]).optional(),

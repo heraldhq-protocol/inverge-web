@@ -11,9 +11,12 @@ import { Amount } from "@/components/ui/amount";
 import { Avatar } from "@/components/ui/avatar";
 import { Pill } from "@/components/ui/pill";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import { ideaStatusLabel } from "@/features/ideas/lib/creator-rows";
 import type { IdeaDetail } from "@/features/ideas/types";
 import { formatSeriesDate } from "@/features/analytics/lib/analytics";
+import type { AnalyticsDataSource } from "@/features/analytics/lib/types";
 
 function SnapshotItem({
   icon,
@@ -48,8 +51,30 @@ function SnapshotItem({
  * The snapshot deliberately matches the public idea page so a creator never has
  * to reconcile two versions of the same number.
  */
-export function AnalyticsHeader({ idea }: { idea: IdeaDetail }) {
+export function AnalyticsHeader({
+  dataSource,
+  idea,
+}: {
+  dataSource: AnalyticsDataSource;
+  idea: IdeaDetail;
+}) {
+  const isDraft = idea.status === "draft";
   const published = idea.visibility === "public";
+  const statusLabel = idea.status
+    ? ideaStatusLabel[idea.status]
+    : published
+      ? "Published"
+      : "Unlisted";
+  const statusVariant =
+    idea.status === "threshold-met"
+      ? "success"
+      : idea.status === "draft" || idea.status === "archived"
+        ? "neutral"
+        : idea.status
+          ? "warning"
+          : published
+            ? "success"
+            : "neutral";
 
   return (
     <>
@@ -85,24 +110,35 @@ export function AnalyticsHeader({ idea }: { idea: IdeaDetail }) {
       >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
-            <StatusBadge variant={published ? "success" : "neutral"}>
-              {published ? "Published" : "Unlisted"}
-            </StatusBadge>
+            <StatusBadge variant={statusVariant}>{statusLabel}</StatusBadge>
             <span className="text-[0.6875rem] text-muted">
-              Published {formatSeriesDate(idea.publishedAt, true)}
+              {isDraft ? "Created" : "Published"}{" "}
+              {formatSeriesDate(idea.publishedAt, true)}
             </span>
             <span
-              className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
-              title="This workspace reads preview data until the analytics API is connected"
+              className={
+                dataSource === "live"
+                  ? "rounded-full bg-brand-soft px-2 py-0.5 text-[0.625rem] font-semibold text-brand-strong"
+                  : "rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
+              }
+              title={
+                dataSource === "live"
+                  ? "This workspace reads live reports from the analytics API"
+                  : "This workspace reads preview data until the analytics API is connected"
+              }
             >
-              Preview data
+              {dataSource === "live" ? "Live API" : "Preview data"}
             </span>
           </div>
           <Link
-            href={`/ideas/${idea.id}`}
+            href={
+              isDraft
+                ? `/d/creator/ideas/${idea.id}`
+                : ideaViewHref(idea.id, "internal")
+            }
             className="inline-flex min-h-10 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
           >
-            View idea page
+            {isDraft ? "Open idea editor" : "View idea page"}
             <HugeiconsIcon
               icon={LinkSquare02Icon}
               size={14}

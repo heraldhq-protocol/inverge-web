@@ -1,8 +1,14 @@
 import type { Metadata } from "next";
 
 import { CampaignWizard } from "@/features/campaigns/components/campaign-wizard";
+import { readSavedDraft } from "@/features/campaigns/lib/draft-api";
 import { emptyCampaignDraft } from "@/features/campaigns/lib/wizard";
+import type { DraftSaveInitial } from "@/features/campaigns/lib/use-campaign-draft-autosave";
+import { readCampaignDraft } from "@/features/campaigns/server/drafts";
+import { readSessionToken } from "@/features/auth/server/session";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
+import { getVerificationEligibility } from "@/features/verification/server/api";
+import type { SubmissionGate } from "@/features/campaigns/lib/wizard";
 
 export const metadata: Metadata = {
   description:
@@ -10,13 +16,64 @@ export const metadata: Metadata = {
   title: "New campaign",
 };
 
+type PageProps = { searchParams: Promise<{ draft?: string }> };
+
 /**
- * A new campaign.
+ * A new campaign, or a saved draft being resumed.
  *
- * The draft starts empty and lives only in the browser: this build has no
- * storage, so the wizard says so before a creator invests time in it.
+ * `?draft=<id>` is written by the wizard on its first successful save. Loading it
+ * server-side means a reload, a crashed tab or a different device continues from
+ * the API's copy rather than from a client-side cache that may be stale.
+ *
+ * A draft that cannot be read is reported above an empty form, not silently
+ * replaced: the creator should know that the link failed before retyping a plan.
  */
-export default function NewCampaignPage() {
+export default async function NewCampaignPage({ searchParams }: PageProps) {
+  const { draft: draftId } = await searchParams;
+
+  let draft = emptyCampaignDraft;
+  let saved: DraftSaveInitial = null;
+  let loadError: string | null = null;
+  let gate: SubmissionGate | null = null;
+
+  const eligibility = await getVerificationEligibility("CAMPAIGN_CREATOR");
+  if (eligibility.ok) {
+    gate = {
+      blockers: eligibility.data.blockers,
+      code: eligibility.data.code,
+      eligible: eligibility.data.eligible,
+    };
+  }
+
+  if (draftId) {
+    const token = await readSessionToken();
+    if (!token) {
+      loadError =
+        "Sign in again to load this saved draft. Nothing was changed.";
+    } else {
+      const result = await readCampaignDraft(token, draftId);
+      if (!result.ok) {
+        loadError =
+          result.status === 404
+            ? "That draft could not be found, or it belongs to another account. Start a new one below."
+            : result.message;
+      } else {
+        const parsed = readSavedDraft(result.data);
+        if (parsed) {
+          draft = parsed.draft;
+          saved = {
+            id: parsed.id,
+            readiness: parsed.readiness,
+            version: parsed.version,
+          };
+        } else {
+          loadError =
+            "Inverge returned a draft this build cannot read. Start a new one below; the saved version is unchanged.";
+        }
+      }
+    }
+  }
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
       <div className="flex flex-wrap items-start justify-between gap-4">
@@ -35,7 +92,13 @@ export default function NewCampaignPage() {
       </div>
 
       <div className="mt-7">
-        <CampaignWizard draft={emptyCampaignDraft} mode="create" />
+        <CampaignWizard
+          draft={draft}
+          gate={gate}
+          loadError={loadError}
+          mode="create"
+          saved={saved}
+        />
       </div>
     </div>
   );
