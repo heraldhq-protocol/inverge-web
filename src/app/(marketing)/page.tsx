@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { connection } from "next/server";
 
 import { CallToAction } from "@/features/marketing/components/call-to-action";
 import { CampaignAnatomySection } from "@/features/marketing/components/campaign-anatomy-section";
@@ -11,6 +12,7 @@ import { MissionTeaserSection } from "@/features/marketing/components/mission-te
 import { StatsSection } from "@/features/marketing/components/stats-section";
 import { TrustStrip } from "@/features/marketing/components/trust-strip";
 import { TwoDoorsSection } from "@/features/marketing/components/two-doors-section";
+import { getHomeView } from "@/features/marketing/server/home-view";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -24,7 +26,12 @@ export const metadata: Metadata = buildPageMetadata({
   title: "Back bold ideas. Keep delivery accountable.",
 });
 
-export default function HomePage() {
+export default async function HomePage() {
+  // The activity band and the idea cards read the live API, so the page renders
+  // per request rather than baking one snapshot into the build.
+  await connection();
+  const view = await getHomeView();
+
   return (
     <main>
       {/* 2. Hero */}
@@ -36,8 +43,8 @@ export default function HomePage() {
       {/* 4. How It Works (Preserved as requested) */}
       <HowItWorks />
 
-      {/* 5. Idea Cards / Discover (Preserved as requested) */}
-      <IdeaCardsSection />
+      {/* 5. Idea Cards / Discover */}
+      <IdeaCardsSection section={view.ideas} />
 
       {/* 6. Anatomy of a Protected Campaign */}
       <CampaignAnatomySection />
@@ -46,7 +53,7 @@ export default function HomePage() {
       <TwoDoorsSection />
 
       {/* 8. Inverge Activity Band */}
-      <StatsSection />
+      <StatsSection section={view.stats} />
 
       {/* 9. Mission Teaser */}
       <MissionTeaserSection />

@@ -9,6 +9,7 @@ import { fetchApiJson } from "@/lib/api/server";
 import {
   discoveryCategoryFor,
   getLiveIdea,
+  getLiveIdeaComments,
   getLiveIdeasWindow,
   isReadableIdea,
   regionFor,
@@ -239,5 +240,83 @@ describe("live idea reads", () => {
   it("hides a DRAFT fetched by direct id", async () => {
     fetchMock.mockResolvedValue(baseIdea({ status: "DRAFT" }));
     await expect(getLiveIdea("idea-1")).resolves.toBeNull();
+  });
+});
+
+describe("live idea comments", () => {
+  it("maps the public author projection and highlighted flag", async () => {
+    // #given
+    fetchMock.mockResolvedValue({
+      data: [
+        {
+          author: {
+            avatarUrl: null,
+            displayName: "Ada Obi",
+            id: "user-1",
+            isCreator: true,
+          },
+          body: "Thanks for the feedback.",
+          createdAt: "2026-10-02T00:00:00.000Z",
+          highlighted: true,
+          id: "comment-1",
+          likeCount: 3,
+        },
+        {
+          author: {
+            avatarUrl: null,
+            displayName: null,
+            id: "user-2",
+            isCreator: false,
+          },
+          body: "When does the pilot start?",
+          createdAt: "2026-10-03T00:00:00.000Z",
+          highlighted: false,
+          id: "comment-2",
+          likeCount: 0,
+        },
+      ],
+      page: { hasMore: false, nextCursor: null },
+    });
+
+    // #when
+    const thread = await getLiveIdeaComments("idea-1");
+
+    // #then
+    expect(thread.hasMore).toBe(false);
+    expect(thread.comments).toEqual([
+      expect.objectContaining({
+        author: "Ada Obi",
+        authorInitials: "AO",
+        body: "Thanks for the feedback.",
+        id: "comment-1",
+        pinned: true,
+      }),
+      expect.objectContaining({
+        author: "Inverge creator",
+        authorInitials: "IC",
+        id: "comment-2",
+        pinned: false,
+      }),
+    ]);
+    expect(fetchMock).toHaveBeenCalledWith("/ideas/idea-1/comments?limit=20");
+  });
+
+  it("returns an empty thread for a missing idea and rethrows outages", async () => {
+    // #given
+    fetchMock.mockRejectedValueOnce(
+      Object.assign(new Error("not found"), { status: 404 }),
+    );
+
+    // #when / #then
+    await expect(getLiveIdeaComments("missing")).resolves.toEqual({
+      comments: [],
+      hasMore: false,
+    });
+
+    // #given
+    fetchMock.mockRejectedValueOnce(new Error("API down"));
+
+    // #when / #then
+    await expect(getLiveIdeaComments("idea-1")).rejects.toThrow("API down");
   });
 });

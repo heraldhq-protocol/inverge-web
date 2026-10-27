@@ -9,6 +9,9 @@ export type ApiPublicCreator = {
   id: string;
   username: string;
   displayName: string | null;
+  /** Optional so older projections keep working; detail reads use them. */
+  avatarUrl?: string | null;
+  bio?: string | null;
 };
 
 export function creatorNameFor(creator: ApiPublicCreator | null): string {
