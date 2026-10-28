@@ -21,7 +21,7 @@ export function StepRail({
   steps: readonly { id: string; title: string }[];
 }) {
   return (
-    <ol className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1 lg:overflow-visible">
+    <ol className="flex gap-2 overflow-x-auto lg:flex-col lg:gap-1 lg:overflow-visible scrollbar-width:none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
       {steps.map((step, index) => {
         const done = index < currentIndex;
         const current = index === currentIndex;

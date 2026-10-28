@@ -29,7 +29,7 @@ export function Tabs({
   return (
     <nav
       aria-label={label}
-      className={`w-full min-w-0 overflow-x-auto border-b border-border ${className}`}
+      className={`w-full min-w-0 overflow-x-auto border-b border-border ${className} [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] scrollbar-none`}
     >
       <ul className="flex min-w-max items-center gap-1">
         {items.map((item) => (
