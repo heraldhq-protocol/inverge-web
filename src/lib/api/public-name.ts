@@ -29,6 +29,23 @@ export function creatorNameFor(creator: ApiPublicCreator | null): string {
   return "Inverge creator";
 }
 
+/**
+ * The stored, routable handle for a creator, or `null`.
+ *
+ * The API's projection may fall back to a display-name slug or the user id.
+ * Neither is a username the profile router serves, so only a value that looks
+ * like a handle and differs from the internal id is returned.
+ */
+export function publicHandleFor(
+  creator: ApiPublicCreator | null,
+): string | null {
+  const username = creator?.username?.trim().toLowerCase();
+  if (!username) return null;
+  if (username === creator?.id.toLowerCase()) return null;
+  if (/^c[a-z0-9]{20,}$/i.test(username)) return null;
+  return /^[a-z0-9_-]{3,30}$/.test(username) ? username : null;
+}
+
 export function initialsFor(name: string): string {
   const parts = name
     .split(/\s+/)

@@ -37,6 +37,8 @@ export type IdeaScope = "all" | "public";
 export type DiscoveryIdea = IdeaSummary & {
   /** Editorial cover, or `null` for the deterministic artwork fallback. */
   cover?: string | null;
+  /** Stored public handle, when the creator has one. Never an internal id. */
+  creatorUsername?: string;
   /**
    * The idea's category in the shared campaign/idea discovery taxonomy.
    *

@@ -8,6 +8,13 @@ const config: NextConfig = {
         hostname: "images.unsplash.com",
         pathname: "/photo-**",
       },
+      // Google profile images from a verified OAuth identity. Keep this list in
+      // sync with `src/lib/public-avatar.ts`; the web projection filters the
+      // path before a URL reaches next/image.
+      { protocol: "https", hostname: "lh3.googleusercontent.com" },
+      { protocol: "https", hostname: "lh4.googleusercontent.com" },
+      { protocol: "https", hostname: "lh5.googleusercontent.com" },
+      { protocol: "https", hostname: "lh6.googleusercontent.com" },
     ],
   },
   async redirects() {

@@ -21,6 +21,7 @@ const shell: ShellData = {
   ],
   unreadCount: 1,
   viewer: {
+    avatarUrl: null,
     capabilities: {
       creator: true,
       ideathonParticipant: false,

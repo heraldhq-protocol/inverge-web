@@ -49,11 +49,13 @@ describe("toSessionUser", () => {
         role: "USER",
       }),
     ).toEqual({
+      avatarUrl: null,
       displayName: "Amara Okonkwo",
       email: "amara@example.test",
       id: "usr_123",
       mode: "live",
       requiresOnboarding: false,
+      role: "USER",
       username: "amaraokonkwo",
     });
   });
@@ -67,13 +69,45 @@ describe("toSessionUser", () => {
         requiresOnboarding: true,
       }),
     ).toEqual({
+      avatarUrl: null,
       displayName: null,
       email: null,
       id: "usr_123",
       mode: "live",
       requiresOnboarding: true,
+      role: "USER",
       username: null,
     });
+  });
+
+  it("accepts an allowlisted provider avatar", () => {
+    const user = toSessionUser({
+      creator: {
+        avatarUrl: "https://lh3.googleusercontent.com/a/ACg8oc-example=s96-c",
+        displayName: "Amara",
+        username: "amaraokonkwo",
+      },
+      id: "usr_123",
+      requiresOnboarding: false,
+    });
+
+    expect(user?.avatarUrl).toBe(
+      "https://lh3.googleusercontent.com/a/ACg8oc-example=s96-c",
+    );
+  });
+
+  it("drops an avatar outside the public image allowlist", () => {
+    const user = toSessionUser({
+      creator: {
+        avatarUrl: "https://evil.test/avatar.png",
+        displayName: "Amara",
+        username: "amaraokonkwo",
+      },
+      id: "usr_123",
+      requiresOnboarding: false,
+    });
+
+    expect(user?.avatarUrl).toBeNull();
   });
 
   it("drops the id fallback the creator projection uses as a username", () => {
@@ -105,11 +139,13 @@ describe("toSessionUser", () => {
 
   it("ignores a creator field that is not an object", () => {
     expect(toSessionUser({ creator: "amara", id: "usr_123" })).toEqual({
+      avatarUrl: null,
       displayName: null,
       email: null,
       id: "usr_123",
       mode: "live",
       requiresOnboarding: true,
+      role: "USER",
       username: null,
     });
   });
@@ -121,6 +157,20 @@ describe("toSessionUser", () => {
         id: "usr_123",
       })?.requiresOnboarding,
     ).toBe(true);
+  });
+
+  it("keeps the API role available to server-side gates", () => {
+    expect(toSessionUser({ id: "usr_123", role: "ADMIN" })?.role).toBe("ADMIN");
+    expect(
+      toSessionUser({ id: "usr_123", role: "COMPLIANCE_REVIEWER" })?.role,
+    ).toBe("COMPLIANCE_REVIEWER");
+  });
+
+  it("defaults an unknown or absent role to USER", () => {
+    expect(toSessionUser({ id: "usr_123" })?.role).toBe("USER");
+    expect(toSessionUser({ id: "usr_123", role: "SUPERUSER" })?.role).toBe(
+      "USER",
+    );
   });
 });
 
@@ -140,11 +190,13 @@ describe("toPreviewSessionUser", () => {
     ).toEqual({
       accountType: null,
       contactName: null,
+      avatarUrl: null,
       displayName: null,
       email: null,
       id: `preview_${subject}`,
       mode: "preview",
       requiresOnboarding: true,
+      role: "USER",
       username: null,
     });
   });

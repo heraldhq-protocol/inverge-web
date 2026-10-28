@@ -362,14 +362,6 @@ export function IdeaDetail({
                   {live ? "On Inverge since" : "Published"}{" "}
                   {formatDate(idea.publishedAt)}
                 </span>
-                {live ? null : (
-                  <span
-                    className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
-                    title="This page is populated from preview data, not the live API"
-                  >
-                    Preview data
-                  </span>
-                )}
               </div>
               <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-[2.5rem] sm:leading-[1.08]">
                 {idea.title}
@@ -381,7 +373,16 @@ export function IdeaDetail({
               <div className="mt-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm">
                 <span className="inline-flex items-center gap-2">
                   <Avatar name={idea.creator} size={32} />
-                  <span className="font-medium text-ink">{idea.creator}</span>
+                  {idea.creatorUsername ? (
+                    <Link
+                      href={`/u/${encodeURIComponent(idea.creatorUsername)}`}
+                      className="font-medium text-ink underline-offset-4 transition-colors hover:text-brand-strong hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      {idea.creator}
+                    </Link>
+                  ) : (
+                    <span className="font-medium text-ink">{idea.creator}</span>
+                  )}
                   {idea.creatorVerified ? (
                     <span
                       className="inline-flex items-center gap-1 text-xs font-semibold text-brand-strong"
@@ -691,9 +692,18 @@ export function IdeaDetail({
               <div className="flex items-start gap-3">
                 <Avatar name={idea.creator} size={44} />
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-bold text-ink">
-                    {idea.creator}
-                  </p>
+                  {idea.creatorUsername ? (
+                    <Link
+                      href={`/u/${encodeURIComponent(idea.creatorUsername)}`}
+                      className="block truncate text-sm font-bold text-ink underline-offset-4 transition-colors hover:text-brand-strong hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                    >
+                      {idea.creator}
+                    </Link>
+                  ) : (
+                    <p className="truncate text-sm font-bold text-ink">
+                      {idea.creator}
+                    </p>
+                  )}
                   {idea.creatorVerified ? (
                     <p className="mt-0.5 inline-flex items-center gap-1 text-xs font-medium text-brand-strong">
                       <HugeiconsIcon
@@ -740,16 +750,14 @@ export function IdeaDetail({
             <div className="mt-3 rounded-2xl border border-border bg-surface p-4">
               <div className="flex items-center justify-between gap-3">
                 <Eyebrow className="text-muted">Validation signals</Eyebrow>
-                <span
-                  className="text-[0.625rem] text-muted"
-                  title={
-                    live
-                      ? "Idea figures come from the Inverge API"
-                      : "Idea figures are preview data"
-                  }
-                >
-                  {live ? "Live" : "Preview"}
-                </span>
+                {live ? (
+                  <span
+                    className="text-[0.625rem] text-muted"
+                    title="Idea figures come from the Inverge API"
+                  >
+                    Live
+                  </span>
+                ) : null}
               </div>
               <dl className="mt-4 space-y-4">
                 <Signal

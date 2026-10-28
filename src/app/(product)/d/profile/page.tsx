@@ -38,23 +38,25 @@ export default async function ProfilePage() {
 
       <section className="mt-5 rounded-2xl border border-border bg-surface p-5 sm:p-6">
         <div className="flex flex-wrap items-start gap-4">
-          <Avatar name={viewer.displayName} size={64} />
+          <Avatar name={viewer.displayName} size={64} src={viewer.avatarUrl} />
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <p className="text-lg font-bold tracking-[-0.02em] text-ink">
                 {viewer.displayName ?? "Your account"}
               </p>
               <Pill tone="neutral" size="xs">
-                Preview profile
+                {viewer.dataSource === "preview"
+                  ? "Preview profile"
+                  : "Inverge account"}
               </Pill>
             </div>
             <p className="mt-0.5 text-sm text-muted">
               {viewer.handle ? `@${viewer.handle}` : "No public handle yet"}
             </p>
             <p className="mt-2 max-w-xl text-xs leading-5 text-muted">
-              Profile details come from the preview identity used across the
-              dashboard. Bio, links, and follower counts are not connected yet,
-              so nothing is shown for them.
+              {viewer.dataSource === "preview"
+                ? "Profile details come from the preview identity used across the dashboard. Bio, links, and follower counts are not connected yet, so nothing is shown for them."
+                : "Profile details come from your Inverge account. Bio, links, and follower counts are not connected yet, so nothing is shown for them."}
             </p>
           </div>
           <Link
