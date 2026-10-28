@@ -62,8 +62,11 @@ export default async function NewCampaignPage({ searchParams }: PageProps) {
         if (parsed) {
           draft = parsed.draft;
           saved = {
+            applicationFee: parsed.applicationFee,
+            campaignStatus: parsed.status,
             id: parsed.id,
             readiness: parsed.readiness,
+            reviewStatus: parsed.reviewStatus,
             version: parsed.version,
           };
         } else {

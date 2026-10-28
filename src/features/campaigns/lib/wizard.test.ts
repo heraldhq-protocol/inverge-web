@@ -1052,4 +1052,38 @@ describe("submissionPreconditions", () => {
     expect(identity?.code).toBeUndefined();
     expect(fee?.met).toBe(false);
   });
+
+  it("marks the fee done only when the API says the charge succeeded", () => {
+    // #given a verified creator with a successful application-fee charge
+    const [identity, fee] = submissionPreconditions(
+      { blockers: [], code: null, eligible: true },
+      {
+        amount: 10000,
+        chargeId: "fee_1",
+        currency: "NGN",
+        redirectUrl: null,
+        status: "SUCCEEDED",
+      },
+    );
+
+    // #then both gates are satisfied
+    expect(identity?.met).toBe(true);
+    expect(fee?.met).toBe(true);
+    expect(fee?.description).toContain("paid and linked");
+  });
+
+  it("keeps a pending or failed payment outstanding", () => {
+    for (const status of ["PENDING", "FAILED", "NONE"] as const) {
+      const [, fee] = submissionPreconditions(null, {
+        amount: 10000,
+        chargeId: status === "NONE" ? null : "fee_1",
+        currency: "NGN",
+        redirectUrl: null,
+        status,
+      });
+
+      expect(fee?.met).toBe(false);
+      expect(fee?.description).not.toContain("paid and linked");
+    }
+  });
 });

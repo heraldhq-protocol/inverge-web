@@ -21,11 +21,16 @@ import { Input } from "@/components/ui/input";
 import { LocationPicker } from "@/components/ui/location-picker";
 import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { CampaignReviewSubmission } from "@/features/campaigns/components/campaign-review-submission";
 import { MediaImage } from "@/features/campaigns/components/media-image";
 import { PrototypeNotice } from "@/features/campaigns/components/prototype-notice";
 import { StepRail } from "@/features/campaigns/components/step-rail";
 import { WizardMediaList } from "@/features/campaigns/components/wizard-media-list";
 import { WizardShippingEditor } from "@/features/campaigns/components/wizard-shipping-editor";
+import {
+  isApplicationFeePaid,
+  type DraftApplicationFee,
+} from "@/features/campaigns/lib/application-fee";
 import {
   describeMediaCount,
   parseImageSource,
@@ -75,10 +80,9 @@ import {
  * deadline, a 2–6 milestone plan whose weights total 100% of the post-tranche
  * pool (FR-301, FR-302),
  * media whose links parse and whose descriptions are written, and published
- * disclosures — and it refuses to pretend the campaign was submitted.
- * Submission needs identity verification and a paid application fee (FR-103,
- * FR-311), neither of which exists in this build, so the final step lists what is
- * outstanding instead of showing a success screen.
+ * disclosures. Submission needs identity verification and a paid application
+ * fee (FR-103, FR-311); the review step starts that payment and submits the
+ * saved draft, while the API remains the authority on both gates.
  *
  * In edit mode the plan is locked (FR-303): a published campaign's milestones and
  * their evidence definitions cannot be rewritten, because backers agreed to them.
@@ -94,26 +98,30 @@ const UNSAVED_NOTE =
 
 function SaveStatus({ save }: { save: DraftSaveState }) {
   const text =
-    save.status === "saved"
-      ? `Draft saved${save.version === null ? "" : ` · version ${save.version}`}`
-      : save.status === "saving"
-        ? "Saving…"
-        : save.status === "waiting"
-          ? (save.message ?? UNSAVED_NOTE)
-          : save.status === "conflict" ||
-              save.status === "error" ||
-              save.status === "signed-out"
-            ? (save.message ?? "This draft could not be saved.")
-            : UNSAVED_NOTE;
+    save.isDirty && save.status === "saved"
+      ? "Saving…"
+      : save.status === "saved"
+        ? `Draft saved${save.version === null ? "" : ` · version ${save.version}`}`
+        : save.status === "saving"
+          ? "Saving…"
+          : save.status === "waiting"
+            ? (save.message ?? UNSAVED_NOTE)
+            : save.status === "conflict" ||
+                save.status === "error" ||
+                save.status === "signed-out"
+              ? (save.message ?? "This draft could not be saved.")
+              : UNSAVED_NOTE;
 
   const tone =
-    save.status === "saved"
-      ? "text-brand-strong"
-      : save.status === "conflict" ||
-          save.status === "error" ||
-          save.status === "signed-out"
-        ? "text-warning-strong"
-        : "text-muted";
+    save.isDirty && save.status === "saved"
+      ? "text-muted"
+      : save.status === "saved"
+        ? "text-brand-strong"
+        : save.status === "conflict" ||
+            save.status === "error" ||
+            save.status === "signed-out"
+          ? "text-warning-strong"
+          : "text-muted";
 
   return (
     <p
@@ -239,6 +247,9 @@ export function CampaignWizard({
   );
   const [stepIndex, setStepIndex] = useState(0);
   const [issues, setIssues] = useState<readonly DraftIssue[]>([]);
+  const [feeOverride, setFeeOverride] = useState<DraftApplicationFee | null>(
+    null,
+  );
 
   const handleCreated = useCallback((id: string) => {
     // Shallow address-bar update: the draft is resumable by URL without a
@@ -310,8 +321,35 @@ export function CampaignWizard({
   const useOfFundsTotal = draftUseOfFundsTotal(draft);
   const allocationTotal = draftAllocationTotalBps(draft);
   const workingCapital = draftWorkingCapitalFor(draft);
-  const preconditions = submissionPreconditions(gate);
+  const applicationFee = feeOverride ?? save.applicationFee;
+  const preconditions = submissionPreconditions(gate, applicationFee);
   const outstanding = preconditions.filter((item) => !item.met);
+  const feePaid = isApplicationFeePaid(applicationFee);
+  const saveBlockedReason =
+    issues.length > 0
+      ? "Finish the incomplete fields above before paying or submitting."
+      : save.isDirty || save.status === "saving" || save.status === "waiting"
+        ? "Waiting for the latest draft changes to save."
+        : save.status !== "saved"
+          ? (save.message ?? "The draft must be saved before continuing.")
+          : save.draftId === null
+            ? "The draft must be saved before continuing."
+            : null;
+  const payBlockedReason =
+    saveBlockedReason ??
+    (preconditions.some((item) => item.id === "kyc" && !item.met)
+      ? "Complete identity verification before paying the non-refundable fee."
+      : null);
+  const readyToSubmit = saveBlockedReason === null && outstanding.length === 0;
+  const submitBlockedReason =
+    saveBlockedReason ??
+    (!feePaid
+      ? "Pay the application fee to enable submission."
+      : outstanding.length > 0
+        ? `Still required: ${outstanding
+            .map((item) => item.label.toLowerCase())
+            .join(", ")}.`
+        : null);
   const heroMedia = toCampaignMedia(draft.heroMedia);
   const storyMedia = toCampaignMedia(draft.storyMedia);
   /** What the reward tiers would publish as. Drives the review summary. */
@@ -1611,29 +1649,24 @@ export function CampaignWizard({
                 title="Before this can enter the review queue"
               />
 
-              <PrototypeNotice title="Application fee is not connected">
-                Your draft is saved to Inverge. This build still has no payment
-                provider for the application fee, so the button below stays
-                disabled rather than showing a success screen.
-              </PrototypeNotice>
-
-              <div className="flex flex-wrap items-center gap-3 border-t border-border pt-4">
-                <button
-                  type="button"
-                  disabled
-                  aria-describedby="submit-blocked"
-                  className="inline-flex min-h-12 cursor-not-allowed items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white opacity-50"
-                >
-                  Submit for review
-                </button>
-                <p id="submit-blocked" className="text-xs leading-5 text-muted">
-                  {outstanding.length === 0
-                    ? "Everything the server checks has passed."
-                    : `Still required: ${outstanding
-                        .map((item) => item.label.toLowerCase())
-                        .join(", ")}.`}
+              {locked ? (
+                <p className="rounded-2xl border border-border bg-canvas p-4 text-sm leading-6 text-muted">
+                  This is a published campaign. Its review state and application
+                  fee are managed in Creator Studio, not by resubmitting this
+                  form.
                 </p>
-              </div>
+              ) : (
+                <CampaignReviewSubmission
+                  applicationFee={applicationFee}
+                  campaignId={save.draftId}
+                  campaignStatus={save.campaignStatus}
+                  onFeeChange={setFeeOverride}
+                  payBlockedReason={payBlockedReason}
+                  readyToSubmit={readyToSubmit}
+                  reviewStatus={save.reviewStatus}
+                  submitBlockedReason={submitBlockedReason}
+                />
+              )}
             </div>
           ) : null}
 

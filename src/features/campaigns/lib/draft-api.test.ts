@@ -271,6 +271,13 @@ describe("readSavedDraft", () => {
     ],
     objectionWindowDays: 7,
     readiness: { blockers: ["Needs one more thing"], ready: false },
+    applicationFee: {
+      amount: 10000,
+      chargeId: "fee_1",
+      currency: "NGN",
+      redirectUrl: "https://checkout.example/fee_1",
+      status: "PENDING",
+    },
     rewardTiers: [
       {
         ...createDraftTier(),
@@ -335,6 +342,13 @@ describe("readSavedDraft", () => {
     expect(saved?.readiness).toEqual({
       blockers: ["Needs one more thing"],
       ready: false,
+    });
+    expect(saved?.status).toBe("DRAFT");
+    expect(saved?.reviewStatus).toBeNull();
+    expect(saved?.applicationFee).toMatchObject({
+      amount: 10000,
+      chargeId: "fee_1",
+      status: "PENDING",
     });
   });
 

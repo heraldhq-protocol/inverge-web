@@ -6,6 +6,10 @@ import {
   TOTAL_BPS,
 } from "@/features/campaigns/lib/amounts";
 import {
+  isApplicationFeePaid,
+  type DraftApplicationFee,
+} from "@/features/campaigns/lib/application-fee";
+import {
   WORKING_CAPITAL_BPS,
   WORKING_CAPITAL_PERCENT,
 } from "@/features/campaigns/lib/escrow";
@@ -1282,9 +1286,17 @@ const IDENTITY_PRECONDITION_DESCRIPTION =
  */
 export function submissionPreconditions(
   gate: SubmissionGate | null = null,
+  applicationFee: DraftApplicationFee | null = null,
 ): readonly SubmissionPrecondition[] {
   const identityCode =
     gate && !gate.eligible && gate.code ? { code: gate.code } : {};
+  const feePaid = isApplicationFeePaid(applicationFee);
+  const feeDescription =
+    applicationFee?.status === "PENDING"
+      ? "An application-fee payment is already pending. Resume that checkout rather than starting a second payment (FR-311)."
+      : applicationFee?.status === "FAILED"
+        ? "The last application-fee payment did not complete. Try the payment again; the fee is only charged on a successful checkout (FR-311)."
+        : "Submission requires a flat, non-refundable application fee, paid before the campaign joins the review queue (FR-311).";
 
   return [
     {
@@ -1300,11 +1312,12 @@ export function submissionPreconditions(
       ...identityCode,
     },
     {
-      description:
-        "Submission requires a flat, non-refundable application fee, paid before the campaign joins the review queue (FR-311).",
+      description: feePaid
+        ? "The non-refundable application fee is paid and linked to this campaign (FR-311)."
+        : feeDescription,
       id: "application-fee",
       label: "Application fee",
-      met: false,
+      met: feePaid,
     },
   ];
 }
