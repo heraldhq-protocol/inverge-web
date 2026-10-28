@@ -202,10 +202,6 @@ export function IdeaCardsSection() {
           </div>
 
           <div className="flex items-center gap-3">
-            <span className="inline-flex items-center rounded-full border border-border bg-surface px-3 py-1 text-xs font-semibold text-muted">
-              Preview data
-            </span>
-
             {isDevelopment ? (
               <div className="hidden items-center gap-1 rounded-full border border-border bg-surface p-1 text-xs font-medium text-muted md:flex">
                 {(["ready", "loading", "empty", "error"] as const).map(

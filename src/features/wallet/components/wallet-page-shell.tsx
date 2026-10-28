@@ -1,7 +1,6 @@
 import type { ReactNode } from "react";
 
 import { Tabs } from "@/components/ui/tabs";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { WalletStatusPill } from "@/features/wallet/components/wallet-status-pill";
 import { walletProvisioningDescriptions } from "@/features/wallet/lib/status";
 import type { WalletView } from "@/features/wallet/types";
@@ -66,7 +65,6 @@ export function WalletPageShell({
           <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
             Your space
           </p>
-          <PreviewDataChip title="Wallet balances and activity are preview data until an embedded-wallet provider and chain index are connected" />
           <WalletStatusPill state={view.account.provisioning} size="xs" />
         </div>
         <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">

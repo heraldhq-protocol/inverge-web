@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { Container } from "@/components/ui/container";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 
 /**
  * Discovery hero.
@@ -18,7 +17,6 @@ export function CampaignDiscoveryHero() {
       <Container className="pb-8 pt-9 sm:pb-10 sm:pt-12 lg:pb-12 lg:pt-14">
         <div className="flex flex-wrap items-center gap-2.5">
           <Eyebrow>Crowdfunding for Africa&apos;s next chapter</Eyebrow>
-          <PreviewDataChip title="Campaigns on this page come from preview data until the campaigns API is connected" />
         </div>
 
         <h1 className="mt-3 max-w-3xl text-balance text-[2.1rem] font-bold leading-[1.06] tracking-[-0.045em] text-ink sm:text-5xl lg:text-[3.25rem]">

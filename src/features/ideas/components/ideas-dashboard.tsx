@@ -459,10 +459,9 @@ export function IdeasDashboard({
                 >
                   {filteredIdeas.length.toLocaleString("en-US")}{" "}
                   {filteredIdeas.length === 1 ? "idea" : "ideas"}
-                  <span className="hidden sm:inline">
-                    {" "}
-                    · {dataSource === "live" ? "Live data" : "Preview data"}
-                  </span>
+                  {dataSource === "live" ? (
+                    <span className="hidden sm:inline"> · Live data</span>
+                  ) : null}
                 </p>
                 <div className="flex items-center gap-2">
                   <ResultViewToggle

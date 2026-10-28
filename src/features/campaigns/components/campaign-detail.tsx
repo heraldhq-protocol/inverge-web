@@ -25,7 +25,6 @@ import {
   type CampaignTabPanel,
 } from "@/features/campaigns/components/campaign-tabs";
 import { CampaignUpdates } from "@/features/campaigns/components/campaign-updates";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import {
   campaignTabsFor,
   type CampaignTabId,
@@ -174,7 +173,6 @@ export function CampaignDetail({
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
-                <PreviewDataChip />
                 <Link
                   href={`/campaigns/${campaign.slug}/recommended`}
                   className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"

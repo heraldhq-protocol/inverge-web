@@ -63,7 +63,7 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.publishedIdeas ?? "Preview data"}
+                  {metrics?.publishedIdeas ?? "—"}
                 </span>
               </div>
 
@@ -92,7 +92,7 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.totalEscrowed ?? "Preview data"}
+                  {metrics?.totalEscrowed ?? "—"}
                 </span>
               </div>
 
@@ -119,7 +119,7 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.activeCampaigns ?? "Preview data"}
+                  {metrics?.activeCampaigns ?? "—"}
                 </span>
               </div>
             </div>

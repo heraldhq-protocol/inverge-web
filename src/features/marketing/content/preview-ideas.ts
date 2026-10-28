@@ -12,9 +12,8 @@ export type PreviewIdea = {
 /**
  * Illustrative idea records for the public homepage.
  *
- * These are preview records only. They are not live platform data and must
- * always be shown alongside a "Preview data" label. Replace this module with a
- * typed backend projection when the ideas endpoint is available.
+ * These are preview records only. They are not live platform data. Replace this
+ * module with a typed backend projection when the ideas endpoint is available.
  */
 export const previewIdeas: PreviewIdea[] = [
   {

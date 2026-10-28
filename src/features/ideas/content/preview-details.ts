@@ -10,8 +10,7 @@ import type { MoneyAmount } from "@/lib/money";
  * Illustrative pitch detail for the public idea pages.
  *
  * Preview content only. It reads like a real listing so the surfaces can be
- * reviewed at a realistic density, but none of it is live platform data. Every
- * surface that shows it must keep a "Preview data" label.
+ * reviewed at a realistic density, but none of it is live platform data.
  *
  * The structured fields mirror `CreateIdeaDto` in `inverge-api`
  * (`problem`, `solution`, `targetUser`, `currentAlternative`, `askBreakdown`,
