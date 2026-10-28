@@ -221,7 +221,7 @@ function Pagination({
   return (
     <nav
       aria-label="Idea result pages"
-      className="mt-8 flex items-center justify-center gap-1"
+      className="mt-8 pb-2 flex items-center justify-center gap-1"
     >
       <button
         type="button"
