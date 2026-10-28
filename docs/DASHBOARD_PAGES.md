@@ -88,6 +88,7 @@ decisions are stored in this browser and are explicitly non-authoritative.
 | Route | Why it is linked |
 | --- | --- |
 | `/ideas`, `/ideas/[id]`, `/topics/[slug]` | Public discovery and detail, linked from the featured band and idea cards |
+| `/u/[username]` | Public creator profile, linked from the authenticated marketing navbar and from idea creator names |
 | `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/recommended`, `/campaigns/[slug]/back`, `/campaigns/categories/[categorySlug]`, `/campaigns/categories/[categorySlug]/[subcategorySlug]` | Public campaign discovery, detail, recommendations, contribution preview, and taxonomy category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
 | `/guides`, `/guides/[slug]` | Sidebar item "Guides & journal" |
 | `/ideathon`, `/ideathon/about`, `/ideathon/past`, `/ideathon/rules` | Public ideathon standings |

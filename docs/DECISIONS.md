@@ -436,6 +436,13 @@ Revisit when: A session exists and `getDashboardViewer()` can return a real
 viewer, or when the dashboard grows a destination that needs to replace one of
 the five mobile navigation slots.
 
+Update (2026-10-28): The session now exists. `(product)/layout.tsx` reads the
+HttpOnly cookie through `GET /auth/me` and redirects an unauthenticated visitor
+to `/auth?next=…`; `getDashboardViewer()` no longer invents a preview persona for
+a signed-out visitor. The proxy performs an early cookie-presence redirect only
+and is not the authorisation decision. The admin layout additionally requires
+the API's `ADMIN` role.
+
 ### D-017: Move every creator surface under `/d/creator`
 
 - Date: 2026-10-17

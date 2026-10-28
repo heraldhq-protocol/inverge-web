@@ -6,3 +6,10 @@
  */
 export const SESSION_COOKIE_NAME = "inverge_session";
 export const ONBOARDING_INTENT_COOKIE_NAME = "inverge_onboarding_intent";
+
+/**
+ * Preview-only identity cookie. Kept here with the other cookie names so the
+ * proxy can recognise a local development session without importing a
+ * `server-only` module that depends on `next/headers`.
+ */
+export const PREVIEW_SESSION_COOKIE_NAME = "inverge_preview_session";

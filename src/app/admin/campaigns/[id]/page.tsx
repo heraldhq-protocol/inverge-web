@@ -17,7 +17,7 @@ type PageProps = {
 };
 
 export default async function AdminCampaignReviewPage({ params }: PageProps) {
-  const access = getProgrammeAdminAccess();
+  const access = await getProgrammeAdminAccess();
   if (!access.allowed) return null;
 
   const { id } = await params;

@@ -10,16 +10,26 @@ import {
 } from "@/features/auth/server/preview-session";
 import { readSessionToken } from "@/features/auth/server/session";
 import { apiBaseUrl } from "@/lib/api/server";
+import { safeAvatarUrl } from "@/lib/public-avatar";
 
 export { apiBaseUrl } from "@/lib/api/server";
+
+export type SessionRole = "USER" | "COMPLIANCE_REVIEWER" | "ADMIN";
 
 export type SessionUser = {
   id: string;
   email: string | null;
+  /** Server-side role projection. Never used as a client access decision. */
+  role: SessionRole;
   /** Set only when the account has a public profile; never derived from email. */
   displayName: string | null;
   /** Public handle, or `null` while the profile is incomplete. */
   username: string | null;
+  /**
+   * Provider or creator avatar URL, already filtered through the public image
+   * allowlist. `null` means render initials.
+   */
+  avatarUrl: string | null;
   /**
    * The API's authoritative answer to "is the shared profile step unfinished?".
    * Defaults to `true` when the field is absent: skipping onboarding is the more
@@ -51,7 +61,8 @@ const SESSION_LOOKUP_TIMEOUT_MS = 3_000;
 
 /**
  * Projects the API's `/auth/me` payload onto the few fields the web app needs.
- * Role, provider id, wallet addresses, and creator statistics stay server-side.
+ * Role stays server-side and is read only by server gates; provider id, wallet
+ * addresses, and creator statistics stay server-side too.
  *
  * The API's creator projection falls back to the user id when no username is
  * stored. That fallback is an internal identifier, not a handle, so it is
@@ -78,6 +89,7 @@ export function toSessionUser(payload: unknown): SessionUser | null {
       : null;
 
   return {
+    avatarUrl: safeAvatarUrl(creator?.avatarUrl),
     displayName:
       typeof creator?.displayName === "string" && creator.displayName.trim()
         ? creator.displayName.trim()
@@ -86,6 +98,10 @@ export function toSessionUser(payload: unknown): SessionUser | null {
     id: record.id,
     mode: "live",
     requiresOnboarding: record.requiresOnboarding !== false,
+    role:
+      record.role === "ADMIN" || record.role === "COMPLIANCE_REVIEWER"
+        ? record.role
+        : "USER",
     username,
   };
 }
@@ -100,7 +116,9 @@ export function toPreviewSessionUser(preview: PreviewSession): SessionUser {
     contactName: preview.contactName,
     id: `preview_${preview.subject}`,
     email: null,
+    avatarUrl: null,
     displayName: preview.displayName,
+    role: "USER",
     username: preview.username,
     requiresOnboarding:
       !preview.accountType || !preview.displayName || !preview.username,

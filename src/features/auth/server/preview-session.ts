@@ -3,6 +3,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { cookies } from "next/headers";
 
+import { PREVIEW_SESSION_COOKIE_NAME } from "@/features/auth/lib/cookies";
 import {
   type AccountType,
   isAccountType,
@@ -20,7 +21,7 @@ import {
  * The provider subject is hashed before storage so the cookie does not carry an
  * email address or another readable identifier.
  */
-export const PREVIEW_SESSION_COOKIE_NAME = "inverge_preview_session";
+export { PREVIEW_SESSION_COOKIE_NAME };
 export const PREVIEW_SESSION_MAX_AGE_SECONDS = 60 * 60;
 
 export type PreviewSession = {

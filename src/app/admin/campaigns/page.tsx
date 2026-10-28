@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   robots: { follow: false, index: false },
 };
 
-export default function AdminCampaignsPage() {
-  const access = getProgrammeAdminAccess();
+export default async function AdminCampaignsPage() {
+  const access = await getProgrammeAdminAccess();
   if (!access.allowed) return null;
 
   return <AdminCampaignReviewQueue initialCampaigns={previewCampaigns} />;
