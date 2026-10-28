@@ -671,7 +671,7 @@ export function IdeaBuilder({
       <div className="mt-4 grid gap-6 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
         <aside
           aria-label="Creation steps"
-          className="xl:sticky xl:top-24 xl:self-start"
+          className="max-md:min-w-0 xl:sticky xl:top-24 xl:self-start"
         >
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Create an idea</Eyebrow>
@@ -685,7 +685,7 @@ export function IdeaBuilder({
               style={{ width: `${completeness.percent}%` }}
             />
           </div>
-          <ol className="mt-4 flex gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible">
+          <ol className="mt-4 flex gap-1 overflow-x-auto pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden xl:flex-col xl:overflow-visible">
             {BUILDER_STEPS.map((item, index) => {
               const current = item.id === step;
               const passed = index < stepIndex;
@@ -1223,7 +1223,7 @@ export function IdeaBuilder({
                       </p>
                       <ul className="mt-1.5 space-y-2">
                         {draft.funding.useOfFunds.map((item, index) => (
-                          <li key={item.id} className="flex gap-2">
+                          <li key={item.id} className="flex gap-2 max-md:flex-col max-md:items-stretch">
                             <Input
                               aria-label={`Use of funds ${index + 1} label`}
                               value={item.label}
@@ -1266,7 +1266,7 @@ export function IdeaBuilder({
                                   },
                                 })
                               }
-                              className="max-w-28"
+                              className="md:max-w-28"
                             />
                             <button
                               type="button"
@@ -1281,7 +1281,7 @@ export function IdeaBuilder({
                                   },
                                 })
                               }
-                              className="grid size-11 shrink-0 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
+                              className="grid size-11 shrink-0 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand max-md:ml-auto"
                             >
                               <HugeiconsIcon
                                 icon={Delete02Icon}
@@ -1660,7 +1660,7 @@ export function IdeaBuilder({
                             ))}
                           </ul>
 
-                          <div className="flex flex-wrap gap-1.5">
+                          <div className="flex md:flex-wrap gap-1.5 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
                             {(
                               [
                                 "rating",
@@ -1686,7 +1686,7 @@ export function IdeaBuilder({
                                     },
                                   })
                                 }
-                                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[0.6875rem] font-medium text-ink hover:border-brand/35 hover:text-brand-strong"
+                                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[0.6875rem] font-medium text-ink hover:border-brand/35 hover:text-brand-strong max-md:shrink-0"
                               >
                                 <HugeiconsIcon
                                   icon={Add01Icon}
@@ -2138,7 +2138,7 @@ export function IdeaBuilder({
             </aside>
           </div>
 
-          <div className="sticky bottom-0 z-20 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur">
+          <div className="sticky bottom-0 z-20 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur max-md:bottom-[calc(4.5rem_+_env(safe-area-inset-bottom))]">
             <Button
               type="button"
               variant="outline"
