@@ -1,5 +1,6 @@
 import "server-only";
 
+import { readSessionUser } from "@/features/auth/server/session-user";
 import type { ProgrammeRole } from "@/features/programmes/types";
 
 export type ProgrammeAdminAccess =
@@ -11,31 +12,62 @@ export type ProgrammeAdminAccess =
     }
   | { allowed: false; preview: false; reason: string };
 
+function denied(reason: string): ProgrammeAdminAccess {
+  return { allowed: false, preview: false, reason };
+}
+
 /**
  * Server-side gate for the programme workspace.
  *
- * The API (`AdminGuard`) is the real authority. This web repository has no
- * authenticated session yet, so production access is denied rather than
- * simulated. Development runs as a clearly labelled preview so the workspace can
- * be reviewed, and the denial state is a real page rather than a hidden button.
+ * Authentication is necessary but not sufficient: the account must hold the
+ * API's `ADMIN` role. The API (`AdminGuard`) remains the authority for every
+ * privileged operation; this gate only decides whether the workspace shell is
+ * allowed to render. A preview identity is accepted only in development and is
+ * clearly labelled, because it has no backend authority.
  */
-export function getProgrammeAdminAccess(): ProgrammeAdminAccess {
-  const isProduction = process.env.NODE_ENV === "production";
+export async function getProgrammeAdminAccess(): Promise<ProgrammeAdminAccess> {
+  const user = await readSessionUser();
 
-  if (isProduction) {
+  if (!user) {
+    return denied(
+      "Programme administration requires an authenticated Inverge admin session. Sign in with an admin account to continue.",
+    );
+  }
+
+  if (user.mode === "preview") {
+    if (process.env.NODE_ENV === "production") {
+      return denied(
+        "Programme administration requires an authenticated Inverge admin session.",
+      );
+    }
+
     return {
-      allowed: false,
-      preview: false,
+      actor: {
+        id: user.id,
+        name: user.displayName ?? "Preview admin",
+        role: "platform_admin",
+      },
+      allowed: true,
+      preview: true,
       reason:
-        "Programme administration requires an authenticated Inverge admin session. Sign in with an admin account to continue.",
+        "Development preview. Changes stay in this browser and are never sent to the API.",
     };
   }
 
+  if (user.role !== "ADMIN") {
+    return denied(
+      "Programme administration requires an administrator account. Ask an Inverge administrator for access.",
+    );
+  }
+
   return {
-    actor: { id: "preview-admin", name: "Ada Admin", role: "platform_admin" },
+    actor: {
+      id: user.id,
+      name: user.displayName ?? "Inverge admin",
+      role: "platform_admin",
+    },
     allowed: true,
-    preview: true,
-    reason:
-      "Development preview. Changes stay in this browser and are never sent to the API.",
+    preview: false,
+    reason: "Signed in with an Inverge administrator account.",
   };
 }

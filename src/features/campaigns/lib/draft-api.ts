@@ -1,4 +1,8 @@
 import {
+  readApplicationFee,
+  type DraftApplicationFee,
+} from "@/features/campaigns/lib/application-fee";
+import {
   PLATFORM_SUCCESS_FEE_BPS,
   WORKING_CAPITAL_PERCENT,
 } from "@/features/campaigns/lib/escrow";
@@ -88,7 +92,10 @@ export type DraftReadiness = {
 };
 
 export type SavedCampaignDraft = {
+  applicationFee: DraftApplicationFee | null;
   id: string;
+  reviewStatus: string | null;
+  status: string;
   version: number;
   readiness: DraftReadiness | null;
   draft: CampaignDraft;
@@ -420,6 +427,7 @@ export function readSavedDraft(value: unknown): SavedCampaignDraft | null {
 
   const readiness = asRecord(record.readiness);
   return {
+    applicationFee: readApplicationFee(record.applicationFee),
     draft,
     id: record.id,
     readiness:
@@ -433,6 +441,9 @@ export function readSavedDraft(value: unknown): SavedCampaignDraft | null {
             ready: readiness.ready,
           }
         : null,
+    reviewStatus:
+      typeof record.reviewStatus === "string" ? record.reviewStatus : null,
+    status: typeof record.status === "string" ? record.status : "DRAFT",
     version: record.version,
   };
 }

@@ -10,6 +10,11 @@ import { BrandMark } from "@/components/shared/brand-mark";
 import { Cancel01Icon, Menu01Icon } from "@/components/ui/hugeicons";
 import { authHref } from "@/features/auth/lib/auth-routes";
 import { Container } from "@/features/marketing/components/container";
+import {
+  SiteAccountMenu,
+  SiteAccountPanel,
+  type SiteViewer,
+} from "@/features/marketing/components/site-account";
 
 /**
  * Primary navigation.
@@ -21,9 +26,13 @@ import { Container } from "@/features/marketing/components/container";
  * Journal, About, Careers, and the legal pages are footer-only for the same
  * reason.
  *
- * The links appear at `md`, but the search field and both account calls to
- * action do not fit beside them until `lg`. Below `lg` they stay in the panel
- * so no action is unreachable at a tablet width.
+ * The links appear at `md`, but the search field and the account control do not
+ * fit beside them until `lg`. Below `lg` they stay in the panel so no action is
+ * unreachable at a tablet width.
+ *
+ * `viewer` is resolved by the server layout from the HttpOnly session, so the
+ * first paint already knows whether the visitor is signed in. The header never
+ * reads a local-storage flag or a client-only auth store.
  */
 const navigation = [
   { href: "/ideas", label: "Discover" },
@@ -61,7 +70,7 @@ function HeaderSearch({ id }: { id: string }) {
   );
 }
 
-export function SiteHeader() {
+export function SiteHeader({ viewer }: { viewer: SiteViewer | null }) {
   const pathname = usePathname();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const triggerRef = useRef<HTMLButtonElement>(null);
@@ -142,18 +151,24 @@ export function SiteHeader() {
           <div className="w-52 xl:w-64">
             <HeaderSearch id="header-idea-search" />
           </div>
-          <Link
-            href="/auth"
-            className="inline-flex min-h-11 items-center rounded-md px-1 text-sm font-semibold text-ink transition-colors hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            Sign in
-          </Link>
-          <Link
-            href={authHref(undefined, "creator")}
-            className="inline-flex min-h-11 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white shadow-sm transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            Start building
-          </Link>
+          {viewer ? (
+            <SiteAccountMenu viewer={viewer} />
+          ) : (
+            <>
+              <Link
+                href="/auth"
+                className="inline-flex min-h-11 items-center rounded-md px-1 text-sm font-semibold text-ink transition-colors hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Sign in
+              </Link>
+              <Link
+                href={authHref(undefined, "creator")}
+                className="inline-flex min-h-11 items-center justify-center rounded-full bg-contrast px-5 text-sm font-semibold text-white shadow-sm transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Start building
+              </Link>
+            </>
+          )}
         </div>
 
         <div className="flex items-center gap-1.5 lg:hidden">
@@ -196,6 +211,11 @@ export function SiteHeader() {
           className="border-b border-border bg-surface px-6 py-6 shadow-xl lg:hidden"
         >
           <nav aria-label="Mobile navigation" className="flex flex-col gap-1">
+            {viewer ? (
+              <div className="pb-4">
+                <SiteAccountPanel onNavigate={closeMenu} viewer={viewer} />
+              </div>
+            ) : null}
             <div className="pb-3">
               <HeaderSearch id="mobile-header-idea-search" />
             </div>
@@ -218,22 +238,24 @@ export function SiteHeader() {
                 </Link>
               );
             })}
-            <div className="flex flex-col gap-3 pt-4">
-              <Link
-                href="/auth"
-                onClick={closeMenu}
-                className="inline-flex min-h-12 items-center justify-center rounded-full border border-border text-sm font-semibold text-ink transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                Sign in
-              </Link>
-              <Link
-                href={authHref(undefined, "creator")}
-                onClick={closeMenu}
-                className="inline-flex min-h-12 items-center justify-center rounded-full bg-contrast text-sm font-semibold text-white transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-              >
-                Start building
-              </Link>
-            </div>
+            {viewer ? null : (
+              <div className="flex flex-col gap-3 pt-4">
+                <Link
+                  href="/auth"
+                  onClick={closeMenu}
+                  className="inline-flex min-h-12 items-center justify-center rounded-full border border-border text-sm font-semibold text-ink transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  Sign in
+                </Link>
+                <Link
+                  href={authHref(undefined, "creator")}
+                  onClick={closeMenu}
+                  className="inline-flex min-h-12 items-center justify-center rounded-full bg-contrast text-sm font-semibold text-white transition-[filter,background-color] duration-150 hover:brightness-125 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+                >
+                  Start building
+                </Link>
+              </div>
+            )}
           </nav>
         </div>
       ) : null}

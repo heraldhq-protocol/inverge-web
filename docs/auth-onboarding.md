@@ -17,8 +17,9 @@ below is presented as working.
 | Session | `POST /api/auth/session` | BFF; API returns a one-hour session JWT |
 | Account setup | `/onboarding/profile` | `PATCH /api/auth/me/profile` through `PATCH /api/auth/profile`; account type is preview-only |
 | Starting point | `/onboarding/role` (also `?intent=creator`) | Presentation only; no role is granted |
-| Creator Studio | `/d/creator` | Existing preview surfaces; not gated by a verified capability yet |
-| Dashboard | `/d` | Preview data while signed out |
+| Creator Studio | `/d/creator` | Protected by the dashboard layout; modules still use preview data |
+| Dashboard | `/d` | Protected: server layout exchanges the HttpOnly session with `/auth/me`; no session redirects to `/auth?next=…` |
+| Public profile | `/u/[username]` | Public API projection; no session required |
 | Sign out | `/sign-out` | Provider `disconnect()`, then `POST /api/auth/sign-out` |
 
 `/sign-in` and `/sign-up` are permanent redirects to `/auth`.
@@ -67,6 +68,29 @@ starting-point route sends a chosen "build" to `/d/creator` and "support" to
 
 Creator CTAs ("Start an idea", "Start building") use
 `authHref(undefined, "creator")`. General CTAs stay `/auth`.
+
+## Route protection
+
+There are two independent steps, and only the second one authorises:
+
+1. **Proxy fast path.** `src/proxy.ts` redirects `/d/**` and `/admin/**` to
+   `/auth?next=…` when no session cookie is present. It checks cookie presence
+   only; it never treats a cookie value as proof of identity. A stale or forged
+   cookie passes this step.
+2. **Server layout gate.** `src/app/(product)/layout.tsx` calls
+   `readSessionUser()`, which forwards the HttpOnly cookie to `GET /auth/me`.
+   A missing, expired, revoked, or unverifiable session returns `null` and the
+   layout redirects before any dashboard content renders. The admin layout does
+   the same and additionally requires the API's `ADMIN` role.
+
+The proxy also forwards the observed pathname in an internal
+`x-inverge-pathname` header so the layout can preserve a safe return path. The
+value is sanitised by `authHref()` and can never become an open redirect.
+
+The API remains the authority for every private endpoint. The web layouts
+decide whether a page may render; they do not replace the bearer-token checks on
+`/auth/me`, `/auth/capabilities`, `mine=true` idea reads, or any other guarded
+route.
 
 ## Preview auth mode
 
@@ -129,7 +153,7 @@ The account step is the first onboarding write that is real in live mode.
 | Creator KYC | The API has KYC/KYB endpoints (stub or Didit), but the web has no client, no status projection in onboarding, and `KycStatus` has no distinct `IN_REVIEW`. |
 | Backer KYC threshold | No web contribution flow calls the API; the threshold is not surfaced. |
 | Wallet provisioning states | FR-101 is not met: the API links a wallet only when the token attests one, and the web has no persisted provisioning state. The wallet page remains preview data. |
-| Route-level authorisation | The API does not expose a permission projection, so no `/d` route is gated on a server-verified capability. |
+| Fine-grained route capabilities | `/d` and `/admin` now require a server-verified session, but individual dashboard modules still read preview data and the API's capability projection is not wired into the shell. |
 | Sign-in methods in copy | The modal owns method choice. The page must not claim a specific method is enabled. |
 
 ## Configuration
@@ -189,7 +213,14 @@ INVERGE_API_URL=http://127.0.0.1:3001
 - `src/features/auth/server/preview-session.test.ts` — stable subject derivation
   without signature verification.
 - `src/features/auth/server/session-user.test.ts` — authoritative
-  `requiresOnboarding`, including fail-safe default and the preview account rule.
+  `requiresOnboarding`, role projection, including fail-safe default and the
+  preview account rule.
+- `src/features/auth/lib/protected-routes.test.ts` — protected prefixes,
+  lookalike paths, and safe return-link construction.
+- `src/features/marketing/components/site-header.test.tsx` — signed-out actions,
+  signed-in account menu, preview labelling, and mobile account actions.
+- `src/features/profile/server/public-profile.test.ts` — username resolution,
+  public allowlist, unsafe links, and avatar host restrictions.
 - `src/features/settings/components/settings-dashboard.test.tsx` — provider-
   managed connections are not presented as editable.
 

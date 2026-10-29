@@ -56,6 +56,7 @@ choices.
 | D-045 | 2026-10-25 | Accepted | The working-capital tranche is fixed at 20% of the original target and does not grow with overfunding; milestone weights total 100% of `eligibleRaised - initialTranche` on their own, and any surplus stays in escrow under the same milestone rules. |
 | D-046 | 2026-10-26 | Accepted | Live creator analytics reuses existing API reports, gates premium reports server-side, and falls back to preview only when auth is preview or the API is unconfigured. |
 | D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
+| D-048 | 2026-10-28 | Accepted | The campaign wizard starts or resumes the application-fee charge through a same-origin BFF and submits the saved draft; the API owns the price, the charge, the webhook state and the submit gate, and the browser only explains the server state. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -435,6 +436,13 @@ distinct labels: one navigates to discovery, the others filter a local list.
 Revisit when: A session exists and `getDashboardViewer()` can return a real
 viewer, or when the dashboard grows a destination that needs to replace one of
 the five mobile navigation slots.
+
+Update (2026-10-28): The session now exists. `(product)/layout.tsx` reads the
+HttpOnly cookie through `GET /auth/me` and redirects an unauthenticated visitor
+to `/auth?next=…`; `getDashboardViewer()` no longer invents a preview persona for
+a signed-out visitor. The proxy performs an early cookie-presence redirect only
+and is not the authorisation decision. The admin layout additionally requires
+the API's `ADMIN` role.
 
 ### D-017: Move every creator surface under `/d/creator`
 
@@ -1983,14 +1991,49 @@ Consequences: Existing `/kyc` and `/kyb` routes remain as a compatibility facade
 clients built before this change keep working. The web gained verification settings,
 admin queues and a case detail screen, and the campaign wizard now shows the live
 identity gate instead of a hard-coded `met: false`. Submission also still requires a
-paid application fee, which has no payment provider in this build, so the wizard
-continues to stop at a saved draft. Risk thresholds, country policy and which optional
-checks are mandatory are left as open compliance decisions; the domain implements the
-mechanism, not the values. Webhook registration and publishing the draft Didit
-workflow are console tasks and remain outstanding.
+paid application fee; as of 2026-10-28 the wizard starts that charge through the API
+(D-048), and the API enforces the gate. Risk thresholds, country policy and which
+optional checks are mandatory are left as open compliance decisions; the domain
+implements the mechanism, not the values. Webhook registration and publishing the
+draft Didit workflow are console tasks and remain outstanding.
 
 Revisit when: Compliance supplies risk/country policy, the application-fee provider
 ships, ongoing AML monitoring is scheduled, or Didit changes its signature schemes.
+
+### D-048: The wizard pays the application fee and submits through the BFF
+
+- Date: 2026-10-28
+- Status: Accepted
+
+Context: The review step was hard-disabled because the application fee had no charge
+path (audit F-02). The API has since added an authenticated, owner-scoped,
+verification-gated `POST /campaigns/:id/application-fee` and the existing
+`POST /campaigns/:id/submit`. The browser still must not hold the session token,
+choose the price, or decide whether the fee or identity checks pass.
+
+Decision: The review step calls same-origin BFF routes
+(`/api/campaigns/:id/application-fee` and `/api/campaigns/:id/submit`). The fee
+route returns the API's amount, status and stored checkout URL; a pending charge is
+resumed instead of duplicated, and a successful charge disables further payment.
+The submit route forwards only an optional charge id. Copy states that the fee is
+non-refundable and is not campaign funding. The wizard enables submit only after the
+latest draft is saved and the API's preconditions are met, but the API remains the
+authority and re-checks verification and the linked charge inside the submit
+transaction.
+
+Alternatives: Create the charge directly from the browser (exposes the session and
+lets the client influence price or metadata); create a second charge on every retry
+(takes a non-refundable payment twice); optimistically mark the campaign submitted
+(the review state would be a client claim); hard-code the fee in the web app (the
+price is a server parameter and can change).
+
+Consequences: A creator can complete draft -> fee -> webhook -> submit without
+leaving the wizard. The BFF refuses preview auth and cross-origin POSTs. A browser
+test with the stub processor and a live Paystack test-mode run remain the outstanding
+exit evidence for F-02; the API e2e covers the sequence.
+
+Revisit when: A hosted checkout return URL changes, a second payment provider is
+added, or the fee policy becomes refundable.
 
 ## Decision template
 

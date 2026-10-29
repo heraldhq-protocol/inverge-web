@@ -20,6 +20,7 @@ import { fetchApiJson } from "@/lib/api/server";
 import {
   creatorNameFor,
   initialsFor,
+  publicHandleFor,
   type ApiPublicCreator,
 } from "@/lib/api/public-name";
 import { decimalToUsdAmount, type MoneyAmount } from "@/lib/money";
@@ -325,6 +326,7 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
     taxonomyCategory,
   );
   const creator = creatorNameFor(idea.creator);
+  const creatorUsername = publicHandleFor(idea.creator);
 
   const publishedAt = publishedAtFor(idea);
   const publishedOrder = Date.parse(publishedAt);
@@ -337,6 +339,7 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
     cover: idea.coverImageUrl,
     creator,
     creatorInitials: initialsFor(creator),
+    ...(creatorUsername ? { creatorUsername } : {}),
     description: idea.problem || idea.solution,
     discoveryCategory,
     feedbackResponses: idea.feedbackCount ?? 0,

@@ -40,9 +40,9 @@ export function ActivityList({
         <h2 id="recent-activity" className="text-sm font-bold text-ink">
           Recent activity
         </h2>
-        <span className="text-[0.6875rem] text-muted">
-          {dataSource === "live" ? "Live API" : "Preview data"}
-        </span>
+        {dataSource === "live" ? (
+          <span className="text-[0.6875rem] text-muted">Live API</span>
+        ) : null}
       </div>
 
       {activity.length > 0 ? (

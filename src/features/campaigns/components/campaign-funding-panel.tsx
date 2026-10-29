@@ -9,7 +9,6 @@ import {
 import { CampaignSaveButton } from "@/features/campaigns/components/campaign-save-button";
 import { CampaignShareButton } from "@/features/campaigns/components/campaign-share-button";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { campaignTabHref } from "@/features/campaigns/lib/campaign-tabs";
 import { allOrNothingSentence } from "@/features/campaigns/lib/escrow";
 import { SAVED_CAMPAIGNS_SHORT_NOTE } from "@/features/campaigns/lib/saved-campaigns";
@@ -126,7 +125,6 @@ export function CampaignFundingPanel({
             Campaign funding
           </h2>
           <span className="flex shrink-0 items-center gap-1.5">
-            <PreviewDataChip />
             <PhasePill phase={campaign.phase} size="xs" />
           </span>
         </div>

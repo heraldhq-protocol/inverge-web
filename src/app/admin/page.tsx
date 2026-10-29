@@ -11,8 +11,8 @@ export const metadata: Metadata = {
   robots: { follow: false, index: false },
 };
 
-export default function AdminIndexPage() {
-  const access = getProgrammeAdminAccess();
+export default async function AdminIndexPage() {
+  const access = await getProgrammeAdminAccess();
   if (!access.allowed) return null;
 
   return (

@@ -51,7 +51,7 @@ moves money.
 | `/d/backing` | Backing history | Real list from the viewer's own contributions, filtered from the URL, with per-contribution state |
 | `/d/backing/[contributionId]` | Contribution receipt | Real, preview-labelled. States payment, contribution, and refund separately; transaction references are `null` and read "None recorded" |
 | `/d/creator/campaigns` | Creator's campaigns | List of owned campaigns with phase and next action |
-| `/d/creator/campaigns/new` | Campaign wizard | Seven steps (basics, media, funding, milestones, rewards, terms, review). The draft autosaves to the API once the funding and milestone steps are complete, with a version so a second tab cannot overwrite it; `?draft=<id>` resumes it. A reward declares digital/physical/mixed fulfilment and, when it posts, the creator's own destinations and terms (D-024). Submitting is blocked until KYC and the application fee exist |
+| `/d/creator/campaigns/new` | Campaign wizard | Seven steps (basics, media, funding, milestones, rewards, terms, review). The draft autosaves to the API once the funding and milestone steps are complete, with a version so a second tab cannot overwrite it; `?draft=<id>` resumes it. A reward declares digital/physical/mixed fulfilment and, when it posts, the creator's own destinations and terms (D-024). The review step starts or resumes the non-refundable application fee through the API and submits only the saved draft; identity and fee gates are enforced server-side (D-048) |
 | `/d/creator/campaigns/[campaignId]` | Campaign workspace | Real. Phase, story, funding, and milestone summary; edit and milestone entry points |
 | `/d/creator/campaigns/[campaignId]/edit` | Campaign wizard (edit) | Same wizard loaded from the campaign's own published terms |
 | `/d/creator/campaigns/[campaignId]/milestones` | Milestone worklist | Real. Every milestone with its state and the reason it is closed; claiming never moves money |
@@ -88,6 +88,7 @@ decisions are stored in this browser and are explicitly non-authoritative.
 | Route | Why it is linked |
 | --- | --- |
 | `/ideas`, `/ideas/[id]`, `/topics/[slug]` | Public discovery and detail, linked from the featured band and idea cards |
+| `/u/[username]` | Public creator profile, linked from the authenticated marketing navbar and from idea creator names |
 | `/campaigns`, `/campaigns/[slug]`, `/campaigns/[slug]/recommended`, `/campaigns/[slug]/back`, `/campaigns/categories/[categorySlug]`, `/campaigns/categories/[categorySlug]/[subcategorySlug]` | Public campaign discovery, detail, recommendations, contribution preview, and taxonomy category pages. Linked from the primary navigation, the home featured band, the footer, and a campaign's own detail page |
 | `/guides`, `/guides/[slug]` | Sidebar item "Guides & journal" |
 | `/ideathon`, `/ideathon/about`, `/ideathon/past`, `/ideathon/rules` | Public ideathon standings |
@@ -106,7 +107,7 @@ decisions are stored in this browser and are explicitly non-authoritative.
 | Analytics | `/d/creator/analytics`, `/d/creator/ideas/[id]/insights` | ✅ Strongest area |
 | Audience | — | ❌ Missing. No follower or relationship data model exists |
 | Milestones | `/d/creator/campaigns/[campaignId]/milestones` | ✅ Shipped as a surface (D-018). Preview data; claiming never moves money |
-| Campaigns | `/d/creator/campaigns`, `/d/creator/campaigns/new`, `/d/creator/campaigns/[campaignId]` | ✅ Shipped as a surface (D-018). List, seven-step wizard, workspace. The new-campaign draft persists through the API (versioned autosave) and is resumable by URL; the other campaign surfaces still read preview data. Submission is blocked until KYC and the application fee exist |
+| Campaigns | `/d/creator/campaigns`, `/d/creator/campaigns/new`, `/d/creator/campaigns/[campaignId]` | ✅ Shipped as a surface (D-018). List, seven-step wizard, workspace. The new-campaign draft persists through the API (versioned autosave) and is resumable by URL; the wizard now pays the application fee and submits through the API (D-048), while the other campaign surfaces still read preview data |
 
 Sections that exist in the repo but are absent from the proposed IA: pre-pledges,
 ideathons, discover, notifications, profile, settings. They stay in the main

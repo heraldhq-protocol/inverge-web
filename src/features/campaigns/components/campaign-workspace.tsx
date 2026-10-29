@@ -18,7 +18,6 @@ import {
   MilestonePill,
   PhasePill,
 } from "@/features/campaigns/components/campaign-status-pill";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { formatBps } from "@/features/campaigns/lib/amounts";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
 import { campaignCategoryText } from "@/features/campaigns/lib/filters";
@@ -229,7 +228,6 @@ export function CampaignWorkspace({ view }: { view: CampaignWorkspaceView }) {
             >
               Where the escrow sits
             </h2>
-            <PreviewDataChip title="Escrow figures are preview data until the escrow indexer is connected" />
           </div>
 
           <table className="mt-3 w-full text-left text-sm">

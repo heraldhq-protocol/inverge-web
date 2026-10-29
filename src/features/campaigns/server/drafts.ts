@@ -145,3 +145,35 @@ export function readCampaignDraft(
     method: "GET",
   });
 }
+
+/**
+ * Starts or resumes the one FR-311 application-fee charge. The API refuses to
+ * create a second charge: a pending one returns its stored checkout URL and a
+ * successful one is returned with `alreadyPaid`.
+ */
+export function createApplicationFeeCharge(
+  token: string,
+  campaignId: string,
+): Promise<DraftApiResult> {
+  return request(
+    token,
+    `/campaigns/${encodeURIComponent(campaignId)}/application-fee`,
+    { method: "POST" },
+  );
+}
+
+/**
+ * Submits the draft for curation review. The API re-checks verification and the
+ * linked fee inside the same transaction; the web's disabled state is only an
+ * explanation, never the gate.
+ */
+export function submitCampaignDraft(
+  token: string,
+  campaignId: string,
+  body: unknown,
+): Promise<DraftApiResult> {
+  return request(token, `/campaigns/${encodeURIComponent(campaignId)}/submit`, {
+    body,
+    method: "POST",
+  });
+}

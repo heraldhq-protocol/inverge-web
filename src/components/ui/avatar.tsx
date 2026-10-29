@@ -23,8 +23,8 @@ function initialsFor(name: string | null | undefined): string {
  * Identity mark. Falls back to initials on the brand tint — never a stock
  * placeholder face.
  *
- * `src` is optional because no creator avatar exists in the API yet; when the
- * field lands, nothing here changes.
+ * `src` is optional: the API may supply an allowlisted provider avatar, and an
+ * unset or rejected URL deliberately renders the initials instead.
  */
 export function Avatar({
   name,

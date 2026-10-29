@@ -78,7 +78,7 @@ export function ConnectedWalletAuth() {
               <p className="rounded-xl border border-border bg-canvas p-3 text-xs leading-5 text-muted">
                 This is your provider&rsquo;s address on this device. It is not
                 linked to your Inverge account yet, so the balances, activity,
-                and refunds on this page are still labelled preview data.
+                and refunds on this page are illustrative.
               </p>
             </>
           ) : (

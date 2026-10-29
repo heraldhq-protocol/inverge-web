@@ -5,7 +5,6 @@ import Link from "next/link";
 
 import { LoadingRegion, Skeleton } from "@/components/ui/skeleton";
 import { StatePanel } from "@/components/ui/state-panel";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import {
   SavedCampaignRow,
   SavedCampaignUnavailableRow,
@@ -90,7 +89,6 @@ export function SavedCampaignsDashboard({
           <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
             Your space
           </p>
-          <PreviewDataChip title="The saved list lives in this browser until account sessions are connected" />
         </div>
         <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
           Saved campaigns

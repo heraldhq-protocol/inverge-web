@@ -1,6 +1,5 @@
 import { Container } from "@/components/ui/container";
 import { StatePanel } from "@/components/ui/state-panel";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { campaignPhaseDescriptions } from "@/features/campaigns/lib/status";
 import type { Campaign } from "@/features/campaigns/types";
 
@@ -13,9 +12,6 @@ import type { Campaign } from "@/features/campaigns/types";
 export function CampaignUnavailable({ campaign }: { campaign: Campaign }) {
   return (
     <Container className="py-10">
-      <div className="mb-4 flex justify-end">
-        <PreviewDataChip />
-      </div>
       <StatePanel
         variant="unavailable"
         eyebrow="Not accepting contributions"

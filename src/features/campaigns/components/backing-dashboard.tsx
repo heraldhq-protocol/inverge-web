@@ -13,7 +13,6 @@ import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
 import { BackingFilters } from "@/features/campaigns/components/backing-filters";
 import { ContributionCard } from "@/features/campaigns/components/contribution-card";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import {
   filterContributions,
   type BackingSort,
@@ -48,7 +47,6 @@ export function BackingDashboard({
           <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
             Your space
           </p>
-          <PreviewDataChip title="Backing records are preview data until contributions are indexed from escrow" />
         </div>
         <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
           Campaigns you back

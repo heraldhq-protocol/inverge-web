@@ -106,12 +106,6 @@ export function HomeDashboard({
               <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
                 Home
               </p>
-              <span
-                className="rounded-full border border-border bg-surface px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-muted"
-                title="This dashboard renders preview content until account sessions are connected"
-              >
-                Preview data
-              </span>
             </div>
             <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
               {salutation}

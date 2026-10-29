@@ -123,7 +123,7 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
       triggerClassName="flex min-h-11 items-center gap-2 rounded-full pl-0.5 pr-2 transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-brand"
       trigger={
         <>
-          <Avatar name={viewer.displayName} size={32} />
+          <Avatar name={viewer.displayName} size={32} src={viewer.avatarUrl} />
           <span className="sr-only">{displayName}</span>
           <span
             aria-hidden="true"
@@ -147,7 +147,7 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
                   ? `@${viewer.handle}`
                   : viewer.authenticated
                     ? "Signed in"
-                    : "Preview data"}
+                    : "Not signed in"}
             </p>
           </div>
           <div className="py-1">

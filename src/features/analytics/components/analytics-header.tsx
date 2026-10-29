@@ -115,20 +115,14 @@ export function AnalyticsHeader({
               {isDraft ? "Created" : "Published"}{" "}
               {formatSeriesDate(idea.publishedAt, true)}
             </span>
-            <span
-              className={
-                dataSource === "live"
-                  ? "rounded-full bg-brand-soft px-2 py-0.5 text-[0.625rem] font-semibold text-brand-strong"
-                  : "rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong"
-              }
-              title={
-                dataSource === "live"
-                  ? "This workspace reads live reports from the analytics API"
-                  : "This workspace reads preview data until the analytics API is connected"
-              }
-            >
-              {dataSource === "live" ? "Live API" : "Preview data"}
-            </span>
+            {dataSource === "live" ? (
+              <span
+                className="rounded-full bg-brand-soft px-2 py-0.5 text-[0.625rem] font-semibold text-brand-strong"
+                title="This workspace reads live reports from the analytics API"
+              >
+                Live API
+              </span>
+            ) : null}
           </div>
           <Link
             href={

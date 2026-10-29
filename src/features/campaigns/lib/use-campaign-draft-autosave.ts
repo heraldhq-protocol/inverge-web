@@ -7,6 +7,7 @@ import {
   toCreateDraftPayload,
   type DraftReadiness,
 } from "@/features/campaigns/lib/draft-api";
+import type { DraftApplicationFee } from "@/features/campaigns/lib/application-fee";
 import type { CampaignDraft } from "@/features/campaigns/lib/wizard";
 
 /**
@@ -33,6 +34,14 @@ export type DraftSaveState = {
   draftId: string | null;
   version: number | null;
   readiness: DraftReadiness | null;
+  applicationFee: DraftApplicationFee | null;
+  reviewStatus: string | null;
+  campaignStatus: string;
+  /**
+   * True while an edit has not yet been confirmed by a save response. The
+   * review step uses this to refuse payment or submission against stale data.
+   */
+  isDirty: boolean;
   message: string | null;
   savedAt: string | null;
 };
@@ -41,6 +50,9 @@ export type DraftSaveInitial = {
   id: string;
   version: number;
   readiness: DraftReadiness | null;
+  applicationFee: DraftApplicationFee | null;
+  reviewStatus: string | null;
+  campaignStatus: string;
 } | null;
 
 export type DraftSaveOptions = {
@@ -63,9 +75,13 @@ export function useCampaignDraftAutosave({
   onCreated,
 }: DraftSaveOptions): DraftSaveState {
   const [state, setState] = useState<DraftSaveState>(() => ({
+    applicationFee: initial?.applicationFee ?? null,
+    campaignStatus: initial?.campaignStatus ?? "DRAFT",
     draftId: initial?.id ?? null,
+    isDirty: false,
     message: null,
     readiness: initial?.readiness ?? null,
+    reviewStatus: initial?.reviewStatus ?? null,
     savedAt: null,
     status: initial?.id ? "saved" : "idle",
     version: initial?.version ?? null,
@@ -78,6 +94,7 @@ export function useCampaignDraftAutosave({
   const onCreatedRef = useRef(onCreated);
   const firstRunRef = useRef(true);
   const queueRef = useRef<Promise<void>>(Promise.resolve());
+  const revisionRef = useRef(0);
 
   useEffect(() => {
     onCreatedRef.current = onCreated;
@@ -100,6 +117,12 @@ export function useCampaignDraftAutosave({
     }
 
     if (blockedRef.current) return;
+
+    const revision = revisionRef.current + 1;
+    revisionRef.current = revision;
+    setState((current) =>
+      current.isDirty ? current : { ...current, isDirty: true },
+    );
 
     const snapshot = draft;
     const timer = setTimeout(() => {
@@ -222,9 +245,13 @@ export function useCampaignDraftAutosave({
           idRef.current = saved.id;
           versionRef.current = saved.version;
           setState({
+            applicationFee: saved.applicationFee,
+            campaignStatus: saved.status,
             draftId: saved.id,
+            isDirty: revisionRef.current !== revision,
             message: null,
             readiness: saved.readiness,
+            reviewStatus: saved.reviewStatus,
             savedAt: new Date().toISOString(),
             status: "saved",
             version: saved.version,

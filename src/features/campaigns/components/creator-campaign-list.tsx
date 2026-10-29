@@ -197,9 +197,7 @@ export function CreatorCampaignCard({
         ))}
       </ul>
 
-      <span className="sr-only">
-        Rendered from preview data at {now.toISOString()}.
-      </span>
+      <span className="sr-only">Updated at {now.toISOString()}.</span>
     </li>
   );
 }

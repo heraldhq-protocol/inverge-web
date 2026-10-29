@@ -10,7 +10,6 @@ import { Amount } from "@/components/ui/amount";
 import { MilestonePill } from "@/features/campaigns/components/campaign-status-pill";
 import { MilestoneClaimForm } from "@/features/campaigns/components/milestone-claim-form";
 import { MilestoneEvidenceList } from "@/features/campaigns/components/campaign-milestone-timeline";
-import { PreviewDataChip } from "@/features/campaigns/components/prototype-notice";
 import { formatBps } from "@/features/campaigns/lib/amounts";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
 import { isObjectionOpen } from "@/features/campaigns/lib/milestones";
@@ -63,7 +62,6 @@ export function MilestoneManager({
           <p className="text-[0.6875rem] font-bold uppercase tracking-[0.16em] text-brand-strong">
             Creator workspace
           </p>
-          <PreviewDataChip title="Milestone state comes from preview data until escrow is indexed" />
         </div>
         <h1 className="mt-2 text-2xl font-bold tracking-[-0.04em] text-ink sm:text-3xl">
           Milestone plan

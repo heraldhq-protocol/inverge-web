@@ -10,8 +10,8 @@ export const metadata: Metadata = {
   description: "Manage your Inverge profile and account preferences.",
 };
 
-export default function SettingsPage() {
-  const access = getProgrammeAdminAccess();
+export default async function SettingsPage() {
+  const access = await getProgrammeAdminAccess();
 
   // The entry only appears when the server gate allows it, so a signed-out or
   // non-admin visitor never sees a link to a workspace they cannot open.

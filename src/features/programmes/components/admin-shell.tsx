@@ -102,9 +102,7 @@ export function AdminShell({
           {children}
         </main>
         <footer className="border-t border-border px-4 py-4 text-[0.6875rem] text-muted sm:px-6 lg:px-8">
-          Inverge admin workspace. Campaign decisions and programme figures are
-          preview data until the API is connected. No money moves from this
-          workspace.
+          Inverge admin workspace. No money moves from this workspace.
         </footer>
       </div>
     </div>

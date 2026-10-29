@@ -20,6 +20,8 @@ export type DashboardViewer = {
   displayName: string | null;
   /** Public handle without the leading `@`, when one exists. */
   handle: string | null;
+  /** Allowlisted provider or creator avatar; `null` renders initials. */
+  avatarUrl: string | null;
   /** Copy shown wherever the UI states where its data comes from. */
   dataSource: "preview" | "live";
   /**

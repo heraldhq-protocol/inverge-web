@@ -18,8 +18,8 @@ export const metadata: Metadata = {
  * still checks every action's permission; hiding this page is not
  * authorization, and the API remains the authority.
  */
-export default function AdminAdvertisingPage() {
-  const access = getProgrammeAdminAccess();
+export default async function AdminAdvertisingPage() {
+  const access = await getProgrammeAdminAccess();
   if (!access.allowed) return null;
 
   return (

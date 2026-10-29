@@ -10,22 +10,6 @@ import type { ReactNode } from "react";
  * moves, and no transaction exists.
  */
 
-/** The inline chip used in page headers, matching the dashboard's existing vocab. */
-export function PreviewDataChip({
-  title = "This page renders preview content until the campaign API is connected",
-}: {
-  title?: string;
-}) {
-  return (
-    <span
-      className="rounded-full border border-border bg-surface px-2 py-0.5 text-[0.625rem] font-semibold uppercase tracking-[0.08em] text-muted"
-      title={title}
-    >
-      Preview data
-    </span>
-  );
-}
-
 /**
  * The block notice used where a reader could otherwise think they are about to
  * pay money — the contribution flow, the receipt, and the creator's payout card.
