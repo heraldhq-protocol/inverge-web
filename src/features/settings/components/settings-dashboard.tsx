@@ -138,7 +138,7 @@ export function SettingsDashboard({
               title="Identity verification"
               description="Open the verification centre for the live status on this account. Inverge stores provider references and outcomes, not raw identity documents."
               action={
-                <div className="flex items-center gap-2 sm:gap-3">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <Link
                     href="/guides/identity-verification"
                     className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-muted transition-colors hover:bg-canvas hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"

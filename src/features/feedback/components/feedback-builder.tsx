@@ -748,14 +748,14 @@ export function FeedbackBuilder({
         </div>
       </header>
 
-      <div className="mt-4 flex gap-1 border-b border-border">
+      <div className="mt-4 flex gap-1 border-b border-border max-md:overflow-x-auto max-md:scrollbar-none max-md:[&::-webkit-scrollbar]:hidden">
         {tabs.map(([value, label]) => (
           <button
             key={value}
             type="button"
             aria-pressed={tab === value}
             onClick={() => setTab(value)}
-            className={`relative inline-flex min-h-11 items-center px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+            className={`relative inline-flex min-h-11 items-center px-3 text-sm transition-colors max-md:shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
               tab === value
                 ? "font-semibold text-ink after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-brand"
                 : "font-medium text-muted hover:text-ink"
@@ -1023,7 +1023,7 @@ export function FeedbackBuilder({
         />
       )}
 
-      <div className="sticky bottom-0 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur">
+      <div className="sticky bottom-0 z-20 mt-6 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur max-md:bottom-[calc(4.5rem_+_env(safe-area-inset-bottom))]">
         <Link
           href="/d/creator/ideas"
           className="inline-flex min-h-10 items-center gap-1.5 rounded-lg text-sm font-semibold text-muted hover:text-ink focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -1036,7 +1036,7 @@ export function FeedbackBuilder({
           />
           Back to my ideas
         </Link>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap gap-2 max-md:w-full max-md:grid max-md:grid-cols-2">
           <Button
             type="button"
             variant="outline"

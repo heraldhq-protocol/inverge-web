@@ -269,12 +269,14 @@ function clearLocalDraft() {
 
 function StepField({
   children,
+  counter,
   error,
   hint,
   label,
   optional,
 }: {
   children: React.ReactNode;
+  counter?: { max: number; value: number };
   error?: string | undefined;
   hint?: string | undefined;
   label: string;
@@ -282,17 +284,28 @@ function StepField({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-ink">
-        {label}
-        {optional ? (
-          <span className="ml-1.5 text-xs font-normal text-muted">
-            optional
+      <span className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-medium text-ink">
+          {label}
+          {optional ? (
+            <span className="ml-1.5 text-xs font-normal text-muted">
+              optional
+            </span>
+          ) : (
+            <span className="ml-1 text-muted" aria-hidden="true">
+              *
+            </span>
+          )}
+        </span>
+        {counter ? (
+          <span
+            className={`shrink-0 text-[0.6875rem] tabular-nums ${
+              counter.value > counter.max * 0.9 ? "text-warning-strong" : "text-muted"
+            }`}
+          >
+            {counter.value}/{counter.max}
           </span>
-        ) : (
-          <span className="ml-1 text-muted" aria-hidden="true">
-            *
-          </span>
-        )}
+        ) : null}
       </span>
       {hint ? (
         <span className="mt-0.5 block text-xs text-muted">{hint}</span>
@@ -353,6 +366,90 @@ function PreviewCard({ draft }: { draft: IdeaDraft }) {
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ * Step navigation below the `xl` breakpoint, where the labelled sidebar does
+ * not fit. Phones get a single segmented progress bar; wider screens get the
+ * same steps as wrapping chips so a creator can still jump back without a
+ * horizontally scrolling rail.
+ */
+function BuilderStepNav({
+  onSelect,
+  stepIndex,
+}: {
+  onSelect: (index: number) => void;
+  stepIndex: number;
+}) {
+  return (
+    <>
+      <div
+        aria-label="Creation progress"
+        aria-valuemax={BUILDER_STEPS.length}
+        aria-valuemin={1}
+        aria-valuenow={stepIndex + 1}
+        aria-valuetext={`Step ${stepIndex + 1} of ${BUILDER_STEPS.length}: ${BUILDER_STEPS[stepIndex]?.label ?? ""}`}
+        className="grid grid-cols-7 gap-1 sm:hidden"
+        role="progressbar"
+      >
+        {BUILDER_STEPS.map((item, index) => (
+          <span
+            aria-hidden="true"
+            className={`h-1.5 rounded-full ${
+              index <= stepIndex ? "bg-brand" : "bg-ink/[0.08]"
+            }`}
+            key={item.id}
+          />
+        ))}
+      </div>
+
+      <ol className="hidden flex-wrap gap-1.5 sm:flex xl:hidden">
+        {BUILDER_STEPS.map((item, index) => {
+          const current = index === stepIndex;
+          const passed = index < stepIndex;
+          return (
+            <li className="min-w-0" key={item.id}>
+              <button
+                type="button"
+                aria-current={current ? "step" : undefined}
+                onClick={() => onSelect(index)}
+                disabled={index > stepIndex}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed ${
+                  current
+                    ? "border-brand/35 bg-brand-soft font-semibold text-brand-strong"
+                    : passed
+                      ? "border-border bg-surface font-medium text-ink hover:border-brand/35"
+                      : "border-border/60 bg-surface/60 text-muted"
+                }`}
+              >
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-full text-[0.5625rem] font-bold tabular-nums ${
+                    passed
+                      ? "bg-brand text-white"
+                      : current
+                        ? "bg-brand/15 text-brand-strong"
+                        : "bg-ink/[0.06] text-muted"
+                  }`}
+                >
+                  {passed ? (
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
+                      size={12}
+                      strokeWidth={2.2}
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }
 
@@ -671,7 +768,7 @@ export function IdeaBuilder({
       <div className="mt-4 grid gap-6 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
         <aside
           aria-label="Creation steps"
-          className="max-md:min-w-0 xl:sticky xl:top-24 xl:self-start"
+          className="hidden min-w-0 xl:sticky xl:top-24 xl:block xl:self-start"
         >
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Create an idea</Eyebrow>
@@ -685,12 +782,12 @@ export function IdeaBuilder({
               style={{ width: `${completeness.percent}%` }}
             />
           </div>
-          <ol className="mt-4 flex gap-1 overflow-x-auto pb-1 max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden xl:flex-col xl:overflow-visible">
+          <ol className="mt-4 flex flex-col gap-1">
             {BUILDER_STEPS.map((item, index) => {
               const current = item.id === step;
               const passed = index < stepIndex;
               return (
-                <li key={item.id} className="shrink-0 xl:w-full">
+                <li key={item.id} className="w-full">
                   <button
                     type="button"
                     aria-current={current ? "step" : undefined}
@@ -735,12 +832,21 @@ export function IdeaBuilder({
               );
             })}
           </ol>
-          <p className="mt-3 hidden text-[0.6875rem] leading-4 text-muted xl:block">
+          <p className="mt-3 text-[0.6875rem] leading-4 text-muted">
             Steps unlock as you go. A saved draft can be reopened at any point.
           </p>
         </aside>
 
         <div className="min-w-0">
+          <div className="mb-4 xl:hidden">
+            <BuilderStepNav
+              onSelect={(index) => {
+                setStepIndex(index);
+                setIssues([]);
+              }}
+              stepIndex={stepIndex}
+            />
+          </div>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-semibold tabular-nums text-muted">
