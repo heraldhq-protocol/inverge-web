@@ -60,6 +60,7 @@ choices.
 | D-051 | 2026-10-29 | Accepted | Creator Studio reads the signed-in creator's own ideas from `GET /ideas?mine=true`; preview auth or an unconfigured API still renders fixtures, and preview-only feedback links are omitted in live mode. |
 | D-052 | 2026-10-29 | Accepted | The idea builder writes through same-origin BFF routes: draft create/update, survey replacement, and publish all go to the API; preview auth keeps the browser-only flow. |
 | D-053 | 2026-10-29 | Accepted | The idea workspace reads the owned idea and its survey from the API for live sessions; individual feedback responses remain unavailable because the API has no creator response list. |
+| D-054 | 2026-10-29 | Accepted | Dashboard home composes live public ideas, the viewer's own ideas, and notifications for an API session; ideathon and pre-pledge modules are omitted live until their read models exist. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2134,6 +2135,34 @@ remain blocked until the API exposes them.
 
 Revisit when: A creator feedback-response endpoint or survey version history
 lands.
+
+### D-054: Dashboard home composes the live reads it already has
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The dashboard home still rendered fixture ideas, a fixture creator
+snapshot, fixture notifications, an ideathon, and pre-pledge counts even for a
+live account. Public ideas, the viewer's own ideas, and notifications already
+have API reads.
+
+Decision: A live home reads `GET /ideas`, `GET /ideas?mine=true`, and
+`GET /me/notifications` together. The featured/trending/recommended rows, creator
+snapshot, and activity rail all come from those responses. Ideathon and
+pre-pledge-specific modules are omitted live because the API has no programme or
+pre-pledge read model; preview auth keeps the complete fixture home. A failed or
+signed-out read degrades to an empty rail/count rather than borrowing fixtures.
+
+Alternatives: Keep the whole home on fixtures until every module has an API
+(the creator snapshot and activity would remain wrong); mix live ideas with
+fixture notifications (two sources on one screen); invent aggregate endpoints
+before the underlying read models exist.
+
+Consequences: A live home is correct for the data it shows and visibly shorter
+where the platform has no connected module. Preview auth remains the full
+prototype.
+
+Revisit when: Dashboard aggregates, programmes, or pre-pledge reads land.
 
 ## Decision template
 

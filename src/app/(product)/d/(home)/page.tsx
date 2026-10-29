@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 
-import { ideaViewHref } from "@/features/ideas/lib/idea-link";
 import { recordPageView } from "@/features/analytics/server/ingest";
 import { getDashboardViewer } from "@/features/app-shell/server/viewer";
+import { isPreviewAuth } from "@/features/auth/server/auth-mode";
 import { getPreviewFeedbackForm } from "@/features/feedback/content/preview-feedback";
 import { toActivityItems } from "@/features/home/lib/activity";
 import {
@@ -16,14 +16,17 @@ import {
 import { greetingFor } from "@/features/home/lib/greeting";
 import { toHomeIdeathon } from "@/features/home/lib/ideathon";
 import type { QuickAction } from "@/features/home/types";
-import { allPublicIdeas } from "@/features/ideas/lib/catalog";
 import { HomeDashboard } from "@/features/home/components/home-dashboard";
+import { ideaViewHref } from "@/features/ideas/lib/idea-link";
+import { allPublicIdeas } from "@/features/ideas/lib/catalog";
 import { ideasPreviewData } from "@/features/ideas/content/preview-data";
-import { previewMyIdeas } from "@/features/ideas/content/preview-my-ideas";
-import { previewFeedbackSubmissions } from "@/features/feedback/content/preview-feedback";
-import { notificationsPreviewData } from "@/features/notifications/content/preview-data";
+import { previewTopics } from "@/features/ideas/content/topics";
+import { getCreatorView } from "@/features/ideas/server/creator-view";
+import { getIdeasDiscoveryView } from "@/features/ideas/server/views";
+import { getNotificationsView } from "@/features/notifications/server/notifications";
 import { prePledgesPreviewData } from "@/features/pre-pledges/content/preview-data";
 import { getPreviewActiveIdeathon } from "@/features/programmes/content/preview-programmes";
+import { isApiConfigured } from "@/lib/api/server";
 
 export const metadata: Metadata = {
   title: "Home",
@@ -37,16 +40,34 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 
 /**
- * Route composition only: every value below is read from an existing fixture
- * through a pure helper. The viewer is the one server lookup, and it is the
- * shell's session seam rather than page data.
+ * Dashboard home.
+ *
+ * Live sessions read the public catalogue, the viewer's own ideas, and the
+ * notification inbox from the API. Preview auth keeps the fixture catalogue and
+ * activity. Ideathons and pre-pledges have no read API yet, so a live home omits
+ * the ideathon card and does not use preview pre-pledge counts.
  */
 export default async function HomePage() {
   recordPageView("creator-dashboard");
-  const viewer = await getDashboardViewer();
-  const publicIdeas = allPublicIdeas(ideasPreviewData);
+  const preview = isPreviewAuth() || !isApiConfigured();
 
-  const featured = ideasPreviewData.featured.at(0) ?? publicIdeas.at(0);
+  const [viewer, publicView, creatorResult, notificationsResult] =
+    await Promise.all([
+      getDashboardViewer(),
+      preview
+        ? Promise.resolve({
+            data: ideasPreviewData,
+            dataSource: "preview" as const,
+            topics: previewTopics,
+            truncated: false,
+          })
+        : getIdeasDiscoveryView(),
+      getCreatorView(),
+      getNotificationsView(),
+    ]);
+
+  const publicIdeas = allPublicIdeas(publicView.data);
+  const featured = publicView.data.featured.at(0) ?? publicIdeas.at(0);
   const featuredId = featured ? [featured.id] : [];
 
   const trending = rankIdeasForFeed(publicIdeas, {
@@ -58,12 +79,16 @@ export default async function HomePage() {
     limit: 3,
   });
 
-  const activity = toActivityItems(notificationsPreviewData, 4);
-
-  const feedbackIdea = bestFeedbackOpportunity(
-    publicIdeas,
-    getPreviewFeedbackForm,
+  const activity = toActivityItems(
+    notificationsResult.status === "ready"
+      ? notificationsResult.view.items
+      : [],
+    4,
   );
+
+  const feedbackIdea = preview
+    ? bestFeedbackOpportunity(publicIdeas, getPreviewFeedbackForm)
+    : null;
 
   const actions: QuickAction[] = [
     {
@@ -94,17 +119,15 @@ export default async function HomePage() {
     },
   ];
 
+  const rows = creatorResult.status === "ready" ? creatorResult.view.rows : [];
   const creatorSnapshot = {
-    draftCount: previewMyIdeas.filter((idea) => idea.status === "draft").length,
-    feedbackReceived: previewMyIdeas.reduce(
-      (total, idea) =>
-        total + (previewFeedbackSubmissions[idea.id]?.length ?? 0),
+    draftCount: rows.filter((idea) => idea.status === "draft").length,
+    feedbackReceived: rows.reduce(
+      (total, idea) => total + idea.feedbackResponses,
       0,
     ),
-    ownedIdeaCount: previewMyIdeas.length,
-    publishedCount: previewMyIdeas.filter(
-      (idea) => idea.visibility === "public",
-    ).length,
+    ownedIdeaCount: rows.length,
+    publishedCount: rows.filter((idea) => idea.visibility === "public").length,
   };
 
   const modules = deriveDashboardModules(viewer, {
@@ -115,8 +138,9 @@ export default async function HomePage() {
   const newViewer = isNewViewer({
     feedbackGiven: 0,
     ownedIdeas: creatorSnapshot.ownedIdeaCount,
-    prePledges:
-      prePledgesPreviewData.active.length + prePledgesPreviewData.past.length,
+    prePledges: preview
+      ? prePledgesPreviewData.active.length + prePledgesPreviewData.past.length
+      : 0,
     supportedIdeas: 0,
   });
 
@@ -127,7 +151,9 @@ export default async function HomePage() {
       creatorSnapshot={creatorSnapshot}
       featured={featured}
       greeting={greetingFor(new Date())}
-      ideathon={toHomeIdeathon(getPreviewActiveIdeathon())}
+      ideathon={
+        preview ? toHomeIdeathon(getPreviewActiveIdeathon()) : null
+      }
       isNewViewer={newViewer}
       modules={modules}
       recommended={recommended}
