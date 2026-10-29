@@ -292,7 +292,9 @@ export default async function IdeaWorkspacePage({ params }: PageProps) {
             <p className="mx-auto mt-1 max-w-md text-sm leading-6 text-muted">
               {feedbackHref
                 ? "Set the questions once, share the idea, and responses arrive here."
-                : "This idea has no public page yet, so nobody can answer a form for it."}
+                : dataSource === "live"
+                  ? "The API does not expose a creator response list yet. The counted total updates as responses arrive."
+                  : "This idea has no public page yet, so nobody can answer a form for it."}
             </p>
             {feedbackHref ? (
               <div className="mt-4 flex justify-center">
