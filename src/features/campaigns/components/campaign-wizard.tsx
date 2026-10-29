@@ -925,7 +925,7 @@ export function CampaignWizard({
 
                         <Field
                           label="Share of escrow"
-                          help="Percent of the target."
+                          // help="Percent of the target."
                           error={errorFor(`milestones.${milestone.id}`)}
                         >
                           {({ describedBy, id, invalid }) => (

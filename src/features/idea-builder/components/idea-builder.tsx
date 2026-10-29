@@ -300,7 +300,9 @@ function StepField({
         {counter ? (
           <span
             className={`shrink-0 text-[0.6875rem] tabular-nums ${
-              counter.value > counter.max * 0.9 ? "text-warning-strong" : "text-muted"
+              counter.value > counter.max * 0.9
+                ? "text-warning-strong"
+                : "text-muted"
             }`}
           >
             {counter.value}/{counter.max}
@@ -857,6 +859,18 @@ export function IdeaBuilder({
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="#idea-preview"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand lg:hidden"
+              >
+                <HugeiconsIcon
+                  icon={ViewIcon}
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
+                Preview
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -914,80 +928,101 @@ export function IdeaBuilder({
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-5">
               {step === "basics" ? (
-                <div className="space-y-4">
-                  <StepField
-                    label="Idea title"
-                    error={errorFor(issues, "title")}
-                    hint="A clear, specific title beats a slogan."
-                  >
-                    <Input
-                      value={draft.title}
-                      maxLength={140}
-                      placeholder="Give your idea a clear and specific title"
-                      aria-invalid={Boolean(errorFor(issues, "title"))}
-                      onChange={(event) =>
-                        update({ title: event.target.value })
-                      }
-                    />
-                  </StepField>
-                  <IdeaFieldAssistant {...assistantProps("title")} />
-                  <StepField
-                    label="Short summary"
-                    error={errorFor(issues, "summary")}
-                    hint="This is what readers see on a card."
-                  >
-                    <Textarea
-                      value={draft.summary}
-                      rows={3}
-                      maxLength={300}
-                      placeholder="In a few sentences, what is your idea about?"
-                      aria-invalid={Boolean(errorFor(issues, "summary"))}
-                      onChange={(event) =>
-                        update({ summary: event.target.value })
-                      }
-                    />
-                  </StepField>
-                  <IdeaFieldAssistant {...assistantProps("summary")} />
-                  <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-7">
+                  <section aria-labelledby="basics-idea" className="space-y-4">
+                    <h2 id="basics-idea" className="text-sm font-bold text-ink">
+                      The idea
+                    </h2>
                     <StepField
-                      label="Category"
-                      error={errorFor(issues, "category")}
+                      label="Idea title"
+                      counter={{ max: 140, value: draft.title.length }}
+                      error={errorFor(issues, "title")}
+                      hint="A clear, specific title beats a slogan."
                     >
-                      <Select
-                        aria-label="Category"
-                        options={categoryOptions}
-                        value={draft.category || undefined}
-                        placeholder="Select a category"
-                        onValueChange={(value) =>
-                          update({ category: value as IdeaDraft["category"] })
+                      <Input
+                        value={draft.title}
+                        maxLength={140}
+                        placeholder="Give your idea a clear and specific title"
+                        aria-invalid={Boolean(errorFor(issues, "title"))}
+                        onChange={(event) =>
+                          update({ title: event.target.value })
                         }
                       />
                     </StepField>
-                    <StepField label="Location" optional>
-                      <Select
-                        aria-label="Location"
-                        options={regionOptions}
-                        value={draft.region || undefined}
-                        placeholder="Select a location"
-                        onValueChange={(region) => update({ region })}
+                    <IdeaFieldAssistant {...assistantProps("title")} />
+                    <StepField
+                      label="Short summary"
+                      counter={{ max: 300, value: draft.summary.length }}
+                      error={errorFor(issues, "summary")}
+                      hint="This is what readers see on a card."
+                    >
+                      <Textarea
+                        value={draft.summary}
+                        rows={3}
+                        maxLength={300}
+                        placeholder="In a few sentences, what is your idea about?"
+                        aria-invalid={Boolean(errorFor(issues, "summary"))}
+                        onChange={(event) =>
+                          update({ summary: event.target.value })
+                        }
                       />
                     </StepField>
-                  </div>
-                  <StepField
-                    label="Cover image"
-                    optional
-                    error={errorFor(issues, "coverUrl")}
-                    hint="An https:// image link. A fallback cover is used when this is empty."
+                    <IdeaFieldAssistant {...assistantProps("summary")} />
+                  </section>
+
+                  <section
+                    aria-labelledby="basics-discovery"
+                    className="space-y-4"
                   >
-                    <Input
-                      type="url"
-                      value={draft.coverUrl}
-                      placeholder="https://images.example.com/your-idea.jpg"
-                      onChange={(event) =>
-                        update({ coverUrl: event.target.value })
-                      }
-                    />
-                  </StepField>
+                    <h2
+                      id="basics-discovery"
+                      className="text-sm font-bold text-ink"
+                    >
+                      Discovery
+                    </h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <StepField
+                        label="Category"
+                        error={errorFor(issues, "category")}
+                      >
+                        <Select
+                          aria-label="Category"
+                          options={categoryOptions}
+                          value={draft.category || undefined}
+                          placeholder="Select a category"
+                          onValueChange={(value) =>
+                            update({
+                              category: value as IdeaDraft["category"],
+                            })
+                          }
+                        />
+                      </StepField>
+                      <StepField label="Location" optional>
+                        <Select
+                          aria-label="Location"
+                          options={regionOptions}
+                          value={draft.region || undefined}
+                          placeholder="Select a location"
+                          onValueChange={(region) => update({ region })}
+                        />
+                      </StepField>
+                    </div>
+                    <StepField
+                      label="Cover image"
+                      optional
+                      error={errorFor(issues, "coverUrl")}
+                      hint="An https:// image link. A fallback cover is used when this is empty."
+                    >
+                      <Input
+                        type="url"
+                        value={draft.coverUrl}
+                        placeholder="https://images.example.com/your-idea.jpg"
+                        onChange={(event) =>
+                          update({ coverUrl: event.target.value })
+                        }
+                      />
+                    </StepField>
+                  </section>
                 </div>
               ) : null}
 
@@ -1329,7 +1364,10 @@ export function IdeaBuilder({
                       </p>
                       <ul className="mt-1.5 space-y-2">
                         {draft.funding.useOfFunds.map((item, index) => (
-                          <li key={item.id} className="flex gap-2 max-md:flex-col max-md:items-stretch">
+                          <li
+                            key={item.id}
+                            className="flex gap-2 max-md:flex-col max-md:items-stretch"
+                          >
                             <Input
                               aria-label={`Use of funds ${index + 1} label`}
                               value={item.label}
@@ -1766,7 +1804,7 @@ export function IdeaBuilder({
                             ))}
                           </ul>
 
-                          <div className="flex md:flex-wrap gap-1.5 max-md:overflow-x-auto max-md:[scrollbar-width:none] max-md:[&::-webkit-scrollbar]:hidden">
+                          <div className="flex flex-wrap gap-1.5">
                             {(
                               [
                                 "rating",
@@ -1792,7 +1830,7 @@ export function IdeaBuilder({
                                     },
                                   })
                                 }
-                                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[0.6875rem] font-medium text-ink hover:border-brand/35 hover:text-brand-strong max-md:shrink-0"
+                                className="inline-flex min-h-9 items-center gap-1 rounded-lg border border-border bg-surface px-2.5 text-[0.6875rem] font-medium text-ink hover:border-brand/35 hover:text-brand-strong"
                               >
                                 <HugeiconsIcon
                                   icon={Add01Icon}
@@ -2206,13 +2244,16 @@ export function IdeaBuilder({
               ) : null}
             </div>
 
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-              <div>
+            <aside
+              id="idea-preview"
+              className="min-w-0 scroll-mt-24 space-y-3 lg:sticky lg:top-24 lg:self-start"
+            >
+              <div className="min-w-0">
                 <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted">
                   Idea preview
                 </p>
                 <p className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
-                  How your idea will appear on the public site.
+                  Updates as you type, exactly as the public card will read.
                 </p>
                 <div className="mt-2">
                   <PreviewCard draft={draft} />
