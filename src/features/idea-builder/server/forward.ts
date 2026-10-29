@@ -11,6 +11,7 @@ type ForwardOptions = {
   body?: unknown;
   method: "PATCH" | "POST" | "PUT";
   path: string;
+  timeoutMs?: number;
 };
 
 /**
@@ -22,7 +23,7 @@ type ForwardOptions = {
  */
 export async function forwardIdeaWrite(
   request: Request,
-  { body, method, path }: ForwardOptions,
+  { body, method, path, timeoutMs = UPSTREAM_TIMEOUT_MS }: ForwardOptions,
 ): Promise<NextResponse> {
   if (!isSameOriginRequest(request)) {
     return NextResponse.json({ error: "origin_not_allowed" }, { status: 403 });
@@ -51,7 +52,7 @@ export async function forwardIdeaWrite(
         ...(body === undefined ? {} : { "Content-Type": "application/json" }),
       },
       method,
-      signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
+      signal: AbortSignal.timeout(timeoutMs),
     };
     if (body !== undefined) init.body = JSON.stringify(body);
 

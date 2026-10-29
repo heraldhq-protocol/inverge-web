@@ -2164,6 +2164,84 @@ prototype.
 
 Revisit when: Dashboard aggregates, programmes, or pre-pledge reads land.
 
+### D-055: AI access is its own admin-approved grant
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: Phase 1 adds a Creator Studio assistant. Analytics already has a grant
+(`AnalyticsAccessGrant`), but it answers a different product question and has its
+own review criteria. Creator tiers are presentation, not entitlement: a
+`CreatorTier` value must never unlock a server capability. The API also needs an
+auditable answer to "who may spend provider tokens, and how much have they spent?".
+
+Decision: Add a dedicated `AiAccessGrant` per user (one assistant feature today),
+with `PENDING`, `APPROVED` and `REJECTED` stored states, an optional expiry that
+reads as `EXPIRED`, and an admin decision record. Users may request access; only
+an admin may approve or reject it. Premium is computed server-side from an active grant. A separate
+append-only `AiUsageEvent` records every billable attempt (feature, prompt
+version, model, token counts, latency, status) so the daily quota can be enforced
+without mutable counters.
+
+Alternatives: Reuse `AnalyticsAccessGrant` (couples two products and lets an
+analytics approval silently unlock AI); trust `CreatorProfile.tier` (a display
+value becomes a security boundary); let users self-grant (no review, no
+revocation); keep usage in a mutable per-user counter (loses the audit trail and
+is easy to corrupt under retries).
+
+Consequences: The assistant is visible but locked for everyone without a grant,
+and the copy explains the request path instead of hiding the feature. Admin
+approval is a prerequisite for any live provider spend. The schema cost is one
+table and one event table; the web has no client-side premium flag to bypass. The
+existing analytics grant is deliberately unchanged.
+
+Revisit when: A paid plan with automatic entitlement is introduced, or AI moves
+from an invited pilot to a standard Creator Studio feature.
+
+### D-056: The assistant proposes, the creator decides
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: A generative assistant can produce plausible text that is wrong about the
+creator's business. Auto-saving it would turn a suggestion into their published
+claim, and a slow response could overwrite newer typing. The API also has to stay
+usable when the provider is missing, and tests must be deterministic and offline.
+
+Decision: Phase 1 is an idea-field assistant. A request names one field, its
+current text, the visible draft context and a client revision. The API re-checks
+ownership, entitlement, daily quota and input size, calls the provider through the
+`AI_COMPLETION_PORT`, validates a strict JSON schema, meters the attempt, and
+returns a proposal with notes, assumptions and model metadata. It never writes to
+the idea. The web renders the proposal beside the field and requires an explicit
+"Use this text"; discard, regenerate and restore-original stay available, and a
+response whose field changed while it was in flight is discarded. Saving remains
+an explicit action.
+
+The provider is selected by `AI_PROVIDER`: `disabled` (no assistant), `stub`
+(deterministic offline JSON for tests and local UI work, rejected in production),
+or `anthropic` (the Anthropic Messages protocol; the current deployment points it
+at DeepSeek's Anthropic-compatible endpoint with model `deepseek-flash`). The
+assistant reads only `AI_*` values; `ANTHROPIC_*` configures moderation. Provider
+cost is not encoded in this decision; the operator must confirm the account's
+current pricing and set the daily request/token caps accordingly.
+
+Alternatives: Auto-apply on response (irreversible without a history and unsafe on
+stale responses); let the browser call the provider (exposes the key and the
+prompt contract); store the proposal server-side (creates a second draft to
+reconcile); fall back to canned text in production (presents fake AI as real);
+make the assistant a separate standalone workspace (duplicates the creator
+workflow and loses context).
+
+Consequences: Free users keep the complete manual flow. The assistant is an
+additive control, not a gate. The API owns every authorization and spend decision;
+the web BFF only forwards the session and the envelope. There is no production
+provider key or paid entitlement in this repository, so a live call is an explicit
+opt-in smoke test documented in `inverge-api/docs/ai-assistant.md`.
+
+Revisit when: Campaign or analytics assistants ship, a streaming UI is needed, or
+the proposal contract gains server-side revision/history storage.
+
 ## Decision template
 
 Copy this section for a new decision.
