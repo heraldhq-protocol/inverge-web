@@ -1,6 +1,8 @@
 import "server-only";
 
 import { previewAnalytics } from "@/features/analytics/content/preview-analytics";
+import { isPreviewAuth } from "@/features/auth/server/auth-mode";
+import { readSessionToken } from "@/features/auth/server/session";
 import {
   getPreviewFeedbackForm,
   previewFeedbackSubmissions,
@@ -11,22 +13,20 @@ import {
 } from "@/features/feedback/lib/submissions";
 import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-detail";
 import { previewMyIdeas } from "@/features/ideas/content/preview-my-ideas";
+import {
+  getLiveIdea,
+  toIdeaDetail,
+  toMyIdea,
+} from "@/features/ideas/server/live-ideas";
 import type { MyIdea } from "@/features/ideas/types";
+import { ApiRequestError, fetchApiJson, isApiConfigured } from "@/lib/api/server";
 
-/**
- * One idea's creator workspace: the view model behind `/d/creator/ideas/[id]`.
- *
- * Scoped to the ideas the signed-in account owns. An id outside that list
- * resolves to `null` and the route 404s, so editing the URL never reaches
- * another creator's idea. Links are populated only for routes that actually
- * resolve: a draft that was never published has no public page, and only the
- * idea with an analytics dataset gets analytics.
- */
 export type IdeaWorkspaceView = {
+  dataSource: "live" | "preview";
   idea: MyIdea;
   /** Public idea page (D-014), when the idea has a published record. */
   detailHref: string | null;
-  /** Feedback setup, when the idea resolves to a public detail record. */
+  /** Feedback setup, when the selected source can resolve the builder. */
   feedbackHref: string | null;
   /** Analytics workspace, when an analytics dataset exists for the idea. */
   analyticsHref: string | null;
@@ -39,9 +39,15 @@ export type IdeaWorkspaceView = {
   summary: { problem: string; solution: string } | null;
 };
 
-export function getIdeaWorkspaceView(ideaId: string): IdeaWorkspaceView | null {
+export type IdeaWorkspaceResult =
+  | { status: "ready"; view: IdeaWorkspaceView }
+  | { status: "not_found" }
+  | { status: "signed_out" }
+  | { status: "unavailable"; reason: string };
+
+function previewView(ideaId: string): IdeaWorkspaceResult {
   const idea = previewMyIdeas.find((candidate) => candidate.id === ideaId);
-  if (!idea) return null;
+  if (!idea) return { status: "not_found" };
 
   const detail = getPreviewIdeaDetail(ideaId);
   const submissions = previewFeedbackSubmissions[ideaId] ?? [];
@@ -57,14 +63,85 @@ export function getIdeaWorkspaceView(ideaId: string): IdeaWorkspaceView | null {
     }));
 
   return {
-    idea,
-    detailHref: detail ? `/ideas/${ideaId}` : null,
-    feedbackHref: detail ? `/d/creator/ideas/${ideaId}/feedback` : null,
-    analyticsHref: hasAnalytics ? `/d/creator/ideas/${ideaId}/insights` : null,
-    feedbackCount: submissions.length,
-    latestFeedback,
-    summary: detail
-      ? { problem: detail.problem, solution: detail.solution }
-      : null,
+    status: "ready",
+    view: {
+      dataSource: "preview",
+      idea,
+      detailHref: detail ? `/ideas/${ideaId}` : null,
+      feedbackHref: detail ? `/d/creator/ideas/${ideaId}/feedback` : null,
+      analyticsHref: hasAnalytics
+        ? `/d/creator/ideas/${ideaId}/insights`
+        : null,
+      feedbackCount: submissions.length,
+      latestFeedback,
+      summary: detail
+        ? { problem: detail.problem, solution: detail.solution }
+        : null,
+    },
   };
+}
+
+function failure(error: unknown): IdeaWorkspaceResult {
+  const status = error instanceof ApiRequestError ? error.status : null;
+  if (status === 401) return { status: "signed_out" };
+  if (status === 403 || status === 404) return { status: "not_found" };
+  return {
+    reason:
+      status !== null && status >= 500
+        ? "The creator service is temporarily unavailable. Try again."
+        : "We could not load this idea workspace. Try again.",
+    status: "unavailable",
+  };
+}
+
+/**
+ * One idea's creator workspace.
+ *
+ * Live auth reads the idea with `includeDraft` and the creator-only insights
+ * report together; the insights call is the ownership check. The response list
+ * is not exposed by the API yet, so a live workspace shows the counted total but
+ * no per-response detail rather than borrowing fixture answers.
+ */
+export async function getIdeaWorkspaceView(
+  ideaId: string,
+): Promise<IdeaWorkspaceResult> {
+  if (isPreviewAuth() || !isApiConfigured()) {
+    return previewView(ideaId);
+  }
+
+  const token = await readSessionToken();
+  if (!token) return { status: "signed_out" };
+
+  try {
+    const [apiIdea] = await Promise.all([
+      getLiveIdea(ideaId, { includeDraft: true, token }),
+      fetchApiJson(`/ideas/${encodeURIComponent(ideaId)}/insights`, { token }),
+    ]);
+    if (!apiIdea) return { status: "not_found" };
+
+    const idea = toMyIdea(apiIdea);
+    if (!idea) return { status: "not_found" };
+
+    const detail = toIdeaDetail(apiIdea);
+    const id = apiIdea.id;
+
+    return {
+      status: "ready",
+      view: {
+        dataSource: "live",
+        idea,
+        detailHref: apiIdea.status === "DRAFT" ? null : `/ideas/${id}`,
+        feedbackHref:
+          apiIdea.status === "DRAFT"
+            ? `/d/creator/ideas/${id}/feedback`
+            : null,
+        analyticsHref: `/d/creator/ideas/${id}/insights`,
+        feedbackCount: apiIdea.feedbackCount ?? 0,
+        latestFeedback: [],
+        summary: { problem: detail.problem, solution: detail.solution },
+      },
+    };
+  } catch (error) {
+    return failure(error);
+  }
 }

@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import Link from "next/link";
+import { notFound, redirect } from "next/navigation";
 
+import { StatePanel } from "@/components/ui/state-panel";
 import { FeedbackBuilder } from "@/features/feedback/components/feedback-builder";
-import { emptyFeedbackForm } from "@/features/feedback/content/preview-feedback";
-import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-detail";
-import type { CommunityInvite } from "@/features/feedback/types";
+import { getFeedbackBuilderView } from "@/features/feedback/server/builder";
 
 export const metadata: Metadata = {
   title: "Feedback and community",
@@ -14,32 +14,43 @@ export const metadata: Metadata = {
 
 type PageProps = { params: Promise<{ id: string }> };
 
-const emptyCommunity: CommunityInvite = {
-  description: "",
-  destinations: [],
-  enabled: false,
-  primaryDestinationId: null,
-  showAfterFeedback: true,
-  showOnIdeaPage: false,
-  title: "Want to stay connected?",
-};
-
-/**
- * Creator-only configuration surface. The API authorises ownership; this page
- * resolves the single preview idea and 404s anything else, so no link implies a
- * workspace that does not exist. The missing session is why the builder labels
- * its persistence as preview.
- */
 export default async function FeedbackBuilderPage({ params }: PageProps) {
   const { id } = await params;
-  const idea = getPreviewIdeaDetail(id);
-  if (!idea) notFound();
+  const result = await getFeedbackBuilderView(id);
+
+  if (result.status === "not_found") notFound();
+  if (result.status === "signed_out") {
+    redirect(
+      `/auth?next=${encodeURIComponent(`/d/creator/ideas/${id}/feedback`)}`,
+    );
+  }
+  if (result.status === "unavailable") {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        <StatePanel
+          variant="error"
+          eyebrow="Feedback unavailable"
+          title="We couldn't load this feedback form"
+          description={result.reason}
+          action={
+            <Link
+              href={`/d/creator/ideas/${id}/feedback`}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              Try again
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
   return (
     <FeedbackBuilder
-      idea={idea}
-      initialForm={idea.feedbackForm ?? emptyFeedbackForm()}
-      initialCommunity={idea.community ?? emptyCommunity}
+      idea={result.view.idea}
+      initialCommunity={result.view.community}
+      initialForm={result.view.form}
+      mode={result.view.dataSource}
     />
   );
 }

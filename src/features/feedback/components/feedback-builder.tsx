@@ -24,6 +24,7 @@ import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { FeedbackDialog } from "@/features/feedback/components/feedback-dialog";
+import { toSurveyApiPayload } from "@/features/idea-builder/lib/api-payload";
 import {
   createId,
   duplicateQuestion,
@@ -496,20 +497,28 @@ export function FeedbackBuilder({
   idea,
   initialCommunity,
   initialForm,
+  mode = "preview",
 }: {
   idea: IdeaDetail;
   initialCommunity: CommunityInvite;
   initialForm: FeedbackForm;
+  mode?: "live" | "preview";
 }) {
   const [tab, setTab] = useState<"community" | "feedback">("feedback");
   const [form, setForm] = useState<FeedbackForm>(initialForm);
   const [community, setCommunity] = useState<CommunityInvite>(initialCommunity);
   const [status, setStatus] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [previewOpen, setPreviewOpen] = useState(false);
   const [loadedDraft, setLoadedDraft] = useState(false);
 
   useEffect(() => {
+    if (mode === "live") {
+      setLoadedDraft(true);
+      return;
+    }
     const draft = readDraft(idea.id);
     if (draft) {
       // The draft lives only in this browser. Reading localStorage during render would
@@ -521,7 +530,7 @@ export function FeedbackBuilder({
       setStatus("Restored the draft saved in this browser.");
     }
     setLoadedDraft(true);
-  }, [idea.id]);
+  }, [idea.id, mode]);
 
   const issues = useMemo(() => validateFeedbackForm(form), [form]);
   const issueMap = useMemo(() => {
@@ -563,28 +572,77 @@ export function FeedbackBuilder({
     });
   }
 
-  function saveDraft() {
-    writeDraft(idea.id, { community, form });
-    setStatus("Draft saved in this browser. It is not on the server yet.");
+  async function saveDraft() {
+    if (mode === "preview") {
+      writeDraft(idea.id, { community, form });
+      setStatus("Draft saved in this browser. It is not on the server yet.");
+      return;
+    }
+
+    setSaving(true);
+    setApiError(null);
+    try {
+      const response = await fetch(
+        `/api/ideas/${encodeURIComponent(idea.id)}/survey`,
+        {
+          body: JSON.stringify(toSurveyApiPayload(form)),
+          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+        },
+      );
+      if (!response.ok) throw new Error("The API rejected this form.");
+      setStatus("Feedback form saved to your idea.");
+    } catch {
+      setApiError("We couldn't save this feedback form. Try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  function publish() {
+  async function publish() {
     setShowErrors(true);
-    if (issues.length > 0 || communityIssues.length > 0) {
+    if (issues.length > 0 || (mode === "preview" && communityIssues.length > 0)) {
       setStatus("Fix the highlighted fields before publishing.");
       return;
     }
-    const nextForm: FeedbackForm = {
-      ...form,
-      published: true,
-      updatedAt: new Date().toISOString(),
-      version: form.published ? form.version + 1 : Math.max(1, form.version),
-    };
-    setForm(nextForm);
-    writeDraft(idea.id, { community, form: nextForm });
-    setStatus(
-      `Published as form version ${nextForm.version} in this preview. Previous responses stay attached to the version they answered.`,
-    );
+    if (mode === "preview") {
+      const nextForm: FeedbackForm = {
+        ...form,
+        published: true,
+        updatedAt: new Date().toISOString(),
+        version: form.published ? form.version + 1 : Math.max(1, form.version),
+      };
+      setForm(nextForm);
+      writeDraft(idea.id, { community, form: nextForm });
+      setStatus(
+        `Published as form version ${nextForm.version} in this preview. Previous responses stay attached to the version they answered.`,
+      );
+      return;
+    }
+
+    setSaving(true);
+    setApiError(null);
+    try {
+      const response = await fetch(
+        `/api/ideas/${encodeURIComponent(idea.id)}/survey`,
+        {
+          body: JSON.stringify(toSurveyApiPayload(form)),
+          headers: { "Content-Type": "application/json" },
+          method: "PUT",
+        },
+      );
+      if (!response.ok) throw new Error("The API rejected this form.");
+      setForm((current) => ({
+        ...current,
+        published: true,
+        updatedAt: new Date().toISOString(),
+      }));
+      setStatus("Feedback form published to your idea.");
+    } catch {
+      setApiError("We couldn't publish this feedback form. Try again.");
+    } finally {
+      setSaving(false);
+    }
   }
 
   function addDestination() {
@@ -642,6 +700,13 @@ export function FeedbackBuilder({
     community,
     feedbackForm: formForPreview,
   };
+  const tabs =
+    mode === "preview"
+      ? ([
+          ["feedback", "Feedback form"],
+          ["community", "Community"],
+        ] as const)
+      : ([["feedback", "Feedback form"]] as const);
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
@@ -678,18 +743,13 @@ export function FeedbackBuilder({
             {form.published ? `Published · v${form.version}` : "Draft"}
           </Pill>
           <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong">
-            Preview persistence
+            {mode === "live" ? "Live API" : "Preview persistence"}
           </span>
         </div>
       </header>
 
       <div className="mt-4 flex gap-1 border-b border-border">
-        {(
-          [
-            ["feedback", "Feedback form"],
-            ["community", "Community"],
-          ] as const
-        ).map(([value, label]) => (
+        {tabs.map(([value, label]) => (
           <button
             key={value}
             type="button"
@@ -712,6 +772,22 @@ export function FeedbackBuilder({
           role="status"
         >
           {status}
+        </p>
+      ) : null}
+
+      {apiError ? (
+        <p
+          className="mt-4 rounded-xl border border-danger/25 bg-danger/[0.04] px-3 py-2 text-xs leading-5 text-danger"
+          role="alert"
+        >
+          {apiError}
+        </p>
+      ) : null}
+
+      {mode === "live" ? (
+        <p className="mt-2 text-[0.6875rem] leading-5 text-muted">
+          Feedback questions save to the API while the idea is a draft. Community
+          invite settings are not stored by the API yet.
         </p>
       ) : null}
 
@@ -961,17 +1037,28 @@ export function FeedbackBuilder({
           Back to my ideas
         </Link>
         <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="md" onClick={saveDraft}>
-            Save draft
+          <Button
+            type="button"
+            variant="outline"
+            size="md"
+            onClick={() => void saveDraft()}
+            disabled={saving}
+          >
+            {saving ? "Saving..." : "Save draft"}
           </Button>
-          <Button type="button" size="md" onClick={publish}>
+          <Button
+            type="button"
+            size="md"
+            onClick={() => void publish()}
+            disabled={saving}
+          >
             <HugeiconsIcon
               icon={CheckmarkCircle02Icon}
               size={16}
               strokeWidth={2}
               aria-hidden="true"
             />
-            Publish changes
+            {saving ? "Publishing..." : "Publish changes"}
           </Button>
         </div>
       </div>

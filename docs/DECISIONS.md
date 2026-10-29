@@ -59,6 +59,7 @@ choices.
 | D-048 | 2026-10-28 | Accepted | The campaign wizard starts or resumes the application-fee charge through a same-origin BFF and submits the saved draft; the API owns the price, the charge, the webhook state and the submit gate, and the browser only explains the server state. |
 | D-051 | 2026-10-29 | Accepted | Creator Studio reads the signed-in creator's own ideas from `GET /ideas?mine=true`; preview auth or an unconfigured API still renders fixtures, and preview-only feedback links are omitted in live mode. |
 | D-052 | 2026-10-29 | Accepted | The idea builder writes through same-origin BFF routes: draft create/update, survey replacement, and publish all go to the API; preview auth keeps the browser-only flow. |
+| D-053 | 2026-10-29 | Accepted | The idea workspace reads the owned idea and its survey from the API for live sessions; individual feedback responses remain unavailable because the API has no creator response list. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2104,6 +2105,35 @@ after a live publish to prevent a published idea from being edited as a draft.
 
 Revisit when: The API stores summary/community, or a draft needs server-side
 revision conflict handling.
+
+### D-053: The idea workspace reads ownership and survey from the API
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The per-idea workspace and feedback builder resolved only preview
+fixtures, while the API already exposes the idea, a creator-only insights report
+that proves ownership, and a replace-all survey route.
+
+Decision: A live workspace reads the idea with `includeDraft` and the insights
+report together; a non-owner receives 404. The feedback builder reads the survey
+and replaces it through the same BFF route used by the builder. Survey edits are
+offered only while the idea is a draft, matching the API. Individual feedback
+responses remain unavailable because there is no creator response list endpoint;
+the workspace shows the counted total without pretending to show answers.
+Preview auth keeps the fixture views. Community settings stay preview-only.
+
+Alternatives: Read a public idea without the insights gate (cannot distinguish
+owner from reader); show fixture responses next to a live idea (mixes sources);
+allow survey edits after publish (API rejects them); add a response-list endpoint
+in this change (larger backend work).
+
+Consequences: A live creator can configure the form before publishing and sees
+the same lifecycle state as the API. The feedback inbox and per-response detail
+remain blocked until the API exposes them.
+
+Revisit when: A creator feedback-response endpoint or survey version history
+lands.
 
 ## Decision template
 

@@ -27,8 +27,8 @@ Ground rules that shape this list:
 | `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
 | `/d/creator/ideas` | My ideas | Real. List of owned ideas, including drafts, from the API. **No filters, search, sort, or archive yet** |
 | `/d/creator/ideas/new` | Idea builder | Live authenticated builder: creates or updates a draft, sets its feedback questions, and publishes through the API. Preview auth keeps the browser-only flow. Summary and community invite stay local preview fields |
-| `/d/creator/ideas/[id]` | Idea workspace | Preview-backed for now. Status, cover, metric cards, summary, latest responses; links only to routes that resolve for the idea |
-| `/d/creator/ideas/[id]/feedback` | Feedback form setup | Preview-backed. Configures questions for one preview idea |
+| `/d/creator/ideas/[id]` | Idea workspace | Live for authenticated accounts: reads the idea and ownership from the API. The creator response list is not exposed yet, so only the counted total is shown |
+| `/d/creator/ideas/[id]/feedback` | Feedback form setup | Live while the idea is a draft: reads and replaces the API survey. Preview auth keeps the fixture builder |
 | `/d/creator/feedback` | Feedback inbox (all ideas) | Preview-backed, read-only. Responses grouped by idea, newest first, anonymous |
 | `/d/creator/analytics` | Analytics (all ideas) | Real. Idea picker plus aggregate cards from the analytics API |
 | `/d/creator/ideas/[id]/insights` | Analytics (one idea) | Real and the richest screen: chart, activity, feedback breakdown, gated AI insights |

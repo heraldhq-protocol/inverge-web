@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 
 import {
   Analytics01Icon,
@@ -16,6 +16,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { Amount } from "@/components/ui/amount";
 import { MetricCard } from "@/components/ui/metric-card";
 import { Pill } from "@/components/ui/pill";
+import { StatePanel } from "@/components/ui/state-panel";
 import { SubmissionSummary } from "@/features/feedback/components/submission-summary";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { IdeaWorkspaceTabs } from "@/features/ideas/components/idea-workspace-tabs";
@@ -33,10 +34,13 @@ export async function generateMetadata({
   params,
 }: PageProps): Promise<Metadata> {
   const { id } = await params;
-  const view = getIdeaWorkspaceView(id);
+  const result = await getIdeaWorkspaceView(id);
 
   return {
-    title: view ? `${view.idea.title} | Creator Studio` : "Idea workspace",
+    title:
+      result.status === "ready"
+        ? `${result.view.idea.title} | Creator Studio`
+        : "Idea workspace",
     description:
       "One idea's workspace: its state, support, feedback, and the sections that exist for it.",
   };
@@ -53,10 +57,35 @@ export async function generateMetadata({
  */
 export default async function IdeaWorkspacePage({ params }: PageProps) {
   const { id } = await params;
-  const view = getIdeaWorkspaceView(id);
-  if (!view) notFound();
+  const result = await getIdeaWorkspaceView(id);
+  if (result.status === "not_found") notFound();
+  if (result.status === "signed_out") {
+    redirect(`/auth?next=${encodeURIComponent(`/d/creator/ideas/${id}`)}`);
+  }
+  if (result.status === "unavailable") {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        <StatePanel
+          variant="error"
+          eyebrow="Idea workspace unavailable"
+          title="We couldn't load this idea"
+          description={result.reason}
+          action={
+            <Link
+              href={`/d/creator/ideas/${id}`}
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              Try again
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
 
-  const { idea, analyticsHref, detailHref, feedbackHref, feedbackCount } = view;
+  const view = result.view;
+  const { idea, analyticsHref, dataSource, detailHref, feedbackHref, feedbackCount } =
+    view;
   const updated = ideaUpdatedLabel(idea.updatedAt);
 
   const actions = [
@@ -224,7 +253,7 @@ export default async function IdeaWorkspacePage({ params }: PageProps) {
           >
             Latest feedback
           </h2>
-          {feedbackCount > 0 ? (
+          {dataSource === "preview" && feedbackCount > 0 ? (
             <Link
               href="/d/creator/feedback"
               className="text-sm font-semibold text-brand-strong hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
@@ -234,7 +263,13 @@ export default async function IdeaWorkspacePage({ params }: PageProps) {
           ) : null}
         </div>
 
-        {feedbackCount > 0 ? (
+        {dataSource === "live" && feedbackCount > 0 ? (
+          <p className="mt-3 rounded-2xl border border-border bg-surface px-4 py-5 text-sm leading-6 text-muted">
+            {feedbackCount} {feedbackCount === 1 ? "response" : "responses"}{" "}
+            are counted for this idea. The API does not expose a creator
+            response list yet, so individual answers are not shown here.
+          </p>
+        ) : feedbackCount > 0 ? (
           <>
             <p className="mt-1 text-xs text-muted">
               {feedbackCount} {feedbackCount === 1 ? "response" : "responses"},
@@ -280,8 +315,9 @@ export default async function IdeaWorkspacePage({ params }: PageProps) {
       </section>
 
       <p className="mt-6 max-w-3xl text-xs leading-5 text-muted">
-        Preview workspace. Support, validation, and responses come from fixtures
-        until idea persistence is connected; nothing here writes to an API.
+        {dataSource === "live"
+          ? "This workspace reads the idea and its ownership from the API. The response list is not connected yet."
+          : "Preview workspace. Support, validation, and responses come from fixtures until idea persistence is connected; nothing here writes to an API."}
       </p>
     </div>
   );
