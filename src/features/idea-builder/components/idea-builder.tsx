@@ -50,6 +50,10 @@ import {
   type IdeaDraft,
 } from "@/features/idea-builder/types";
 import {
+  toIdeaApiPayload,
+  toSurveyApiPayload,
+} from "@/features/idea-builder/lib/api-payload";
+import {
   categoryLabel,
   draftCompleteness,
   validateDraft,
@@ -59,6 +63,7 @@ import {
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 
 const DRAFT_KEY = "inverge:idea-draft:new";
+const REMOTE_ID_KEY = "inverge:idea-draft:remote-id";
 
 const categoryOptions = discoveryCategories.map((category) => ({
   label: category.label,
@@ -233,6 +238,31 @@ function writeDraft(draft: IdeaDraft) {
   }
 }
 
+function readRemoteId(): string | null {
+  try {
+    return window.localStorage.getItem(REMOTE_ID_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function writeRemoteId(id: string) {
+  try {
+    window.localStorage.setItem(REMOTE_ID_KEY, id);
+  } catch {
+    // The draft still rounds-trips through the API response.
+  }
+}
+
+function clearLocalDraft() {
+  try {
+    window.localStorage.removeItem(DRAFT_KEY);
+    window.localStorage.removeItem(REMOTE_ID_KEY);
+  } catch {
+    // Nothing else depends on the local copy.
+  }
+}
+
 function StepField({
   children,
   error,
@@ -322,11 +352,18 @@ function PreviewCard({ draft }: { draft: IdeaDraft }) {
   );
 }
 
-export function IdeaBuilder() {
+export function IdeaBuilder({
+  mode = "preview",
+}: {
+  mode?: "live" | "preview";
+}) {
   const [draft, setDraft] = useState<IdeaDraft>(freshDraft);
   const [stepIndex, setStepIndex] = useState(0);
   const [issues, setIssues] = useState<DraftIssue[]>([]);
   const [status, setStatus] = useState<string | null>(null);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [remoteId, setRemoteId] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [published, setPublished] = useState(false);
   const [loaded, setLoaded] = useState(false);
 
@@ -343,6 +380,8 @@ export function IdeaBuilder() {
       setDraft(saved);
       setStatus("Restored the draft saved in this browser.");
     }
+    const savedRemoteId = readRemoteId();
+    if (savedRemoteId) setRemoteId(savedRemoteId);
     setLoaded(true);
   }, []);
 
@@ -354,11 +393,86 @@ export function IdeaBuilder() {
     }));
     setPublished(false);
     setStatus(null);
+    setApiError(null);
   }
 
-  function persist(next = draft) {
+  async function saveToApi(next: IdeaDraft): Promise<string | null> {
+    setSaving(true);
+    setApiError(null);
+
+    try {
+      const response = await fetch(
+        remoteId ? `/api/ideas/${encodeURIComponent(remoteId)}` : "/api/ideas",
+        {
+          body: JSON.stringify(toIdeaApiPayload(next)),
+          headers: { "Content-Type": "application/json" },
+          method: remoteId ? "PATCH" : "POST",
+        },
+      );
+      const payload = (await response.json().catch(() => null)) as {
+        id?: unknown;
+        message?: unknown;
+      } | null;
+
+      if (!response.ok) {
+        throw new Error(
+          typeof payload?.message === "string"
+            ? payload.message
+            : "The API rejected this idea.",
+        );
+      }
+
+      const id =
+        typeof payload?.id === "string" ? payload.id : (remoteId ?? null);
+      if (!id) throw new Error("The API did not return an idea id.");
+      setRemoteId(id);
+      writeRemoteId(id);
+
+      if (next.feedback.enabled && next.feedback.questions.length > 0) {
+        const survey = await fetch(
+          `/api/ideas/${encodeURIComponent(id)}/survey`,
+          {
+            body: JSON.stringify(toSurveyApiPayload(next.feedback)),
+            headers: { "Content-Type": "application/json" },
+            method: "PUT",
+          },
+        );
+        if (!survey.ok) {
+          throw new Error(
+            "The idea saved, but the feedback form could not be updated. Add a rating question and try again.",
+          );
+        }
+      }
+
+      return id;
+    } catch (error) {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't save this idea. Try again.",
+      );
+      return null;
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function persist(next = draft): Promise<boolean> {
     writeDraft({ ...next, updatedAt: new Date().toISOString() });
-    setStatus("Draft saved in this browser. Publishing is not connected yet.");
+
+    if (mode === "preview") {
+      setStatus("Draft saved in this browser.");
+      return true;
+    }
+
+    const id = await saveToApi(next);
+    if (!id) {
+      setStatus("Could not save the draft to your account.");
+      return false;
+    }
+
+    setStatus("Draft saved to your Inverge account.");
+    return true;
   }
 
   function goNext() {
@@ -377,16 +491,53 @@ export function IdeaBuilder() {
     setStepIndex((index) => Math.max(index - 1, 0));
   }
 
-  function publish() {
+  async function publish() {
     const allIssues = validateDraft(draft);
     setIssues(allIssues);
     if (allIssues.length > 0) {
       setStatus("Fix the remaining fields before publishing.");
       return;
     }
-    persist();
-    setPublished(true);
-    setStatus(null);
+
+    if (mode === "preview") {
+      void persist();
+      setPublished(true);
+      setStatus(null);
+      return;
+    }
+
+    const id = await saveToApi(draft);
+    if (!id) return;
+
+    setSaving(true);
+    setApiError(null);
+    try {
+      const response = await fetch(
+        `/api/ideas/${encodeURIComponent(id)}/publish`,
+        { method: "POST" },
+      );
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as {
+          message?: unknown;
+        } | null;
+        throw new Error(
+          typeof payload?.message === "string"
+            ? payload.message
+            : "The API could not publish this idea.",
+        );
+      }
+      setPublished(true);
+      setStatus(null);
+      clearLocalDraft();
+    } catch (error) {
+      setApiError(
+        error instanceof Error
+          ? error.message
+          : "We couldn't publish this idea. Try again.",
+      );
+    } finally {
+      setSaving(false);
+    }
   }
 
   if (published) {
@@ -405,19 +556,25 @@ export function IdeaBuilder() {
             Your idea is ready
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-            This preview has validated the plan and saved it in this browser. A
-            live publish will run the existing quality check and create the
-            public idea through the API.
+            {mode === "live"
+              ? "Your idea was saved and published through the API. The quality check and moderation run server-side."
+              : "This preview has validated the plan and saved it in this browser. A live publish will run the existing quality check and create the public idea through the API."}
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Button type="button" onClick={() => setPublished(false)}>
-              Keep editing
-            </Button>
+            {mode === "preview" ? (
+              <Button type="button" onClick={() => setPublished(false)}>
+                Keep editing
+              </Button>
+            ) : null}
             <Link
-              href="/d/creator/ideas"
+              href={
+                mode === "live" && remoteId
+                  ? `/d/creator/ideas/${remoteId}`
+                  : "/d/creator/ideas"
+              }
               className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:border-brand/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
             >
-              Back to my ideas
+              {mode === "live" ? "Open idea workspace" : "Back to my ideas"}
             </Link>
           </div>
         </div>
@@ -548,7 +705,7 @@ export function IdeaBuilder() {
                 Fill demo data
               </button>
               <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong">
-                Preview workflow
+                {mode === "preview" ? "Preview workflow" : "Live API"}
               </span>
             </div>
           </div>
@@ -559,6 +716,23 @@ export function IdeaBuilder() {
               role="status"
             >
               {status}
+            </p>
+          ) : null}
+
+          {apiError ? (
+            <p
+              className="mt-3 rounded-xl border border-danger/25 bg-danger/[0.04] px-3 py-2 text-xs leading-5 text-danger"
+              role="alert"
+            >
+              {apiError}
+            </p>
+          ) : null}
+
+          {mode === "live" ? (
+            <p className="mt-2 text-[0.6875rem] leading-5 text-muted">
+              Summary and community invite settings are not stored by the API
+              yet; they remain local builder preview fields. The idea, roadmap,
+              funding intent, and feedback questions are saved to your account.
             </p>
           ) : null}
 
@@ -1838,9 +2012,10 @@ export function IdeaBuilder() {
                     </div>
                   ) : (
                     <p className="rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs text-brand-strong">
-                      All required fields are complete. Publishing in this
-                      preview validates the flow; the live API will run its own
-                      quality and moderation checks.
+                      All required fields are complete.{" "}
+                      {mode === "live"
+                        ? "The API will run its own quality and moderation checks when you publish."
+                        : "Publishing in this preview validates the flow; the live API will run its own quality and moderation checks."}
                     </p>
                   )}
                 </div>
@@ -1874,10 +2049,10 @@ export function IdeaBuilder() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => persist()}
+                  onClick={() => void persist()}
                   className="mt-2 inline-flex min-h-9 items-center gap-1 text-[0.6875rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
                 >
-                  Save draft in this browser
+                  {mode === "live" ? "Save draft" : "Save draft in this browser"}
                 </button>
               </div>
             </aside>
@@ -1904,22 +2079,30 @@ export function IdeaBuilder() {
                 type="button"
                 variant="ghost"
                 size="md"
-                onClick={() => persist()}
+                onClick={() => void persist()}
+                disabled={saving}
               >
-                Save draft
+                {saving ? "Saving..." : "Save draft"}
               </Button>
               {step === "review" ? (
-                <Button type="button" size="md" onClick={publish}>
+                <Button
+                  type="button"
+                  size="md"
+                  onClick={() => void publish()}
+                  disabled={saving}
+                >
                   <HugeiconsIcon
                     icon={CheckmarkCircle02Icon}
                     size={16}
                     strokeWidth={2}
                     aria-hidden="true"
                   />
-                  Publish idea
-                  <span className="ml-1 text-[0.625rem] font-normal opacity-80">
-                    preview
-                  </span>
+                  {saving ? "Publishing..." : "Publish idea"}
+                  {mode === "preview" ? (
+                    <span className="ml-1 text-[0.625rem] font-normal opacity-80">
+                      preview
+                    </span>
+                  ) : null}
                 </Button>
               ) : (
                 <Button type="button" size="md" onClick={goNext}>

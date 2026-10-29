@@ -58,6 +58,7 @@ choices.
 | D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
 | D-048 | 2026-10-28 | Accepted | The campaign wizard starts or resumes the application-fee charge through a same-origin BFF and submits the saved draft; the API owns the price, the charge, the webhook state and the submit gate, and the browser only explains the server state. |
 | D-051 | 2026-10-29 | Accepted | Creator Studio reads the signed-in creator's own ideas from `GET /ideas?mine=true`; preview auth or an unconfigured API still renders fixtures, and preview-only feedback links are omitted in live mode. |
+| D-052 | 2026-10-29 | Accepted | The idea builder writes through same-origin BFF routes: draft create/update, survey replacement, and publish all go to the API; preview auth keeps the browser-only flow. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2071,6 +2072,38 @@ be complete.
 
 Revisit when: The API exposes a creator feedback inbox or a bounded dashboard
 aggregate, or the idea workspace is moved onto the API.
+
+### D-052: The idea builder writes through the API
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The idea builder was a browser-only flow: drafts lived in
+`localStorage` and the review step said publishing was not connected. The API
+already exposes create, update, survey replacement, and publish routes, but the
+browser has no bearer token and the preview identity has no server account.
+
+Decision: In a live session the builder creates or updates a draft through
+same-origin BFF routes, replaces the feedback survey while the idea is still a
+draft, and then publishes. The API remains authoritative for validation,
+ownership, quality and moderation. Preview auth keeps the existing local flow.
+The browser draft remains as recovery state; a remote id is stored separately so
+a reload updates the same API draft instead of creating a duplicate. Summary and
+community invite are not stored by the API yet, so the live UI labels them as
+local preview fields rather than silently dropping them.
+
+Alternatives: Post directly to the API from the browser (exposes the session
+token); keep publishing local-only (the creator sees success but no idea exists);
+fold create, survey and publish into one route (hides which step failed); add a
+summary column and community model in this change (schema and product work
+larger than the wiring).
+
+Consequences: A live idea is visible in My ideas immediately after publish.
+Survey edits fail after publish by design. The builder's local draft is cleared
+after a live publish to prevent a published idea from being edited as a draft.
+
+Revisit when: The API stores summary/community, or a draft needs server-side
+revision conflict handling.
 
 ## Decision template
 

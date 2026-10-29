@@ -26,7 +26,7 @@ Ground rules that shape this list:
 | `/d/pre-pledges` | Pre-pledges | Preview list with fixture intents. A live account sees an unavailable state because the API has no pre-pledge read model yet |
 | `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
 | `/d/creator/ideas` | My ideas | Real. List of owned ideas, including drafts, from the API. **No filters, search, sort, or archive yet** |
-| `/d/creator/ideas/new` | Idea builder | Full four-step flow with draft autosave |
+| `/d/creator/ideas/new` | Idea builder | Live authenticated builder: creates or updates a draft, sets its feedback questions, and publishes through the API. Preview auth keeps the browser-only flow. Summary and community invite stay local preview fields |
 | `/d/creator/ideas/[id]` | Idea workspace | Preview-backed for now. Status, cover, metric cards, summary, latest responses; links only to routes that resolve for the idea |
 | `/d/creator/ideas/[id]/feedback` | Feedback form setup | Preview-backed. Configures questions for one preview idea |
 | `/d/creator/feedback` | Feedback inbox (all ideas) | Preview-backed, read-only. Responses grouped by idea, newest first, anonymous |
