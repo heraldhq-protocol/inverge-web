@@ -8,8 +8,8 @@ import type { ShellData } from "@/features/app-shell/types";
 import { authHref } from "@/features/auth/lib/auth-routes";
 import { PATHNAME_HEADER } from "@/features/auth/lib/protected-routes";
 import { readSessionUser } from "@/features/auth/server/session-user";
-import { notificationsPreviewData } from "@/features/notifications/content/preview-data";
 import { shellNotifications } from "@/features/notifications/lib/shell-summary";
+import { getNotificationsView } from "@/features/notifications/server/notifications";
 import { PRIVATE_ROBOTS } from "@/lib/seo/metadata";
 
 /**
@@ -32,7 +32,11 @@ export default async function ProductLayout({
   }
 
   const viewer = await getDashboardViewer();
-  const notifications = shellNotifications(notificationsPreviewData, 4);
+  const notificationsResult = await getNotificationsView();
+  const notifications =
+    notificationsResult.status === "ready"
+      ? shellNotifications(notificationsResult.view.items, 4)
+      : { items: [], unreadCount: 0 };
 
   const shell: ShellData = {
     notifications: notifications.items,

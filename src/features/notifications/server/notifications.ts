@@ -1,5 +1,7 @@
 import "server-only";
 
+import { cache } from "react";
+
 import { isPreviewAuth } from "@/features/auth/server/auth-mode";
 import { readSessionToken } from "@/features/auth/server/session";
 import { notificationsPreviewData } from "@/features/notifications/content/preview-data";
@@ -189,40 +191,42 @@ function unavailable(error: unknown): NotificationsResult {
   };
 }
 
-export async function getNotificationsView(): Promise<NotificationsResult> {
-  if (isPreviewAuth() || !isApiConfigured()) {
-    return {
-      status: "ready",
-      view: {
-        dataSource: "preview",
-        items: notificationsPreviewData,
-        truncated: false,
-      },
-    };
-  }
-
-  const token = await readSessionToken();
-  if (!token) return { status: "signed_out" };
-
-  try {
-    const page = await fetchApiJson<ApiNotificationPage>(
-      "/me/notifications?limit=50",
-      { token },
-    );
-    const now = new Date();
-
-    return {
-      status: "ready",
-      view: {
-        dataSource: "live",
-        items: page.data.map((row) => toNotificationRecord(row, now)),
-        truncated: page.page.hasMore,
-      },
-    };
-  } catch (error) {
-    if (error instanceof ApiRequestError && error.status === 401) {
-      return { status: "signed_out" };
+export const getNotificationsView = cache(
+  async (): Promise<NotificationsResult> => {
+    if (isPreviewAuth() || !isApiConfigured()) {
+      return {
+        status: "ready",
+        view: {
+          dataSource: "preview",
+          items: notificationsPreviewData,
+          truncated: false,
+        },
+      };
     }
-    return unavailable(error);
-  }
-}
+
+    const token = await readSessionToken();
+    if (!token) return { status: "signed_out" };
+
+    try {
+      const page = await fetchApiJson<ApiNotificationPage>(
+        "/me/notifications?limit=50",
+        { token },
+      );
+      const now = new Date();
+
+      return {
+        status: "ready",
+        view: {
+          dataSource: "live",
+          items: page.data.map((row) => toNotificationRecord(row, now)),
+          truncated: page.page.hasMore,
+        },
+      };
+    } catch (error) {
+      if (error instanceof ApiRequestError && error.status === 401) {
+        return { status: "signed_out" };
+      }
+      return unavailable(error);
+    }
+  },
+);
