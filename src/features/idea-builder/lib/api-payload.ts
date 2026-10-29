@@ -63,14 +63,14 @@ const SURVEY_TYPE: Readonly<
  * them in the browser draft and tells the creator they are not persisted live.
  */
 export function toIdeaApiPayload(draft: IdeaDraft): IdeaApiPayload {
-  const useOfFunds = Object.fromEntries(
-    draft.funding.useOfFunds.flatMap((entry) => {
-      const amount = Number(entry.amount);
-      const label = entry.label.trim();
-      if (!label || !Number.isFinite(amount) || amount <= 0) return [];
-      return [[label, amount]];
-    }),
-  );
+  const useOfFunds: Record<string, number> = {};
+  for (const entry of draft.funding.useOfFunds) {
+    const amount = Number(entry.amount);
+    const label = entry.label.trim();
+    if (label && Number.isFinite(amount) && amount > 0) {
+      useOfFunds[label] = amount;
+    }
+  }
   const roadmapSteps = draft.roadmapSteps
     .map((step) => ({
       date: step.date.trim(),

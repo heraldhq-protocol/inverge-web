@@ -700,13 +700,13 @@ export function FeedbackBuilder({
     community,
     feedbackForm: formForPreview,
   };
-  const tabs =
+  const tabs: readonly (readonly ["community" | "feedback", string])[] =
     mode === "preview"
-      ? ([
+      ? [
           ["feedback", "Feedback form"],
           ["community", "Community"],
-        ] as const)
-      : ([["feedback", "Feedback form"]] as const);
+        ]
+      : [["feedback", "Feedback form"]];
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
