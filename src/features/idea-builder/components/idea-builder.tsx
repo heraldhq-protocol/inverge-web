@@ -16,7 +16,7 @@ import {
   ViewIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -25,6 +25,9 @@ import { Pill } from "@/components/ui/pill";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { IdeaFieldAssistant } from "@/features/ai/components/idea-field-assistant";
+import type { AiAccess, IdeaAssistantField } from "@/features/ai/types";
+import { assistantContext } from "@/features/ai/lib/context";
 import { discoveryCategories } from "@/features/home/discovery-categories";
 import {
   COMMUNITY_DESTINATION_META,
@@ -61,6 +64,7 @@ import {
   type DraftIssue,
 } from "@/features/idea-builder/lib/validation";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import { sendJson } from "@/lib/api/client";
 
 const DRAFT_KEY = "inverge:idea-draft:new";
 const REMOTE_ID_KEY = "inverge:idea-draft:remote-id";
@@ -366,9 +370,34 @@ export function IdeaBuilder({
   const [saving, setSaving] = useState(false);
   const [published, setPublished] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [aiAccess, setAiAccess] = useState<AiAccess | null>(null);
+  const [aiAccessLoading, setAiAccessLoading] = useState(false);
+  const [aiAccessRequesting, setAiAccessRequesting] = useState(false);
 
   const step = BUILDER_STEPS[stepIndex]?.id ?? "basics";
   const completeness = draftCompleteness(draft);
+
+  const refreshAiAccess = useCallback(async () => {
+    if (mode !== "live") {
+      setAiAccess(null);
+      setAiAccessLoading(false);
+      return;
+    }
+
+    setAiAccessLoading(true);
+    const result = await sendJson<AiAccess>("/api/ai/access", {
+      method: "GET",
+    });
+    setAiAccess(result.ok ? result.data : null);
+    setAiAccessLoading(false);
+  }, [mode]);
+
+  useEffect(() => {
+    // Access is server-owned; fetching after mount is the hydration boundary for
+    // this client builder, which also restores its local draft in an effect.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refreshAiAccess();
+  }, [refreshAiAccess]);
 
   useEffect(() => {
     const saved = readDraft();
@@ -538,6 +567,46 @@ export function IdeaBuilder({
     } finally {
       setSaving(false);
     }
+  }
+
+  async function requestAiAccess() {
+    if (aiAccessRequesting) return;
+    setAiAccessRequesting(true);
+
+    try {
+      const result = await sendJson<unknown>("/api/ai/access-requests", {
+        method: "POST",
+      });
+      if (!result.ok) {
+        setApiError(result.message);
+        return;
+      }
+      await refreshAiAccess();
+    } finally {
+      setAiAccessRequesting(false);
+    }
+  }
+
+  function assistantProps(field: IdeaAssistantField) {
+    return {
+      field,
+      value: draft[field],
+      context: assistantContext(draft, field),
+      baseRevision: draft.updatedAt,
+      ideaId: mode === "live" ? remoteId : null,
+      access: mode === "live" ? aiAccess : null,
+      accessLoading: mode === "live" ? aiAccessLoading : false,
+      requestingAccess: aiAccessRequesting,
+      onRefreshAccess: () => void refreshAiAccess(),
+      onRequestAccess: () => void requestAiAccess(),
+      onSaveFirst: async () => (mode === "live" ? saveToApi(draft) : null),
+      onApply: (value: string) =>
+        update({ [field]: value } as Partial<IdeaDraft>),
+      disabledReason:
+        mode === "live"
+          ? undefined
+          : "AI assist is available on the live API workspace. This preview keeps the manual flow.",
+    };
   }
 
   if (published) {
@@ -755,6 +824,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("title")} />
                   <StepField
                     label="Short summary"
                     error={errorFor(issues, "summary")}
@@ -771,6 +841,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("summary")} />
                   <div className="grid gap-4 sm:grid-cols-2">
                     <StepField
                       label="Category"
@@ -829,6 +900,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("problem")} />
                   <StepField
                     label="Who it affects"
                     error={errorFor(issues, "targetUser")}
@@ -842,6 +914,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("targetUser")} />
                   <StepField
                     label="What happens today"
                     error={errorFor(issues, "currentAlternative")}
@@ -855,6 +928,9 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant
+                    {...assistantProps("currentAlternative")}
+                  />
                 </div>
               ) : null}
 
@@ -873,6 +949,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("solution")} />
                   <StepField
                     label="Risks and challenges"
                     optional
@@ -887,6 +964,7 @@ export function IdeaBuilder({
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("risks")} />
                 </div>
               ) : null}
 
@@ -2052,7 +2130,9 @@ export function IdeaBuilder({
                   onClick={() => void persist()}
                   className="mt-2 inline-flex min-h-9 items-center gap-1 text-[0.6875rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
                 >
-                  {mode === "live" ? "Save draft" : "Save draft in this browser"}
+                  {mode === "live"
+                    ? "Save draft"
+                    : "Save draft in this browser"}
                 </button>
               </div>
             </aside>
