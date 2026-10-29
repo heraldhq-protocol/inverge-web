@@ -11,6 +11,7 @@ import {
 } from "@/features/auth/server/preview-session";
 import {
   clearSessionCookie,
+  writeEmailHint,
   writeOnboardingIntent,
   writeSessionCookie,
 } from "@/features/auth/server/session";
@@ -72,9 +73,11 @@ export async function POST(request: Request) {
     });
     // A stale API session must not be picked up if the mode changes back.
     await clearSessionCookie();
+    await writeEmailHint(null);
     await writeOnboardingIntent(parsed.data.intent ?? "general");
 
     return NextResponse.json({
+      requiresEmailVerification: false,
       requiresOnboarding:
         !profile?.accountType || !profile.displayName || !profile.username,
     });
@@ -127,8 +130,10 @@ export async function POST(request: Request) {
   }
 
   const body = (await upstream.json().catch(() => null)) as {
+    requiresEmailVerification?: unknown;
     requiresOnboarding?: unknown;
     sessionToken?: unknown;
+    suggestedEmail?: unknown;
   } | null;
 
   if (!body || typeof body.sessionToken !== "string" || !body.sessionToken) {
@@ -136,11 +141,17 @@ export async function POST(request: Request) {
   }
 
   await writeSessionCookie(body.sessionToken);
+  // The provider may return an address it has not proven. It is only a prefill
+  // hint and is never treated as ownership.
+  await writeEmailHint(
+    typeof body.suggestedEmail === "string" ? body.suggestedEmail : null,
+  );
   // Always written, not only for creator intent: a stale intent from an
   // abandoned flow must never decide where a fresh sign-in lands.
   await writeOnboardingIntent(parsed.data.intent ?? "general");
 
   return NextResponse.json({
+    requiresEmailVerification: body.requiresEmailVerification === true,
     requiresOnboarding: body.requiresOnboarding === true,
   });
 }

@@ -19,6 +19,13 @@ export type SessionRole = "USER" | "COMPLIANCE_REVIEWER" | "ADMIN";
 export type SessionUser = {
   id: string;
   email: string | null;
+  /** True only when the API has proven ownership of the stored address. */
+  emailVerified: boolean;
+  /**
+   * True when the API requires a verified email before authored actions.
+   * Presentation only; every guarded API route re-checks it.
+   */
+  requiresEmailVerification: boolean;
   /** Server-side role projection. Never used as a client access decision. */
   role: SessionRole;
   /** Set only when the account has a public profile; never derived from email. */
@@ -95,8 +102,10 @@ export function toSessionUser(payload: unknown): SessionUser | null {
         ? creator.displayName.trim()
         : null,
     email: typeof record.email === "string" ? record.email : null,
+    emailVerified: record.emailVerified === true,
     id: record.id,
     mode: "live",
+    requiresEmailVerification: record.requiresEmailVerification === true,
     requiresOnboarding: record.requiresOnboarding !== false,
     role:
       record.role === "ADMIN" || record.role === "COMPLIANCE_REVIEWER"
@@ -116,10 +125,14 @@ export function toPreviewSessionUser(preview: PreviewSession): SessionUser {
     contactName: preview.contactName,
     id: `preview_${preview.subject}`,
     email: null,
+    emailVerified: false,
     avatarUrl: null,
     displayName: preview.displayName,
     role: "USER",
     username: preview.username,
+    // Preview identities never reach the API, so an email gate cannot be
+    // satisfied and must not be advertised as a step for them.
+    requiresEmailVerification: false,
     requiresOnboarding:
       !preview.accountType || !preview.displayName || !preview.username,
     mode: "preview",

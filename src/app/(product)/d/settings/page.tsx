@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
+import { readSessionUser } from "@/features/auth/server/session-user";
 import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
 import { settingsPreviewData } from "@/features/settings/content/preview-data";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
@@ -11,7 +12,10 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const access = await getProgrammeAdminAccess();
+  const [access, user] = await Promise.all([
+    getProgrammeAdminAccess(),
+    readSessionUser(),
+  ]);
 
   // The entry only appears when the server gate allows it, so a signed-out or
   // non-admin visitor never sees a link to a workspace they cannot open.
@@ -40,6 +44,11 @@ export default async function SettingsPage() {
   ) : null;
 
   return (
-    <SettingsDashboard adminEntry={adminEntry} data={settingsPreviewData} />
+    <SettingsDashboard
+      adminEntry={adminEntry}
+      data={settingsPreviewData}
+      email={user?.email ?? null}
+      emailVerified={user?.emailVerified === true}
+    />
   );
 }

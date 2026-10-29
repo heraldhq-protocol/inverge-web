@@ -25,6 +25,11 @@ export type DashboardViewer = {
   /** Copy shown wherever the UI states where its data comes from. */
   dataSource: "preview" | "live";
   /**
+   * True when the live API still wants the account email confirmed. Preview
+   * identities never reach the API and therefore never carry this prompt.
+   */
+  requiresEmailVerification: boolean;
+  /**
    * True when a session exists, including a local preview session. The preview
    * identity rendered while signed out leaves this false.
    */

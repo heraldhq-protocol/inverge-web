@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 
 import { ProductSearch } from "@/features/app-shell/components/product-search";
 import { AccountSettings } from "@/features/settings/components/account-settings";
+import { EmailSettings } from "@/features/settings/components/email-settings";
 import { FeedSettings } from "@/features/settings/components/feed-settings";
 import { NotificationSettings } from "@/features/settings/components/notification-settings";
 import { ProfileSettingsForm } from "@/features/settings/components/profile-settings-form";
@@ -18,6 +19,7 @@ import type { SettingsData } from "@/features/settings/types";
 const sections = [
   { href: "#profile", label: "Profile" },
   { href: "#sign-in", label: "Sign in" },
+  { href: "#email", label: "Email" },
   { href: "#verification", label: "Verification" },
   { href: "#wallet", label: "Wallet" },
   { href: "#feed", label: "Your feed" },
@@ -28,10 +30,27 @@ const sections = [
 export function SettingsDashboard({
   adminEntry,
   data,
+  email = null,
+  emailVerified = false,
 }: {
   adminEntry?: ReactNode;
   data: SettingsData;
+  email?: string | null;
+  emailVerified?: boolean;
 }) {
+  const connections = data.connections.map((connection) =>
+    connection.id === "email"
+      ? {
+          ...connection,
+          actionLabel: emailVerified ? "Change" : email ? "Verify" : "Add",
+          detail: email ?? "No address added",
+          status: emailVerified
+            ? ("verified" as const)
+            : ("not-connected" as const),
+        }
+      : connection,
+  );
+
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
       <ProductSearch action="/d" />
@@ -88,7 +107,15 @@ export function SettingsDashboard({
           title="Signing in"
           description="Review the methods connected to your Inverge account."
         >
-          <SignInSettings connections={data.connections} />
+          <SignInSettings connections={connections} />
+        </SettingsSection>
+
+        <SettingsSection
+          id="email"
+          title="Email"
+          description="The address used for account notices. Confirmation proves mailbox control, not identity."
+        >
+          <EmailSettings email={email} verified={emailVerified} />
         </SettingsSection>
 
         <SettingsSection

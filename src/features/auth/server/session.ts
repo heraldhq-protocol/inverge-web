@@ -3,6 +3,7 @@ import "server-only";
 import { cookies } from "next/headers";
 
 import {
+  EMAIL_HINT_COOKIE_NAME,
   ONBOARDING_INTENT_COOKIE_NAME,
   SESSION_COOKIE_NAME,
 } from "@/features/auth/lib/cookies";
@@ -49,6 +50,49 @@ export async function writeSessionCookie(token: string): Promise<void> {
 export async function clearSessionCookie(): Promise<void> {
   const store = await cookies();
   store.delete(SESSION_COOKIE_NAME);
+}
+
+/**
+ * Stores the provider's unverified address for prefill only.
+ *
+ * The value is normalised to a plausible address before it is written; a
+ * malformed hint is dropped instead of being reflected into the form.
+ */
+export async function writeEmailHint(email: string | null): Promise<void> {
+  const store = await cookies();
+  if (!email) {
+    store.delete(EMAIL_HINT_COOKIE_NAME);
+    return;
+  }
+
+  const candidate = email.trim().toLowerCase();
+  if (
+    candidate.length === 0 ||
+    candidate.length > 254 ||
+    !candidate.includes("@") ||
+    /[\u0000-\u001f\u007f]/.test(candidate)
+  ) {
+    store.delete(EMAIL_HINT_COOKIE_NAME);
+    return;
+  }
+
+  store.set(EMAIL_HINT_COOKIE_NAME, candidate, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: SESSION_MAX_AGE_SECONDS,
+  });
+}
+
+export async function readEmailHint(): Promise<string | null> {
+  const value = (await cookies()).get(EMAIL_HINT_COOKIE_NAME)?.value;
+  return value && value.includes("@") ? value : null;
+}
+
+export async function clearEmailHint(): Promise<void> {
+  const store = await cookies();
+  store.delete(EMAIL_HINT_COOKIE_NAME);
 }
 
 /**
