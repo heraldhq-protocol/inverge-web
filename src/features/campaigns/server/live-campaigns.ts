@@ -31,6 +31,14 @@ type ApiIdeaSummary = {
   taxonomySubcategorySlug: string | null;
   region: string | null;
   coverImageUrl: string | null;
+  // Detail reads include the rest of the pitch; the list projection does not.
+  targetUser?: string | null;
+  currentAlternative?: string | null;
+  roadmap?: string | null;
+  roadmapSteps?: unknown;
+  risks?: string | null;
+  askAmount?: string | number | null;
+  askBreakdown?: unknown;
 };
 
 export type ApiCampaign = {
@@ -62,6 +70,8 @@ export type LiveCampaignStatus = "active" | "funded" | "failed" | "completed";
 
 export type LiveCampaign = {
   id: string;
+  /** The public campaign URL segment: the source idea's slug, else the id. */
+  slug: string;
   title: string;
   summary: string;
   creator: string;
@@ -83,6 +93,11 @@ export type LiveCampaign = {
   ideaId: string | null;
   ideaTitle: string | null;
 };
+
+/** The canonical public path for a live campaign. */
+export function campaignHref(campaign: Pick<LiveCampaign, "id" | "slug">) {
+  return `/campaigns/${encodeURIComponent(campaign.slug)}`;
+}
 
 const PAGE_LIMIT = 50;
 const MAX_CAMPAIGNS = 300;
@@ -137,9 +152,7 @@ function snapshotText(value: unknown, key: string): string | null {
     : null;
 }
 
-function taxonomyFor(
-  campaign: ApiCampaign,
-): {
+function taxonomyFor(campaign: ApiCampaign): {
   category: CampaignCategorySlug | null;
   subcategory: CampaignSubcategorySlug | null;
 } {
@@ -238,8 +251,12 @@ export function toLiveCampaign(campaign: ApiCampaign): LiveCampaign | null {
     ideaTitle: campaign.idea?.title.trim() || null,
     location: campaign.idea?.region?.trim() || "Location not shared",
     milestones,
-    percentFunded: percentFundedFor(campaign.totalRaised, campaign.targetAmount),
+    percentFunded: percentFundedFor(
+      campaign.totalRaised,
+      campaign.targetAmount,
+    ),
     raised: decimalToUsdAmount(campaign.totalRaised),
+    slug: campaign.idea?.slug?.trim() || campaign.id,
     status,
     statusLabel: STATUS_LABELS[status],
     summary,
@@ -248,6 +265,120 @@ export function toLiveCampaign(campaign: ApiCampaign): LiveCampaign | null {
     taxonomySubcategory: subcategory,
     taxonomyText: taxonomyTextFor(category, subcategory),
     title,
+  };
+}
+
+/**
+ * Campaign discovery parameters the live API can actually honour.
+ *
+ * Search, money bands, country and percent filters belong to the preview
+ * discovery grid and have no server-side equivalent yet. Rather than render
+ * controls that silently do nothing, the live feed offers only these.
+ */
+export type LiveCampaignFeedStatus =
+  "all" | "active" | "completed" | "failed" | "funded";
+
+export type LiveCampaignFeedSort = "closing-soon" | "most-backed" | "newest";
+
+export type LiveCampaignFeedParams = {
+  cursor: string | null;
+  sort: LiveCampaignFeedSort;
+  status: LiveCampaignFeedStatus;
+};
+
+const FEED_STATUSES: readonly LiveCampaignFeedStatus[] = [
+  "all",
+  "active",
+  "completed",
+  "failed",
+  "funded",
+];
+
+const FEED_SORTS: readonly LiveCampaignFeedSort[] = [
+  "closing-soon",
+  "most-backed",
+  "newest",
+];
+
+const STATUS_TO_API: Readonly<
+  Record<Exclude<LiveCampaignFeedStatus, "all">, string>
+> = {
+  active: "ACTIVE",
+  completed: "COMPLETED",
+  failed: "FAILED",
+  funded: "FUNDED",
+};
+
+function firstValue(value: string | string[] | undefined): string {
+  if (!Array.isArray(value)) return value ?? "";
+  // A cleared control can append an empty value before the real one, so the
+  // first non-empty entry is the one the reader meant.
+  return value.find((entry) => entry.trim() !== "") ?? "";
+}
+
+/**
+ * Parse the feed query string against allowlists.
+ *
+ * An unknown status or sort falls back to the default rather than being sent to
+ * the API, and a cursor is passed through as the opaque value it is. Nothing
+ * here is used to build SQL.
+ */
+export function parseCampaignFeedParams(
+  params: Record<string, string | string[] | undefined>,
+): LiveCampaignFeedParams {
+  const requestedStatus = firstValue(params.status);
+  const requestedSort = firstValue(params.sort);
+  const cursor = firstValue(params.cursor).trim();
+
+  return {
+    cursor: cursor === "" ? null : cursor.slice(0, 512),
+    sort: FEED_SORTS.includes(requestedSort as LiveCampaignFeedSort)
+      ? (requestedSort as LiveCampaignFeedSort)
+      : "newest",
+    status: FEED_STATUSES.includes(requestedStatus as LiveCampaignFeedStatus)
+      ? (requestedStatus as LiveCampaignFeedStatus)
+      : "all",
+  };
+}
+
+export type LiveCampaignPage = {
+  campaigns: LiveCampaign[];
+  hasMore: boolean;
+  nextCursor: string | null;
+};
+
+/**
+ * One page of the public campaign catalogue.
+ *
+ * This is a single API page rather than a fetched window: the index shows what
+ * `GET /campaigns` returned, follows its cursor for "load more", and never
+ * implies it is holding the whole catalogue.
+ */
+export async function getLiveCampaignPage(options: {
+  cursor?: string | null;
+  limit?: number;
+  sort?: LiveCampaignFeedSort;
+  status?: LiveCampaignFeedStatus;
+}): Promise<LiveCampaignPage> {
+  const params = new URLSearchParams({
+    limit: String(options.limit ?? PAGE_LIMIT),
+    sort: options.sort ?? "newest",
+  });
+  if (options.status && options.status !== "all") {
+    params.set("status", STATUS_TO_API[options.status]);
+  }
+  if (options.cursor) params.set("cursor", options.cursor);
+
+  const page = await fetchApiJson<ApiListPage<ApiCampaign>>(
+    `/campaigns?${params.toString()}`,
+  );
+
+  return {
+    campaigns: page.data
+      .map(toLiveCampaign)
+      .filter((campaign): campaign is LiveCampaign => campaign !== null),
+    hasMore: page.page.hasMore,
+    nextCursor: page.page.nextCursor,
   };
 }
 

@@ -20,21 +20,34 @@ function formatTimestamp(iso: string): string {
 }
 
 /**
- * The public discussion thread. Comments are readable by anyone; posting
- * requires a signed-in account, so the input is gated by the viewer state.
- * In preview, posting appends to the local list and is clearly labelled.
+ * The public discussion thread.
+ *
+ * Comments are readable by anyone. On a live idea the thread is the API's thread
+ * and posting is not wired yet, so the composer is withheld rather than posting
+ * into local state that disappears on refresh. Preview keeps its local composer
+ * and says so. A failed thread shows an unavailable note; it never claims there
+ * are no comments.
  */
 export function IdeaDiscussion({
+  canPost = true,
   comments: initialComments,
+  source = "preview",
+  unavailable = false,
 }: {
+  canPost?: boolean;
   comments: readonly IdeaComment[];
+  source?: "live" | "preview";
+  unavailable?: boolean;
 }) {
   const { viewer } = useIdeaViewer();
   const [comments, setComments] = useState<IdeaComment[]>([...initialComments]);
   const [draft, setDraft] = useState("");
+  const preview = source === "preview";
 
   function handlePost(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (!canPost) return;
+
     const body = draft.trim();
     if (!body) return;
 
@@ -72,12 +85,21 @@ export function IdeaDiscussion({
             Community discussion
           </h2>
         </div>
-        <span className="text-xs text-muted" title="Sample data">
-          {comments.length} comments · Preview
+        <span
+          className="text-xs text-muted"
+          title={preview ? "Sample data" : undefined}
+        >
+          {comments.length} comment{comments.length === 1 ? "" : "s"}
+          {preview ? " · Preview" : ""}
         </span>
       </div>
 
-      {comments.length > 0 ? (
+      {unavailable ? (
+        <p className="mt-4 max-w-2xl rounded-2xl border border-border bg-surface-muted p-4 text-sm leading-6 text-muted">
+          The discussion could not be loaded right now. The idea above is
+          unaffected. Reload the page to try again.
+        </p>
+      ) : comments.length > 0 ? (
         <ul className="mt-5 max-w-2xl space-y-5">
           {comments.map((comment) => (
             <li key={comment.id} className="flex gap-3">
@@ -91,7 +113,7 @@ export function IdeaDiscussion({
                   </span>
                   {comment.pinned ? (
                     <span className="rounded-full bg-brand/10 px-2 py-0.5 text-[0.6875rem] font-semibold text-brand-strong">
-                      Creator
+                      Creator&apos;s pick
                     </span>
                   ) : null}
                   <span className="text-xs text-muted">
@@ -112,7 +134,13 @@ export function IdeaDiscussion({
         </p>
       )}
 
-      {viewer === "signed-in" ? (
+      {!canPost ? (
+        <p className="mt-6 text-sm leading-6 text-muted">
+          {unavailable
+            ? "Posting is unavailable until the thread loads."
+            : "Posting from this public page is not available yet."}
+        </p>
+      ) : viewer === "signed-in" ? (
         <form onSubmit={handlePost} className="mt-6 max-w-2xl">
           <div className="flex items-center justify-between gap-3">
             <label

@@ -16,10 +16,10 @@ export function MissionTeaserSection() {
           >
             <Image
               data-parallax
-              src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=1200&h=800&fit=crop"
+              src="/images/hero/collaborative-creative-workspace.png"
               alt="Lagos skyline and tech corridor at sunset"
               fill
-              sizes="(max-width: 1024px) 100vw, 580px"
+              // sizes="(max-width: 1024px) 100vw, 580px"
               className="object-cover object-center"
             />
           </div>

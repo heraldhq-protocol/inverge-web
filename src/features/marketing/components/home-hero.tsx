@@ -81,15 +81,15 @@ export function HomeHero() {
           {/* Right column: authentic photo with integrated campaign protection card */}
           <div data-hero-item className="relative mt-2 lg:col-span-5 lg:mt-0">
             <div className="relative mx-auto max-w-lg lg:max-w-none">
-              <div className="relative aspect-[4/3] overflow-hidden rounded-3xl border border-border/80 shadow-xl shadow-contrast/8 sm:aspect-[16/12] lg:aspect-[4/5]">
+              <div className="relative aspect-4/3 overflow-hidden rounded-3xl border border-border/80 shadow-xl shadow-contrast/8 sm:aspect-[16/12] lg:aspect-[4/5]">
                 <Image
                   data-parallax
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=900&fit=crop"
+                  src="/images/hero/collaborative-crowdfunding-community-illustration.png"
                   alt="African hardware and technology builders collaborating in a Lagos workshop studio with protected campaign framework"
                   fill
                   priority
-                  sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 560px"
-                  className="object-cover object-center"
+                  // sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 560px"
+                  className="object-cover object-left"
                 />
 
                 {/* Campaign lifecycle summary, overlaid on the hero image */}

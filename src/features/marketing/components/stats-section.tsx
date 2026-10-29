@@ -2,18 +2,41 @@
 
 import { Container } from "@/features/marketing/components/container";
 import { SectionBackground } from "@/features/marketing/components/section-background";
+import type { HomeStatsSection } from "@/features/marketing/types";
 
-export interface MarketingStats {
-  publishedIdeas: string;
-  totalEscrowed: string;
-  activeCampaigns: string;
-}
+const countFormat = new Intl.NumberFormat("en-US");
+const asOfFormat = new Intl.DateTimeFormat("en-GB", {
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit",
+  month: "short",
+  timeZone: "UTC",
+});
 
-interface StatsSectionProps {
-  metrics?: MarketingStats | null;
-}
+type LiveStats = Extract<HomeStatsSection, { state: "live" }>["stats"];
 
-export function StatsSection({ metrics }: StatsSectionProps) {
+/**
+ * The homepage activity band.
+ *
+ * The three figures are counts of public platform records, not money: no escrow
+ * balance, funding total or treasury figure appears here. A live section renders
+ * the API's counters; a preview section says so on every metric; an unavailable
+ * section says "Unavailable" rather than inventing a number.
+ */
+export function StatsSection({ section }: { section: HomeStatsSection }) {
+  const valueFor = (pick: (stats: LiveStats) => number) => {
+    if (section.state === "live")
+      return countFormat.format(pick(section.stats));
+    return section.state === "preview" ? "Preview data" : "Unavailable";
+  };
+
+  const caption =
+    section.state === "live"
+      ? "Counts from the Inverge platform."
+      : section.state === "preview"
+        ? "Illustrative counts while the API is not configured."
+        : "Platform counts are unavailable right now.";
+
   return (
     <section id="stats" className="bg-canvas py-8 sm:py-12">
       <Container>
@@ -32,9 +55,12 @@ export function StatsSection({ metrics }: StatsSectionProps) {
               <h2 className="text-xl font-bold tracking-tight text-white sm:text-2xl">
                 Inverge activity
               </h2>
-              <p className="mt-1 text-xs text-white/60 sm:text-sm">
-                Figures come from indexed chain data.
-              </p>
+              <p className="mt-1 text-xs text-white/60 sm:text-sm">{caption}</p>
+              {section.state === "live" ? (
+                <p className="mt-1 text-[11px] text-white/45">
+                  As of {asOfFormat.format(new Date(section.asOf))} UTC
+                </p>
+              ) : null}
             </div>
 
             {/* Right side: 3 metrics */}
@@ -63,7 +89,7 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.publishedIdeas ?? "—"}
+                  {valueFor((stats) => stats.publishedIdeas)}
                 </span>
               </div>
 
@@ -88,11 +114,11 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                     <path d="M14 12h1" />
                   </svg>
                   <span className="text-sm font-medium text-white">
-                    Total escrowed
+                    Active campaigns
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.totalEscrowed ?? "—"}
+                  {valueFor((stats) => stats.activeCampaigns)}
                 </span>
               </div>
 
@@ -115,11 +141,11 @@ export function StatsSection({ metrics }: StatsSectionProps) {
                     <path d="M12 15v5s3.03-.55 4.5-2c1.63-1.62 2-5 2-5" />
                   </svg>
                   <span className="text-sm font-medium text-white">
-                    Active campaigns
+                    Completed campaigns
                   </span>
                 </div>
                 <span className="font-semibold text-xs text-brand">
-                  {metrics?.activeCampaigns ?? "—"}
+                  {valueFor((stats) => stats.completedCampaigns)}
                 </span>
               </div>
             </div>

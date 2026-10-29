@@ -10,6 +10,7 @@ import {
 import type {
   AskBreakdownItem,
   DiscoveryIdea,
+  IdeaComment,
   IdeaDetail,
   IdeaRegion,
   IdeaStatus,
@@ -472,6 +473,70 @@ export async function getLiveIdea(
   } catch (error) {
     if (error instanceof Error && "status" in error && error.status === 404) {
       return null;
+    }
+    throw error;
+  }
+}
+
+type ApiIdeaComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  highlighted: boolean;
+  likeCount: number;
+  author: {
+    id: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isCreator: boolean;
+  };
+};
+
+type ApiCommentPage = {
+  data: ApiIdeaComment[];
+  page: { hasMore: boolean; nextCursor: string | null };
+};
+
+export const COMMENT_PAGE_LIMIT = 20;
+
+/**
+ * The public discussion thread.
+ *
+ * Comment bodies are public; author identity is the API's projection and never
+ * includes a wallet, email or internal user id beyond the opaque account id.
+ * A failed or missing thread is the caller's decision - this function throws so
+ * the page can distinguish "no comments" from "could not load".
+ */
+export async function getLiveIdeaComments(
+  idOrSlug: string,
+  limit = COMMENT_PAGE_LIMIT,
+): Promise<{ comments: IdeaComment[]; hasMore: boolean }> {
+  try {
+    const page = await fetchApiJson<ApiCommentPage>(
+      `/ideas/${encodeURIComponent(idOrSlug)}/comments?limit=${limit}`,
+    );
+
+    return {
+      comments: page.data.map((comment) => {
+        const author = creatorNameFor({
+          displayName: comment.author.displayName,
+          id: comment.author.id,
+          username: comment.author.id,
+        });
+        return {
+          author,
+          authorInitials: initialsFor(author),
+          body: comment.body,
+          createdAt: comment.createdAt,
+          id: comment.id,
+          pinned: comment.highlighted,
+        };
+      }),
+      hasMore: page.page.hasMore,
+    };
+  } catch (error) {
+    if (error instanceof Error && "status" in error && error.status === 404) {
+      return { comments: [], hasMore: false };
     }
     throw error;
   }

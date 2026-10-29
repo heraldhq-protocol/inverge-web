@@ -47,6 +47,7 @@ import { ideaTaxonomyHref } from "@/features/ideas/lib/filters";
 import { evaluateGate } from "@/features/ideas/lib/gate";
 import type {
   DiscoveryIdea,
+  IdeaComment,
   IdeaDetail as IdeaDetailModel,
   Topic,
 } from "@/features/ideas/types";
@@ -271,11 +272,15 @@ export function IdeaDetail({
   idea,
   ideas,
   topics,
+  comments = [],
+  commentsState = "preview",
 }: {
   dataSource?: "live" | "preview";
   idea: IdeaDetailModel;
   ideas: readonly DiscoveryIdea[];
   topics: readonly Topic[];
+  comments?: readonly IdeaComment[];
+  commentsState?: "live" | "preview" | "unavailable";
 }) {
   const live = dataSource === "live";
   const ideaTopics = topicsForIdea(topics, idea.id);
@@ -682,7 +687,14 @@ export function IdeaDetail({
               </section>
             ) : null}
 
-            {live ? null : (
+            {live ? (
+              <IdeaDiscussion
+                canPost={false}
+                comments={comments}
+                source="live"
+                unavailable={commentsState === "unavailable"}
+              />
+            ) : (
               <IdeaDiscussion comments={previewComments[idea.id] ?? []} />
             )}
           </div>

@@ -2,20 +2,24 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("@/lib/api/server", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@/lib/api/server")>();
-  return { ...actual, fetchApiJson: vi.fn() };
+  return { ...actual, fetchApiJson: vi.fn(), isApiConfigured: vi.fn() };
 });
 
-import { fetchApiJson } from "@/lib/api/server";
+import { fetchApiJson, isApiConfigured } from "@/lib/api/server";
+import { getCampaignFeedSurface } from "@/features/campaigns/server/feed-view";
 import { campaignPageFromParam } from "@/features/campaigns/lib/live-page";
 import {
+  getLiveCampaignPage,
   getLiveCampaignWindow,
   isReadableCampaign,
+  parseCampaignFeedParams,
   percentFundedFor,
   toLiveCampaign,
   type ApiCampaign,
 } from "@/features/campaigns/server/live-campaigns";
 
 const fetchMock = vi.mocked(fetchApiJson);
+const configuredMock = vi.mocked(isApiConfigured);
 
 function baseCampaign(overrides: Partial<ApiCampaign> = {}): ApiCampaign {
   return {
@@ -54,6 +58,7 @@ function baseCampaign(overrides: Partial<ApiCampaign> = {}): ApiCampaign {
 
 beforeEach(() => {
   fetchMock.mockReset();
+  configuredMock.mockReset();
 });
 
 describe("live campaign mapping", () => {
@@ -185,10 +190,7 @@ describe("live campaign reads", () => {
       max: 50,
     });
 
-    expect(window.campaigns.map((campaign) => campaign.id)).toEqual([
-      "a",
-      "b",
-    ]);
+    expect(window.campaigns.map((campaign) => campaign.id)).toEqual(["a", "b"]);
     expect(window.truncated).toBe(false);
   });
 
@@ -226,5 +228,107 @@ describe("live campaign reads", () => {
     await expect(
       getLiveCampaignWindow({ category: "technology" }),
     ).rejects.toThrow("API down");
+  });
+});
+
+describe("live campaign feed parameters", () => {
+  it("keeps only allowlisted status and sort values", () => {
+    expect(parseCampaignFeedParams({})).toEqual({
+      cursor: null,
+      sort: "newest",
+      status: "all",
+    });
+
+    expect(
+      parseCampaignFeedParams({
+        cursor: "abc123",
+        sort: "most-backed",
+        status: "funded",
+      }),
+    ).toEqual({ cursor: "abc123", sort: "most-backed", status: "funded" });
+  });
+
+  it("does not forward an unknown filter to the API", () => {
+    expect(
+      parseCampaignFeedParams({ sort: "most-funded", status: "paused" }),
+    ).toEqual({ cursor: null, sort: "newest", status: "all" });
+  });
+
+  it("accepts the first value of a repeated parameter and ignores empty cursors", () => {
+    expect(
+      parseCampaignFeedParams({ cursor: ["", "second"], status: ["failed"] }),
+    ).toEqual({ cursor: "second", sort: "newest", status: "failed" });
+  });
+});
+
+describe("live campaign feed page", () => {
+  it("maps the API status and sort, and returns the cursor", async () => {
+    fetchMock.mockResolvedValue({
+      data: [baseCampaign({ status: "FUNDED" })],
+      page: { hasMore: true, nextCursor: "next-page" },
+    });
+
+    const page = await getLiveCampaignPage({
+      cursor: "current-page",
+      limit: 24,
+      sort: "most-backed",
+      status: "funded",
+    });
+
+    const requested = String(fetchMock.mock.calls[0]?.[0]);
+    expect(requested).toContain("limit=24");
+    expect(requested).toContain("sort=most-backed");
+    expect(requested).toContain("status=FUNDED");
+    expect(requested).toContain("cursor=current-page");
+    expect(page).toMatchObject({
+      hasMore: true,
+      nextCursor: "next-page",
+    });
+    expect(page.campaigns[0]?.status).toBe("funded");
+  });
+
+  it("omits the status parameter for the all view", async () => {
+    fetchMock.mockResolvedValue({
+      data: [],
+      page: { hasMore: false, nextCursor: null },
+    });
+
+    await getLiveCampaignPage({ status: "all" });
+
+    const requested = String(fetchMock.mock.calls[0]?.[0]);
+    expect(requested).not.toContain("status=");
+  });
+
+  it("propagates an API failure instead of returning fixtures", async () => {
+    fetchMock.mockRejectedValue(new Error("API down"));
+
+    await expect(getLiveCampaignPage({})).rejects.toThrow("API down");
+  });
+});
+
+describe("campaign discovery surface", () => {
+  it("serves preview fixtures only when no API is configured", async () => {
+    configuredMock.mockReturnValue(false);
+
+    const surface = await getCampaignFeedSurface({});
+
+    expect(surface.dataSource).toBe("preview");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("serves one live page when an API is configured", async () => {
+    configuredMock.mockReturnValue(true);
+    fetchMock.mockResolvedValue({
+      data: [baseCampaign()],
+      page: { hasMore: false, nextCursor: null },
+    });
+
+    const surface = await getCampaignFeedSurface({ status: "active" });
+
+    expect(surface.dataSource).toBe("live");
+    if (surface.dataSource !== "live") return;
+    expect(surface.campaigns).toHaveLength(1);
+    expect(surface.params.status).toBe("active");
+    expect(surface.hasMore).toBe(false);
   });
 });
