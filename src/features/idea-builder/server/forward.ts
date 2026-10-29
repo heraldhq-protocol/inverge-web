@@ -44,8 +44,7 @@ export async function forwardIdeaWrite(
 
   let upstream: Response;
   try {
-    upstream = await fetch(`${base}${path}`, {
-      body: body === undefined ? undefined : JSON.stringify(body),
+    const init: RequestInit = {
       cache: "no-store",
       headers: {
         Authorization: `Bearer ${token}`,
@@ -53,7 +52,10 @@ export async function forwardIdeaWrite(
       },
       method,
       signal: AbortSignal.timeout(UPSTREAM_TIMEOUT_MS),
-    });
+    };
+    if (body !== undefined) init.body = JSON.stringify(body);
+
+    upstream = await fetch(`${base}${path}`, init);
   } catch {
     return NextResponse.json({ error: "api_unreachable" }, { status: 502 });
   }
