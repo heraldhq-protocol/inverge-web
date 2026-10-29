@@ -9,9 +9,11 @@ Ground rules that shape this list:
 
 - Creator surfaces live under `/d/creator/*` (D-017); public idea surfaces live
   under `/ideas` (D-014). Old `/d/ideas*` paths 308-redirect to their new homes.
-- There is no auth session and no API data layer yet. Every page reads
-  `content/preview-*.ts` fixtures through a server seam. A page may show a
-  metric only when a fixture record actually supports it.
+- Authenticated routes have a server-held session. Creator Studio reads the
+  signed-in account's own ideas from the API; a preview session or a deployment
+  without an API falls back to the `content/preview-*.ts` fixtures through the
+  same server seam. A page may show a metric only when the selected source
+  actually supports it.
 - Tabs are only rendered for routes that exist (`CreatorStudioTabs`,
   `IdeaWorkspaceTabs`), so a section appears when its page ships, never before.
 
@@ -22,13 +24,13 @@ Ground rules that shape this list:
 | `/d` | Home | Full. Greeting, featured band, quick actions, momentum grid, activity rail |
 | `/d/discover` | In-shell discovery | Full. Reuses the public `IdeasDashboard` with filters, topics, featured band |
 | `/d/pre-pledges` | Pre-pledges | Real list with fixture intents. Own loading/error |
-| `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, recent ideas, feedback/analytics entry cards |
-| `/d/creator/ideas` | My ideas | List of owned ideas with metrics. **No filters, search, sort, or archive yet** |
+| `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
+| `/d/creator/ideas` | My ideas | Real. List of owned ideas, including drafts, from the API. **No filters, search, sort, or archive yet** |
 | `/d/creator/ideas/new` | Idea builder | Full four-step flow with draft autosave |
-| `/d/creator/ideas/[id]` | Idea workspace | Real. Status, cover, metric cards, summary, latest responses; links only to routes that resolve for the idea |
-| `/d/creator/ideas/[id]/feedback` | Feedback form setup | Real. Configures questions for one idea |
-| `/d/creator/feedback` | Feedback inbox (all ideas) | Real, read-only. Responses grouped by idea, newest first, anonymous |
-| `/d/creator/analytics` | Analytics (all ideas) | Real. Idea picker plus aggregate cards |
+| `/d/creator/ideas/[id]` | Idea workspace | Preview-backed for now. Status, cover, metric cards, summary, latest responses; links only to routes that resolve for the idea |
+| `/d/creator/ideas/[id]/feedback` | Feedback form setup | Preview-backed. Configures questions for one preview idea |
+| `/d/creator/feedback` | Feedback inbox (all ideas) | Preview-backed, read-only. Responses grouped by idea, newest first, anonymous |
+| `/d/creator/analytics` | Analytics (all ideas) | Real. Idea picker plus aggregate cards from the analytics API |
 | `/d/creator/ideas/[id]/insights` | Analytics (one idea) | Real and the richest screen: chart, activity, feedback breakdown, gated AI insights |
 | `/d/creator/ideas/[id]/insights/traffic` | Traffic tab | Honest empty state — no view tracking exists |
 | `/d/creator/ideas/[id]/insights/referrals` | Referrals tab | Honest empty state |
@@ -99,12 +101,12 @@ decisions are stored in this browser and are explicitly non-authoritative.
 
 | Section | Repo route | Status |
 | --- | --- | --- |
-| Overview | `/d/creator` | ✅ Shipped. Metrics, next best step, recent ideas |
-| My ideas | `/d/creator/ideas` | ⚠️ Partial. List works; status filters, search, sort, archive, and pagination are missing |
+| Overview | `/d/creator` | ✅ Shipped. Live own-idea metrics, next best step, and recent ideas; preview fallback |
+| My ideas | `/d/creator/ideas` | ⚠️ Partial. Live list including drafts; status filters, search, sort, archive, and pagination are missing |
 | Create / edit idea | `/d/creator/ideas/new`, `/d/creator/ideas/[id]/edit` | ⚠️ Create ships; **edit route does not exist** |
-| Idea workspace | `/d/creator/ideas/[id]` | ✅ Shipped (D-017). One page per owned idea; unowned ids 404 |
-| Feedback inbox | `/d/creator/feedback` | ✅ Shipped read-only (D-017). Reply state arrives with the feedback API |
-| Analytics | `/d/creator/analytics`, `/d/creator/ideas/[id]/insights` | ✅ Strongest area |
+| Idea workspace | `/d/creator/ideas/[id]` | ✅ Shipped (D-017). One page per owned idea; preview-backed for now, unowned ids 404 |
+| Feedback inbox | `/d/creator/feedback` | ✅ Shipped read-only (D-017). Fixture-backed; the API has no creator response list or reply surface yet |
+| Analytics | `/d/creator/analytics`, `/d/creator/ideas/[id]/insights` | ✅ Strong area. Live creator reports for authenticated accounts, with a preview fallback |
 | Audience | — | ❌ Missing. No follower or relationship data model exists |
 | Milestones | `/d/creator/campaigns/[campaignId]/milestones` | ✅ Shipped as a surface (D-018). Preview data; claiming never moves money |
 | Campaigns | `/d/creator/campaigns`, `/d/creator/campaigns/new`, `/d/creator/campaigns/[campaignId]` | ✅ Shipped as a surface (D-018). List, seven-step wizard, workspace. The new-campaign draft persists through the API (versioned autosave) and is resumable by URL; the wizard now pays the application fee and submits through the API (D-048), while the other campaign surfaces still read preview data |

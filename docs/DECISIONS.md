@@ -57,6 +57,7 @@ choices.
 | D-046 | 2026-10-26 | Accepted | Live creator analytics reuses existing API reports, gates premium reports server-side, and falls back to preview only when auth is preview or the API is unconfigured. |
 | D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
 | D-048 | 2026-10-28 | Accepted | The campaign wizard starts or resumes the application-fee charge through a same-origin BFF and submits the saved draft; the API owns the price, the charge, the webhook state and the submit gate, and the browser only explains the server state. |
+| D-051 | 2026-10-29 | Accepted | Creator Studio reads the signed-in creator's own ideas from `GET /ideas?mine=true`; preview auth or an unconfigured API still renders fixtures, and preview-only feedback links are omitted in live mode. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2034,6 +2035,42 @@ exit evidence for F-02; the API e2e covers the sequence.
 
 Revisit when: A hosted checkout return URL changes, a second payment provider is
 added, or the fee policy becomes refundable.
+
+### D-051: Creator Studio reads the signed-in creator's own ideas
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The Creator Studio overview and My ideas list still rendered the
+preview account's fixtures even when a real API session was present. The API
+already exposes `GET /ideas?mine=true` with draft visibility and ownership
+enforced server-side, and the analytics index already used it. The feedback
+builder and inbox, however, have no creator response or configuration endpoint.
+
+Decision: `getCreatorView()` reads `GET /ideas?mine=true` with the session token
+for a live account. The overview metrics, suggested next steps, and rows are all
+derived from that one response. Preview auth or an unconfigured API keeps the
+fixture account. Every owned live idea links to analytics because ownership is
+the API's own authorization check. Live rows keep the feedback response count
+but omit the feedback-setup link until a creator inbox/builder API exists; the
+overview links feedback to analytics instead. A signed-out or failed request
+renders a state panel rather than silently mixing fixtures into live data.
+
+Alternatives: Keep the studio on fixtures until every creator subpage is wired
+(the overview would remain wrong for real accounts); copy the public discovery
+catalogue and filter it in the browser (drafts would be missing and ownership
+would be client-side); expose the preview feedback builder in live mode
+(creates a dead or misleading route); add a new aggregate dashboard endpoint
+(duplicates a list the API already serves).
+
+Consequences: The overview and My ideas are correct for signed-in creators,
+including drafts and lifecycle states. The per-idea workspace, feedback inbox,
+and feedback builder remain preview-backed for now, and live links deliberately
+avoid them. The 100-idea window is stated on the list rather than pretended to
+be complete.
+
+Revisit when: The API exposes a creator feedback inbox or a bounded dashboard
+aggregate, or the idea workspace is moved onto the API.
 
 ## Decision template
 

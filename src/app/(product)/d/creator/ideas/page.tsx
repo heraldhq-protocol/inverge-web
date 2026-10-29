@@ -6,6 +6,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 
 import { MetricStrip } from "@/components/ui/metric-strip";
 import { CreatorIdeaList } from "@/features/ideas/components/creator-idea-list";
+import { CreatorStudioStatePage } from "@/features/ideas/components/creator-studio-state";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
 import { getCreatorView } from "@/features/ideas/server/creator-view";
 
@@ -19,8 +20,21 @@ export const metadata: Metadata = {
  * The creator's own list (D-014). `/d/creator/ideas` is not discovery — public
  * discovery lives at `/d/discover` and `/ideas`.
  */
-export default function MyIdeasPage() {
-  const { metrics, rows } = getCreatorView();
+export default async function MyIdeasPage() {
+  const result = await getCreatorView();
+
+  if (result.status !== "ready") {
+    return (
+      <CreatorStudioStatePage
+        active="ideas"
+        next="/d/creator/ideas"
+        result={result}
+        retryHref="/d/creator/ideas"
+      />
+    );
+  }
+
+  const { dataSource, metrics, rows, truncated } = result.view;
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
@@ -68,9 +82,12 @@ export default function MyIdeasPage() {
       />
 
       <p className="mt-4 max-w-3xl text-xs leading-5 text-muted">
-        Preview workspace. Ideas, metrics, and forms come from fixtures until
-        idea persistence is connected; publishing here does not write to the
-        API.
+        {dataSource === "live"
+          ? "This list reads the signed-in creator's own ideas from the API, including drafts. Drafts stay private until you publish them."
+          : "Preview workspace. Ideas, metrics, and forms come from fixtures until the API is configured."}
+        {truncated
+          ? " Showing the newest 100 ideas; older ideas are not listed."
+          : ""}
       </p>
 
       <section aria-labelledby="owned-ideas-heading" className="mt-6">

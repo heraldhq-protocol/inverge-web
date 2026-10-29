@@ -14,6 +14,7 @@ import type {
   IdeaDetail,
   IdeaRegion,
   IdeaStatus,
+  MyIdea,
   RoadmapStep,
 } from "@/features/ideas/types";
 import { fetchApiJson } from "@/lib/api/server";
@@ -75,6 +76,7 @@ export type ApiIdea = {
   discoverabilityTier: string;
   validatingSince: string | null;
   createdAt: string;
+  updatedAt?: string;
   weightedPrePledgeTotal: string | number | null;
   supporterCount: number | null;
   feedbackCount: number | null;
@@ -355,6 +357,39 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
     title: idea.title,
     validationPercent: validationPercentFor(idea.gateProgress),
     visibility: idea.discoverabilityTier === "LINK_ONLY" ? "private" : "public",
+  };
+}
+
+/**
+ * A creator's own row, or `null` when the API reports a status this client does
+ * not know. The studio never guesses a lifecycle label for a future enum value;
+ * the caller can omit that row rather than mislabel it.
+ */
+export function toMyIdea(idea: ApiIdea): MyIdea | null {
+  const status = ideaStatusFor(idea.status);
+  if (!status) return null;
+
+  const discovery = toDiscoveryIdea(idea);
+  // Mirror the public list: only a validating or threshold-met idea with a
+  // discoverable tier is actually listed. A stale tier on an archived or
+  // converted row must not inflate the studio's "published" count.
+  const listed =
+    (status === "validating" || status === "threshold-met") &&
+    discovery.visibility === "public";
+
+  return {
+    artwork: discovery.artwork,
+    category: discovery.category,
+    cover: discovery.cover ?? null,
+    discoveryCategory: discovery.discoveryCategory,
+    id: idea.id,
+    prePledged: discovery.prePledged,
+    status,
+    supporters: discovery.supporters,
+    title: idea.title,
+    updatedAt: idea.updatedAt ?? idea.createdAt,
+    validationPercent: discovery.validationPercent,
+    visibility: listed ? "public" : "private",
   };
 }
 

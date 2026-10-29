@@ -5,9 +5,10 @@ import type { MyIdea } from "@/features/ideas/types";
 /**
  * One row on the creator's own list, with the links that genuinely exist.
  *
- * The detail page is only reachable for ideas the fixture can resolve, so
- * `detailHref` is `null` for a draft that has never been published. Callers must
- * render a plain title in that case rather than a link that 404s.
+ * The detail page is only reachable when the selected data source can resolve
+ * the record, so `detailHref` is `null` for a draft that has never been
+ * published. Callers must render a plain title in that case rather than a link
+ * that 404s.
  */
 export type CreatorIdeaRow = MyIdea & {
   analyticsHref: string | null;
@@ -22,12 +23,19 @@ export function buildCreatorIdeaRows(
     analyticsIdeaIds,
     feedbackCounts,
     hasDetail,
+    hasFeedback = hasDetail,
   }: {
     /** Idea ids with an analytics dataset; anything else gets no link. */
     analyticsIdeaIds: readonly string[];
     feedbackCounts: Readonly<Record<string, number>>;
     /** Whether a public/detail record exists for the id. */
     hasDetail: (ideaId: string) => boolean;
+    /**
+     * Whether the feedback setup surface resolves for the id. Defaults to the
+     * detail check; a live studio can count responses without yet exposing the
+     * preview-only builder.
+     */
+    hasFeedback?: (ideaId: string) => boolean;
   },
 ): CreatorIdeaRow[] {
   const analytics = new Set(analyticsIdeaIds);
@@ -41,7 +49,9 @@ export function buildCreatorIdeaRows(
         ? `/d/creator/ideas/${idea.id}/insights`
         : null,
       detailHref: detailed ? `/ideas/${idea.id}` : null,
-      feedbackHref: detailed ? `/d/creator/ideas/${idea.id}/feedback` : null,
+      feedbackHref: hasFeedback(idea.id)
+        ? `/d/creator/ideas/${idea.id}/feedback`
+        : null,
       feedbackResponses: feedbackCounts[idea.id] ?? 0,
     };
   });
