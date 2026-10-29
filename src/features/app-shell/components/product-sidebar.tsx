@@ -43,16 +43,26 @@ export function ProductSidebar({
       <div
         className={`flex min-h-11 items-center transition-[gap,padding] duration-200 ${
           collapsed
-            ? "justify-between gap-1 px-0"
+            ? "justify-center px-0"
             : "justify-between gap-3 px-2"
         }`}
       >
-        <BrandMark href="/d" inverted compact={collapsed} />
+        <div
+          className={`overflow-hidden transition-[max-width,opacity] duration-200 ${
+            collapsed
+              ? "max-w-0 opacity-0 pointer-events-none"
+              : "max-w-40 opacity-100"
+          }`}
+          aria-hidden={collapsed || undefined}
+        >
+          <BrandMark href="/d" inverted />
+        </div>
         <button
           type="button"
           aria-controls="product-sidebar"
           aria-expanded={!collapsed}
           aria-label={collapsed ? "Expand sidebar" : "Collapse sidebar"}
+          title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
           onClick={onToggle}
           className="grid size-11 shrink-0 place-items-center rounded-xl text-white/65 transition-colors hover:bg-white/[0.08] hover:text-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
