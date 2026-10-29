@@ -30,16 +30,18 @@ const sections = [
 export function SettingsDashboard({
   adminEntry,
   data,
+  dataSource = "preview",
   email = null,
   emailVerified = false,
 }: {
   adminEntry?: ReactNode;
   data: SettingsData;
+  dataSource?: "live" | "preview";
   email?: string | null;
   emailVerified?: boolean;
 }) {
   const connections = data.connections.map((connection) =>
-    connection.id === "email"
+    connection.id === "email" && dataSource === "live"
       ? {
           ...connection,
           actionLabel: emailVerified ? "Change" : email ? "Verify" : "Add",
@@ -60,8 +62,15 @@ export function SettingsDashboard({
           <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-strong">
             Settings
           </p>
-          <span className="text-xs text-muted" title="Settings are sample data">
-            Sample data
+          <span
+            className="text-xs text-muted"
+            title={
+              dataSource === "live"
+                ? "Settings read from your Inverge account"
+                : "Settings are sample data"
+            }
+          >
+            {dataSource === "live" ? "Your account" : "Sample data"}
           </span>
         </div>
         <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
@@ -99,7 +108,7 @@ export function SettingsDashboard({
           title="Profile"
           description="The name, picture, and location people see on your ideas, feedback, and profile."
         >
-          <ProfileSettingsForm profile={data.profile} />
+          <ProfileSettingsForm mode={dataSource} profile={data.profile} />
         </SettingsSection>
 
         <SettingsSection
@@ -193,7 +202,16 @@ export function SettingsDashboard({
           title="Your feed"
           description="Choose what Inverge should prioritize when showing you ideas."
         >
-          <FeedSettings feed={data.feed} />
+          {dataSource === "live" ? (
+            <SettingsCard>
+              <p className="text-sm leading-6 text-muted">
+                Feed preferences are not connected to the API yet. Your ideas
+                and discovery still use the platform defaults.
+              </p>
+            </SettingsCard>
+          ) : (
+            <FeedSettings feed={data.feed} />
+          )}
         </SettingsSection>
 
         <SettingsSection
@@ -201,7 +219,17 @@ export function SettingsDashboard({
           title="Notifications"
           description="Choose which updates Inverge should send you."
         >
-          <NotificationSettings initialPreferences={data.notifications} />
+          {dataSource === "live" ? (
+            <SettingsCard>
+              <p className="text-sm leading-6 text-muted">
+                Notification preferences are not connected to the API yet. Your
+                in-app inbox is live; email and digest settings will appear here
+                when the API stores them.
+              </p>
+            </SettingsCard>
+          ) : (
+            <NotificationSettings initialPreferences={data.notifications} />
+          )}
         </SettingsSection>
 
         <SettingsSection
