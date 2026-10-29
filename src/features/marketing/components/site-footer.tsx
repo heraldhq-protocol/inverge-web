@@ -2,7 +2,6 @@ import Link from "next/link";
 
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Container } from "@/features/marketing/components/container";
-import { NewsletterField } from "@/features/marketing/components/newsletter-field";
 import { SectionBackground } from "@/features/marketing/components/section-background";
 
 const groups = [
@@ -24,6 +23,7 @@ const groups = [
       ["About", "/about"],
       ["Careers", "/careers"],
       ["Contact", "/contact"],
+      ["Join the waitlist", "/waitlist"],
     ],
   },
   {
@@ -88,12 +88,18 @@ export function SiteFooter() {
 
           <div className="space-y-3 sm:col-span-2 lg:col-span-3">
             <h2 className="text-xs font-semibold uppercase tracking-[0.16em] text-white/45">
-              Stay updated
+              Early access
             </h2>
             <p className="text-sm leading-6 text-white/68">
-              Get updates on new ideas, campaigns, and the product launch.
+              Join the launch list to hear when campaigns and idea publishing
+              open.
             </p>
-            <NewsletterField />
+            <Link
+              href="/waitlist"
+              className="inline-flex min-h-11 items-center justify-center rounded-full bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-white"
+            >
+              Join the waitlist
+            </Link>
           </div>
         </div>
 

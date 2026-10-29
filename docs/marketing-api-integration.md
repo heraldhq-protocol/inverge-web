@@ -3,8 +3,9 @@
 Status: **homepage, idea discovery/detail, campaign discovery/detail, and the
 sitemap read the live API**. Fixture-only surfaces remain only where the backend
 has no endpoint or no data model (campaign contribution flow, ideathon,
-editorial topics, newsletter/contact submission). Written 2026-10-26, extended
-2026-10-27 on `feat/marketing-api-integration`.
+editorial topics, waitlist/contact submission). Written 2026-10-26, extended
+2026-10-27 on `feat/marketing-api-integration` and 2026-10-29 for the launch
+list.
 
 This document is the single record of what every public marketing surface reads,
 where that data comes from, and what could not be wired because the backend does
@@ -80,7 +81,8 @@ is correct to keep in the repository.
 | `/guides`, `/guides/[slug]`, `/blog`, `/blog/[slug]`, `/help` | Editorial guides, journal, FAQs | `features/marketing/content/editorial.ts` + page components | none needed; could move to a CMS later | static | frontend | none |
 | `/about`, `/careers`, `/privacy`, `/terms` | Brand, legal, careers copy | Page components | - | static | frontend | none |
 | `/contact` | Contact form | `mailto:` handoff; nothing is submitted to Inverge | a contact endpoint if server-side delivery is wanted | static by design | frontend | none |
-| Footer newsletter (`NewsletterField`) | Email capture | disabled control with an honest "unavailable" note | subscription endpoint - **missing** | missing | backend | none |
+| Footer newsletter (`NewsletterField`) | Email capture | replaced by a static link to `/waitlist`; the disabled control is no longer rendered | subscription endpoint - **missing** | missing | backend | none |
+| `/waitlist` - launch list | Lane choice, email capture, confirmation state | client-side preview; nothing is persisted | `POST /waitlist` or subscription endpoint - **missing** | missing | backend + frontend | `waitlist-form.test.tsx` |
 | `/advertising-preferences` | Consent choices | client-side preferences | - | static by design | frontend | none |
 | Header / footer navigation | Links, footer categories | `site-header.tsx` / `site-footer.tsx` | - | static by design | frontend | none |
 | `sitemap.ts` | Indexable ideas, campaigns, categories | **live** `GET /ideas` + `GET /campaigns` when configured; fixtures only in preview mode | `GET /ideas`, `GET /campaigns` | **connected** | frontend | `app/sitemap.test.ts` |
@@ -184,7 +186,10 @@ Classification follows the task's vocabulary.
 
 ### Missing
 
-- Newsletter subscription endpoint (footer capture is disabled with honest copy).
+- Waitlist subscription endpoint. The launch-list form validates the address and
+  renders loading, success, and offline-error states, but it does not store the
+  address; the success panel says so. Wire it before sending traffic to
+  `/waitlist`.
 - Contact submission endpoint (the page currently opens the user's mail client).
 - Public programmes/competitions endpoints (listings, standings, entries, judging,
   archive). The ideathon surfaces therefore stay on the programmes fixture.
@@ -293,6 +298,17 @@ Classification follows the task's vocabulary.
 - Same source campaign read, full ranked list, explicit rule statement.
 - Unavailable and empty are separate states, each with an actionable link.
 
+### Waitlist (`/waitlist`)
+
+- Server component; it reads only the optional `lane` query so a lane link
+  preselects the form. No data is fetched.
+- The page uses hairline rules and native `<details>` instead of cards, and it
+  omits scroll-reveal attributes so the content paints immediately.
+- The form validates on blur and submit, then completes against a local preview
+  after 500 ms. It renders a loading state, an offline error, and a success panel
+  that states the address is not stored. No request leaves the browser.
+- Replace the preview submit with the waitlist endpoint before launch.
+
 ### Sitemap (`/sitemap.xml`)
 
 - Async and API-backed when configured. It reads bounded windows (`500` records
@@ -393,5 +409,7 @@ short version:
    endpoint already exists).
 4. Decide the programme/competitions API surface before any ideathon page claims
    live standings.
-5. Add a newsletter endpoint only when there is a list to write to.
+5. Add a waitlist endpoint that stores the lane and email, then replace the
+   preview submit on `/waitlist`. Add a newsletter endpoint only when there is a
+   list to write to.
 6. Split the sitemap with `generateSitemaps` before raising the 500-record cap.

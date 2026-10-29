@@ -89,9 +89,15 @@
   background-size: auto, cover;
 }
 
+/*
+ * Route changes must land at the top immediately. Smooth scrolling here
+ * animates Next's scroll restoration and the motion provider's ScrollTrigger
+ * refresh, which can leave a newly opened page part-way down. In-page motion
+ * is handled by the reveal timeline instead.
+ */
 html {
   background: var(--inverge-canvas);
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
 }
 
 body {

@@ -76,6 +76,17 @@ export function HomeHero() {
                 Start an idea
               </Link>
             </div>
+
+            <p data-hero-item className="text-sm leading-6 text-muted">
+              Not ready to publish?{" "}
+              <Link
+                href="/waitlist"
+                className="font-semibold text-brand-strong underline decoration-brand/40 underline-offset-4 transition-colors hover:decoration-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
+              >
+                Join the launch list
+              </Link>
+              .
+            </p>
           </div>
 
           {/* Right column: authentic photo with integrated campaign protection card */}
