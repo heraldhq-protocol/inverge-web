@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 
+import { isPreviewAuth } from "@/features/auth/server/auth-mode";
 import { IdeaBuilder } from "@/features/idea-builder/components/idea-builder";
+import { isApiConfigured } from "@/lib/api/server";
 
 export const metadata: Metadata = {
   title: "Create an idea",
@@ -9,5 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function NewIdeaPage() {
-  return <IdeaBuilder />;
+  const mode =
+    isPreviewAuth() || !isApiConfigured() ? ("preview" as const) : ("live" as const);
+
+  return <IdeaBuilder mode={mode} />;
 }

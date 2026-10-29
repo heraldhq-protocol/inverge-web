@@ -58,6 +58,8 @@ choices.
 | D-047 | 2026-10-27 | Accepted | Identity, AML and business verification is one server-owned domain: the browser never decides eligibility, webhooks are verified and re-fetched, and submission and contribution gates are enforced by the API. |
 | D-048 | 2026-10-28 | Accepted | The campaign wizard starts or resumes the application-fee charge through a same-origin BFF and submits the saved draft; the API owns the price, the charge, the webhook state and the submit gate, and the browser only explains the server state. |
 | D-051 | 2026-10-29 | Accepted | Creator Studio reads the signed-in creator's own ideas from `GET /ideas?mine=true`; preview auth or an unconfigured API still renders fixtures, and preview-only feedback links are omitted in live mode. |
+| D-052 | 2026-10-29 | Accepted | The idea builder writes through same-origin BFF routes: draft create/update, survey replacement, and publish all go to the API; preview auth keeps the browser-only flow. |
+| D-053 | 2026-10-29 | Accepted | The idea workspace reads the owned idea and its survey from the API for live sessions; individual feedback responses remain unavailable because the API has no creator response list. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2071,6 +2073,67 @@ be complete.
 
 Revisit when: The API exposes a creator feedback inbox or a bounded dashboard
 aggregate, or the idea workspace is moved onto the API.
+
+### D-052: The idea builder writes through the API
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The idea builder was a browser-only flow: drafts lived in
+`localStorage` and the review step said publishing was not connected. The API
+already exposes create, update, survey replacement, and publish routes, but the
+browser has no bearer token and the preview identity has no server account.
+
+Decision: In a live session the builder creates or updates a draft through
+same-origin BFF routes, replaces the feedback survey while the idea is still a
+draft, and then publishes. The API remains authoritative for validation,
+ownership, quality and moderation. Preview auth keeps the existing local flow.
+The browser draft remains as recovery state; a remote id is stored separately so
+a reload updates the same API draft instead of creating a duplicate. Summary and
+community invite are not stored by the API yet, so the live UI labels them as
+local preview fields rather than silently dropping them.
+
+Alternatives: Post directly to the API from the browser (exposes the session
+token); keep publishing local-only (the creator sees success but no idea exists);
+fold create, survey and publish into one route (hides which step failed); add a
+summary column and community model in this change (schema and product work
+larger than the wiring).
+
+Consequences: A live idea is visible in My ideas immediately after publish.
+Survey edits fail after publish by design. The builder's local draft is cleared
+after a live publish to prevent a published idea from being edited as a draft.
+
+Revisit when: The API stores summary/community, or a draft needs server-side
+revision conflict handling.
+
+### D-053: The idea workspace reads ownership and survey from the API
+
+- Date: 2026-10-29
+- Status: Accepted
+
+Context: The per-idea workspace and feedback builder resolved only preview
+fixtures, while the API already exposes the idea, a creator-only insights report
+that proves ownership, and a replace-all survey route.
+
+Decision: A live workspace reads the idea with `includeDraft` and the insights
+report together; a non-owner receives 404. The feedback builder reads the survey
+and replaces it through the same BFF route used by the builder. Survey edits are
+offered only while the idea is a draft, matching the API. Individual feedback
+responses remain unavailable because there is no creator response list endpoint;
+the workspace shows the counted total without pretending to show answers.
+Preview auth keeps the fixture views. Community settings stay preview-only.
+
+Alternatives: Read a public idea without the insights gate (cannot distinguish
+owner from reader); show fixture responses next to a live idea (mixes sources);
+allow survey edits after publish (API rejects them); add a response-list endpoint
+in this change (larger backend work).
+
+Consequences: A live creator can configure the form before publishing and sees
+the same lifecycle state as the API. The feedback inbox and per-response detail
+remain blocked until the API exposes them.
+
+Revisit when: A creator feedback-response endpoint or survey version history
+lands.
 
 ## Decision template
 
