@@ -269,12 +269,14 @@ function clearLocalDraft() {
 
 function StepField({
   children,
+  counter,
   error,
   hint,
   label,
   optional,
 }: {
   children: React.ReactNode;
+  counter?: { max: number; value: number };
   error?: string | undefined;
   hint?: string | undefined;
   label: string;
@@ -282,17 +284,30 @@ function StepField({
 }) {
   return (
     <label className="block">
-      <span className="text-sm font-medium text-ink">
-        {label}
-        {optional ? (
-          <span className="ml-1.5 text-xs font-normal text-muted">
-            optional
+      <span className="flex items-baseline justify-between gap-3">
+        <span className="text-sm font-medium text-ink">
+          {label}
+          {optional ? (
+            <span className="ml-1.5 text-xs font-normal text-muted">
+              optional
+            </span>
+          ) : (
+            <span className="ml-1 text-muted" aria-hidden="true">
+              *
+            </span>
+          )}
+        </span>
+        {counter ? (
+          <span
+            className={`shrink-0 text-[0.6875rem] tabular-nums ${
+              counter.value > counter.max * 0.9
+                ? "text-warning-strong"
+                : "text-muted"
+            }`}
+          >
+            {counter.value}/{counter.max}
           </span>
-        ) : (
-          <span className="ml-1 text-muted" aria-hidden="true">
-            *
-          </span>
-        )}
+        ) : null}
       </span>
       {hint ? (
         <span className="mt-0.5 block text-xs text-muted">{hint}</span>
@@ -353,6 +368,90 @@ function PreviewCard({ draft }: { draft: IdeaDraft }) {
         </p>
       </div>
     </div>
+  );
+}
+
+/**
+ * Step navigation below the `xl` breakpoint, where the labelled sidebar does
+ * not fit. Phones get a single segmented progress bar; wider screens get the
+ * same steps as wrapping chips so a creator can still jump back without a
+ * horizontally scrolling rail.
+ */
+function BuilderStepNav({
+  onSelect,
+  stepIndex,
+}: {
+  onSelect: (index: number) => void;
+  stepIndex: number;
+}) {
+  return (
+    <>
+      <div
+        aria-label="Creation progress"
+        aria-valuemax={BUILDER_STEPS.length}
+        aria-valuemin={1}
+        aria-valuenow={stepIndex + 1}
+        aria-valuetext={`Step ${stepIndex + 1} of ${BUILDER_STEPS.length}: ${BUILDER_STEPS[stepIndex]?.label ?? ""}`}
+        className="grid grid-cols-7 gap-1 sm:hidden"
+        role="progressbar"
+      >
+        {BUILDER_STEPS.map((item, index) => (
+          <span
+            aria-hidden="true"
+            className={`h-1.5 rounded-full ${
+              index <= stepIndex ? "bg-brand" : "bg-ink/[0.08]"
+            }`}
+            key={item.id}
+          />
+        ))}
+      </div>
+
+      <ol className="hidden flex-wrap gap-1.5 sm:flex xl:hidden">
+        {BUILDER_STEPS.map((item, index) => {
+          const current = index === stepIndex;
+          const passed = index < stepIndex;
+          return (
+            <li className="min-w-0" key={item.id}>
+              <button
+                type="button"
+                aria-current={current ? "step" : undefined}
+                onClick={() => onSelect(index)}
+                disabled={index > stepIndex}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed ${
+                  current
+                    ? "border-brand/35 bg-brand-soft font-semibold text-brand-strong"
+                    : passed
+                      ? "border-border bg-surface font-medium text-ink hover:border-brand/35"
+                      : "border-border/60 bg-surface/60 text-muted"
+                }`}
+              >
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-full text-[0.5625rem] font-bold tabular-nums ${
+                    passed
+                      ? "bg-brand text-white"
+                      : current
+                        ? "bg-brand/15 text-brand-strong"
+                        : "bg-ink/[0.06] text-muted"
+                  }`}
+                >
+                  {passed ? (
+                    <HugeiconsIcon
+                      icon={CheckmarkCircle02Icon}
+                      size={12}
+                      strokeWidth={2.2}
+                      aria-hidden="true"
+                    />
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </>
   );
 }
 
@@ -671,7 +770,7 @@ export function IdeaBuilder({
       <div className="mt-4 grid gap-6 xl:grid-cols-[15rem_minmax(0,1fr)] xl:gap-8">
         <aside
           aria-label="Creation steps"
-          className="xl:sticky xl:top-24 xl:self-start"
+          className="hidden min-w-0 xl:sticky xl:top-24 xl:block xl:self-start"
         >
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Create an idea</Eyebrow>
@@ -685,12 +784,12 @@ export function IdeaBuilder({
               style={{ width: `${completeness.percent}%` }}
             />
           </div>
-          <ol className="mt-4 flex gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible">
+          <ol className="mt-4 flex flex-col gap-1">
             {BUILDER_STEPS.map((item, index) => {
               const current = item.id === step;
               const passed = index < stepIndex;
               return (
-                <li key={item.id} className="shrink-0 xl:w-full">
+                <li key={item.id} className="w-full">
                   <button
                     type="button"
                     aria-current={current ? "step" : undefined}
@@ -735,12 +834,21 @@ export function IdeaBuilder({
               );
             })}
           </ol>
-          <p className="mt-3 hidden text-[0.6875rem] leading-4 text-muted xl:block">
+          <p className="mt-3 text-[0.6875rem] leading-4 text-muted">
             Steps unlock as you go. A saved draft can be reopened at any point.
           </p>
         </aside>
 
         <div className="min-w-0">
+          <div className="mb-4 xl:hidden">
+            <BuilderStepNav
+              onSelect={(index) => {
+                setStepIndex(index);
+                setIssues([]);
+              }}
+              stepIndex={stepIndex}
+            />
+          </div>
           <div className="flex flex-wrap items-end justify-between gap-3">
             <div>
               <p className="text-xs font-semibold tabular-nums text-muted">
@@ -751,6 +859,18 @@ export function IdeaBuilder({
               </h1>
             </div>
             <div className="flex flex-wrap items-center gap-2">
+              <a
+                href="#idea-preview"
+                className="inline-flex min-h-9 items-center gap-1.5 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/35 hover:text-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand lg:hidden"
+              >
+                <HugeiconsIcon
+                  icon={ViewIcon}
+                  size={14}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                />
+                Preview
+              </a>
               <button
                 type="button"
                 onClick={() => {
@@ -808,80 +928,101 @@ export function IdeaBuilder({
           <div className="mt-4 grid gap-5 lg:grid-cols-[minmax(0,1fr)_18rem]">
             <div className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-5">
               {step === "basics" ? (
-                <div className="space-y-4">
-                  <StepField
-                    label="Idea title"
-                    error={errorFor(issues, "title")}
-                    hint="A clear, specific title beats a slogan."
-                  >
-                    <Input
-                      value={draft.title}
-                      maxLength={140}
-                      placeholder="Give your idea a clear and specific title"
-                      aria-invalid={Boolean(errorFor(issues, "title"))}
-                      onChange={(event) =>
-                        update({ title: event.target.value })
-                      }
-                    />
-                  </StepField>
-                  <IdeaFieldAssistant {...assistantProps("title")} />
-                  <StepField
-                    label="Short summary"
-                    error={errorFor(issues, "summary")}
-                    hint="This is what readers see on a card."
-                  >
-                    <Textarea
-                      value={draft.summary}
-                      rows={3}
-                      maxLength={300}
-                      placeholder="In a few sentences, what is your idea about?"
-                      aria-invalid={Boolean(errorFor(issues, "summary"))}
-                      onChange={(event) =>
-                        update({ summary: event.target.value })
-                      }
-                    />
-                  </StepField>
-                  <IdeaFieldAssistant {...assistantProps("summary")} />
-                  <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-7">
+                  <section aria-labelledby="basics-idea" className="space-y-4">
+                    <h2 id="basics-idea" className="text-sm font-bold text-ink">
+                      The idea
+                    </h2>
                     <StepField
-                      label="Category"
-                      error={errorFor(issues, "category")}
+                      label="Idea title"
+                      counter={{ max: 140, value: draft.title.length }}
+                      error={errorFor(issues, "title")}
+                      hint="A clear, specific title beats a slogan."
                     >
-                      <Select
-                        aria-label="Category"
-                        options={categoryOptions}
-                        value={draft.category || undefined}
-                        placeholder="Select a category"
-                        onValueChange={(value) =>
-                          update({ category: value as IdeaDraft["category"] })
+                      <Input
+                        value={draft.title}
+                        maxLength={140}
+                        placeholder="Give your idea a clear and specific title"
+                        aria-invalid={Boolean(errorFor(issues, "title"))}
+                        onChange={(event) =>
+                          update({ title: event.target.value })
                         }
                       />
                     </StepField>
-                    <StepField label="Location" optional>
-                      <Select
-                        aria-label="Location"
-                        options={regionOptions}
-                        value={draft.region || undefined}
-                        placeholder="Select a location"
-                        onValueChange={(region) => update({ region })}
+                    <IdeaFieldAssistant {...assistantProps("title")} />
+                    <StepField
+                      label="Short summary"
+                      counter={{ max: 300, value: draft.summary.length }}
+                      error={errorFor(issues, "summary")}
+                      hint="This is what readers see on a card."
+                    >
+                      <Textarea
+                        value={draft.summary}
+                        rows={3}
+                        maxLength={300}
+                        placeholder="In a few sentences, what is your idea about?"
+                        aria-invalid={Boolean(errorFor(issues, "summary"))}
+                        onChange={(event) =>
+                          update({ summary: event.target.value })
+                        }
                       />
                     </StepField>
-                  </div>
-                  <StepField
-                    label="Cover image"
-                    optional
-                    error={errorFor(issues, "coverUrl")}
-                    hint="An https:// image link. A fallback cover is used when this is empty."
+                    <IdeaFieldAssistant {...assistantProps("summary")} />
+                  </section>
+
+                  <section
+                    aria-labelledby="basics-discovery"
+                    className="space-y-4"
                   >
-                    <Input
-                      type="url"
-                      value={draft.coverUrl}
-                      placeholder="https://images.example.com/your-idea.jpg"
-                      onChange={(event) =>
-                        update({ coverUrl: event.target.value })
-                      }
-                    />
-                  </StepField>
+                    <h2
+                      id="basics-discovery"
+                      className="text-sm font-bold text-ink"
+                    >
+                      Discovery
+                    </h2>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <StepField
+                        label="Category"
+                        error={errorFor(issues, "category")}
+                      >
+                        <Select
+                          aria-label="Category"
+                          options={categoryOptions}
+                          value={draft.category || undefined}
+                          placeholder="Select a category"
+                          onValueChange={(value) =>
+                            update({
+                              category: value as IdeaDraft["category"],
+                            })
+                          }
+                        />
+                      </StepField>
+                      <StepField label="Location" optional>
+                        <Select
+                          aria-label="Location"
+                          options={regionOptions}
+                          value={draft.region || undefined}
+                          placeholder="Select a location"
+                          onValueChange={(region) => update({ region })}
+                        />
+                      </StepField>
+                    </div>
+                    <StepField
+                      label="Cover image"
+                      optional
+                      error={errorFor(issues, "coverUrl")}
+                      hint="An https:// image link. A fallback cover is used when this is empty."
+                    >
+                      <Input
+                        type="url"
+                        value={draft.coverUrl}
+                        placeholder="https://images.example.com/your-idea.jpg"
+                        onChange={(event) =>
+                          update({ coverUrl: event.target.value })
+                        }
+                      />
+                    </StepField>
+                  </section>
                 </div>
               ) : null}
 
@@ -1223,7 +1364,10 @@ export function IdeaBuilder({
                       </p>
                       <ul className="mt-1.5 space-y-2">
                         {draft.funding.useOfFunds.map((item, index) => (
-                          <li key={item.id} className="flex gap-2">
+                          <li
+                            key={item.id}
+                            className="flex gap-2 max-md:flex-col max-md:items-stretch"
+                          >
                             <Input
                               aria-label={`Use of funds ${index + 1} label`}
                               value={item.label}
@@ -1266,7 +1410,7 @@ export function IdeaBuilder({
                                   },
                                 })
                               }
-                              className="max-w-28"
+                              className="md:max-w-28"
                             />
                             <button
                               type="button"
@@ -1281,7 +1425,7 @@ export function IdeaBuilder({
                                   },
                                 })
                               }
-                              className="grid size-11 shrink-0 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand"
+                              className="grid size-11 shrink-0 place-items-center rounded-lg border border-border text-muted hover:text-danger focus-visible:outline-2 focus-visible:outline-brand max-md:ml-auto"
                             >
                               <HugeiconsIcon
                                 icon={Delete02Icon}
@@ -2100,13 +2244,16 @@ export function IdeaBuilder({
               ) : null}
             </div>
 
-            <aside className="space-y-3 lg:sticky lg:top-24 lg:self-start">
-              <div>
+            <aside
+              id="idea-preview"
+              className="min-w-0 scroll-mt-24 space-y-3 lg:sticky lg:top-24 lg:self-start"
+            >
+              <div className="min-w-0">
                 <p className="text-[0.6875rem] font-semibold uppercase tracking-[0.12em] text-muted">
                   Idea preview
                 </p>
                 <p className="mt-0.5 text-[0.6875rem] leading-4 text-muted">
-                  How your idea will appear on the public site.
+                  Updates as you type, exactly as the public card will read.
                 </p>
                 <div className="mt-2">
                   <PreviewCard draft={draft} />
@@ -2138,7 +2285,7 @@ export function IdeaBuilder({
             </aside>
           </div>
 
-          <div className="sticky bottom-0 z-20 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur">
+          <div className="sticky bottom-0 z-20 mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border bg-canvas/95 py-3 backdrop-blur max-md:bottom-[calc(4.5rem_+_env(safe-area-inset-bottom))]">
             <Button
               type="button"
               variant="outline"

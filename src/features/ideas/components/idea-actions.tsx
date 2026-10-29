@@ -112,7 +112,7 @@ function SupportAction({
                 strokeWidth={2.2}
                 aria-hidden="true"
               />
-              Supported
+              <span className="ml-2">Supported</span>
             </>
           ) : (
             <>
@@ -122,7 +122,7 @@ function SupportAction({
                 strokeWidth={1.8}
                 aria-hidden="true"
               />
-              Support idea
+              <span className="ml-2">Support idea</span>
             </>
           )}
         </Button>

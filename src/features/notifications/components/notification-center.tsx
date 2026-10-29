@@ -135,7 +135,7 @@ export function NotificationCenter({
           aria-label="Notification filters"
           className="-mx-4 sm:-mx-6 lg:mx-0"
         >
-          <ul className="flex gap-6 overflow-x-auto px-4 sm:px-6 lg:px-0">
+          <ul className="flex gap-6 overflow-x-auto px-4 sm:px-6 lg:px-0 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none]">
             {filters.map((filter) => {
               const isCurrent = selectedFilter === filter.value;
 

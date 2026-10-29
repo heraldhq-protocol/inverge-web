@@ -14,7 +14,7 @@ export function TwoDoorsSection() {
         >
           {/* Card 1: For builders */}
           <div className="flex flex-col gap-6 rounded-3xl border border-border/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:p-7">
-            <div className="relative h-44 w-36 shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
+            <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
               <Image
                 src="/images/hero/for-builder-thumbnail.png"
                 alt="African builder planning project milestone delivery"
@@ -53,7 +53,7 @@ export function TwoDoorsSection() {
 
           {/* Card 2: For backers */}
           <div className="flex flex-col gap-6 rounded-3xl border border-border/80 bg-white p-6 shadow-sm sm:flex-row sm:items-center sm:p-7">
-            <div className="relative h-44 w-36 shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
+            <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-2xl border border-border/60 sm:h-48 sm:w-40">
               <Image
                 src="/images/hero/for-backer-thumbnail.png"
                 alt="African supporter reviewing community milestones"

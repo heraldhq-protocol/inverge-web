@@ -64,7 +64,7 @@ function CardStatus({ idea }: { idea: DiscoveryIdea }) {
 
 function CreatorLine({ idea }: { idea: DiscoveryIdea }) {
   return (
-    <div className="min-w-0">
+    <div className="min-w-0 sm:block flex justify-between items-center">
       <div className="flex min-w-0 items-center gap-2">
         <Avatar name={idea.creator} size={32} />
         <span className="truncate text-sm font-medium text-ink">
@@ -145,8 +145,8 @@ export function IdeaDiscoveryCard({
       <div
         className={`relative shrink-0 overflow-hidden bg-surface-muted ${
           isList
-            ? "aspect-[16/10] sm:aspect-auto sm:h-full sm:min-h-44"
-            : "aspect-[16/10]"
+            ? "aspect-16/10 sm:aspect-auto sm:h-full sm:min-h-44"
+            : "aspect-16/10"
         }`}
       >
         <IdeaCover

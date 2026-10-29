@@ -248,7 +248,7 @@ export function Select({
             : "border-border hover:border-muted/45 focus-visible:border-brand focus-visible:ring-3 focus-visible:ring-brand/12"
         }`}
       >
-        <span className={selectedOption ? "truncate text-ink" : "text-muted"}>
+        <span className={selectedOption ? " truncate text-sm text-ink" : "text-muted text-sm"}>
           {selectedOption?.label ?? placeholder}
         </span>
         <HugeiconsIcon
@@ -280,7 +280,7 @@ export function Select({
                     ? "translateY(-100%)"
                     : undefined,
               }}
-              className="fixed z-[100] overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-[0_18px_48px_rgba(13,29,21,0.16)]"
+              className="fixed z-100 overflow-y-auto rounded-xl border border-border bg-surface p-1.5 shadow-[0_18px_48px_rgba(13,29,21,0.16)]"
             >
               {options.map((option, index) => {
                 const isSelected = option.value === selectedValue;
