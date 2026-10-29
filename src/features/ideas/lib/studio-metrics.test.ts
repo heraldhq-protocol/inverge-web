@@ -133,6 +133,18 @@ describe("buildCreatorIdeaRows", () => {
 
     expect(row?.analyticsHref).toBe("/d/creator/ideas/with-analytics/insights");
   });
+
+  it("can count feedback without exposing a preview-only setup link", () => {
+    const [row] = buildCreatorIdeaRows([myIdea("with-detail")], {
+      ...options,
+      hasFeedback: () => false,
+    });
+
+    expect(row).toMatchObject({
+      feedbackHref: null,
+      feedbackResponses: 4,
+    });
+  });
 });
 
 describe("labels", () => {

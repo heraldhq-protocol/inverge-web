@@ -24,8 +24,11 @@ export const metadata: Metadata = {
  */
 export default async function ProfilePage() {
   const viewer = await getDashboardViewer();
-  const { rows } = getCreatorView();
-  const publicIdeas = rows.filter((row) => row.visibility === "public");
+  const result = await getCreatorView();
+  const publicIdeas =
+    result.status === "ready"
+      ? result.view.rows.filter((row) => row.visibility === "public")
+      : [];
 
   return (
     <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
@@ -90,7 +93,18 @@ export default async function ProfilePage() {
           link and are not shown here.
         </p>
 
-        {publicIdeas.length > 0 ? (
+        {result.status !== "ready" ? (
+          <p className="mt-3 rounded-2xl border border-dashed border-border-strong bg-surface px-5 py-6 text-center text-sm text-muted">
+            We couldn&apos;t load your public ideas right now. Try again from{" "}
+            <Link
+              href="/d/profile"
+              className="font-semibold text-brand-strong underline-offset-4 hover:underline"
+            >
+              this profile
+            </Link>
+            .
+          </p>
+        ) : publicIdeas.length > 0 ? (
           <ul className="mt-3 divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface">
             {publicIdeas.map((idea) => (
               <li key={idea.id}>

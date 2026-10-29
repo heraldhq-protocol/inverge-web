@@ -15,6 +15,7 @@ import { Amount } from "@/components/ui/amount";
 import { MetricCard } from "@/components/ui/metric-card";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { CreatorIdeaList } from "@/features/ideas/components/creator-idea-list";
+import { CreatorStudioStatePage } from "@/features/ideas/components/creator-studio-state";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
 import { getCreatorView } from "@/features/ideas/server/creator-view";
 
@@ -31,8 +32,21 @@ export const metadata: Metadata = {
  * records can never disagree. Nothing here implies money has been raised: the
  * only monetary figure is non-binding pre-pledge intent.
  */
-export default function CreatorStudioPage() {
-  const { feedbackIdea, metrics, nextSteps, rows } = getCreatorView();
+export default async function CreatorStudioPage() {
+  const result = await getCreatorView();
+
+  if (result.status !== "ready") {
+    return (
+      <CreatorStudioStatePage
+        active="overview"
+        next="/d/creator"
+        result={result}
+        retryHref="/d/creator"
+      />
+    );
+  }
+
+  const { dataSource, feedbackIdea, metrics, nextSteps, rows } = result.view;
   const recent = rows.slice(0, 3);
 
   return (
@@ -97,6 +111,13 @@ export default function CreatorStudioPage() {
           hint="Non-binding interest. No money has moved and no campaign is open."
         />
       </dl>
+
+      {dataSource === "preview" ? (
+        <p className="mt-3 max-w-3xl text-xs leading-5 text-muted">
+          Preview workspace. These figures come from the local fixture account
+          because preview auth is enabled or the API is not configured.
+        </p>
+      ) : null}
 
       {nextSteps.length > 0 ? (
         <section aria-labelledby="next-steps-heading" className="mt-6">
@@ -177,19 +198,29 @@ export default function CreatorStudioPage() {
               <>
                 <p className="mt-1 text-xs leading-5 text-muted">
                   {feedbackIdea.feedbackResponses} responses are recorded for{" "}
-                  {feedbackIdea.title}. Review the form and its questions.
+                  {feedbackIdea.title}.{" "}
+                  {dataSource === "live"
+                    ? "The response breakdown stays private in Analytics."
+                    : "Review the form and its questions."}
                 </p>
                 <Link
-                  href={feedbackIdea.feedbackHref ?? "/d/creator/ideas"}
+                  href={
+                    dataSource === "live"
+                      ? "/d/creator/analytics"
+                      : (feedbackIdea.feedbackHref ?? "/d/creator/ideas")
+                  }
                   className="mt-2 inline-flex min-h-9 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                 >
-                  Open feedback setup
+                  {dataSource === "live"
+                    ? "Open analytics"
+                    : "Open feedback setup"}
                 </Link>
               </>
             ) : (
               <p className="mt-1 text-xs leading-5 text-muted">
-                No idea has a feedback form with responses yet. Add questions to
-                an idea to start collecting structured feedback.
+                {dataSource === "live"
+                  ? "No feedback responses have been recorded yet. They appear here once supporters submit an idea's feedback form."
+                  : "No idea has a feedback form with responses yet. Add questions to an idea to start collecting structured feedback."}
               </p>
             )}
           </div>

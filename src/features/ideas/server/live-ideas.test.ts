@@ -16,6 +16,7 @@ import {
   toAskBreakdown,
   toDiscoveryIdea,
   toIdeaDetail,
+  toMyIdea,
   toRoadmapSteps,
   validationPercentFor,
   type ApiIdea,
@@ -155,6 +156,44 @@ describe("live idea mapping", () => {
         baseIdea({ discoverabilityTier: "LINK_ONLY", status: "VALIDATING" }),
       ).status,
     ).toBe("validating");
+  });
+
+  it("maps an owned idea into the creator row shape", () => {
+    const row = toMyIdea(
+      baseIdea({
+        discoverabilityTier: "LINK_ONLY",
+        status: "DRAFT",
+        updatedAt: "2026-10-05T09:30:00.000Z",
+      }),
+    );
+
+    expect(row).toMatchObject({
+      id: "idea-1",
+      status: "draft",
+      supporters: 12,
+      title: "Stock tracker",
+      updatedAt: "2026-10-05T09:30:00.000Z",
+      validationPercent: 20,
+      visibility: "private",
+    });
+    expect(row?.prePledged.atomic).toBe("25050");
+  });
+
+  it("does not count an archived idea as listed just because its tier is stale", () => {
+    const row = toMyIdea(
+      baseIdea({ discoverabilityTier: "DISCOVERABLE", status: "ARCHIVED" }),
+    );
+
+    expect(row?.status).toBe("archived");
+    expect(row?.visibility).toBe("private");
+  });
+
+  it("falls back to createdAt when the API omits updatedAt", () => {
+    expect(toMyIdea(baseIdea())?.updatedAt).toBe("2026-10-01T00:00:00.000Z");
+  });
+
+  it("drops an owned idea with an unknown lifecycle value", () => {
+    expect(toMyIdea(baseIdea({ status: "FUTURE_STATUS" }))).toBeNull();
   });
 
   it("does not invent a status for an unknown API value", () => {
