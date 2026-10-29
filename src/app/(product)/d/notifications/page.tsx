@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
 
+import { StatePanel } from "@/components/ui/state-panel";
 import { NotificationsDashboard } from "@/features/notifications/components/notifications-dashboard";
-import { notificationsPreviewData } from "@/features/notifications/content/preview-data";
+import { getNotificationsView } from "@/features/notifications/server/notifications";
 import {
   isNotificationFilter,
   type NotificationFilter,
@@ -28,12 +30,48 @@ export default async function NotificationsPage({
     typeof params.filter === "string" && isNotificationFilter(params.filter)
       ? params.filter
       : "all";
+  const result = await getNotificationsView();
+
+  if (result.status === "signed_out") {
+    redirect(`/auth?next=${encodeURIComponent("/d/notifications")}`);
+  }
+
+  if (result.status === "unavailable") {
+    return (
+      <NotificationsDashboard
+        dataSource="live"
+        items={[]}
+        query={query}
+        selectedFilter={selectedFilter}
+        state={
+          <div className="mt-6">
+            <StatePanel
+              variant="error"
+              eyebrow="Notifications unavailable"
+              title="We couldn't load your updates"
+              description={result.reason}
+              action={
+                <a
+                  href="/d/notifications"
+                  className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Try again
+                </a>
+              }
+            />
+          </div>
+        }
+      />
+    );
+  }
 
   return (
     <NotificationsDashboard
-      items={notificationsPreviewData}
+      dataSource={result.view.dataSource}
+      items={result.view.items}
       query={query}
       selectedFilter={selectedFilter}
+      truncated={result.view.truncated}
     />
   );
 }

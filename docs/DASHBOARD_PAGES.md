@@ -22,8 +22,8 @@ Ground rules that shape this list:
 | Route | Page | State |
 | --- | --- | --- |
 | `/d` | Home | Full. Greeting, featured band, quick actions, momentum grid, activity rail |
-| `/d/discover` | In-shell discovery | Full. Reuses the public `IdeasDashboard` with filters, topics, featured band |
-| `/d/pre-pledges` | Pre-pledges | Real list with fixture intents. Own loading/error |
+| `/d/discover` | In-shell discovery | Live public catalogue for an API session; preview auth keeps the fixture catalogue |
+| `/d/pre-pledges` | Pre-pledges | Preview list with fixture intents. A live account sees an unavailable state because the API has no pre-pledge read model yet |
 | `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
 | `/d/creator/ideas` | My ideas | Real. List of owned ideas, including drafts, from the API. **No filters, search, sort, or archive yet** |
 | `/d/creator/ideas/new` | Idea builder | Full four-step flow with draft autosave |
@@ -37,9 +37,9 @@ Ground rules that shape this list:
 | `/d/creator/ideas/[id]/insights/supporters` | Supporters tab | Real, tiered breakdown |
 | `/d/creator/ideas/[id]/insights/interest` | Interest tab | Real, feedback breakdown plus AI panel |
 | `/d/ideathons` | Ideathons | Real participant workspace for the active programme |
-| `/d/notifications` | Notifications | Real list with unread states |
+| `/d/notifications` | Notifications | Live from `GET /me/notifications`; mark-read actions go through same-origin BFF routes. Preview auth keeps fixtures |
 | `/d/profile` | Profile | Real. Identity preview plus the creator's public surface |
-| `/d/settings` | Settings | Real form, surfaces programme-admin access when present |
+| `/d/settings` | Settings | Live profile and email connection for an API account; profile saves through `PATCH /api/auth/profile`. Feed and notification preferences stay unconnected rather than showing preview controls |
 | `/d/saved` | Saved campaigns | Real list of this browser's saves (D-023), resolved against the public campaign set. An id that no longer resolves is shown as unavailable rather than dropped. Not account-synced, and the page says so |
 
 ### Campaign surfaces

@@ -2,6 +2,7 @@ import type { SettingsData } from "@/features/settings/types";
 
 export const settingsPreviewData: SettingsData = {
   profile: {
+    avatarUrl: "/images/profile_img.png",
     displayName: "Amara Okonkwo",
     email: "amara@example.com",
     location: "Lagos, Nigeria",

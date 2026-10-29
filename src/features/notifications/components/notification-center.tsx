@@ -47,14 +47,17 @@ export function NotificationCenter({
   items,
   query,
   selectedFilter,
+  dataSource = "preview",
 }: {
   items: NotificationRecord[];
   query: string;
   selectedFilter: NotificationFilter;
+  dataSource?: "live" | "preview";
 }) {
   const [readIds, setReadIds] = useState(
     () => new Set(items.filter((item) => item.isRead).map((item) => item.id)),
   );
+  const [saveError, setSaveError] = useState("");
   const unreadCount = items.filter((item) => !readIds.has(item.id)).length;
   const visibleItems = items.filter((item) => {
     if (!matchesQuery(item, query)) return false;
@@ -63,12 +66,48 @@ export function NotificationCenter({
     return item.kind === selectedFilter;
   });
 
-  function markAllAsRead() {
+  async function markAllAsRead() {
+    if (unreadCount === 0) return;
+
+    const previous = readIds;
     setReadIds(new Set(items.map((item) => item.id)));
+    setSaveError("");
+
+    if (dataSource !== "live") return;
+
+    try {
+      const response = await fetch("/api/notifications/read-all", {
+        method: "POST",
+      });
+      if (!response.ok) throw new Error("read-all failed");
+    } catch {
+      setReadIds(previous);
+      setSaveError("We couldn't mark every notification read. Try again.");
+    }
   }
 
-  function markAsRead(id: string) {
+  async function markAsRead(id: string) {
+    if (readIds.has(id)) return;
+
     setReadIds((current) => new Set(current).add(id));
+    setSaveError("");
+
+    if (dataSource !== "live") return;
+
+    try {
+      const response = await fetch(
+        `/api/notifications/${encodeURIComponent(id)}/read`,
+        { method: "PATCH" },
+      );
+      if (!response.ok) throw new Error("mark-read failed");
+    } catch {
+      setReadIds((current) => {
+        const next = new Set(current);
+        next.delete(id);
+        return next;
+      });
+      setSaveError("We couldn't mark that notification read. Try again.");
+    }
   }
 
   return (
@@ -85,6 +124,12 @@ export function NotificationCenter({
             {unreadCount === 0 ? "All read" : "Mark all as read"}
           </button>
         </div>
+
+        {saveError ? (
+          <p aria-live="polite" className="pb-2 text-xs text-danger">
+            {saveError}
+          </p>
+        ) : null}
 
         <nav
           aria-label="Notification filters"
@@ -151,7 +196,7 @@ export function NotificationCenter({
                       key={item.id}
                       item={item}
                       isRead={readIds.has(item.id)}
-                      onOpen={() => markAsRead(item.id)}
+                      onOpen={() => void markAsRead(item.id)}
                     />
                   ))}
                 </ul>

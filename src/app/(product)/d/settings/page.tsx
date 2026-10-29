@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
+import { StatePanel } from "@/components/ui/state-panel";
 import { readSessionUser } from "@/features/auth/server/session-user";
-import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
-import { settingsPreviewData } from "@/features/settings/content/preview-data";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
+import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
+import { getSettingsView } from "@/features/settings/server/settings";
 
 export const metadata: Metadata = {
   title: "Settings",
@@ -12,13 +14,16 @@ export const metadata: Metadata = {
 };
 
 export default async function SettingsPage() {
-  const [access, user] = await Promise.all([
+  const [access, user, result] = await Promise.all([
     getProgrammeAdminAccess(),
     readSessionUser(),
+    getSettingsView(),
   ]);
 
-  // The entry only appears when the server gate allows it, so a signed-out or
-  // non-admin visitor never sees a link to a workspace they cannot open.
+  if (result.status === "signed_out") {
+    redirect(`/auth?next=${encodeURIComponent("/d/settings")}`);
+  }
+
   const adminEntry = access.allowed ? (
     <section
       aria-labelledby="admin-access"
@@ -43,10 +48,32 @@ export default async function SettingsPage() {
     </section>
   ) : null;
 
+  if (result.status === "unavailable") {
+    return (
+      <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+        <StatePanel
+          variant="error"
+          eyebrow="Settings unavailable"
+          title="We couldn't load your account"
+          description={result.reason}
+          action={
+            <Link
+              href="/d/settings"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              Try again
+            </Link>
+          }
+        />
+      </div>
+    );
+  }
+
   return (
     <SettingsDashboard
       adminEntry={adminEntry}
-      data={settingsPreviewData}
+      data={result.view.data}
+      dataSource={result.view.dataSource}
       email={user?.email ?? null}
       emailVerified={user?.emailVerified === true}
     />

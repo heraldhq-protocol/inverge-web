@@ -4,15 +4,22 @@ import type {
   NotificationFilter,
   NotificationRecord,
 } from "@/features/notifications/types";
+import type { ReactNode } from "react";
 
 export function NotificationsDashboard({
+  dataSource = "preview",
   items,
   query = "",
   selectedFilter = "all",
+  state,
+  truncated = false,
 }: {
+  dataSource?: "live" | "preview";
   items: NotificationRecord[];
   query?: string;
   selectedFilter?: NotificationFilter;
+  state?: ReactNode;
+  truncated?: boolean;
 }) {
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10">
@@ -35,9 +42,13 @@ export function NotificationsDashboard({
           </p>
           <span
             className="text-xs text-muted"
-            title="Notifications are sample data"
+            title={
+              dataSource === "live"
+                ? "Notifications from the Inverge API"
+                : "Notifications are sample data"
+            }
           >
-            Sample data
+            {dataSource === "live" ? "Live updates" : "Sample data"}
           </span>
         </div>
         <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
@@ -48,11 +59,21 @@ export function NotificationsDashboard({
         </p>
       </header>
 
-      <NotificationCenter
-        items={items}
-        query={query}
-        selectedFilter={selectedFilter}
-      />
+      {state ?? (
+        <>
+          <NotificationCenter
+            dataSource={dataSource}
+            items={items}
+            query={query}
+            selectedFilter={selectedFilter}
+          />
+          {dataSource === "live" && truncated ? (
+            <p className="mt-4 text-center text-xs text-muted" role="status">
+              Showing the newest 50 notifications.
+            </p>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }

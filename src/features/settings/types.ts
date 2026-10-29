@@ -1,4 +1,5 @@
 export type SettingsProfile = {
+  avatarUrl?: string | null;
   displayName: string;
   email: string;
   location: string;
