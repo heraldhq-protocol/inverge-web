@@ -21,7 +21,7 @@ Ground rules that shape this list:
 
 | Route | Page | State |
 | --- | --- | --- |
-| `/d` | Home | Full. Greeting, featured band, quick actions, momentum grid, activity rail |
+| `/d` | Home | Live public ideas, creator snapshot, and notification activity for an API session. Ideathon and pre-pledge-only modules are omitted live because those read models do not exist yet; preview auth keeps the full fixture home |
 | `/d/discover` | In-shell discovery | Live public catalogue for an API session; preview auth keeps the fixture catalogue |
 | `/d/pre-pledges` | Pre-pledges | Preview list with fixture intents. A live account sees an unavailable state because the API has no pre-pledge read model yet |
 | `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
