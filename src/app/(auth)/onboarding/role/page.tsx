@@ -29,6 +29,9 @@ export default async function RoleOnboardingPage({
   const user = await readSessionUser();
   if (!user) redirect(authHref(ROLE_ONBOARDING_PATH));
 
+  // Email confirmation is a non-blocking account task; it never interrupts the
+  // starting-point question.
+
   // The starting-point choice is only meaningful after the shared profile
   // exists, so an interrupted flow resumes at the step it missed.
   if (user.requiresOnboarding) redirect(PROFILE_ONBOARDING_PATH);

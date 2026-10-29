@@ -1,5 +1,6 @@
 import {
   DEFAULT_ONBOARDING_INTENT,
+  EMAIL_VERIFICATION_PATH,
   type OnboardingIntent,
 } from "@/features/auth/lib/onboarding";
 
@@ -39,6 +40,8 @@ export function safeReturnPath(value: string | string[] | undefined): string {
   if (
     candidate === AUTH_PATH ||
     candidate.startsWith(`${AUTH_PATH}?`) ||
+    candidate === EMAIL_VERIFICATION_PATH ||
+    candidate.startsWith(`${EMAIL_VERIFICATION_PATH}?`) ||
     candidate === SIGN_OUT_PATH ||
     candidate.startsWith(`${SIGN_OUT_PATH}?`)
   ) {

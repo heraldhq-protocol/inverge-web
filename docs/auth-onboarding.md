@@ -14,7 +14,8 @@ below is presented as working.
 | --- | --- | --- |
 | Entry | any public CTA | `authHref(nextPath?, intent?)` |
 | Sign in or create account | `/auth` (also `?next=`, `?intent=creator`) | Web3Auth modal, then the API verifies the identity token (or the local preview mode) |
-| Session | `POST /api/auth/session` | BFF; API returns a one-hour session JWT |
+| Session | `POST /api/auth/session` | BFF; API returns a one-hour session JWT and the email-verification requirement |
+| Email confirmation | `/auth/email` (also `?next=`, `?intent=creator`; `?change=1` from settings) | BFF `GET/POST /api/auth/email`; API owns codes, hashes, cooldown and gates |
 | Account setup | `/onboarding/profile` | `PATCH /api/auth/me/profile` through `PATCH /api/auth/profile`; account type is preview-only |
 | Starting point | `/onboarding/role` (also `?intent=creator`) | Presentation only; no role is granted |
 | Creator Studio | `/d/creator` | Protected by the dashboard layout; modules still use preview data |
@@ -60,6 +61,11 @@ Post-auth routing (`postAuthPath`):
 1. `requiresOnboarding === true` → `/onboarding/profile`, regardless of intent.
 2. Otherwise creator intent → `/d/creator`.
 3. Otherwise → the validated `?next=` path, default `/d`.
+
+Email confirmation is deliberately **non-blocking**. It is prompted by the app
+shell banner and the settings email row, and authored actions (comments, ideas,
+campaign submission) still fail server-side until it is complete. Sign-in,
+onboarding, the dashboard, idea support, and pre-pledges never wait for it.
 
 After the account step, `postProfilePath` sends everyone to `/onboarding/role`;
 creator intent becomes `?intent=creator` so the question is pre-selected. The
@@ -147,8 +153,8 @@ The account step is the first onboarding write that is real in live mode.
 | Google, X, passwordless email availability | Enabled in the Web3Auth dashboard, not in code. The repo cannot verify which connections the Client ID has enabled. |
 | Creator type (individual / organisation) | The preview UI collects it, but there is no `creatorType` field on `CreatorProfile` and no API DTO. Persisting the live value needs a reviewed Prisma migration and product approval. |
 | Organisation profile fields | No organisation/KYB profile model in the web contract. `KYC_PROVIDER` has a KYB workflow, but no onboarding surface. |
-| Trust tiers (`EMAIL` / `SOCIAL` / `VERIFIED`) | The API computes tiers server-side, but nothing writes `User.emailVerified` and there is no social-link write path. Displaying a tier now would be a fabricated state. |
-| Email verification | No endpoint that records a verified email or a verification timestamp. Do not show "verified". |
+| Trust tiers (`EMAIL` / `SOCIAL` / `VERIFIED`) | The API computes tiers server-side and now writes `User.emailVerifiedAt`; there is still no social-link write path. Displaying a tier beyond the email fact would be fabricated. |
+| Email delivery to arbitrary recipients | The API and web flow are implemented, but the Resend account has no verified domain. The shared test sender only reaches the account owner. See the API's `docs/deployment/email.md`. |
 | X connection / revocation | No social-connection model or OAuth linking endpoint. |
 | Creator KYC | The API has KYC/KYB endpoints (stub or Didit), but the web has no client, no status projection in onboarding, and `KycStatus` has no distinct `IN_REVIEW`. |
 | Backer KYC threshold | No web contribution flow calls the API; the threshold is not surfaced. |
@@ -163,9 +169,12 @@ Server-only:
 - `INVERGE_API_URL` - no default; unset means the BFF reports
   `api_not_configured` (503) instead of guessing a port. Set the API origin; the
   BFF appends the `/api/v1` prefix (an already-versioned base is also accepted).
-- `INVERGE_AUTH_MODE` — `preview` keeps the real provider sign-in and stores a
+- `INVERGE_AUTH_MODE` - `preview` keeps the real provider sign-in and stores a
   local preview identity instead of calling the API. Ignored in production.
   Unset (or `api`) uses the live BFF exchange.
+- Email verification adds no web environment variables. The BFF reuses
+  `INVERGE_API_URL`; the API owns `EMAIL_PROVIDER`, `RESEND_API_KEY`,
+  `EMAIL_FROM`, `EMAIL_CODE_SECRET` and the OTP timings.
 
 Public:
 

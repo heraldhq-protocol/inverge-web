@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { isSameOriginRequest } from "@/features/auth/server/origin";
 import { clearPreviewSession } from "@/features/auth/server/preview-session";
 import {
+  clearEmailHint,
   clearOnboardingIntent,
   clearSessionCookie,
 } from "@/features/auth/server/session";
@@ -21,7 +22,8 @@ export async function POST(request: Request) {
 
   await clearSessionCookie();
   await clearPreviewSession();
-  // The onboarding hint belongs to the session it was captured for.
+  // Both hints belong to the session they were captured for.
+  await clearEmailHint();
   await clearOnboardingIntent();
 
   return new NextResponse(null, { status: 204 });

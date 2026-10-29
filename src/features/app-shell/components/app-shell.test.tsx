@@ -30,6 +30,7 @@ const shell: ShellData = {
     dataSource: "preview",
     displayName: "Amara Okonkwo",
     handle: "amaraokonkwo",
+    requiresEmailVerification: false,
   },
 };
 

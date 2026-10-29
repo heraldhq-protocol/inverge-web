@@ -19,6 +19,9 @@ export default async function ProfileOnboardingPage() {
   const user = await readSessionUser();
   if (!user) redirect(authHref(PROFILE_ONBOARDING_PATH));
 
+  // Email confirmation is a non-blocking account task. Onboarding must remain
+  // available so a new account can reach the dashboard and support ideas first.
+
   // The API decides when the shared profile is complete. A returning visitor
   // who has already finished it must not be asked again.
   if (!user.requiresOnboarding) redirect("/d");

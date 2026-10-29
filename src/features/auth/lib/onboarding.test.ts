@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import {
   CREATOR_HOME_PATH,
   DASHBOARD_HOME_PATH,
+  EMAIL_VERIFICATION_PATH,
+  emailVerificationPath,
   initialStartingPoint,
   postAuthPath,
   postProfilePath,
@@ -35,6 +37,23 @@ describe("safeOnboardingIntent", () => {
 });
 
 describe("postAuthPath", () => {
+  it("does not let an unverified email block onboarding or the dashboard", () => {
+    expect(
+      postAuthPath({
+        intent: "creator",
+        requiresOnboarding: false,
+        returnPath: "/d/wallet",
+      }),
+    ).toBe("/d/creator");
+    expect(
+      postAuthPath({
+        intent: "general",
+        requiresOnboarding: false,
+        returnPath: "/d/settings",
+      }),
+    ).toBe("/d/settings");
+  });
+
   it("always finishes an incomplete profile first", () => {
     expect(
       postAuthPath({
@@ -70,6 +89,23 @@ describe("postAuthPath", () => {
         returnPath: "/d/wallet",
       }),
     ).toBe("/d/wallet");
+  });
+});
+
+describe("emailVerificationPath", () => {
+  it("uses the bare path when there is no destination or intent to carry", () => {
+    expect(
+      emailVerificationPath({ intent: "general", returnPath: "/d" }),
+    ).toBe(EMAIL_VERIFICATION_PATH);
+  });
+
+  it("refuses to carry an off-site return value", () => {
+    expect(
+      emailVerificationPath({
+        intent: "general",
+        returnPath: "//evil.test",
+      }),
+    ).toBe(EMAIL_VERIFICATION_PATH);
   });
 });
 

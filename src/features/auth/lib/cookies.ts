@@ -6,6 +6,13 @@
  */
 export const SESSION_COOKIE_NAME = "inverge_session";
 export const ONBOARDING_INTENT_COOKIE_NAME = "inverge_onboarding_intent";
+/**
+ * Untrusted provider address, kept only to prefill the capture screen.
+ *
+ * It is written from the API's `suggestedEmail` field, never used as proof of
+ * ownership, and cleared once verification succeeds or the session ends.
+ */
+export const EMAIL_HINT_COOKIE_NAME = "inverge_email_hint";
 
 /**
  * Preview-only identity cookie. Kept here with the other cookie names so the

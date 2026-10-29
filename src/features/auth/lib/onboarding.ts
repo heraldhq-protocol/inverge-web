@@ -16,6 +16,12 @@ export const PROFILE_ONBOARDING_PATH = "/onboarding/profile";
 export const ROLE_ONBOARDING_PATH = "/onboarding/role";
 export const DASHBOARD_HOME_PATH = "/d";
 
+/**
+ * Email confirmation. It is a public auth screen, not onboarding: the account
+ * already exists, but authored actions stay closed until the address is proven.
+ */
+export const EMAIL_VERIFICATION_PATH = "/auth/email";
+
 /** Creator Studio. Reached after the shared onboarding asks where to start. */
 export const CREATOR_HOME_PATH = "/d/creator";
 
@@ -82,11 +88,39 @@ type PostAuthPathInput = {
 };
 
 /**
+ * The email-confirmation URL, carrying the destination and door so the flow
+ * resumes in the right place after the code is accepted.
+ */
+export function emailVerificationPath({
+  intent,
+  returnPath,
+}: {
+  intent: OnboardingIntent;
+  returnPath: string;
+}): string {
+  const params = new URLSearchParams();
+  const safeReturn =
+    returnPath.startsWith("/") &&
+    !returnPath.startsWith("//") &&
+    !returnPath.includes("\\")
+      ? returnPath
+      : DASHBOARD_HOME_PATH;
+
+  if (safeReturn !== DASHBOARD_HOME_PATH) params.set("next", safeReturn);
+  if (intent === "creator") params.set("intent", "creator");
+
+  const query = params.toString();
+  return query
+    ? `${EMAIL_VERIFICATION_PATH}?${query}`
+    : EMAIL_VERIFICATION_PATH;
+}
+
+/**
  * Where a visitor goes immediately after the session exchange.
  *
- * An incomplete profile always wins: no intent may skip account setup. Once the
- * profile exists, creator intent opens Creator Studio and every other visitor
- * continues to the page they originally asked for.
+ * Email confirmation is a non-blocking account task: it is prompted in the app
+ * shell and settings, but it never stands between sign-in and the dashboard,
+ * onboarding, or supporting an idea. Authored actions re-check it server-side.
  */
 export function postAuthPath({
   intent,

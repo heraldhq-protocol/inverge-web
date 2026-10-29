@@ -22,6 +22,8 @@ describe("safeReturnPath", () => {
       "/d\u0000evil",
       "/auth",
       "/auth?next=%2Fauth",
+      "/auth/email",
+      "/auth/email?next=%2Fauth",
       "/sign-out",
     ]) {
       expect(safeReturnPath(candidate)).toBe("/d");

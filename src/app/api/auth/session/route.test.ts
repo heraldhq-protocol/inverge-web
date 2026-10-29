@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 const writeSessionCookie = vi.hoisted(() => vi.fn(async () => undefined));
 const clearSessionCookie = vi.hoisted(() => vi.fn(async () => undefined));
 const writeOnboardingIntent = vi.hoisted(() => vi.fn(async () => undefined));
+const writeEmailHint = vi.hoisted(() => vi.fn(async () => undefined));
 const previewMode = vi.hoisted(() => ({ value: false }));
 const previewSubjectFromIdToken = vi.hoisted(() =>
   vi.fn((token: string) => (token === "valid-preview" ? "a".repeat(64) : null)),
@@ -34,6 +35,7 @@ vi.mock("@/features/auth/server/preview-session", () => ({
 }));
 vi.mock("@/features/auth/server/session", () => ({
   clearSessionCookie,
+  writeEmailHint,
   writeOnboardingIntent,
   writeSessionCookie,
 }));
@@ -75,6 +77,7 @@ beforeEach(() => {
   writeSessionCookie.mockClear();
   clearSessionCookie.mockClear();
   writeOnboardingIntent.mockClear();
+  writeEmailHint.mockClear();
   previewSubjectFromIdToken.mockClear();
   readPreviewSession.mockReset();
   readPreviewSession.mockResolvedValue(null);
@@ -146,10 +149,14 @@ describe("POST /api/auth/session", () => {
       }),
     );
     expect(writeSessionCookie).toHaveBeenCalledWith("session-jwt");
+    expect(writeEmailHint).toHaveBeenCalledWith(null);
     expect(writeOnboardingIntent).toHaveBeenCalledWith("general");
 
     const payload = await response.text();
-    expect(JSON.parse(payload)).toEqual({ requiresOnboarding: false });
+    expect(JSON.parse(payload)).toEqual({
+      requiresEmailVerification: false,
+      requiresOnboarding: false,
+    });
     expect(payload).not.toContain("session-jwt");
   });
 
@@ -170,7 +177,29 @@ describe("POST /api/auth/session", () => {
       }),
     );
     expect(writeOnboardingIntent).toHaveBeenCalledWith("creator");
-    expect(await response.json()).toEqual({ requiresOnboarding: true });
+    expect(await response.json()).toEqual({
+      requiresEmailVerification: false,
+      requiresOnboarding: true,
+    });
+  });
+
+  it("stores an unproven provider address only as a prefill hint", async () => {
+    fetchMock.mockResolvedValue(
+      upstream({
+        requiresEmailVerification: true,
+        requiresOnboarding: true,
+        sessionToken: "session-jwt",
+        suggestedEmail: "Amara@Example.test",
+      }),
+    );
+
+    const response = await POST(exchangeRequest({ idToken: "id-token" }));
+
+    expect(writeEmailHint).toHaveBeenCalledWith("Amara@Example.test");
+    expect(await response.json()).toEqual({
+      requiresEmailVerification: true,
+      requiresOnboarding: true,
+    });
   });
 
   it("rejects an intent outside the supported doors", async () => {
@@ -231,8 +260,12 @@ describe("POST /api/auth/session", () => {
       displayName: null,
       username: null,
     });
+    expect(writeEmailHint).toHaveBeenCalledWith(null);
     expect(writeOnboardingIntent).toHaveBeenCalledWith("creator");
-    expect(await response.json()).toEqual({ requiresOnboarding: true });
+    expect(await response.json()).toEqual({
+      requiresEmailVerification: false,
+      requiresOnboarding: true,
+    });
   });
 
   it("keeps an existing preview profile for the same subject", async () => {
@@ -256,7 +289,10 @@ describe("POST /api/auth/session", () => {
       displayName: "Amara",
       username: "amara",
     });
-    expect(await response.json()).toEqual({ requiresOnboarding: false });
+    expect(await response.json()).toEqual({
+      requiresEmailVerification: false,
+      requiresOnboarding: false,
+    });
   });
 
   it("asks an older preview profile for the missing account type", async () => {
@@ -272,7 +308,10 @@ describe("POST /api/auth/session", () => {
 
     const response = await POST(exchangeRequest({ idToken: "valid-preview" }));
 
-    expect(await response.json()).toEqual({ requiresOnboarding: true });
+    expect(await response.json()).toEqual({
+      requiresEmailVerification: false,
+      requiresOnboarding: true,
+    });
   });
 
   it("rejects a preview token with no stable subject", async () => {

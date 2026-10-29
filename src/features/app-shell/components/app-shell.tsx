@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
 import { useState } from "react";
 
@@ -25,6 +27,8 @@ export function AppShell({
   data: ShellData;
 }) {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const pathname = usePathname();
+  const verifyHref = `/auth/email?next=${encodeURIComponent(pathname || "/d")}`;
 
   return (
     <div
@@ -49,6 +53,26 @@ export function AppShell({
       <div className="flex min-h-dvh min-w-0 flex-col">
         <ProductHeader data={data} />
         <ProductTopbar data={data} />
+        {data.viewer.requiresEmailVerification ? (
+          <div
+            role="status"
+            className="border-b border-brand/20 bg-brand-tint px-4 py-3 text-sm text-ink sm:px-6 lg:px-8"
+          >
+            <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2">
+              <p>
+                <span className="font-semibold">Confirm your email</span> to
+                comment, publish ideas, and submit campaigns. Supporting an idea
+                still works without it.
+              </p>
+              <Link
+                href={verifyHref}
+                className="font-semibold text-brand-strong underline-offset-3 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                Confirm email
+              </Link>
+            </div>
+          </div>
+        ) : null}
         <main id="main-content" className="flex-1">
           {children}
         </main>

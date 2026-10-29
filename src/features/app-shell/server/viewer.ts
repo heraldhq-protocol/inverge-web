@@ -35,6 +35,7 @@ export async function getDashboardViewer(): Promise<DashboardViewer> {
       dataSource: "preview",
       displayName: null,
       handle: null,
+      requiresEmailVerification: false,
     };
   }
 
@@ -53,6 +54,7 @@ export async function getDashboardViewer(): Promise<DashboardViewer> {
       dataSource: "preview",
       displayName: user.displayName,
       handle: user.username,
+      requiresEmailVerification: false,
     };
   }
 
@@ -67,5 +69,6 @@ export async function getDashboardViewer(): Promise<DashboardViewer> {
     dataSource: "live",
     displayName: user.displayName,
     handle: user.username,
+    requiresEmailVerification: user.requiresEmailVerification,
   };
 }
