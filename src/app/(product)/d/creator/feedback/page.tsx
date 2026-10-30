@@ -7,6 +7,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import { SubmissionSummary } from "@/features/feedback/components/submission-summary";
 import { getFeedbackInboxView } from "@/features/feedback/server/inbox";
 import { CreatorStudioTabs } from "@/features/ideas/components/creator-studio-tabs";
+import { StatePanel } from "@/components/ui/state-panel";
 
 export const metadata: Metadata = {
   title: "Feedback",
@@ -22,8 +23,12 @@ export const metadata: Metadata = {
  * answered and when it arrived, never a sender — and each group links to the
  * idea's feedback setup rather than implying conversation.
  */
-export default function FeedbackInboxPage() {
-  const { groups, totalResponses } = getFeedbackInboxView();
+export default async function FeedbackInboxPage() {
+  const result = await getFeedbackInboxView();
+  const { groups, totalResponses } =
+    result.status === "ready"
+      ? result.view
+      : { groups: [], totalResponses: 0 };
 
   return (
     <div className="mx-auto w-full max-w-7xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
@@ -44,7 +49,24 @@ export default function FeedbackInboxPage() {
         <CreatorStudioTabs active="feedback" />
       </div>
 
-      {groups.length === 0 ? (
+      {result.status !== "ready" ? (
+        <div className="mt-6">
+          <StatePanel
+            variant="unavailable"
+            eyebrow="Creator feedback"
+            title={
+              result.status === "signed_out"
+                ? "Sign in to read your feedback"
+                : "Feedback is unavailable"
+            }
+            description={
+              result.status === "signed_out"
+                ? "Sign in to read responses to your ideas."
+                : result.reason
+            }
+          />
+        </div>
+      ) : groups.length === 0 ? (
         <div className="mt-6 rounded-2xl border border-dashed border-border-strong bg-surface px-5 py-10 text-center">
           <span className="mx-auto grid size-11 place-items-center rounded-full bg-brand-soft text-brand-strong">
             <HugeiconsIcon
