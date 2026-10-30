@@ -7,10 +7,15 @@ import {
   getPreviewFeedbackForm,
   previewFeedbackSubmissions,
 } from "@/features/feedback/content/preview-feedback";
+import { toFeedbackAnswers } from "@/features/feedback/lib/answers";
 import {
   describeSubmissionAnswers,
   type DescribedAnswer,
 } from "@/features/feedback/lib/submissions";
+import {
+  toFeedbackForm,
+  type ApiQuestion,
+} from "@/features/feedback/server/builder";
 import { getPreviewIdeaDetail } from "@/features/ideas/content/preview-idea-detail";
 import { previewMyIdeas } from "@/features/ideas/content/preview-my-ideas";
 import {
@@ -44,6 +49,15 @@ export type IdeaWorkspaceResult =
   | { status: "not_found" }
   | { status: "signed_out" }
   | { status: "unavailable"; reason: string };
+
+type ApiWorkspaceFeedback = {
+  questions: ApiQuestion[];
+  data: Array<{
+    answers: unknown;
+    createdAt: string;
+  }>;
+  truncated: boolean;
+};
 
 function previewView(ideaId: string): IdeaWorkspaceResult {
   const idea = previewMyIdeas.find((candidate) => candidate.id === ideaId);
@@ -97,10 +111,10 @@ function failure(error: unknown): IdeaWorkspaceResult {
 /**
  * One idea's creator workspace.
  *
- * Live auth reads the idea with `includeDraft` and the creator-only insights
- * report together; the insights call is the ownership check. The response list
- * is not exposed by the API yet, so a live workspace shows the counted total but
- * no per-response detail rather than borrowing fixture answers.
+ * Live auth reads the idea with `includeDraft`, the creator-only insights report,
+ * and the anonymous response list together; insights and responses both enforce
+ * ownership. The workspace shows the newest three responses against the current
+ * form, or none when the idea has no survey yet.
  */
 export async function getIdeaWorkspaceView(
   ideaId: string,
@@ -113,9 +127,13 @@ export async function getIdeaWorkspaceView(
   if (!token) return { status: "signed_out" };
 
   try {
-    const [apiIdea] = await Promise.all([
+    const [apiIdea, , feedback] = await Promise.all([
       getLiveIdea(ideaId, { includeDraft: true, token }),
       fetchApiJson(`/ideas/${encodeURIComponent(ideaId)}/insights`, { token }),
+      fetchApiJson<ApiWorkspaceFeedback>(
+        `/ideas/${encodeURIComponent(ideaId)}/survey/responses?limit=3`,
+        { token },
+      ),
     ]);
     if (!apiIdea) return { status: "not_found" };
 
@@ -124,6 +142,14 @@ export async function getIdeaWorkspaceView(
 
     const detail = toIdeaDetail(apiIdea);
     const id = apiIdea.id;
+    const form = toFeedbackForm(feedback.questions);
+    const latestFeedback = feedback.data.map((response) => ({
+      answers: describeSubmissionAnswers(
+        form.questions,
+        toFeedbackAnswers(response.answers),
+      ),
+      submittedAt: response.createdAt,
+    }));
 
     return {
       status: "ready",
@@ -137,7 +163,7 @@ export async function getIdeaWorkspaceView(
             : null,
         analyticsHref: `/d/creator/ideas/${id}/insights`,
         feedbackCount: apiIdea.feedbackCount ?? 0,
-        latestFeedback: [],
+        latestFeedback,
         summary: { problem: detail.problem, solution: detail.solution },
       },
     };

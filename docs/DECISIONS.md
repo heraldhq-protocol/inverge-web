@@ -61,6 +61,11 @@ choices.
 | D-052 | 2026-10-29 | Accepted | The idea builder writes through same-origin BFF routes: draft create/update, survey replacement, and publish all go to the API; preview auth keeps the browser-only flow. |
 | D-053 | 2026-10-29 | Accepted | The idea workspace reads the owned idea and its survey from the API for live sessions; individual feedback responses remain unavailable because the API has no creator response list. |
 | D-054 | 2026-10-29 | Accepted | Dashboard home composes live public ideas, the viewer's own ideas, and notifications for an API session; ideathon and pre-pledge modules are omitted live until their read models exist. |
+| D-055 | 2026-10-30 | Accepted | AI access is its own admin-approved grant; the assistant is server-gated and never exposes provider keys to the browser. |
+| D-056 | 2026-10-30 | Accepted | The assistant proposes changes and the creator decides; preview data is never silently treated as live AI output. |
+| D-057 | 2026-10-30 | Accepted | Pre-pledges read `GET /me/pre-pledges` for a live account; the list is non-binding intent only, and a live API failure is shown explicitly rather than replaced with fixtures. |
+| D-058 | 2026-10-30 | Accepted | Creator feedback reads the anonymous `GET /me/feedback` projection; responses never carry respondent identity, and the inbox shows only the current form's resolvable answers. |
+| D-059 | 2026-10-30 | Accepted | Creator campaigns read `GET /campaigns?mine=true` and the creator-readable detail route for live sessions; the workspace shows funding and milestones but omits escrow and claim writes until those surfaces exist. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2241,6 +2246,85 @@ opt-in smoke test documented in `inverge-api/docs/ai-assistant.md`.
 
 Revisit when: Campaign or analytics assistants ship, a streaming UI is needed, or
 the proposal contract gains server-side revision/history storage.
+### D-057: Pre-pledges are a live read, not a fixture
+
+- Date: 2026-10-30
+- Status: Accepted
+
+Context: The pre-pledges page had no creator read endpoint, so a live account saw
+an unavailable panel while preview auth saw fixtures.
+
+Decision: `GET /me/pre-pledges` returns the caller's `PRE_PLEDGE` signals joined
+to the public idea projection. The web derives active/past from the idea's
+workflow status and near-validation from the gate. The page keeps preview
+fixtures only for preview auth; a live failure is surfaced explicitly.
+
+Alternatives: Keep the unavailable page until a full payment-intent model
+exists; call the public idea list and infer intents (impossible); show zero
+instead of an unavailable state (false).
+
+Consequences: A live creator can review non-binding intent, including closed
+ideas. No payment state is implied, and the UI continues to say no money has
+moved.
+
+Revisit when: Pre-pledge editing, withdrawal, or conversion state becomes a
+supported creator action.
+
+### D-058: The creator feedback inbox reads an anonymous projection
+
+- Date: 2026-10-30
+- Status: Accepted
+
+Context: The API stored survey responses and counts but exposed no creator list.
+The inbox was therefore fixture-backed, and the idea workspace could only show a
+count.
+
+Decision: `GET /me/feedback` returns responses across the caller's ideas with
+the current form's questions; `GET /ideas/:id/survey/responses` returns one
+idea's responses. Neither projection selects the respondent relation. The web
+resolves option labels through the current form and drops answers whose question
+no longer exists. Setup links are offered only while the idea is a draft, which
+matches the survey write rule.
+
+Alternatives: Expose respondent identity (violates feedback anonymity); call the
+public survey endpoint and infer responses (impossible); keep the fixture inbox
+for live users (misleading).
+
+Consequences: The inbox and workspace now show real anonymous answers. A form
+replaced after a response was submitted may leave that response without a
+readable question label; the client omits it rather than showing a raw id.
+
+Revisit when: The survey stores a form version per response or the creator gets
+a reply surface.
+
+### D-059: Creator campaign surfaces read the campaign API without inventing escrow
+
+- Date: 2026-10-30
+- Status: Accepted
+
+Context: The creator campaign list and workspace were fixture-backed even though
+`GET /campaigns?mine=true` and the owner-readable detail route already return the
+lifecycle, review axis, funding totals, and milestone plan. The list mapper for
+public campaigns intentionally drops drafts, so it could not be reused.
+
+Decision: A live creator list reads `mine=true` and maps both lifecycle and
+review statuses. A live workspace reads the detail route and renders the phase,
+summary, funding position, and milestone plan. It does not show escrow ledgers or
+contribution rows, which are not in the response, and it does not offer claim
+submission, which has no write route. Preview auth keeps the full fixture
+workspace and milestone manager. Live editing shows an explicit unavailable state
+because no campaign update route exists.
+
+Alternatives: Keep the preview list for live users (wrong ownership and status);
+derive escrow from `totalRaised` (would misstate released versus held money);
+reuse the public mapper (drops drafts, the main creator state).
+
+Consequences: Creators can see every campaign they own and its real funding and
+milestone plan. The live workspace is visibly shorter than the preview one where
+the API has no read model. The edit action is honest about being unavailable.
+
+Revisit when: Campaign update, escrow, contribution, or milestone-claim endpoints
+land.
 
 ## Decision template
 

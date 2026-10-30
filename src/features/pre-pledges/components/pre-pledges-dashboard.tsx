@@ -16,11 +16,13 @@ import type {
 
 export function PrePledgesDashboard({
   data,
+  dataSource = "preview",
   query = "",
   sort = "most-recent",
   status = "all",
 }: {
   data: PrePledgesData;
+  dataSource?: "live" | "preview";
   query?: string;
   sort?: PrePledgeSort;
   status?: PrePledgeStatusFilter;
@@ -58,12 +60,14 @@ export function PrePledgesDashboard({
               <p className="text-xs font-bold uppercase tracking-[0.16em] text-brand-strong">
                 Pre-pledges
               </p>
-              <span
-                className="text-xs text-muted"
-                title="Pre-pledge figures are sample data"
-              >
-                Sample data
-              </span>
+              {dataSource === "preview" ? (
+                <span
+                  className="text-xs text-muted"
+                  title="Pre-pledge figures are sample data"
+                >
+                  Sample data
+                </span>
+              ) : null}
             </div>
             <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
               Your pre-pledges
@@ -127,6 +131,21 @@ export function PrePledgesDashboard({
             />
           ) : null}
         </div>
+      ) : allItems.length === 0 ? (
+        <StatePanel
+          variant="empty"
+          eyebrow="No pre-pledges yet"
+          title="Signal intent on an idea"
+          description="Pre-pledges are non-binding. When you find an idea worth backing, signal your intent and it will appear here."
+          action={
+            <Link
+              href="/d/discover"
+              className="inline-flex min-h-11 items-center justify-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              Discover ideas
+            </Link>
+          }
+        />
       ) : (
         <StatePanel
           variant="empty"

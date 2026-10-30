@@ -2,16 +2,14 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { StatePanel } from "@/components/ui/state-panel";
-import { isPreviewAuth } from "@/features/auth/server/auth-mode";
 import { PrePledgesDashboard } from "@/features/pre-pledges/components/pre-pledges-dashboard";
-import { prePledgesPreviewData } from "@/features/pre-pledges/content/preview-data";
+import { getPrePledgesView } from "@/features/pre-pledges/server/pre-pledges";
 import {
   isPrePledgeSort,
   isPrePledgeStatusFilter,
   type PrePledgeSort,
   type PrePledgeStatusFilter,
 } from "@/features/pre-pledges/types";
-import { isApiConfigured } from "@/lib/api/server";
 
 export const metadata: Metadata = {
   title: "Pre-pledges",
@@ -40,16 +38,24 @@ export default async function PrePledgesPage({
       ? params.sort
       : "most-recent";
 
-  // Pre-pledges have no creator read endpoint yet. A live account sees an
-  // honest unavailable state rather than the preview account's intentions.
-  if (!isPreviewAuth() && isApiConfigured()) {
+  const view = await getPrePledgesView();
+
+  if (view.status !== "ready") {
     return (
       <div className="mx-auto w-full max-w-5xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
         <StatePanel
           variant="unavailable"
           eyebrow="Pre-pledges"
-          title="Pre-pledges are not connected yet"
-          description="The API does not expose a creator pre-pledge read model yet. Your live account is not showing any preview intentions."
+          title={
+            view.status === "signed_out"
+              ? "Sign in to see your pre-pledges"
+              : "Pre-pledges are unavailable"
+          }
+          description={
+            view.status === "signed_out"
+              ? "Sign in to review the ideas you have signalled intent for."
+              : view.reason
+          }
           action={
             <Link
               href="/d/discover"
@@ -65,7 +71,8 @@ export default async function PrePledgesPage({
 
   return (
     <PrePledgesDashboard
-      data={prePledgesPreviewData}
+      data={view.data}
+      dataSource={view.dataSource}
       query={query}
       sort={sort}
       status={status}

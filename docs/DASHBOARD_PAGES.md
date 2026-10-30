@@ -23,13 +23,13 @@ Ground rules that shape this list:
 | --- | --- | --- |
 | `/d` | Home | Live public ideas, creator snapshot, and notification activity for an API session. Ideathon and pre-pledge-only modules are omitted live because those read models do not exist yet; preview auth keeps the full fixture home |
 | `/d/discover` | In-shell discovery | Live public catalogue for an API session; preview auth keeps the fixture catalogue |
-| `/d/pre-pledges` | Pre-pledges | Preview list with fixture intents. A live account sees an unavailable state because the API has no pre-pledge read model yet |
+| `/d/pre-pledges` | Pre-pledges | Live non-binding intents from `GET /me/pre-pledges`, grouped by whether the source idea is still validating; preview auth keeps the fixture list |
 | `/d/creator` | Creator Studio overview | Real. Metrics, suggested next steps, and recent ideas come from the viewer's own ideas (`GET /ideas?mine=true`) for an authenticated account; preview auth reads fixtures |
 | `/d/creator/ideas` | My ideas | Real. List of owned ideas, including drafts, from the API. **No filters, search, sort, or archive yet** |
 | `/d/creator/ideas/new` | Idea builder | Live authenticated builder: creates or updates a draft, sets its feedback questions, and publishes through the API. Preview auth keeps the browser-only flow. Summary and community invite stay local preview fields |
 | `/d/creator/ideas/[id]` | Idea workspace | Live for authenticated accounts: reads the idea and ownership from the API. The creator response list is not exposed yet, so only the counted total is shown |
 | `/d/creator/ideas/[id]/feedback` | Feedback form setup | Live while the idea is a draft: reads and replaces the API survey. Preview auth keeps the fixture builder |
-| `/d/creator/feedback` | Feedback inbox (all ideas) | Preview-backed, read-only. Responses grouped by idea, newest first, anonymous |
+| `/d/creator/feedback` | Feedback inbox (all ideas) | Live anonymous responses from `GET /me/feedback`; preview auth keeps fixture responses. Read-only, grouped by idea, newest first |
 | `/d/creator/analytics` | Analytics (all ideas) | Real. Idea picker plus aggregate cards from the analytics API |
 | `/d/creator/ideas/[id]/insights` | Analytics (one idea) | Real and the richest screen: chart, activity, feedback breakdown, gated AI insights |
 | `/d/creator/ideas/[id]/insights/traffic` | Traffic tab | Honest empty state — no view tracking exists |
@@ -52,11 +52,11 @@ moves money.
 | --- | --- | --- |
 | `/d/backing` | Backing history | Real list from the viewer's own contributions, filtered from the URL, with per-contribution state |
 | `/d/backing/[contributionId]` | Contribution receipt | Real, preview-labelled. States payment, contribution, and refund separately; transaction references are `null` and read "None recorded" |
-| `/d/creator/campaigns` | Creator's campaigns | List of owned campaigns with phase and next action |
+| `/d/creator/campaigns` | Creator's campaigns | Live list from `GET /campaigns?mine=true`, including drafts and review states; preview auth keeps fixtures. Live rows open the live workspace |
 | `/d/creator/campaigns/new` | Campaign wizard | Seven steps (basics, media, funding, milestones, rewards, terms, review). The draft autosaves to the API once the funding and milestone steps are complete, with a version so a second tab cannot overwrite it; `?draft=<id>` resumes it. A reward declares digital/physical/mixed fulfilment and, when it posts, the creator's own destinations and terms (D-024). The review step starts or resumes the non-refundable application fee through the API and submits only the saved draft; identity and fee gates are enforced server-side (D-048) |
-| `/d/creator/campaigns/[campaignId]` | Campaign workspace | Real. Phase, story, funding, and milestone summary; edit and milestone entry points |
-| `/d/creator/campaigns/[campaignId]/edit` | Campaign wizard (edit) | Same wizard loaded from the campaign's own published terms |
-| `/d/creator/campaigns/[campaignId]/milestones` | Milestone worklist | Real. Every milestone with its state and the reason it is closed; claiming never moves money |
+| `/d/creator/campaigns/[campaignId]` | Campaign workspace | Live creator-readable campaign detail: phase, summary, funding, and milestone plan. Escrow/contribution sections and claim writes are omitted because the API does not expose them; preview auth keeps the fixture workspace |
+| `/d/creator/campaigns/[campaignId]/edit` | Campaign wizard (edit) | Preview keeps the full wizard. A live campaign shows an explicit unavailable state because no campaign update route exists yet |
+| `/d/creator/campaigns/[campaignId]/milestones` | Milestone worklist | Live campaigns show the plan and claim states from the campaign endpoint; claim submission is not offered. Preview keeps the interactive manager |
 
 Loading/error boundaries exist at `d/`, `d/(home)`, `d/creator`,
 `d/creator/ideas/[id]/insights`, `d/notifications`, `d/pre-pledges`,

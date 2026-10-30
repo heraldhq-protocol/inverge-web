@@ -25,6 +25,7 @@ import { getCreatorView } from "@/features/ideas/server/creator-view";
 import { getIdeasDiscoveryView } from "@/features/ideas/server/views";
 import { getNotificationsView } from "@/features/notifications/server/notifications";
 import { prePledgesPreviewData } from "@/features/pre-pledges/content/preview-data";
+import { getPrePledgesView } from "@/features/pre-pledges/server/pre-pledges";
 import { getPreviewActiveIdeathon } from "@/features/programmes/content/preview-programmes";
 import { isApiConfigured } from "@/lib/api/server";
 
@@ -51,7 +52,7 @@ export default async function HomePage() {
   recordPageView("creator-dashboard");
   const preview = isPreviewAuth() || !isApiConfigured();
 
-  const [viewer, publicView, creatorResult, notificationsResult] =
+  const [viewer, publicView, creatorResult, notificationsResult, prePledgeResult] =
     await Promise.all([
       getDashboardViewer(),
       preview
@@ -64,6 +65,7 @@ export default async function HomePage() {
         : getIdeasDiscoveryView(),
       getCreatorView(),
       getNotificationsView(),
+      getPrePledgesView(),
     ]);
 
   const publicIdeas = allPublicIdeas(publicView.data);
@@ -135,12 +137,17 @@ export default async function HomePage() {
     previewEligible: true,
   });
 
+  const livePrePledgeCount =
+    prePledgeResult.status === "ready"
+      ? prePledgeResult.data.active.length + prePledgeResult.data.past.length
+      : 0;
+
   const newViewer = isNewViewer({
     feedbackGiven: 0,
     ownedIdeas: creatorSnapshot.ownedIdeaCount,
     prePledges: preview
       ? prePledgesPreviewData.active.length + prePledgesPreviewData.past.length
-      : 0,
+      : livePrePledgeCount,
     supportedIdeas: 0,
   });
 

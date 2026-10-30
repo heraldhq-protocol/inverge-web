@@ -16,7 +16,7 @@ import {
 import type { IdeaDetail } from "@/features/ideas/types";
 import { ApiRequestError, fetchApiJson, isApiConfigured } from "@/lib/api/server";
 
-type ApiQuestion = {
+export type ApiQuestion = {
   id: string;
   index: number;
   options: string[] | null;
