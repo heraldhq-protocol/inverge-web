@@ -18,7 +18,6 @@ export default function WalletReceivePage() {
       active="receive"
       description="Adding funds needs a real address or a licensed on-ramp quote. Neither exists in this build, so this page explains the handoff instead of inventing one."
       title="Receive"
-      view={view}
     >
       <WalletReceive view={view} />
     </WalletPageShell>

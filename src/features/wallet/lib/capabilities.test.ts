@@ -48,7 +48,10 @@ describe("auditWalletCapabilities", () => {
 
     expect(byId.get("balance")?.status).toBe("preview");
     expect(byId.get("activity")?.status).toBe("preview");
-    expect(byId.get("balance")?.reason).toMatch(/labelled samples/i);
+    expect(byId.get("balance")?.reason).toMatch(/SOL balance is read live/i);
+    expect(byId.get("balance")?.reason).toMatch(
+      /USDC balance is a labelled sample/i,
+    );
   });
 
   it("marks every capability connected only when the whole mechanism exists", () => {

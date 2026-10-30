@@ -1,25 +1,25 @@
 import type { Metadata } from "next";
 
+import { readSessionUser } from "@/features/auth/server/session-user";
 import { WalletOverview } from "@/features/wallet/components/wallet-overview";
 import { WalletPageShell } from "@/features/wallet/components/wallet-page-shell";
 import { getWalletView } from "@/features/wallet/server/wallet";
 
 export const metadata: Metadata = {
   title: "Wallet",
-  description:
-    "Review your Inverge wallet, its balances, activity, and what is connected.",
+  description: "Your wallet for backing ideas and tracking contributions.",
 };
 
-export default function WalletPage() {
+export default async function WalletPage() {
   const view = getWalletView();
+  const user = await readSessionUser();
 
   return (
     <WalletPageShell
       active="overview"
-      description="Your wallet is tied to your Inverge identity. This build labels every sample figure and never invents an address, a balance, or a transfer."
-      view={view}
+      description="Your wallet for backing ideas and tracking contributions."
     >
-      <WalletOverview view={view} />
+      <WalletOverview authenticated={user !== null} view={view} />
     </WalletPageShell>
   );
 }

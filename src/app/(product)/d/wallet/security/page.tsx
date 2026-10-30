@@ -18,7 +18,6 @@ export default function WalletSecurityPage() {
       active="security"
       description="What protects the wallet, what Inverge never asks for, and which security controls are actually connected."
       title="Security"
-      view={view}
     >
       <WalletSecurity view={view} />
     </WalletPageShell>
