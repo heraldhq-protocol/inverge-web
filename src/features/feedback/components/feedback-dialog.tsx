@@ -27,6 +27,18 @@ import type {
 } from "@/features/feedback/types";
 import type { IdeaDetail } from "@/features/ideas/types";
 
+function messageFromEnvelope(payload: unknown): string | null {
+  if (!payload || typeof payload !== "object") return null;
+  const error = (payload as { error?: unknown }).error;
+  if (typeof error === "string" && error.trim()) return error;
+  if (error && typeof error === "object") {
+    const message = (error as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  const message = (payload as { message?: unknown }).message;
+  return typeof message === "string" && message.trim() ? message : null;
+}
+
 function draftKey(ideaId: string, formVersion: number): string {
   return `inverge:feedback-draft:${ideaId}:${formVersion}`;
 }
@@ -355,12 +367,14 @@ function QuestionField({
 export function FeedbackDialog({
   idea,
   form,
+  live = false,
   onClose,
   open,
   viewer,
 }: {
   idea: IdeaDetail;
   form: FeedbackForm;
+  live?: boolean;
   onClose: () => void;
   open: boolean;
   viewer: "signed-in" | "visitor";
@@ -373,6 +387,9 @@ export function FeedbackDialog({
   const [signInRequired, setSignInRequired] = useState(false);
   const [success, setSuccess] = useState(false);
   const [confirmDiscard, setConfirmDiscard] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const publicPath = `/ideas/${encodeURIComponent(idea.slug ?? idea.id)}`;
 
   const answered = answeredCount(form, answers);
 
@@ -401,6 +418,8 @@ export function FeedbackDialog({
     setSignInRequired(false);
     setSuccess(false);
     setConfirmDiscard(false);
+    setSubmitError(null);
+    setSubmitting(false);
 
     const panel = panelRef.current;
     const focusable = panel?.querySelectorAll<HTMLElement>(
@@ -452,7 +471,7 @@ export function FeedbackDialog({
     });
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const issues = validateFeedbackAnswers(form, answers);
     if (Object.keys(issues).length > 0) {
@@ -469,8 +488,46 @@ export function FeedbackDialog({
       setSignInRequired(true);
       return;
     }
-    clearDraft(idea.id, form.version);
-    setSuccess(true);
+
+    if (!live) {
+      clearDraft(idea.id, form.version);
+      setSuccess(true);
+      return;
+    }
+
+    setSubmitting(true);
+    setSubmitError(null);
+    try {
+      const response = await fetch(
+        `/api/ideas/${encodeURIComponent(idea.id)}/survey`,
+        {
+          body: JSON.stringify({
+            answers: Object.entries(answers).map(([questionId, value]) => ({
+              questionId,
+              value,
+            })),
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        },
+      );
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as unknown;
+        setSubmitError(
+          messageFromEnvelope(payload) ??
+            "We couldn't send your feedback. Try again.",
+        );
+        return;
+      }
+      clearDraft(idea.id, form.version);
+      setSuccess(true);
+    } catch {
+      setSubmitError(
+        "The network could not be reached. Your answers are still here.",
+      );
+    } finally {
+      setSubmitting(false);
+    }
   }
 
   if (!open || typeof document === "undefined") return null;
@@ -499,9 +556,11 @@ export function FeedbackDialog({
               >
                 {success ? "Feedback complete" : form.title}
               </h2>
-              <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.08em] text-warning-strong">
-                Preview
-              </span>
+              {live ? null : (
+                <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.5625rem] font-semibold uppercase tracking-[0.08em] text-warning-strong">
+                  Preview
+                </span>
+              )}
             </div>
             {!success ? (
               <p className="mt-1 max-w-lg text-xs leading-5 text-muted">
@@ -560,9 +619,9 @@ export function FeedbackDialog({
             <div className="space-y-4">
               <FeedbackThanks />
               <p className="rounded-xl bg-canvas px-3 py-2 text-center text-[0.6875rem] leading-4 text-muted">
-                This is a preview: nothing has been sent to the creator yet.
-                When accounts are connected, your response will be stored
-                against form version {form.version}.
+                {live
+                  ? "Your response was sent to the creator against the current form. It is anonymous in their inbox."
+                  : `This is a preview: nothing has been sent to the creator yet. When accounts are connected, your response will be stored against form version ${form.version}.`}
               </p>
               {idea.community?.enabled && idea.community.showAfterFeedback ? (
                 <CommunityInvite invite={idea.community} />
@@ -570,7 +629,7 @@ export function FeedbackDialog({
               <FollowCreatorButton
                 creatorName={idea.creator}
                 signedIn={viewer === "signed-in"}
-                returnTo={`/ideas/${idea.id}`}
+                returnTo={publicPath}
                 compact
               />
               <div className="flex justify-center pt-1">
@@ -624,19 +683,27 @@ export function FeedbackDialog({
                   </p>
                   <div className="mt-3 flex flex-wrap gap-2">
                     <Link
-                      href={`/auth?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
+                      href={`/auth?next=${encodeURIComponent(publicPath)}`}
                       className="inline-flex min-h-10 items-center rounded-lg bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       Sign in
                     </Link>
                     <Link
-                      href={`/auth?next=${encodeURIComponent(`/ideas/${idea.id}`)}`}
+                      href={`/auth?next=${encodeURIComponent(publicPath)}`}
                       className="inline-flex min-h-10 items-center rounded-lg border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
                     >
                       Create an account
                     </Link>
                   </div>
                 </div>
+              ) : null}
+              {submitError ? (
+                <p
+                  className="mt-5 rounded-xl border border-danger/25 bg-danger/[0.04] px-3 py-2 text-xs leading-5 text-danger"
+                  role="alert"
+                >
+                  {submitError}
+                </p>
               ) : null}
             </form>
           )}
@@ -656,8 +723,17 @@ export function FeedbackDialog({
               >
                 Cancel
               </Button>
-              <Button type="submit" size="md" form="feedback-form">
-                {signInRequired ? "Save answers" : "Submit feedback"}
+              <Button
+                type="submit"
+                size="md"
+                form="feedback-form"
+                disabled={submitting}
+              >
+                {submitting
+                  ? "Sending…"
+                  : signInRequired
+                    ? "Save answers"
+                    : "Submit feedback"}
               </Button>
             </div>
           </footer>

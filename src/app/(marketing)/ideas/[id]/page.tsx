@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
@@ -17,6 +17,25 @@ type PageProps = {
   params: Promise<{ id: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 };
+
+function ideaPath(idea: { id: string; slug?: string | undefined }): string {
+  return `/ideas/${encodeURIComponent(idea.slug ?? idea.id)}`;
+}
+
+function queryString(
+  query: Record<string, string | string[] | undefined>,
+): string {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (Array.isArray(value)) {
+      for (const item of value) params.append(key, item);
+    } else if (value !== undefined) {
+      params.set(key, value);
+    }
+  }
+  const serialized = params.toString();
+  return serialized ? `?${serialized}` : "";
+}
 
 export async function generateMetadata({
   params,
@@ -38,7 +57,7 @@ export async function generateMetadata({
       eyebrow: "Idea",
       template: "idea",
     },
-    path: `/ideas/${idea.id}`,
+    path: ideaPath(idea),
     // An unlisted idea stays readable to anyone holding the link, but must not
     // be discoverable through search.
     robots: idea.visibility === "public" ? "all" : "noindex",
@@ -57,6 +76,13 @@ export default async function IdeaDetailPage({
   if (!view) notFound();
 
   const { idea } = view;
+  const canonical = ideaPath(idea);
+  // Shared links used to be the internal id. Redirect once to the slug so the
+  // address bar, copy-link, social share, and canonical metadata agree.
+  if (id !== (idea.slug ?? idea.id)) {
+    redirect(`${canonical}${queryString(query)}`);
+  }
+
   const source = parseAnalyticsSource(query.source);
   recordPageView("idea-detail", { source });
   recordIdeaView(idea.id, { source });
@@ -67,7 +93,7 @@ export default async function IdeaDetailPage({
         data={breadcrumbJsonLd([
           { name: "Home", path: "/" },
           { name: "Ideas", path: "/ideas" },
-          { name: idea.title, path: `/ideas/${idea.id}` },
+          { name: idea.title, path: canonical },
         ])}
       />
       <IdeaDetail
@@ -76,7 +102,9 @@ export default async function IdeaDetailPage({
         dataSource={view.dataSource}
         idea={idea}
         ideas={view.ideas}
+        signals={view.signals}
         topics={view.topics}
+        viewer={view.viewer}
       />
     </>
   );

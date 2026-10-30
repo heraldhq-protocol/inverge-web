@@ -37,6 +37,11 @@ export type IdeaScope = "all" | "public";
 export type DiscoveryIdea = IdeaSummary & {
   /** Editorial cover, or `null` for the deterministic artwork fallback. */
   cover?: string | null;
+  /**
+   * Public slug from the API. Optional because fixtures predate it; links fall
+   * back to the stable id when it is absent.
+   */
+  slug?: string;
   /** Stored public handle, when the creator has one. Never an internal id. */
   creatorUsername?: string;
   /**

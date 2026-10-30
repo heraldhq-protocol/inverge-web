@@ -27,8 +27,14 @@ export function useIdeaViewer(): IdeaViewerContextValue {
  * a development affordance, not an auth mechanism — when a real session lands,
  * the provider is replaced by server-derived viewer state.
  */
-export function IdeaViewerProvider({ children }: { children: ReactNode }) {
-  const [viewer, setViewer] = useState<IdeaViewer>("visitor");
+export function IdeaViewerProvider({
+  children,
+  initialViewer = "visitor",
+}: {
+  children: ReactNode;
+  initialViewer?: IdeaViewer;
+}) {
+  const [viewer, setViewer] = useState<IdeaViewer>(initialViewer);
 
   return (
     <IdeaViewerContext.Provider value={{ viewer, setViewer }}>

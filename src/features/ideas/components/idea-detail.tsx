@@ -42,12 +42,14 @@ import { IdeaGoalsStrip } from "@/features/feedback/components/idea-goals-strip"
 import {
   IdeaViewerProvider,
   ViewerToggle,
+  type IdeaViewer,
 } from "@/features/ideas/components/idea-viewer";
 import { previewComments } from "@/features/ideas/content/preview-comments";
 import { relatedIdeas, topicsForIdea } from "@/features/ideas/lib/catalog";
 import { ideaTaxonomyText } from "@/features/ideas/lib/filter-ideas";
 import { ideaTaxonomyHref } from "@/features/ideas/lib/filters";
 import { evaluateGate } from "@/features/ideas/lib/gate";
+import { emptySignals, type IdeaSignals } from "@/features/ideas/lib/signals";
 import type {
   DiscoveryIdea,
   IdeaComment,
@@ -277,6 +279,8 @@ export function IdeaDetail({
   topics,
   comments = [],
   commentsState = "preview",
+  signals = emptySignals,
+  viewer = "visitor",
 }: {
   dataSource?: "live" | "preview";
   idea: IdeaDetailModel;
@@ -284,6 +288,8 @@ export function IdeaDetail({
   topics: readonly Topic[];
   comments?: readonly IdeaComment[];
   commentsState?: "live" | "preview" | "unavailable";
+  signals?: IdeaSignals;
+  viewer?: IdeaViewer;
 }) {
   const live = dataSource === "live";
   const ideaTopics = topicsForIdea(topics, idea.id);
@@ -317,7 +323,7 @@ export function IdeaDetail({
       : null;
 
   return (
-    <IdeaViewerProvider>
+    <IdeaViewerProvider initialViewer={viewer}>
       <Container className="py-6 sm:py-8">
         <nav aria-label="Breadcrumb" className="text-xs text-muted">
           <ol className="flex flex-wrap items-center gap-1.5">
@@ -864,11 +870,13 @@ export function IdeaDetail({
               />
             )}
 
-            {live ? null : (
-              <div className="mt-3">
-                <IdeaActions idea={idea} />
-              </div>
-            )}
+            <div className="mt-3">
+              <IdeaActions
+                idea={idea}
+                initialSignals={signals}
+                mode={live ? "live" : "preview"}
+              />
+            </div>
 
             {idea.community?.enabled && idea.community.showOnIdeaPage ? (
               <div className="mt-3">
