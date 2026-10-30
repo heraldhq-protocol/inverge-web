@@ -63,6 +63,7 @@ choices.
 | D-054 | 2026-10-29 | Accepted | Dashboard home composes live public ideas, the viewer's own ideas, and notifications for an API session; ideathon and pre-pledge modules are omitted live until their read models exist. |
 | D-055 | 2026-10-30 | Accepted | AI access is its own admin-approved grant; the assistant is server-gated and never exposes provider keys to the browser. |
 | D-056 | 2026-10-30 | Accepted | The assistant proposes changes and the creator decides; preview data is never silently treated as live AI output. |
+| D-057 | 2026-10-30 | Accepted | The wallet is a three-destination account surface; the SDK owns provider connection, the server projection owns account linkage, live SOL is the only balance, and preview activity/refunds stay labelled. |
 | D-057 | 2026-10-30 | Accepted | Pre-pledges read `GET /me/pre-pledges` for a live account; the list is non-binding intent only, and a live API failure is shown explicitly rather than replaced with fixtures. |
 | D-058 | 2026-10-30 | Accepted | Creator feedback reads the anonymous `GET /me/feedback` projection; responses never carry respondent identity, and the inbox shows only the current form's resolvable answers. |
 | D-059 | 2026-10-30 | Accepted | Creator campaigns read `GET /campaigns?mine=true` and the creator-readable detail route for live sessions; the workspace shows funding and milestones but omits escrow and claim writes until those surfaces exist. |
@@ -2325,6 +2326,54 @@ the API has no read model. The edit action is honest about being unavailable.
 
 Revisit when: Campaign update, escrow, contribution, or milestone-claim endpoints
 land.
+
+### D-057: The wallet overview is an account surface, not a capability dashboard
+
+- Date: 2026-10-30
+- Status: Accepted
+- Owner: Product and web engineering
+
+Context: The wallet page had grown into six tabs and a diagnostic inventory:
+an account table, a "what is real here" panel, a capability audit, sample
+balances, a refund summary, and a separate sign-in card. The provider SDK can
+return a real Solana address and a real SOL balance, but the server still cannot
+link an address to an account, and no signing, USDC read, contribution
+settlement, refund execution, or on-ramp exists. Presenting all of that at once
+made a wallet with one real signal look both technical and finished.
+
+Decision: The wallet has three primary destinations: Overview, Activity and
+Refunds. Send, Receive and Security remain routes for compatibility and are
+reached contextually; security stays linked from Settings and from the overview.
+The overview is a single connection card plus supported quick actions and four
+recent records. The SDK owns provider connection and the address; the server
+projection (`WalletAccount.address` and `provisioning`) owns account linkage. The
+card never calls `connect()` on mount, and it distinguishes initialising,
+signed-out, connected-but-unlinked, linked, mismatched-address, and error
+states. A validated address is shown shortened with a copy action and a full
+address disclosure. SOL balance is read through the provider's documented
+`useSolanaWallet().rpc.getBalance`; a failed read says "Balance unavailable" and
+never renders zero. USDC is not read because no verified mint or chain index
+exists. Sample balances are no longer rendered on the overview; the fixtures
+remain only for the contribution checkout's labelled balance check. Activity and
+refund records stay labelled "Example data" until a real source replaces them,
+and a refund claim control is omitted rather than disabled.
+
+Alternatives: Keep the capability audit (turns a user-facing wallet into an
+engineering report); show sample balances next to the live address (mixes
+fabricated and real money); derive provisioning from the SDK session (claims an
+account link that does not exist); show a disabled refund button (implies the
+backer's click is the only missing step); auto-connect on mount (opens a provider
+popup on every visit).
+
+Consequences: The first chain read in the web client exists, and it is SOL only.
+The overview is shorter and the same server projection can later carry a linked
+address without reworking the card. The mock-based tests prove state handling,
+not real provisioning. A staging smoke test with the configured SDK is still
+required before claiming connected-wallet behaviour is verified.
+
+Revisit when: the API links a provider address to `WalletAccount`, USDC has a
+verified mint and balance read, the refund service or escrow index exists, or the
+provider SDK changes its documented hooks.
 
 ## Decision template
 

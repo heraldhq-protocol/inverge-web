@@ -10,7 +10,7 @@ import { getWalletView } from "@/features/wallet/server/wallet";
 
 export const metadata: Metadata = {
   title: "Wallet activity",
-  description: "Contributions and refunds, each with its own settlement state.",
+  description: "Your contribution and refund history.",
 };
 
 type WalletActivityPageProps = {
@@ -34,9 +34,8 @@ export default async function WalletActivityPage({
   return (
     <WalletPageShell
       active="activity"
-      description="Every contribution and refund record in one history. A failed or pending record stays visible so you can see what did not happen."
+      description="Every contribution and refund, in one place."
       title="Activity"
-      view={view}
     >
       <WalletActivityDashboard filter={filter} query={query} view={view} />
     </WalletPageShell>

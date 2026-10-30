@@ -7,10 +7,16 @@ import { formatShortDate } from "@/features/campaigns/lib/dates";
 import {
   walletActivityStatusLabels,
   walletActivityStatusTones,
-  walletDirectionLabels,
 } from "@/features/wallet/lib/activity";
 import { formatTokenAmountWithSymbol } from "@/features/wallet/lib/token-amount";
 import type { WalletActivityItem } from "@/features/wallet/types";
+
+function amountPrefix(item: WalletActivityItem): string {
+  if (!item.amount || item.status === "failed") return "";
+  if (item.direction === "out") return "−";
+  if (item.direction === "in") return "+";
+  return "";
+}
 
 function ActivityRow({ item }: { item: WalletActivityItem }) {
   const isRefund = item.kind === "refund";
@@ -39,13 +45,13 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
               {item.title}
             </span>
             <span className="mt-0.5 block text-[0.6875rem] text-muted">
-              {formatShortDate(item.occurredAt)} ·{" "}
-              {walletDirectionLabels[item.direction]}
+              {formatShortDate(item.occurredAt)}
             </span>
           </span>
           <span className="flex shrink-0 flex-col items-end gap-1.5">
             {item.amount ? (
               <span className="text-sm font-semibold tabular-nums text-ink">
+                {amountPrefix(item)}
                 {formatTokenAmountWithSymbol(
                   {
                     assetId: item.amount.assetId,
@@ -64,9 +70,6 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
               {walletActivityStatusLabels[item.status]}
             </Pill>
           </span>
-        </span>
-        <span className="mt-1.5 block text-xs leading-5 text-muted">
-          {item.description}
         </span>
       </span>
     </>
@@ -88,8 +91,8 @@ function ActivityRow({ item }: { item: WalletActivityItem }) {
 
 export function WalletActivityList({
   items,
-  emptyTitle = "No wallet activity yet",
-  emptyDescription = "Contributions and refunds appear here once they exist. This preview has no deposits or withdrawals to show.",
+  emptyTitle = "No activity yet",
+  emptyDescription = "Contributions and refunds appear here once they exist.",
 }: {
   items: readonly WalletActivityItem[];
   emptyTitle?: string;
@@ -97,7 +100,7 @@ export function WalletActivityList({
 }) {
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border border-border bg-canvas p-5">
+      <div className="rounded-2xl border border-border bg-surface p-5">
         <p className="text-sm font-semibold text-ink">{emptyTitle}</p>
         <p className="mt-1 text-sm leading-6 text-muted">{emptyDescription}</p>
       </div>

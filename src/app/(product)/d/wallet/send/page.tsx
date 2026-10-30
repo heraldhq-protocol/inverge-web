@@ -18,7 +18,6 @@ export default function WalletSendPage() {
       active="send"
       description="A transfer leaves your wallet for an external address. The form validates the destination and amount for real; it cannot sign or send in this build."
       title="Send"
-      view={view}
     >
       <WalletSend
         account={view.account}

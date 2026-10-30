@@ -7,7 +7,7 @@ import { getWalletView } from "@/features/wallet/server/wallet";
 export const metadata: Metadata = {
   title: "Wallet refunds",
   description:
-    "Refund records derived from campaign outcomes. Claiming is not connected in this build.",
+    "Refund status for contributions you have backed. Refund claims are not connected yet.",
 };
 
 export default function WalletRefundsPage() {
@@ -16,9 +16,8 @@ export default function WalletRefundsPage() {
   return (
     <WalletPageShell
       active="refunds"
-      description="Refunds are decided by the campaign outcome, not by the wallet. This page shows what is eligible, in progress, or returned, and never claims a refund was executed."
+      description="Refunds are decided by the campaign outcome. Eligible amounts return to the wallet you contributed from."
       title="Refunds"
-      view={view}
     >
       <WalletRefunds view={view} />
     </WalletPageShell>

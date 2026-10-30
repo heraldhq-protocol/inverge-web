@@ -2,27 +2,41 @@
 
 import dynamic from "next/dynamic";
 
-import { WalletAuthLoading } from "@/features/wallet/components/wallet-auth-loading";
-import { WalletAuthUnavailable } from "@/features/wallet/components/wallet-auth-unavailable";
+import {
+  WalletConnectionLoading,
+  WalletConnectionUnavailable,
+} from "@/features/wallet/components/wallet-connection-states";
 import type { WalletSdkConfig } from "@/features/wallet/lib/provider-config";
 import { resolveWalletSdkConfig } from "@/features/wallet/lib/provider-config";
+import type { WalletAccount } from "@/features/wallet/types";
 
 /**
- * Wallet sign-in boundary.
+ * Wallet connection boundary.
  *
  * The provider tree is a frontend-only SDK, so it is loaded after mount and
  * never during SSR. When no Client ID is present the card explains the gap
  * instead of initialising a provider that cannot provision anything.
+ *
+ * Nothing here calls `connect()`. The provider mounts, restores an existing
+ * session silently if one exists, and waits for the user to continue.
  */
-const WalletSdkBoundary = dynamic(
+const WalletConnectionBoundary = dynamic(
   () =>
-    import("@/features/wallet/components/wallet-sdk-boundary").then(
-      (module) => module.WalletSdkBoundary,
+    import("@/features/wallet/components/wallet-connection-boundary").then(
+      (module) => module.WalletConnectionBoundary,
     ),
-  { loading: () => <WalletAuthLoading />, ssr: false },
+  { loading: () => <WalletConnectionLoading />, ssr: false },
 );
 
-export function WalletAuthPanel() {
+export function WalletAuthPanel({
+  account,
+  authenticated,
+  networkLabel,
+}: {
+  account: WalletAccount;
+  authenticated: boolean;
+  networkLabel: string;
+}) {
   const config: WalletSdkConfig | null = resolveWalletSdkConfig({
     clientId: process.env.NEXT_PUBLIC_WEB3AUTH_CLIENT_ID,
     network: process.env.NEXT_PUBLIC_WEB3AUTH_NETWORK,
@@ -30,7 +44,14 @@ export function WalletAuthPanel() {
     rpcUrl: process.env.NEXT_PUBLIC_SOLANA_RPC_URL,
   });
 
-  if (!config) return <WalletAuthUnavailable />;
+  if (!config) return <WalletConnectionUnavailable />;
 
-  return <WalletSdkBoundary config={config} />;
+  return (
+    <WalletConnectionBoundary
+      account={account}
+      authenticated={authenticated}
+      config={config}
+      networkLabel={networkLabel}
+    />
+  );
 }

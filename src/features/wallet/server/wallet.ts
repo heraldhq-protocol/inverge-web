@@ -15,11 +15,11 @@ import type {
  * The wallet seam.
  *
  * Every wallet route reads through this module. It still returns preview
- * fixtures and labels them as such, because there is no authenticated Inverge
- * session and no server-side wallet read: the browser can hold a provider
- * address, but this module cannot bind it to a user. The SDK and Client ID are
- * reported so the capability audit stops claiming the provider is absent while
- * still marking provisioning and signing unavailable.
+ * fixtures and labels them as such, because the API cannot bind a provider
+ * address to a user and exposes no server wallet read: the browser can hold a
+ * provider address, but this module cannot carry it into a `WalletView`. The SDK
+ * and Client ID are reported so the capability audit stops claiming the provider
+ * is absent while still marking provisioning and signing unavailable.
  *
  * When the API can verify a provider token and issue a session, this is the only
  * file that changes: it will read the authenticated Inverge user id and ask the

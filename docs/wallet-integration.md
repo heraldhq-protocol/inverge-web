@@ -1,29 +1,40 @@
 # Wallet integration
 
 The wallet is a first-class dashboard feature. MetaMask Embedded Wallets
-(formerly Web3Auth) is the chosen provider and its client sign-in is wired, but
-the **account data is still preview-only**: there is no authenticated Inverge
-session and no server-side wallet read, so no address is linked and no balance,
-contribution, or refund comes from a chain.
+(formerly Web3Auth) is the chosen provider and its client sign-in is wired. A
+connected provider now exposes its real Solana address and a real SOL balance on
+the overview. **Account linkage, USDC balances, activity and refund records are
+still preview-only**: the API does not yet bind a provider address to a
+`WalletAccount`, and no chain index, refund service or on-ramp exists. No
+contribution or refund reads from a chain.
 
 Related decisions: D-008 (Privy, superseded for the web client), D-029 (payment
-routes), D-031 (preview scope), D-033 (MetaMask Embedded Wallets).
+routes), D-031 (preview scope), D-033 (MetaMask Embedded Wallets), D-057 (the
+wallet overview is an account surface).
 
-## Why the data is preview-only
+## Why the account data is preview-only
 
-- No authenticated session — `getDashboardViewer()` returns a labelled preview
-  identity, so a provider account cannot be bound to a user.
-- No server-side wallet read and no Solana RPC endpoint, so no balance or
-  activity is read from the chain.
-- No on-ramp provider, escrow index, or refund service.
+- The web app can hold a verified Inverge session when `INVERGE_API_URL` is set
+  and the BFF exchange succeeds, but `inverge-api`'s `AuthService.authenticate()`
+  is stubbed and does not call `EmbeddedWalletPort`, so a provider address cannot
+  be linked to a user.
+- No server-side wallet read is exposed to the web, so the `WalletView`
+  projection cannot carry an address, a USDC balance, or a chain activity index.
+- No on-ramp provider, escrow index, or refund service exists.
+- The provider SDK is installed and a Client ID may be present, so the browser can
+  hold a real provider address. That address is shown as **device-only** and is
+  never written into a `WalletView`. Its SOL balance is read through the provider's
+  own RPC endpoint and labelled with the configured network; a failed read is
+  shown as unavailable, never as zero.
+- Provisioning is still impossible, and manufacturing an address, signature,
+  deposit, withdrawal, or claim would misrepresent custody and money. None is
+  manufactured.
 
 The provider SDK is installed and a Client ID may be present, so the browser can
 hold a real provider address. That address is shown as **device-only** and is
 never written into a `WalletView`. `inverge-api` models `WalletAccount` and a
 Privy reference adapter behind `EmbeddedWalletPort`, but its
-`AuthService.authenticate()` is stubbed and does not call that port. Provisioning
-is therefore impossible, and manufacturing an address, signature, deposit,
-withdrawal, or claim would misrepresent custody and money. None is manufactured.
+`AuthService.authenticate()` is stubbed and does not call that port.
 
 ## Chosen provider
 
@@ -42,9 +53,10 @@ signatures. Both live in the parent `Inverge/` workspace
   `null` unless a Client ID is present. It is pure and unit-tested without
   loading the SDK.
 - **Client-only boundary.** `components/wallet-auth-panel.tsx` loads
-  `wallet-sdk-boundary.tsx` through `next/dynamic` with `ssr: false`, because the
-  SDK is a frontend library that must not evaluate on the server.
-  `wallet-sdk-boundary.tsx` is the only module that imports `@web3auth/modal`.
+  `wallet-connection-boundary.tsx` through `next/dynamic` with `ssr: false`,
+  because the SDK is a frontend library that must not evaluate on the server.
+  `wallet-sdk-boundary.tsx` is the only module that imports `@web3auth/modal`;
+  the connection card is imported only by the dynamic boundary, not by the page.
 - **Solana chain declared in code.** `wallet-sdk-boundary.tsx` passes `chains`
   and `defaultChainId`. The dashboard's pre-configured networks are EVM-only, and
   the SDK builds its Solana wallet only from Solana entries in
@@ -58,35 +70,43 @@ signatures. Both live in the parent `Inverge/` workspace
   and brand colour through `uiConfig`. `/sign-in` and `/sign-up` are 308s to
   `/auth`, so there is one credential surface and one place to change it.
 - **Session exchange (BFF).** After the modal resolves, the panel reads the
-  ES256 `id_token` with `useAuthTokenInfo().getAuthTokenInfo()` and POSTs it to
-  `/api/auth/session`. That route forwards `{ accessToken, walletAddress }` to the
-  API's `POST /auth/session` and writes the returned one-hour session JWT into an
-  HttpOnly, SameSite=Lax cookie (`inverge_session`). The token never enters
-  JavaScript, local storage, or a URL. A valid existing provider session is
-  exchanged silently, so returning visitors are not asked to pick a method again.
+  ES256 `id_token` with `useAuthTokenInfo().getAuthTokenInfo()` and POSTs
+  `{ idToken, intent }` to `/api/auth/session`. That route forwards the token to
+  the API's `POST /auth/session` and writes the returned one-hour session JWT into
+  an HttpOnly, SameSite=Lax cookie (`inverge_session`). No wallet address is sent:
+  the provider's Solana address is not proven to match the token's attested key
+  yet. The token never enters JavaScript, local storage, or a URL. A valid existing
+  provider session is exchanged silently, so returning visitors are not asked to
+  pick a method again.
 - **Sign-out.** `/sign-out` disconnects the provider in the browser, then POSTs
   `/api/auth/sign-out` to delete the cookie. Both session endpoints require a
   same-origin `Origin` header, because the exchange is otherwise a login-CSRF
   target.
 - **Server session seam.** `server/viewer.ts` `getDashboardViewer()` reads the
-  cookie and calls the API's `GET /auth/me` with `Authorization: Bearer`. It is
-  the only function the dashboard changed: with a session it reports
-  `dataSource: "live"` and the account's own public name; without one, or when
-  the API is unreachable, it returns the labelled preview identity. The lookup
-  times out after three seconds and is memoised per render.
+  cookie and calls the API's `GET /auth/me` with `Authorization: Bearer`. The
+  product layout redirects when there is no session, and the viewer returns no
+  identity rather than borrowing a preview persona. The lookup times out after
+  three seconds and is memoised per render.
 - **Address display.** `useSolanaWallet().accounts` is validated with the
-  existing base58/32-byte check and shortened for display. The address is offered
-  to the session exchange for linking; the API verifies it against the signed
-  token and rejects a mismatch, so the web app never decides that an address
-  belongs to an account.
-- **Unconfigured and loading states.** `wallet-auth-unavailable.tsx` explains the
-  gap and offers no control; `wallet-auth-loading.tsx` holds the card's final
-  height.
+  existing base58/32-byte check and shortened for display, with a copy action and
+  a full-address disclosure. The address is still not linked server-side, so the
+  card says so instead of calling the wallet provisioned.
+- **Balance read.** When the provider has returned a validated address, the card
+  calls `useSolanaWallet().rpc.getBalance(address)` against the configured cluster
+  and formats lamports as SOL. The read has loading, ready, and unavailable
+  states; a failure never renders zero. USDC is not read because no verified mint
+  or chain index exists.
+- **Provider state.** `useWeb3Auth()` supplies initialisation, connection, and
+  initialisation-error state. `connect()` runs only from the explicit button;
+  mounting the page never opens the provider modal. A provider session restored
+  from storage is treated as connection, not provisioning.
+- **Unconfigured and loading states.** `wallet-connection-states.tsx` holds the
+  connection card's loading and unavailable shapes without importing the SDK.
 - **Honest capability input.** `server/wallet.ts` reports `sdkInstalled` and
   whether a Provider Client ID is present, so the audit no longer claims the
-  provider is absent when it is configured. Provisioning, receive, signing, and
-  withdrawal stay `unavailable` because no on-chain read, custody, or signing
-  exists.
+  provider is absent when it is configured. Provisioning, receive, signing,
+  withdrawal, and refund execution stay `unavailable` because no account link,
+  custody, signing, or refund service exists.
 
 ### Not wired yet
 
@@ -122,11 +142,11 @@ signatures. Both live in the parent `Inverge/` workspace
 | `/sign-out` | Ends the provider session and clears the Inverge cookie. |
 | `/api/auth/session` | Server-only exchange: `id_token` → HttpOnly session cookie. |
 | `/api/auth/sign-out` | Clears the session cookie; same-origin POST only. |
-| `/d/wallet` | Overview: sign-in, account state, balances, actions, refunds, recent activity, capabilities. |
+| `/d/wallet` | Overview: the connection card (live provider address and SOL balance), supported quick actions, and four recent records. |
 | `/d/wallet/activity` | Unified contribution and refund history with URL-backed filters and search. |
-| `/d/wallet/receive` | Receive/deposit explanation; no address or QR because none is linked. |
+| `/d/wallet/receive` | Receive/deposit explanation; no address or QR because no address is linked server-side. |
 | `/d/wallet/send` | Transfer form with real local validation; ends at a labelled handoff. |
-| `/d/wallet/refunds` | Refund summary and records; claim control present and disabled with its reason. |
+| `/d/wallet/refunds` | Refund summary and records; no claim control while refund execution is missing. |
 | `/d/wallet/security` | Security posture and control status; export, sessions, and recovery unavailable. |
 
 `/d/wallet/loading.tsx` and `/d/wallet/error.tsx` provide the loading and error
@@ -170,9 +190,11 @@ src/features/wallet/
     funding.ts                 "can this contribution be paid from the wallet?"
     status.ts                  labels and tones for provisioning/capabilities
   components/
-    wallet-auth-panel.tsx      client gate: boundary or unavailable card
+    wallet-auth-panel.tsx      client gate: dynamic boundary or unavailable card
+    wallet-connection-boundary.tsx  dynamic provider + connection card
     wallet-sdk-boundary.tsx    the only importer of @web3auth/modal
-    connected-wallet-auth.tsx  modal sign-in, address display, sign-out
+    wallet-connection-card.tsx provider session, address, copy, SOL balance
+    wallet-connection-states.tsx  SDK-free loading and unavailable shapes
     wallet-auth-unavailable.tsx / wallet-auth-loading.tsx
     WalletPageShell, overview, receive, send, refunds, security, activity
     list/dashboard, cards
@@ -186,7 +208,12 @@ Rules the feature holds to:
 - **One seam for data.** `server/wallet.ts` exposes `getWalletView()` and
   `getWalletFundingSnapshot()`; the live implementation replaces only that file.
 - **One SDK boundary.** Only `wallet-sdk-boundary.tsx` imports the provider SDK,
-  and it is reached through a client-only dynamic import.
+  and it is reached through a client-only dynamic import. The connection card is
+  imported only by `wallet-connection-boundary.tsx`, so the SDK never enters the
+  initial page bundle or the server render.
+- **Three primary destinations.** Overview, Activity and Refunds are the tab bar.
+  Send, Receive and Security remain routes but are contextual; security is linked
+  from Settings and from the overview.
 - **One capability truth.** Every surface reads `lib/capabilities.ts`, so a page
   cannot imply a feature exists merely because a route does.
 - **No secrets, ever.** No private key, seed phrase, signing share, or one-time
@@ -201,20 +228,22 @@ With no Client ID, the preview audit (`providerConfigured`, `sdkInstalled`,
 
 | Capability | Status | Mechanism missing |
 | --- | --- | --- |
-| Wallet provisioning | unavailable | provider, SDK, session |
-| Balances | preview | labelled samples; no chain read |
-| Receive and deposit | unavailable | no public address |
+| Wallet provisioning | unavailable | no server-side account link |
+| Balances | preview | SOL is read live; USDC has no verified mint or index |
+| Receive and deposit | unavailable | no linked public address |
 | Activity history | preview | derived from preview contributions |
-| Signing and sending | unavailable | no SDK / signing flow |
+| Signing and sending | unavailable | no signing flow |
 | Card and bank funding | unavailable | no licensed on-ramp provider |
 | Send and withdraw | unavailable | signing + RPC fee quote |
 | Refund execution | unavailable | no refund service / escrow index |
 | Key export | unavailable | no documented export flow |
 
-With a Client ID present, `sdkInstalled` and `providerConfigured` become true, so
-provisioning's reason becomes "No authenticated Inverge session exists…". Its
-status stays `unavailable`: a signed-in provider address alone is not an Inverge
-account, and an address is never an authorization input.
+With a Client ID present, `sdkInstalled` and `providerConfigured` become true. A
+live Inverge session may also exist, but provisioning still stays `unavailable`:
+the API does not bind a provider address to a `WalletAccount`, and the server
+projection has no address. A signed-in provider address alone is not an Inverge
+account, and an address is never an authorization input. The overview shows that
+address as device-only and never marks it linked.
 
 A capability becomes `available` only when its mechanism is present; nothing is
 promoted by adding a page.
@@ -237,21 +266,22 @@ existing labelled "payment is not connected" handoff. Nothing is submitted.
 
 ## Clearly demo-only
 
-- Sample balances (1,250.50 USDC, 0.42 SOL), labelled on the card and in the
-  checkout.
+- The checkout's sample balances (1,250.50 USDC, 0.42 SOL). They are never
+  rendered on the wallet overview; the overview reads SOL from the provider and
+  says USDC is not connected.
 - Derived activity and refund records, every item `demo: true` with a null
-  transaction and no explorer link.
-- The disabled refund claim control.
+  transaction and no explorer link, labelled "Example data" once per section.
 - The contribution handoff screen.
 
 ## Not implemented (reported, never simulated)
 
-- Account binding: no `id_token` exchange, no session, no `WalletAccount` link.
-- Chain-read balances and activity.
+- Account binding: the web app can hold a session, but `inverge-api` does not link
+  the provider address to a `WalletAccount`, and the web has no server wallet read.
+- USDC balances, chain activity, and escrow reconciliation.
 - Wallet signing, transfer submission, and on-chain confirmation.
 - On-ramp/card funding and any quote, rate, or fee.
 - Withdrawals and RPC fee quotes.
-- Refund execution and escrow reconciliation.
+- Refund execution.
 - Key export.
 - Webhook verification and idempotency (no provider webhook contract exists).
 
@@ -262,15 +292,18 @@ existing labelled "payment is not connected" handoff. Nothing is submitted.
 2. Configure the login connections and any group connection; record each
    `authConnectionId` and the JWT user identifier field.
 3. ~~Install the SDK and add a guarded client provider.~~ Done in this change.
-4. Add `useAuthTokenInfo()` and exchange the ES256 `id_token` with the API. Never
-   trust a client-supplied address for authorization.
+4. ~~Add `useAuthTokenInfo()` and exchange the ES256 `id_token` with the API.~~
+   Done. The exchange sends no wallet address; never trust a client-supplied
+   address for authorization.
 5. Add a MetaMask adapter behind `inverge-api`'s `EmbeddedWalletPort`: verify the
    token against the provider JWKS, map `sub` to `User`, link the Solana address
    to `WalletAccount`, and issue the existing Inverge session. Replace the stub
    in `AuthService.authenticate()`.
 6. Replace `server/wallet.ts` with the authenticated API/provider read; set
-   `sessionAvailable` and `addressAvailable` true only when each is real.
-7. Add chain-read balances and move balance/activity out of `preview`.
+   `addressAvailable` true only when the server projection has a linked address.
+7. ~~Read the connected SOL balance from the provider.~~ Done. Add the verified
+   USDC mint and a chain activity index before moving those capabilities out of
+   `preview`.
 8. Enable on-ramp, refunds, withdrawals, and export only after their own provider,
    escrow, and security reviews.
 
@@ -340,17 +373,23 @@ shared anywhere outside the server.
   provisioning unavailable, balances still samples, funding snapshot flag).
 - `components/wallet-auth-panel.test.tsx` (unconfigured card, configured boundary
   mounts the loading state rather than the SDK in tests),
+  `wallet-connection-card.test.tsx` (no connect on mount, explicit connect and
+  disconnect, address copy, live SOL read, balance failure never becomes zero,
+  mismatch between the SDK address and the server link, initialisation error),
+  `wallet-page-shell.test.tsx` (three primary destinations, short introduction),
   `wallet-send.test.tsx` (destination bytes, wrong network, amount precision,
-  insufficient sample balance, maximum, handoff), `wallet-overview.test.tsx`,
-  `wallet-refunds.test.tsx`, `wallet-security.test.tsx`,
-  `wallet-activity-dashboard.test.tsx`.
+  insufficient sample balance, maximum, handoff), `wallet-overview.test.tsx`
+  (no sample balance, labelled preview activity, supported quick actions),
+  `wallet-refunds.test.tsx` (no claim control, preview label, record states),
+  `wallet-security.test.tsx`, `wallet-activity-dashboard.test.tsx`.
 - `features/campaigns/components/contribution-preview.test.tsx` covers the
   sample-balance and insufficient-funds settlement behaviour.
 
 Scenarios covered include provisioning state, unsupported asset, insufficient
 funds, destination validation and wrong-network rejection, quote expiry, refund
-states and duplicate-claim prevention, demo-vs-production labelling, and
-responsive/empty/error states at the component level.
+states and duplicate-claim prevention, demo-vs-production labelling, SDK
+connection states without an automatic popup, and responsive/empty/error states
+at the component level.
 
 On this machine the parallel Vitest pool can hit `EMFILE` while a large icon
 package is imported once per file. `pnpm exec vitest run --no-file-parallelism`
@@ -368,7 +407,9 @@ is a reliable local fallback; the committed configuration is unchanged.
   connection configuration, and `useSFAKey` must not change without an explicit
   migration.
 - A provider address shown in the browser is device-only until it is linked
-  server-side, so no balance, contribution, or refund reads from it.
+  server-side. The overview reads that address's SOL balance from the configured
+  cluster, but no contribution or refund reads from it, and it is not exposed as
+  a deposit address.
 - The provider `id_token` proves identity only at exchange; authorization always
   uses the Inverge session and server-side checks. A client-reported address is
   never an authorization input.

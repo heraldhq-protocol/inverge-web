@@ -27,13 +27,11 @@ function contributionLinks(container: HTMLElement) {
 }
 
 describe("WalletActivityDashboard overview", () => {
-  it("counts the unified history and names no fabricated deposit", () => {
+  it("counts the unified history and labels preview records", () => {
     renderDashboard();
 
     expect(screen.getByText("15 records")).toBeInTheDocument();
-    expect(
-      screen.getByText(/No deposit or withdrawal is fabricated/),
-    ).toBeInTheDocument();
+    expect(screen.getByText("Example data")).toBeInTheDocument();
     expect(screen.getByText("15 records match")).toBeInTheDocument();
   });
 

@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { Pill } from "@/components/ui/pill";
 import { StatePanel } from "@/components/ui/state-panel";
 import { ProductSearch } from "@/features/app-shell/components/product-search";
 import { WalletActivityList } from "@/features/wallet/components/wallet-activity-list";
@@ -41,25 +42,28 @@ export function WalletActivityDashboard({
   const counts = activityCounts(view.activity);
   const items = filterWalletActivity({ filter, items: view.activity, query });
   const hasFilters = filter !== "all" || query.trim() !== "";
+  const preview = view.dataSource === "preview";
 
   return (
     <div>
-      <div className="flex flex-wrap items-baseline justify-between gap-3">
-        <div>
-          <h2 className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl">
-            Activity
-          </h2>
-          <p className="mt-1 max-w-2xl text-sm leading-5 text-muted">
-            Contributions and refunds, each with its own settlement state. No
-            deposit or withdrawal is fabricated to fill the list.
-          </p>
-        </div>
-        <p className="text-xs text-muted">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <p className="text-sm text-muted">
           {counts.all === 1 ? "1 record" : `${counts.all} records`}
         </p>
+        {preview ? (
+          <Pill tone="neutral" size="xs">
+            Example data
+          </Pill>
+        ) : null}
       </div>
 
-      <div className="mt-4 border-t border-border pt-5">
+      {preview ? (
+        <p className="mt-1 text-xs leading-5 text-muted">
+          Sample records until live wallet activity is connected.
+        </p>
+      ) : null}
+
+      <div className="mt-3">
         <ProductSearch
           action="/d/wallet/activity"
           defaultValue={query}
@@ -71,7 +75,7 @@ export function WalletActivityDashboard({
         />
       </div>
 
-      <nav aria-label="Activity filters" className="mt-4 overflow-x-auto">
+      <nav aria-label="Activity filters" className="mt-3 overflow-x-auto">
         <ul className="flex min-w-max items-center gap-2">
           {WALLET_ACTIVITY_FILTERS.map((candidate) => {
             const active = candidate === filter;
@@ -98,7 +102,7 @@ export function WalletActivityDashboard({
         </ul>
       </nav>
 
-      <div className="mt-5">
+      <div className="mt-4">
         {items.length > 0 ? (
           <>
             <p className="mb-2 text-xs text-muted" role="status">
@@ -123,7 +127,7 @@ export function WalletActivityDashboard({
             description={
               hasFilters
                 ? "No contribution or refund record matches this filter and search. Clear them to see the whole history."
-                : "Contributions you make and refunds returned to you appear here. This preview has no deposits or withdrawals to show."
+                : "Contributions you make and refunds returned to you will appear here."
             }
             action={
               hasFilters ? (

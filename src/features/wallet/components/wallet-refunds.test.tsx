@@ -12,51 +12,48 @@ function viewWithRefunds(refunds: WalletView["refunds"]): WalletView {
 }
 
 describe("WalletRefunds", () => {
-  it("shows each refund record with its own state", () => {
+  it("shows each refund record with its own state and amount", () => {
     render(<WalletRefunds view={createPreviewWalletView()} />);
 
     expect(screen.getByText("Refund available")).toBeInTheDocument();
     expect(screen.getByText("Refund confirmed")).toBeInTheDocument();
-    // Once in the summary metrics, once as the record's eligible amount.
     expect(screen.getAllByText("$5,000").length).toBeGreaterThanOrEqual(2);
     expect(screen.getAllByText("$2,500").length).toBeGreaterThanOrEqual(2);
   });
 
-  it("offers a claim control only where one is possible, and keeps it disabled", () => {
+  it("labels preview records as example data", () => {
     render(<WalletRefunds view={createPreviewWalletView()} />);
 
-    const claim = screen.getByRole("button", { name: "Claim refund" });
-    expect(claim).toBeDisabled();
-    expect(
-      screen.queryByRole("button", { name: /refund confirmed/i }),
-    ).toBeNull();
+    expect(screen.getByText("Example data")).toBeInTheDocument();
   });
 
-  it("attaches the reason a claim cannot be submitted to the disabled control", () => {
+  it("does not render a claim control while refund execution is missing", () => {
     render(<WalletRefunds view={createPreviewWalletView()} />);
 
-    const claim = screen.getByRole("button", { name: "Claim refund" });
-    const reasonId = claim.getAttribute("aria-describedby");
-    expect(reasonId).toBeTruthy();
-    expect(document.getElementById(reasonId ?? "")).toHaveTextContent(
-      "Refund execution is not connected in this build",
-    );
+    expect(screen.queryByRole("button", { name: /claim/i })).toBeNull();
+    expect(
+      screen.getByText(/Refund claims can’t be submitted yet/),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/Claiming isn’t available yet/),
+    ).toBeInTheDocument();
   });
 
   it("states that a confirmed refund is complete rather than offering another claim", () => {
     render(<WalletRefunds view={createPreviewWalletView()} />);
 
-    expect(screen.getByText("This refund is complete.")).toBeInTheDocument();
-    expect(screen.getAllByText("None exists")).toHaveLength(2);
+    expect(
+      screen.getByText("The refund has been returned."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("None exists")).toBeNull();
   });
 
-  it("explains the missing service instead of showing an empty state with records", () => {
+  it("keeps the contribution reference for every record", () => {
     render(<WalletRefunds view={createPreviewWalletView()} />);
 
     expect(
-      screen.getByText(/No refund service or escrow index is connected/),
-    ).toBeInTheDocument();
-    expect(screen.getByText(/none of them moves money/)).toBeInTheDocument();
+      screen.getAllByRole("link", { name: /View contribution/ }).length,
+    ).toBeGreaterThan(0);
   });
 });
 
