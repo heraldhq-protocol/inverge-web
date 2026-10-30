@@ -1,5 +1,11 @@
 import type { DiscoveryCategory } from "@/features/home/discovery-categories";
 import type { IdeaArtworkVariant } from "@/features/home/types";
+import type {
+  FeedbackForm,
+  FeedbackQuestion,
+  FeedbackQuestionType,
+} from "@/features/feedback/types";
+import type { IdeaSignals } from "@/features/ideas/lib/signals";
 import {
   isIdeaCategorySlug,
   isIdeaSubcategoryOf,
@@ -163,6 +169,51 @@ const ARTWORK_BY_DISCOVERY: Readonly<
   technology: "campus",
 };
 
+/**
+ * Compatibility taxonomy for ideas created before the builder wrote a
+ * `taxonomy` pair.
+ *
+ * The API stores the legacy `category` even when no canonical taxonomy is
+ * assigned. Treating that legacy value as unassigned is what made those ideas
+ * invisible to every category filter, even though their detail page still
+ * showed a category. This deterministic map is a fallback only: an explicit
+ * API taxonomy always wins, and a legacy value with no honest parent
+ * (`community`, `other`) stays unassigned rather than being forced into one.
+ */
+const TAXONOMY_BY_LEGACY: Readonly<Record<string, IdeaCategorySlug>> = {
+  art: "art",
+  comics: "comics",
+  crafts: "crafts",
+  dance: "dance",
+  design: "design",
+  fashion: "fashion",
+  film: "film",
+  food: "food",
+  games: "games",
+  journalism: "journalism",
+  music: "music",
+  photography: "photography",
+  publishing: "publishing",
+  theater: "theater",
+  technology: "technology",
+  software: "technology",
+  fintech: "technology",
+  agritech: "technology",
+  healthtech: "technology",
+  cleantech: "technology",
+  edtech: "technology",
+  logistics: "technology",
+  "e-commerce": "technology",
+  web3: "technology",
+};
+
+function taxonomyCategoryFor(idea: ApiIdea): IdeaCategorySlug | undefined {
+  return (
+    taxonomySlug(idea.taxonomy?.category) ??
+    TAXONOMY_BY_LEGACY[idea.category.trim().toLowerCase()]
+  );
+}
+
 function taxonomySlug(
   value: string | null | undefined,
 ): IdeaCategorySlug | undefined {
@@ -319,7 +370,7 @@ export function isReadableIdea(idea: ApiIdea): boolean {
 }
 
 export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
-  const taxonomyCategory = taxonomySlug(idea.taxonomy?.category);
+  const taxonomyCategory = taxonomyCategoryFor(idea);
   const taxonomySubcategory = taxonomyChildSlug(
     taxonomyCategory,
     idea.taxonomy?.subcategory,
@@ -352,6 +403,7 @@ export function toDiscoveryIdea(idea: ApiIdea): DiscoveryIdea {
     promoted: idea.promoted,
     publishedOrder: Number.isFinite(publishedOrder) ? publishedOrder : 0,
     region: regionFor(idea.region),
+    ...(idea.slug ? { slug: idea.slug } : {}),
     supporters: idea.supporterCount ?? 0,
     ...(taxonomyCategory ? { taxonomyCategory } : {}),
     ...(taxonomySubcategory ? { taxonomySubcategory } : {}),
@@ -394,7 +446,10 @@ export function toMyIdea(idea: ApiIdea): MyIdea | null {
   };
 }
 
-export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
+export function toIdeaDetail(
+  idea: ApiIdea,
+  feedbackForm?: FeedbackForm,
+): IdeaDetail {
   const base = toDiscoveryIdea(idea);
   const askAmount = toAmount(idea.askAmount);
   const status = ideaStatusFor(idea.status);
@@ -406,6 +461,17 @@ export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
             ? "The validation gate is met. The next step is a campaign draft with milestone escrow."
             : "The next step is to meet the validation gate before a campaign draft opens.",
           useOfFunds: toAskBreakdown(idea.askBreakdown),
+        }
+      : undefined;
+  // The API has no stored goal flags. A form or an ask is direct evidence of
+  // the intent; community stays false because nothing in the response says the
+  // creator enabled it. Never invent a goal from the page's layout.
+  const goals =
+    feedbackForm || fundingIntent
+      ? {
+          community: false,
+          feedback: Boolean(feedbackForm),
+          funding: Boolean(fundingIntent),
         }
       : undefined;
 
@@ -420,7 +486,9 @@ export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
     creatorVerified: idea.creator?.identityVerified === true,
     ...(idea.demoUrl?.trim() ? { demoUrl: idea.demoUrl.trim() } : {}),
     feedbackScore: Number(idea.feedbackScore ?? 0),
+    ...(feedbackForm ? { feedbackForm } : {}),
     ...(fundingIntent ? { fundingIntent } : {}),
+    ...(goals ? { goals } : {}),
     gate: {
       minPrePledged: toAmount(
         idea.gateProgress?.criteria.weightedInterest.need ?? 0,
@@ -513,6 +581,122 @@ export async function getLiveIdea(
     }
     throw error;
   }
+}
+
+export type ApiSurveyQuestion = {
+  createdAt: string;
+  id: string;
+  index: number;
+  options: unknown;
+  prompt: string;
+  required: boolean;
+  type: string;
+};
+
+const FEEDBACK_TYPE_BY_SURVEY: Readonly<Record<string, FeedbackQuestionType>> =
+  {
+    BOOLEAN: "boolean",
+    MULTI_CHOICE: "multi-choice",
+    RATING: "rating",
+    SINGLE_CHOICE: "single-choice",
+    TEXT: "long-text",
+  };
+
+/**
+ * The public survey as the respondent form.
+ *
+ * Question ids stay the API ids because answers are submitted against them.
+ * Choice option ids are labels: the API stores and validates option strings,
+ * not generated ids, so introducing a second id would break the round trip.
+ */
+export function toFeedbackForm(
+  questions: readonly ApiSurveyQuestion[] | null | undefined,
+): FeedbackForm | undefined {
+  if (!questions || questions.length === 0) return undefined;
+
+  const mapped: FeedbackQuestion[] = questions.flatMap((question) => {
+    const type = FEEDBACK_TYPE_BY_SURVEY[question.type];
+    if (!type) return [];
+    const options = Array.isArray(question.options)
+      ? question.options.filter(
+          (option): option is string => typeof option === "string",
+        )
+      : [];
+    return [
+      {
+        id: question.id,
+        label: question.prompt,
+        required: question.required,
+        type,
+        ...(options.length > 0
+          ? {
+              options: options.map((label) => ({
+                id: label,
+                label,
+              })),
+            }
+          : {}),
+      },
+    ];
+  });
+
+  if (mapped.length === 0) return undefined;
+
+  const updatedAt = questions.reduce(
+    (latest, question) =>
+      question.createdAt > latest ? question.createdAt : latest,
+    questions[0]?.createdAt ?? new Date(0).toISOString(),
+  );
+
+  return {
+    description:
+      "A few honest answers help the creator decide what to build next.",
+    enabled: true,
+    published: true,
+    questions: mapped,
+    title: "Share your feedback",
+    updatedAt,
+    version: 1,
+  };
+}
+
+export async function getLiveIdeaSurvey(
+  idOrSlug: string,
+): Promise<ApiSurveyQuestion[]> {
+  return fetchApiJson<ApiSurveyQuestion[]>(
+    `/ideas/${encodeURIComponent(idOrSlug)}/survey`,
+  );
+}
+
+type ApiIdeaEngagement = {
+  prePledge: { amountUsd: string } | null;
+  supported: boolean;
+};
+
+/**
+ * The signed-in viewer's own signals on one idea.
+ *
+ * `feedbackSubmitted` stays false because the public API does not expose an
+ * anonymous submission receipt; claiming it from a local click would be a
+ * different kind of lie. The form itself handles repeat submissions as an
+ * upsert.
+ */
+export async function getLiveIdeaEngagement(
+  idOrSlug: string,
+  token: string,
+): Promise<IdeaSignals> {
+  const engagement = await fetchApiJson<ApiIdeaEngagement>(
+    `/ideas/${encodeURIComponent(idOrSlug)}/engagement`,
+    { token },
+  );
+
+  return {
+    feedbackSubmitted: false,
+    prePledge: engagement.prePledge
+      ? { amount: decimalToUsdAmount(engagement.prePledge.amountUsd) }
+      : null,
+    supported: engagement.supported,
+  };
 }
 
 type ApiIdeaComment = {

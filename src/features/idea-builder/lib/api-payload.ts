@@ -11,6 +11,26 @@ const API_CATEGORY: Readonly<Record<DiscoveryCategory, string>> = {
   technology: "technology",
 };
 
+/**
+ * The canonical taxonomy parent for each builder bucket.
+ *
+ * The builder's six choices are discovery buckets, not taxonomy categories.
+ * Sending the pair keeps a published idea inside the category filter instead
+ * of creating an unassigned record whose own page shows a category but no
+ * filter can reach it. `community` has no honest parent in the taxonomy, so it
+ * stays unassigned rather than being forced into one.
+ */
+const TAXONOMY_BY_CATEGORY: Readonly<
+  Record<DiscoveryCategory, string | undefined>
+> = {
+  agriculture: "technology",
+  "clean-energy": "technology",
+  community: undefined,
+  creative: "art",
+  "food-retail": "food",
+  technology: "technology",
+};
+
 export type IdeaApiPayload = {
   askAmount?: number;
   askBreakdown?: Record<string, number>;
@@ -24,15 +44,12 @@ export type IdeaApiPayload = {
   roadmapSteps?: { date: string; description: string }[];
   solution: string;
   targetUser: string;
+  taxonomy?: { category: string };
   title: string;
 };
 
 type SurveyQuestion =
-  | "BOOLEAN"
-  | "MULTI_CHOICE"
-  | "RATING"
-  | "SINGLE_CHOICE"
-  | "TEXT";
+  "BOOLEAN" | "MULTI_CHOICE" | "RATING" | "SINGLE_CHOICE" | "TEXT";
 
 export type SurveyApiPayload = {
   questions: {
@@ -78,6 +95,9 @@ export function toIdeaApiPayload(draft: IdeaDraft): IdeaApiPayload {
       description: step.description.trim(),
     }))
     .filter((step) => step.date && step.description);
+  const taxonomy = draft.category
+    ? TAXONOMY_BY_CATEGORY[draft.category]
+    : undefined;
 
   return {
     title: draft.title.trim(),
@@ -86,10 +106,9 @@ export function toIdeaApiPayload(draft: IdeaDraft): IdeaApiPayload {
     targetUser: draft.targetUser.trim(),
     currentAlternative: draft.currentAlternative.trim(),
     category: draft.category ? API_CATEGORY[draft.category] : "other",
+    ...(taxonomy ? { taxonomy: { category: taxonomy } } : {}),
     ...(draft.region.trim() ? { region: draft.region.trim() } : {}),
-    ...(draft.coverUrl.trim()
-      ? { coverImageUrl: draft.coverUrl.trim() }
-      : {}),
+    ...(draft.coverUrl.trim() ? { coverImageUrl: draft.coverUrl.trim() } : {}),
     ...(draft.demoUrl.trim() ? { demoUrl: draft.demoUrl.trim() } : {}),
     ...(draft.risks.trim() ? { risks: draft.risks.trim() } : {}),
     ...(draft.goals.funding

@@ -9,7 +9,7 @@ const UPSTREAM_TIMEOUT_MS = 15_000;
 
 type ForwardOptions = {
   body?: unknown;
-  method: "PATCH" | "POST" | "PUT";
+  method: "DELETE" | "PATCH" | "POST" | "PUT";
   path: string;
   timeoutMs?: number;
 };

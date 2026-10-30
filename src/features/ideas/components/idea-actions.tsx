@@ -44,6 +44,24 @@ function PreviewNote() {
   );
 }
 
+async function failureMessage(
+  response: Response,
+  fallback: string,
+): Promise<string> {
+  const payload = (await response.json().catch(() => null)) as unknown;
+  if (payload && typeof payload === "object") {
+    const error = (payload as { error?: unknown }).error;
+    if (typeof error === "string" && error.trim()) return error;
+    if (error && typeof error === "object") {
+      const message = (error as { message?: unknown }).message;
+      if (typeof message === "string" && message.trim()) return message;
+    }
+    const message = (payload as { message?: unknown }).message;
+    if (typeof message === "string" && message.trim()) return message;
+  }
+  return fallback;
+}
+
 function SignInGate({ action }: { action: string }) {
   return (
     <p className="text-sm leading-6 text-muted">
@@ -66,10 +84,16 @@ function SignInGate({ action }: { action: string }) {
 }
 
 function SupportAction({
+  busy,
+  error,
+  mode,
   onToggle,
   signals,
   viewer,
 }: {
+  busy: boolean;
+  error: string | null;
+  mode: "live" | "preview";
   onToggle: () => void;
   signals: IdeaSignals;
   viewer: IdeaViewer;
@@ -80,7 +104,7 @@ function SupportAction({
     <div className="rounded-xl bg-brand-soft p-4">
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-ink">Support this idea</h2>
-        {viewer === "signed-in" ? <PreviewNote /> : null}
+        {mode === "preview" && viewer === "signed-in" ? <PreviewNote /> : null}
       </div>
       <p className="mt-1 text-xs leading-5 text-muted">
         Let the creator know you would like to see this move forward. Supporting
@@ -102,6 +126,7 @@ function SupportAction({
               : ""
           }`}
           aria-pressed={supported}
+          disabled={busy}
           onClick={onToggle}
         >
           {supported ? (
@@ -112,7 +137,7 @@ function SupportAction({
                 strokeWidth={2.2}
                 aria-hidden="true"
               />
-              <span className="ml-2">Supported</span>
+              <span className="ml-2">{busy ? "Saving…" : "Supported"}</span>
             </>
           ) : (
             <>
@@ -122,11 +147,17 @@ function SupportAction({
                 strokeWidth={1.8}
                 aria-hidden="true"
               />
-              <span className="ml-2">Support idea</span>
+              <span className="ml-2">{busy ? "Saving…" : "Support idea"}</span>
             </>
           )}
         </Button>
       )}
+
+      {error ? (
+        <p className="mt-2 text-xs font-medium text-danger" role="alert">
+          {error}
+        </p>
+      ) : null}
     </div>
   );
 }
@@ -138,11 +169,13 @@ function SupportAction({
  */
 function FeedbackEntry({
   enabled,
+  mode,
   onOpen,
   questionCount,
   viewer,
 }: {
   enabled: boolean;
+  mode: "live" | "preview";
   onOpen: () => void;
   questionCount: number;
   viewer: IdeaViewer;
@@ -153,7 +186,7 @@ function FeedbackEntry({
     <div>
       <div className="flex items-center justify-between gap-3">
         <h2 className="text-base font-bold text-ink">Give feedback</h2>
-        {viewer === "signed-in" ? <PreviewNote /> : null}
+        {mode === "preview" && viewer === "signed-in" ? <PreviewNote /> : null}
       </div>
       <p className="mt-1 text-xs leading-5 text-muted">
         The creator asks {questionCount}{" "}
@@ -180,13 +213,17 @@ function FeedbackEntry({
 }
 
 function PrePledgeAction({
+  busy,
+  mode,
   onSave,
   onWithdraw,
   signals,
   viewer,
 }: {
-  onSave: (amount: MoneyAmount) => string | null;
-  onWithdraw: () => void;
+  busy: boolean;
+  mode: "live" | "preview";
+  onSave: (amount: MoneyAmount) => string | null | Promise<string | null>;
+  onWithdraw: () => string | null | Promise<string | null>;
   signals: IdeaSignals;
   viewer: IdeaViewer;
 }) {
@@ -207,7 +244,7 @@ function PrePledgeAction({
     setEditing(true);
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const atomic = parseUsdAmount(draft);
     if (!atomic) {
@@ -218,9 +255,15 @@ function PrePledgeAction({
       setError("Confirm that you understand this is non-binding.");
       return;
     }
-    const failure = onSave({ atomic, currency: "USD", decimals: 2 });
-    if (failure) {
-      setError(failure);
+    const result = onSave({ atomic, currency: "USD", decimals: 2 });
+    if (result instanceof Promise) {
+      const failure = await result;
+      if (failure) {
+        setError(failure);
+        return;
+      }
+    } else if (result) {
+      setError(result);
       return;
     }
     setEditing(false);
@@ -233,7 +276,7 @@ function PrePledgeAction({
         <h2 className="text-base font-bold text-ink">
           Express funding interest
         </h2>
-        {viewer === "signed-in" ? <PreviewNote /> : null}
+        {mode === "preview" && viewer === "signed-in" ? <PreviewNote /> : null}
       </div>
       <p className="mt-1 text-xs leading-5 text-muted">
         Tell the creator how much you might consider contributing if this idea
@@ -277,15 +320,27 @@ function PrePledgeAction({
               type="button"
               variant="destructive"
               size="sm"
+              disabled={busy}
               onClick={() => {
-                onWithdraw();
-                setDraft("");
-                setAcknowledged(false);
-                setEditing(false);
-                setNotice("withdrawn");
+                const apply = (failure: string | null) => {
+                  if (failure) {
+                    setError(failure);
+                    return;
+                  }
+                  setDraft("");
+                  setAcknowledged(false);
+                  setEditing(false);
+                  setNotice("withdrawn");
+                };
+                const result = onWithdraw();
+                if (result instanceof Promise) {
+                  void result.then(apply);
+                  return;
+                }
+                apply(result);
               }}
             >
-              Withdraw
+              {busy ? "Withdrawing…" : "Withdraw"}
             </Button>
           </div>
         </div>
@@ -351,8 +406,8 @@ function PrePledgeAction({
             </p>
           ) : null}
 
-          <Button type="submit" size="md" className="w-full">
-            {existing ? "Update intent" : "Record intent"}
+          <Button type="submit" size="md" className="w-full" disabled={busy}>
+            {busy ? "Saving…" : existing ? "Update intent" : "Record intent"}
           </Button>
         </form>
       )}
@@ -360,12 +415,22 @@ function PrePledgeAction({
   );
 }
 
-function ShareAction({ ideaTitle }: { ideaTitle?: string | undefined }) {
+function ShareAction({
+  ideaTitle,
+  path,
+}: {
+  ideaTitle?: string | undefined;
+  path: string;
+}) {
   const [status, setStatus] = useState<"idle" | "copied" | "error">("idle");
+
+  function shareUrl(): string {
+    return new URL(path, window.location.origin).toString();
+  }
 
   async function copyLink() {
     try {
-      await navigator.clipboard.writeText(window.location.href);
+      await navigator.clipboard.writeText(shareUrl());
       setStatus("copied");
     } catch {
       setStatus("error");
@@ -374,7 +439,7 @@ function ShareAction({ ideaTitle }: { ideaTitle?: string | undefined }) {
 
   function shareToX() {
     const intent = new URL("https://twitter.com/intent/tweet");
-    intent.searchParams.set("url", window.location.href);
+    intent.searchParams.set("url", shareUrl());
     if (ideaTitle) intent.searchParams.set("text", ideaTitle);
     window.open(intent.toString(), "_blank", "noopener,noreferrer");
   }
@@ -426,33 +491,155 @@ function ShareAction({ ideaTitle }: { ideaTitle?: string | undefined }) {
  */
 export function IdeaActions({
   idea,
+  initialSignals,
+  mode = "preview",
   viewer: viewerProp,
 }: {
   idea: IdeaDetail;
+  initialSignals?: IdeaSignals;
+  mode?: "live" | "preview";
   viewer?: IdeaViewer;
 }) {
   const { viewer: contextViewer } = useIdeaViewer();
   const viewer = viewerProp ?? contextViewer;
-  const [signals, setSignals] = useState<IdeaSignals>(emptySignals);
+  const [signals, setSignals] = useState<IdeaSignals>(
+    initialSignals ?? emptySignals,
+  );
   const [feedbackOpen, setFeedbackOpen] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState<string | null>(null);
 
   const form = idea.feedbackForm;
-  const feedbackEnabled = Boolean(form?.enabled && form.questions.length > 0);
-  const fundingEnabled = Boolean(idea.goals?.funding);
+  const openForInput =
+    mode === "preview" ||
+    !idea.status ||
+    idea.status === "validating" ||
+    idea.status === "threshold-met";
+  const feedbackEnabled = Boolean(
+    form?.enabled && form.questions.length > 0 && openForInput,
+  );
+  const fundingEnabled =
+    mode === "preview"
+      ? Boolean(idea.goals?.funding)
+      : openForInput && BigInt(idea.askAmount.atomic) > 0n;
+
+  async function handleSupport() {
+    if (mode === "preview") {
+      setSignals((current) => toggleSupport(current));
+      return;
+    }
+
+    setBusy(true);
+    setActionError(null);
+    try {
+      const response = await fetch(
+        `/api/ideas/${encodeURIComponent(idea.id)}/support`,
+        { method: signals.supported ? "DELETE" : "POST" },
+      );
+      if (!response.ok) {
+        setActionError(
+          await failureMessage(response, "Support could not be saved."),
+        );
+        return;
+      }
+      setSignals((current) => toggleSupport(current));
+    } catch {
+      setActionError("The network could not be reached. Nothing changed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  function savePrePledge(
+    amount: MoneyAmount,
+  ): string | null | Promise<string | null> {
+    if (mode === "preview") {
+      const result = setPrePledge(signals, { amount });
+      if (!result.ok) return "That amount is not valid.";
+      setSignals(result.signals);
+      return null;
+    }
+
+    return (async () => {
+      setBusy(true);
+      setActionError(null);
+      try {
+        const response = await fetch(
+          `/api/ideas/${encodeURIComponent(idea.id)}/pre-pledge`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              amount: Number(amount.atomic) / 100,
+              currency: "USD",
+            }),
+          },
+        );
+        if (!response.ok) {
+          return failureMessage(response, "Your intent could not be saved.");
+        }
+        setSignals((current) => {
+          const result = setPrePledge(current, { amount });
+          return result.ok ? result.signals : current;
+        });
+        return null;
+      } catch {
+        return "The network could not be reached. Nothing changed.";
+      } finally {
+        setBusy(false);
+      }
+    })();
+  }
+
+  function withdrawPrePledgeAction(): string | null | Promise<string | null> {
+    if (mode === "preview") {
+      setSignals((current) => withdrawPrePledge(current));
+      return null;
+    }
+
+    return (async () => {
+      setBusy(true);
+      setActionError(null);
+      try {
+        const response = await fetch(
+          `/api/ideas/${encodeURIComponent(idea.id)}/pre-pledge`,
+          { method: "DELETE" },
+        );
+        if (!response.ok) {
+          return failureMessage(
+            response,
+            "Your intent could not be withdrawn.",
+          );
+        }
+        setSignals((current) => withdrawPrePledge(current));
+        return null;
+      } catch {
+        return "The network could not be reached. Nothing changed.";
+      } finally {
+        setBusy(false);
+      }
+    })();
+  }
 
   return (
     <>
       <div className="rounded-2xl border border-border bg-surface p-4">
         <SupportAction
+          busy={busy}
+          error={actionError}
+          mode={mode}
           signals={signals}
           viewer={viewer}
-          onToggle={() => setSignals((current) => toggleSupport(current))}
+          onToggle={() => {
+            void handleSupport();
+          }}
         />
 
         {feedbackEnabled || fundingEnabled ? (
           <div className="mt-4 space-y-4 border-t border-border pt-4">
             <FeedbackEntry
               enabled={feedbackEnabled}
+              mode={mode}
               questionCount={form?.questions.length ?? 0}
               viewer={viewer}
               onOpen={() => setFeedbackOpen(true)}
@@ -462,24 +649,22 @@ export function IdeaActions({
             ) : null}
             {fundingEnabled ? (
               <PrePledgeAction
+                busy={busy}
+                mode={mode}
                 signals={signals}
                 viewer={viewer}
-                onSave={(amount) => {
-                  const result = setPrePledge(signals, { amount });
-                  if (!result.ok) return "That amount is not valid.";
-                  setSignals(result.signals);
-                  return null;
-                }}
-                onWithdraw={() =>
-                  setSignals((current) => withdrawPrePledge(current))
-                }
+                onSave={savePrePledge}
+                onWithdraw={withdrawPrePledgeAction}
               />
             ) : null}
           </div>
         ) : null}
 
         <div className="mt-4 border-t border-border pt-3">
-          <ShareAction ideaTitle={idea.title} />
+          <ShareAction
+            ideaTitle={idea.title}
+            path={`/ideas/${encodeURIComponent(idea.slug ?? idea.id)}`}
+          />
         </div>
       </div>
 
@@ -487,6 +672,7 @@ export function IdeaActions({
         <FeedbackDialog
           idea={idea}
           form={form}
+          live={mode === "live"}
           open={feedbackOpen}
           viewer={viewer}
           onClose={() => setFeedbackOpen(false)}
