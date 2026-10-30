@@ -14,6 +14,8 @@ import { Field } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
 import { CampaignVideoPlayer } from "@/features/campaigns/components/campaign-video-player";
 import { MediaImage } from "@/features/campaigns/components/media-image";
+import { MediaUploadButton } from "@/features/media/components/media-upload-button";
+import type { UploadPurpose } from "@/features/media/lib/upload";
 import {
   MIN_MEDIA_ALT,
   parseImageSource,
@@ -325,6 +327,7 @@ export function WizardMediaList({
   legend,
   onChange,
   orderNote,
+  upload,
 }: {
   /** The list's heading, e.g. "Hero media". */
   legend: string;
@@ -343,6 +346,12 @@ export function WizardMediaList({
   orderNote?: string;
   /** A note shown beside the add controls. */
   addNote?: string;
+  /**
+   * Enables photo upload beside the add controls. A verified upload becomes a
+   * normal draft row, so an uploaded photo and a linked one behave identically
+   * from here on. Videos are never uploaded: they are linked and played in place.
+   */
+  upload?: { purpose: UploadPurpose; maxItems: number };
 }) {
   function move(from: number, delta: number) {
     const to = from + delta;
@@ -360,6 +369,22 @@ export function WizardMediaList({
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-medium text-ink">{legend}</p>
         <div className="flex flex-wrap items-center gap-2">
+          {upload ? (
+            <MediaUploadButton
+              disabled={items.length >= upload.maxItems}
+              purpose={upload.purpose}
+              onUploaded={(asset) =>
+                onChange([
+                  ...items,
+                  {
+                    ...createDraftMedia("image"),
+                    alt: asset.altText ?? "",
+                    srcInput: asset.src,
+                  },
+                ])
+              }
+            />
+          ) : null}
           {addNote ? (
             <span className="text-xs text-muted">{addNote}</span>
           ) : null}

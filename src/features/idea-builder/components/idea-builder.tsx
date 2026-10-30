@@ -16,7 +16,7 @@ import {
   ViewIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
@@ -25,7 +25,14 @@ import { Pill } from "@/components/ui/pill";
 import { Select } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
+import { IdeaFieldAssistant } from "@/features/ai/components/idea-field-assistant";
+import type { AiAccess, IdeaAssistantField } from "@/features/ai/types";
 import { discoveryCategories } from "@/features/home/discovery-categories";
+import {
+  assistantContext,
+  missingIdeaApiFields,
+  toIdeaApiPayload,
+} from "@/features/idea-builder/lib/api-payload";
 import {
   COMMUNITY_DESTINATION_META,
   FEEDBACK_QUESTION_META,
@@ -56,7 +63,10 @@ import {
   validateDraftStep,
   type DraftIssue,
 } from "@/features/idea-builder/lib/validation";
+import { parseHostedVideoSource, videoProviderLabel } from "@/features/campaigns/lib/media";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
+import { sendJson } from "@/lib/api/client";
 
 const DRAFT_KEY = "inverge:idea-draft:new";
 
@@ -214,20 +224,41 @@ function demoDraft(): IdeaDraft {
   };
 }
 
-function readDraft(): IdeaDraft | null {
+type StoredDraft = { draft: IdeaDraft; ideaId: string | null };
+
+function readDraft(): StoredDraft | null {
   try {
     const raw = window.localStorage.getItem(DRAFT_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<IdeaDraft>;
-    return parsed.title !== undefined ? { ...freshDraft(), ...parsed } : null;
+    const parsed = JSON.parse(raw) as
+      (Partial<StoredDraft> & Partial<IdeaDraft>) | null;
+    if (!parsed || typeof parsed !== "object") return null;
+
+    // Older drafts were stored as the bare IdeaDraft. Accept both shapes so an
+    // in-progress draft survives this change instead of disappearing.
+    if ("draft" in parsed && parsed.draft) {
+      return {
+        draft: { ...freshDraft(), ...parsed.draft },
+        ideaId:
+          typeof parsed.ideaId === "string" && parsed.ideaId
+            ? parsed.ideaId
+            : null,
+      };
+    }
+
+    if (parsed.title !== undefined) {
+      return { draft: { ...freshDraft(), ...parsed }, ideaId: null };
+    }
+
+    return null;
   } catch {
     return null;
   }
 }
 
-function writeDraft(draft: IdeaDraft) {
+function writeDraft(draft: IdeaDraft, ideaId: string | null) {
   try {
-    window.localStorage.setItem(DRAFT_KEY, JSON.stringify(draft));
+    window.localStorage.setItem(DRAFT_KEY, JSON.stringify({ draft, ideaId }));
   } catch {
     // A full or disabled store must not block the flow.
   }
@@ -329,22 +360,72 @@ export function IdeaBuilder() {
   const [status, setStatus] = useState<string | null>(null);
   const [published, setPublished] = useState(false);
   const [loaded, setLoaded] = useState(false);
+  const [ideaId, setIdeaId] = useState<string | null>(null);
+  const [saveState, setSaveState] = useState<"idle" | "saving" | "saved">(
+    "idle",
+  );
+  const [aiAccess, setAiAccess] = useState<AiAccess | null>(null);
+  const [aiAccessLoading, setAiAccessLoading] = useState(true);
+  const [aiAccessRequesting, setAiAccessRequesting] = useState(false);
 
   const step = BUILDER_STEPS[stepIndex]?.id ?? "basics";
   const completeness = draftCompleteness(draft);
+  const demoStatus = draft.demoUrl.trim()
+    ? (() => {
+        const parsed = parseHostedVideoSource(draft.demoUrl);
+        return parsed.ok
+          ? { ok: true as const, provider: videoProviderLabel(parsed.source) }
+          : { ok: false as const, reason: parsed.reason };
+      })()
+    : null;
+
+  const refreshAiAccess = useCallback(async () => {
+    setAiAccessLoading(true);
+    const result = await sendJson<AiAccess>("/api/ai/access", {
+      method: "GET",
+    });
+    setAiAccess(result.ok ? result.data : null);
+    setAiAccessLoading(false);
+  }, []);
 
   useEffect(() => {
     const saved = readDraft();
     if (saved) {
-      // The draft lives only in this browser. Reading localStorage during render would
-      // make the first client render disagree with the server HTML, so restoring after
-      // mount is intentional; this is a hydration boundary, not derived state.
+      // The draft lives in this browser until saved to the API. Reading
+      // localStorage during render would make the first client render disagree
+      // with the server HTML, so restoring after mount is intentional; this is a
+      // hydration boundary, not derived state.
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setDraft(saved);
+      setDraft(saved.draft);
+      setIdeaId(saved.ideaId);
       setStatus("Restored the draft saved in this browser.");
     }
     setLoaded(true);
   }, []);
+
+  useEffect(() => {
+    // Access is server-owned and has to be fetched after mount; the builder is a
+    // client boundary that also restores its local draft in an effect, so there
+    // is no server component to carry this state in.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refreshAiAccess();
+  }, [refreshAiAccess]);
+
+  async function requestAiAccess() {
+    setAiAccessRequesting(true);
+    const result = await sendJson<AiAccess>("/api/ai/access-requests", {
+      method: "POST",
+    });
+    setAiAccessRequesting(false);
+
+    if (!result.ok) {
+      setStatus(result.message);
+      return;
+    }
+
+    setAiAccess(result.data);
+    setStatus("AI access requested. An admin will review it.");
+  }
 
   function update(patch: Partial<IdeaDraft>) {
     setDraft((current) => ({
@@ -353,12 +434,93 @@ export function IdeaBuilder() {
       updatedAt: new Date().toISOString(),
     }));
     setPublished(false);
+    setSaveState("idle");
     setStatus(null);
   }
 
-  function persist(next = draft) {
-    writeDraft({ ...next, updatedAt: new Date().toISOString() });
-    setStatus("Draft saved in this browser. Publishing is not connected yet.");
+  /**
+   * Writes the browser copy, then the API copy when the deployment has one.
+   *
+   * A missing API, preview sign-in or signed-out visitor still gets the local
+   * save: the manual flow must work without premium infrastructure. The message
+   * says which of the two happened, so a local-only save is never mistaken for a
+   * server save.
+   */
+  async function saveDraft(announce = true): Promise<string | null> {
+    setSaveState("saving");
+    const payload = toIdeaApiPayload(draft);
+    const missing = missingIdeaApiFields(payload);
+
+    if (missing.length > 0) {
+      writeDraft(draft, ideaId);
+      setSaveState("idle");
+      if (announce) {
+        setStatus(
+          `Add ${missing.join(", ")} before saving to your account. This draft is in your browser only.`,
+        );
+      }
+      return null;
+    }
+
+    let result = ideaId
+      ? await sendJson<{ id?: string }>(
+          `/api/ideas/${encodeURIComponent(ideaId)}`,
+          { method: "PATCH", body: payload },
+        )
+      : await sendJson<{ id?: string }>("/api/ideas", {
+          method: "POST",
+          body: payload,
+        });
+
+    if (!result.ok && ideaId && result.status === 404) {
+      // The stored id can outlive the server draft (database reset, deleted
+      // account). Create a fresh draft instead of trapping the browser copy.
+      const recovered = await sendJson<{ id?: string }>("/api/ideas", {
+        method: "POST",
+        body: payload,
+      });
+      if (recovered.ok) {
+        const recoveredId =
+          typeof recovered.data?.id === "string" ? recovered.data.id : null;
+        if (recoveredId) setIdeaId(recoveredId);
+        writeDraft(draft, recoveredId);
+        setSaveState("saved");
+        if (announce) {
+          setStatus(
+            "Draft created in your account. AI assist can work on it now.",
+          );
+        }
+        return recoveredId;
+      }
+      result = recovered;
+    }
+
+    if (!result.ok) {
+      writeDraft(draft, ideaId);
+      setSaveState("idle");
+      if (announce) {
+        setStatus(
+          result.status === 401 || result.status === 503
+            ? `${result.message} This draft is saved in your browser only.`
+            : `${result.message} Your draft is still in this browser.`,
+        );
+      }
+      return null;
+    }
+
+    const nextId =
+      typeof result.data?.id === "string" ? result.data.id : ideaId;
+    if (nextId) setIdeaId(nextId);
+    writeDraft(draft, nextId);
+    setSaveState("saved");
+    if (announce) {
+      setStatus(
+        ideaId
+          ? "Saved to your account."
+          : "Draft created in your account. AI assist can work on it now.",
+      );
+    }
+    return nextId;
   }
 
   function goNext() {
@@ -377,16 +539,62 @@ export function IdeaBuilder() {
     setStepIndex((index) => Math.max(index - 1, 0));
   }
 
-  function publish() {
+  async function publish() {
     const allIssues = validateDraft(draft);
     setIssues(allIssues);
     if (allIssues.length > 0) {
       setStatus("Fix the remaining fields before publishing.");
       return;
     }
-    persist();
-    setPublished(true);
+
+    const id = await saveDraft(false);
+    if (!id) {
+      setStatus(
+        "The idea could not be saved to your account, so it was not published. Your draft is still in this browser.",
+      );
+      return;
+    }
+
+    const result = await sendJson<{ status?: string }>(
+      `/api/ideas/${encodeURIComponent(id)}/publish`,
+      { method: "POST" },
+    );
+
+    if (!result.ok) {
+      setStatus(result.message);
+      if (result.code === "FUNDING_REQUIRES_ROADMAP") {
+        const roadmapIndex = BUILDER_STEPS.findIndex(
+          (item) => item.id === "roadmap",
+        );
+        if (roadmapIndex >= 0) {
+          setStepIndex(roadmapIndex);
+          setIssues([]);
+        }
+      }
+      return;
+    }
+
+    writeDraft(draft, id);
     setStatus(null);
+    setPublished(true);
+  }
+
+  function assistantProps(field: IdeaAssistantField) {
+    return {
+      field,
+      value: draft[field],
+      context: assistantContext(draft, field),
+      baseRevision: draft.updatedAt,
+      ideaId,
+      access: aiAccess,
+      accessLoading: aiAccessLoading,
+      requestingAccess: aiAccessRequesting,
+      onRefreshAccess: () => void refreshAiAccess(),
+      onRequestAccess: () => void requestAiAccess(),
+      onSaveFirst: () => saveDraft(false),
+      onApply: (text: string) =>
+        update({ [field]: text } as Partial<IdeaDraft>),
+    };
   }
 
   if (published) {
@@ -402,17 +610,23 @@ export function IdeaBuilder() {
             />
           </span>
           <h1 className="mt-3 text-2xl font-bold tracking-[-0.04em] text-ink">
-            Your idea is ready
+            Your idea is in validation
           </h1>
           <p className="mx-auto mt-2 max-w-md text-sm leading-6 text-muted">
-            This preview has validated the plan and saved it in this browser. A
-            live publish will run the existing quality check and create the
-            public idea through the API.
+            The idea was published through the API. Its quality and moderation
+            checks run on the server, and you can follow progress from the idea
+            workspace. Published ideas are read-only while they are in
+            validation.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Button type="button" onClick={() => setPublished(false)}>
-              Keep editing
-            </Button>
+            {ideaId ? (
+              <Link
+                href={`/d/creator/ideas/${ideaId}`}
+                className="inline-flex min-h-11 items-center rounded-xl bg-brand px-5 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                Open idea workspace
+              </Link>
+            ) : null}
             <Link
               href="/d/creator/ideas"
               className="inline-flex min-h-11 items-center rounded-xl border border-border bg-surface px-5 text-sm font-semibold text-ink transition-colors hover:border-brand/35 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
@@ -530,7 +744,8 @@ export function IdeaBuilder() {
                 onClick={() => {
                   const demo = demoDraft();
                   setDraft(demo);
-                  writeDraft(demo);
+                  setIdeaId(null);
+                  writeDraft(demo, null);
                   setStepIndex(0);
                   setIssues([]);
                   setStatus(
@@ -548,7 +763,7 @@ export function IdeaBuilder() {
                 Fill demo data
               </button>
               <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[0.625rem] font-semibold text-warning-strong">
-                Preview workflow
+                Draft workspace
               </span>
             </div>
           </div>
@@ -626,16 +841,46 @@ export function IdeaBuilder() {
                     label="Cover image"
                     optional
                     error={errorFor(issues, "coverUrl")}
-                    hint="An https:// image link. A fallback cover is used when this is empty."
+                    hint="Upload a photo, or paste an https:// image link. A fallback cover is used when this is empty."
                   >
-                    <Input
-                      type="url"
-                      value={draft.coverUrl}
-                      placeholder="https://images.example.com/your-idea.jpg"
-                      onChange={(event) =>
-                        update({ coverUrl: event.target.value })
-                      }
+                    <ImageUploadField
+                      allowUrlEntry
+                      aspect="photo"
+                      purpose="IDEA_COVER"
+                      value={draft.coverUrl.trim() || null}
+                      onChange={(src) => update({ coverUrl: src ?? "" })}
                     />
+                  </StepField>
+
+                  <StepField
+                    label="Demo video"
+                    optional
+                    error={errorFor(issues, "demoUrl")}
+                    hint="A YouTube or Vimeo link. It plays in the idea hero, so a long demo does not have to be uploaded here. Video files are not accepted."
+                  >
+                    <div>
+                      <Input
+                        type="url"
+                        value={draft.demoUrl}
+                        placeholder="https://www.youtube.com/watch?v=…"
+                        onChange={(event) =>
+                          update({ demoUrl: event.target.value })
+                        }
+                      />
+                      {demoStatus ? (
+                        <p
+                          className={`mt-1.5 text-xs leading-5 ${
+                            demoStatus.ok
+                              ? "text-brand-strong"
+                              : "text-danger"
+                          }`}
+                        >
+                          {demoStatus.ok
+                            ? `${demoStatus.provider} video recognised. It plays in the hero.`
+                            : demoStatus.reason}
+                        </p>
+                      ) : null}
+                    </div>
                   </StepField>
                 </div>
               ) : null}
@@ -649,12 +894,14 @@ export function IdeaBuilder() {
                     <Textarea
                       value={draft.problem}
                       rows={4}
+                      maxLength={4_000}
                       placeholder="What is broken or missing today?"
                       onChange={(event) =>
                         update({ problem: event.target.value })
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("problem")} />
                   <StepField
                     label="Who it affects"
                     error={errorFor(issues, "targetUser")}
@@ -662,12 +909,14 @@ export function IdeaBuilder() {
                     <Textarea
                       value={draft.targetUser}
                       rows={2}
+                      maxLength={4_000}
                       placeholder="Name a specific group, not everyone."
                       onChange={(event) =>
                         update({ targetUser: event.target.value })
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("targetUser")} />
                   <StepField
                     label="What happens today"
                     error={errorFor(issues, "currentAlternative")}
@@ -675,12 +924,16 @@ export function IdeaBuilder() {
                     <Textarea
                       value={draft.currentAlternative}
                       rows={3}
+                      maxLength={4_000}
                       placeholder="What do those people do instead, and why does it fall short?"
                       onChange={(event) =>
                         update({ currentAlternative: event.target.value })
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant
+                    {...assistantProps("currentAlternative")}
+                  />
                 </div>
               ) : null}
 
@@ -693,12 +946,14 @@ export function IdeaBuilder() {
                     <Textarea
                       value={draft.solution}
                       rows={6}
+                      maxLength={4_000}
                       placeholder="How does it work, and why is it better than what exists?"
                       onChange={(event) =>
                         update({ solution: event.target.value })
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("solution")} />
                   <StepField
                     label="Risks and challenges"
                     optional
@@ -707,12 +962,14 @@ export function IdeaBuilder() {
                     <Textarea
                       value={draft.risks}
                       rows={3}
+                      maxLength={4_000}
                       placeholder="What is most likely to go wrong, and what will you do about it?"
                       onChange={(event) =>
                         update({ risks: event.target.value })
                       }
                     />
                   </StepField>
+                  <IdeaFieldAssistant {...assistantProps("risks")} />
                 </div>
               ) : null}
 
@@ -1838,9 +2095,9 @@ export function IdeaBuilder() {
                     </div>
                   ) : (
                     <p className="rounded-xl border border-brand/25 bg-brand-tint px-3 py-2 text-xs text-brand-strong">
-                      All required fields are complete. Publishing in this
-                      preview validates the flow; the live API will run its own
-                      quality and moderation checks.
+                      All required fields are complete. Publishing saves the
+                      idea to your account and runs the API&apos;s quality and
+                      moderation checks.
                     </p>
                   )}
                 </div>
@@ -1874,10 +2131,15 @@ export function IdeaBuilder() {
                 </div>
                 <button
                   type="button"
-                  onClick={() => persist()}
-                  className="mt-2 inline-flex min-h-9 items-center gap-1 text-[0.6875rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand"
+                  onClick={() => void saveDraft()}
+                  disabled={saveState === "saving"}
+                  className="mt-2 inline-flex min-h-9 items-center gap-1 text-[0.6875rem] font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-60"
                 >
-                  Save draft in this browser
+                  {saveState === "saving"
+                    ? "Saving…"
+                    : saveState === "saved"
+                      ? "Saved to your account"
+                      : "Save draft to your account"}
                 </button>
               </div>
             </aside>
@@ -1904,12 +2166,18 @@ export function IdeaBuilder() {
                 type="button"
                 variant="ghost"
                 size="md"
-                onClick={() => persist()}
+                onClick={() => void saveDraft()}
+                disabled={saveState === "saving"}
               >
-                Save draft
+                {saveState === "saving" ? "Saving…" : "Save draft"}
               </Button>
               {step === "review" ? (
-                <Button type="button" size="md" onClick={publish}>
+                <Button
+                  type="button"
+                  size="md"
+                  onClick={() => void publish()}
+                  disabled={saveState === "saving"}
+                >
                   <HugeiconsIcon
                     icon={CheckmarkCircle02Icon}
                     size={16}
@@ -1917,9 +2185,6 @@ export function IdeaBuilder() {
                     aria-hidden="true"
                   />
                   Publish idea
-                  <span className="ml-1 text-[0.625rem] font-normal opacity-80">
-                    preview
-                  </span>
                 </Button>
               ) : (
                 <Button type="button" size="md" onClick={goNext}>

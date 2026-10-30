@@ -167,6 +167,29 @@ export function parseVideoSource(input: string): VideoParse {
 }
 
 /**
+ * A hosted video page, and nothing else.
+ *
+ * Used where the video is the hero of a page (an idea or a campaign): the hero
+ * embeds the provider's player, so a raw file or a same-origin path has nothing
+ * to embed and would leave an empty frame. Long demo and presentation videos
+ * belong on YouTube or Vimeo; this service never stores video bytes.
+ */
+export function parseHostedVideoSource(input: string): VideoParse {
+  const parsed = parseVideoSource(input);
+  if (!parsed.ok) return parsed;
+
+  if (parsed.source.kind === "youtube" || parsed.source.kind === "vimeo") {
+    return parsed;
+  }
+
+  return {
+    ok: false,
+    reason:
+      "Use a YouTube or Vimeo page link. Video files are not uploaded here.",
+  };
+}
+
+/**
  * The player URL for a hosted video, or null when the source is a file.
  *
  * Built from the parsed id, never from the creator's original string, and served

@@ -8,7 +8,6 @@ import {
   Award01Icon,
   Cancel01Icon,
   CheckListIcon,
-  CloudUploadIcon,
   InformationCircleIcon,
   PlusSignIcon,
 } from "@hugeicons/core-free-icons";
@@ -23,7 +22,6 @@ import { Select } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { CampaignReviewSubmission } from "@/features/campaigns/components/campaign-review-submission";
 import { MediaImage } from "@/features/campaigns/components/media-image";
-import { PrototypeNotice } from "@/features/campaigns/components/prototype-notice";
 import { StepRail } from "@/features/campaigns/components/step-rail";
 import { WizardMediaList } from "@/features/campaigns/components/wizard-media-list";
 import { WizardShippingEditor } from "@/features/campaigns/components/wizard-shipping-editor";
@@ -33,6 +31,8 @@ import {
 } from "@/features/campaigns/lib/application-fee";
 import {
   describeMediaCount,
+  MAX_HERO_MEDIA,
+  MAX_STORY_MEDIA,
   parseImageSource,
 } from "@/features/campaigns/lib/media";
 import {
@@ -565,34 +565,14 @@ export function CampaignWizard({
 
           {stepId === "media" ? (
             <div className="mt-6 space-y-6">
-              <PrototypeNotice title="Uploads are not connected">
-                This build has no file storage, so nothing can be uploaded here.
-                Link a YouTube or Vimeo video, or an image that is already
-                online: the campaign stores the link and a backer loads it from
-                the original host.
-              </PrototypeNotice>
-
-              <div className="flex flex-wrap items-center gap-3 rounded-xl border border-dashed border-border-strong bg-canvas px-3.5 py-3">
-                <button
-                  type="button"
-                  disabled
-                  aria-describedby="media-upload-blocked"
-                  className="inline-flex min-h-11 cursor-not-allowed items-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-muted opacity-60"
-                >
-                  <HugeiconsIcon
-                    icon={CloudUploadIcon}
-                    size={16}
-                    strokeWidth={1.9}
-                    aria-hidden="true"
-                  />
-                  Upload a file
-                </button>
-                <p
-                  id="media-upload-blocked"
-                  className="text-xs leading-5 text-muted"
-                >
-                  Disabled until file storage exists, rather than pretending to
-                  upload. Use a link for now.
+              <div className="rounded-xl border border-border bg-canvas px-4 py-3">
+                <p className="text-sm font-semibold text-ink">
+                  Demo videos live on YouTube
+                </p>
+                <p className="mt-1 text-xs leading-5 text-muted">
+                  Link a YouTube or Vimeo page and it plays in the campaign hero,
+                  on this page. Long recordings are not uploaded here; photos can
+                  be uploaded directly.
                 </p>
               </div>
 
@@ -602,13 +582,14 @@ export function CampaignWizard({
                 error={errorFor("heroMedia")}
                 errorFor={errorFor}
                 fieldPrefix="heroMedia"
-                help="Shown at the top of the campaign page. A link is all this build stores; nothing is uploaded."
+                help="Shown at the top of the campaign page. The first video plays in the hero; photos can be uploaded or linked."
                 items={draft.heroMedia}
                 legend="Hero media"
                 onChange={(heroMediaNext) =>
                   patch({ heroMedia: heroMediaNext })
                 }
                 orderNote="The first item is what a backer sees before pressing play."
+                upload={{ maxItems: MAX_HERO_MEDIA, purpose: "CAMPAIGN_HERO" }}
               />
 
               <WizardMediaList
@@ -622,6 +603,7 @@ export function CampaignWizard({
                 onChange={(storyMediaNext) =>
                   patch({ storyMedia: storyMediaNext })
                 }
+                upload={{ maxItems: MAX_STORY_MEDIA, purpose: "CAMPAIGN_STORY" }}
               />
             </div>
           ) : null}

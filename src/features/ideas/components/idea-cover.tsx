@@ -1,5 +1,4 @@
-import Image from "next/image";
-
+import { MediaImage } from "@/components/ui/media-image";
 import { IdeaArtwork } from "@/features/home/components/idea-artwork";
 import type { IdeaArtworkVariant } from "@/features/home/types";
 
@@ -35,12 +34,11 @@ export function IdeaCover({
   }
 
   return (
-    <Image
+    <MediaImage
       src={cover}
       alt={alt}
-      fill
-      priority={priority}
       sizes={sizes}
+      priority={priority}
       className={`object-cover ${className}`}
     />
   );
