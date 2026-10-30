@@ -1,5 +1,6 @@
-import Image from "next/image";
 import type { ReactNode } from "react";
+
+import { MediaImage } from "@/components/ui/media-image";
 
 export type CoverRatio = "band" | "thumbnail";
 
@@ -78,10 +79,9 @@ export function Cover({
           thumbnail ? "aspect-video" : "aspect-[3/2]"
         } ${className}`}
       >
-        <Image
+        <MediaImage
           src={src}
           alt={`${label} cover`}
-          fill
           sizes={
             size === "featured"
               ? "(min-width: 1024px) 640px, 100vw"

@@ -19,6 +19,8 @@ import {
   CampaignTabs,
   type CampaignTabPanel,
 } from "@/features/campaigns/components/campaign-tabs";
+import { CampaignVideoPlayer } from "@/features/campaigns/components/campaign-video-player";
+import { MediaImage } from "@/features/campaigns/components/media-image";
 import { LiveCampaignCard } from "@/features/campaigns/components/live-campaign-card";
 import {
   resolveCampaignTab,
@@ -149,6 +151,38 @@ function StoryPanel({ campaign }: { campaign: LiveCampaignDetail }) {
           <p className="mt-2 whitespace-pre-line text-sm leading-6 text-ink">
             {campaign.story.risks}
           </p>
+        </section>
+      ) : null}
+
+      {campaign.storyMedia.length > 0 ? (
+        <section>
+          <SectionHeading>Media</SectionHeading>
+          <ul className="mt-3 grid gap-4 sm:grid-cols-2">
+            {campaign.storyMedia.map((item) => (
+              <li key={item.id}>
+                <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-surface-muted">
+                  {item.kind === "image" ? (
+                    <MediaImage
+                      src={item.src}
+                      alt={item.alt}
+                      sizes="(min-width: 640px) 360px, 100vw"
+                      className="object-cover"
+                    />
+                  ) : (
+                    <CampaignVideoPlayer
+                      media={item}
+                      sizes="(min-width: 640px) 360px, 100vw"
+                    />
+                  )}
+                </div>
+                {item.caption ? (
+                  <p className="mt-2 text-xs leading-5 text-muted">
+                    {item.caption}
+                  </p>
+                ) : null}
+              </li>
+            ))}
+          </ul>
         </section>
       ) : null}
     </div>
@@ -391,6 +425,11 @@ export function LiveCampaignDetailPage({
   const { campaign, related, relatedState } = view;
   const tabs = tabsFor(campaign);
   const resolvedTab = resolveCampaignTab(requestedTab, tabs);
+  // A demo video in the hero is the strongest thing a campaign can show. The
+  // creator's own order decides: the first video wins, then the first photo,
+  // then the campaign cover.
+  const heroVideo = campaign.heroMedia.find((item) => item.kind === "video");
+  const heroImage = campaign.heroMedia.find((item) => item.kind === "image");
   const categoryHref = campaign.taxonomyCategory
     ? `/campaigns/categories/${campaign.taxonomyCategory}${
         campaign.taxonomySubcategory ? `/${campaign.taxonomySubcategory}` : ""
@@ -429,13 +468,24 @@ export function LiveCampaignDetailPage({
         <div className="mt-5 grid min-w-0 gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] xl:grid-cols-[minmax(0,1fr)_23rem] xl:gap-10">
           <div className="min-w-0">
             <div className="overflow-hidden rounded-3xl border border-border bg-surface-muted">
-              <Cover
-                label={campaign.taxonomyText}
-                ratio="band"
-                seed={campaign.slug}
-                size="featured"
-                src={campaign.cover}
-              />
+              {heroVideo?.kind === "video" ? (
+                <div className="relative aspect-video">
+                  <CampaignVideoPlayer
+                    media={heroVideo}
+                    sizes="(min-width: 1024px) 900px, 100vw"
+                  />
+                </div>
+              ) : (
+                <Cover
+                  label={campaign.taxonomyText}
+                  ratio="band"
+                  seed={campaign.slug}
+                  size="featured"
+                  src={
+                    heroImage?.kind === "image" ? heroImage.src : campaign.cover
+                  }
+                />
+              )}
             </div>
 
             <div className="mt-5 flex flex-wrap items-center gap-2">

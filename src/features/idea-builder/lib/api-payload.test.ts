@@ -55,6 +55,18 @@ describe("toIdeaApiPayload", () => {
       { date: "Nov 2026", description: "Pilot" },
     ]);
   });
+
+  it("sends the demo link only when one is set", () => {
+    expect(toIdeaApiPayload({ ...emptyIdeaDraft, demoUrl: "  " })).not.toHaveProperty(
+      "demoUrl",
+    );
+    expect(
+      toIdeaApiPayload({
+        ...emptyIdeaDraft,
+        demoUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+      }).demoUrl,
+    ).toBe("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+  });
 });
 
 describe("toSurveyApiPayload", () => {

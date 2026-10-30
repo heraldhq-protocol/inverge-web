@@ -29,6 +29,9 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { IconTile } from "@/components/ui/icon-tile";
 import { Pill } from "@/components/ui/pill";
 import { AdSlot } from "@/features/advertising/components/ad-slot";
+import { CampaignVideoPlayer } from "@/features/campaigns/components/campaign-video-player";
+import { parseHostedVideoSource } from "@/features/campaigns/lib/media";
+import type { CampaignVideo } from "@/features/campaigns/types";
 import { IdeaActions } from "@/features/ideas/components/idea-actions";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";
@@ -297,6 +300,21 @@ export function IdeaDetail({
       : "Collecting feedback";
   const taxonomyHref = ideaTaxonomyHref(idea);
   const taxonomyText = ideaTaxonomyText(idea);
+  // A demo video is the strongest thing an idea can show, so it takes the hero
+  // slot when the link is a host we can embed. A non-video demo link (a mockup,
+  // a prototype) keeps the cover in the hero and is offered as a link instead.
+  const demo = idea.demoUrl ? parseHostedVideoSource(idea.demoUrl) : null;
+  const demoVideo: CampaignVideo | null =
+    demo?.ok === true
+      ? {
+          alt: `${idea.title} demo`,
+          caption: null,
+          id: "idea-demo",
+          kind: "video",
+          poster: idea.cover ?? null,
+          source: demo.source,
+        }
+      : null;
 
   return (
     <IdeaViewerProvider>
@@ -331,14 +349,25 @@ export function IdeaDetail({
 
         <div className="mt-4 grid gap-8 lg:grid-cols-[minmax(0,1.6fr)_minmax(19rem,1fr)] lg:gap-10">
           <div className="min-w-0">
-            <figure className="relative aspect-[2.05/1] overflow-hidden rounded-2xl border border-border bg-surface-muted">
-              <IdeaCover
-                artwork={idea.artwork}
-                cover={idea.cover}
-                alt={`${idea.title}, ${taxonomyText}`}
-                priority
-                sizes="(min-width: 1024px) 760px, 100vw"
-              />
+            <figure
+              className={`relative overflow-hidden rounded-2xl border border-border bg-surface-muted ${
+                demoVideo ? "aspect-video" : "aspect-[2.05/1]"
+              }`}
+            >
+              {demoVideo ? (
+                <CampaignVideoPlayer
+                  media={demoVideo}
+                  sizes="(min-width: 1024px) 760px, 100vw"
+                />
+              ) : (
+                <IdeaCover
+                  artwork={idea.artwork}
+                  cover={idea.cover}
+                  alt={`${idea.title}, ${taxonomyText}`}
+                  priority
+                  sizes="(min-width: 1024px) 760px, 100vw"
+                />
+              )}
               {idea.promoted ? (
                 <div className="absolute right-3 top-3">
                   <Pill
@@ -419,7 +448,7 @@ export function IdeaDetail({
               <MetricStrip idea={idea} />
             </div>
 
-            {idea.demoUrl ? (
+            {idea.demoUrl && !demoVideo ? (
               <section aria-labelledby="idea-demo" className="mt-6">
                 <div className="flex items-start gap-4 rounded-2xl border border-border bg-surface p-4">
                   <IconTile icon={MonitorPlayIcon} size="md" />
