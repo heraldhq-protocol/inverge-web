@@ -411,7 +411,7 @@ function WalletFundingPanel({
 
       {funding.status === "insufficient" ? (
         <Link
-          href="/d/wallet/receive"
+          href="/d/wallet"
           className="mt-2.5 inline-flex min-h-10 items-center rounded-lg text-sm font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
           Add USDC to your wallet

@@ -11,8 +11,7 @@ export const metadata: Metadata = {
 };
 
 export default async function WalletPage() {
-  const view = getWalletView();
-  const user = await readSessionUser();
+  const [view, user] = await Promise.all([getWalletView(), readSessionUser()]);
 
   return (
     <WalletPageShell

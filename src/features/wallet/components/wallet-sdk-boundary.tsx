@@ -65,6 +65,14 @@ export function WalletSdkBoundary({
           clientId: config.clientId,
           defaultChainId: config.defaultChainId,
           uiConfig: UI_CONFIG,
+          // The Wallet Services iframe ships a floating widget button by
+          // default. Inverge owns the wallet surface and opens the same services
+          // from its own Receive/Send/Add funds controls, so the duplicate
+          // bottom-left overlay stays off.
+          walletServicesConfig: {
+            loginMode: "plugin",
+            whiteLabel: { showWidgetButton: false },
+          },
           web3AuthNetwork: WEB3AUTH_NETWORKS[config.network],
         },
       }}

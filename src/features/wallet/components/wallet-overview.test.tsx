@@ -81,8 +81,12 @@ describe("WalletOverview", () => {
     render(<WalletOverview authenticated view={view} />);
 
     expect(screen.getByText("No activity yet")).toBeInTheDocument();
-    expect(
-      screen.getByRole("link", { name: /Explore campaigns/ }),
-    ).toHaveAttribute("href", "/campaigns");
+    const campaignLinks = screen.getAllByRole("link", {
+      name: /Explore campaigns/,
+    });
+    expect(campaignLinks.length).toBeGreaterThan(0);
+    for (const link of campaignLinks) {
+      expect(link).toHaveAttribute("href", "/campaigns");
+    }
   });
 });

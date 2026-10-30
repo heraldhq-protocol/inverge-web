@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  act,
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+} from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { WalletConnectionCard } from "@/features/wallet/components/wallet-connection-card";
@@ -16,19 +22,49 @@ const mocks = vi.hoisted(() => ({
   },
   connect: vi.fn(async () => null),
   connectState: { error: null as unknown, loading: false },
-  disconnect: vi.fn(async () => undefined),
-  disconnectState: { error: null as unknown, loading: false },
+  session: undefined as
+    { account: { address: { toString: () => string } } } | undefined,
+  services: {
+    checkout: vi.fn(async () => undefined),
+    error: null as unknown,
+    loading: false,
+    receive: vi.fn(async () => undefined),
+    walletUi: vi.fn(async () => undefined),
+  },
   wallet: {
     accounts: null as string[] | null,
     rpc: null as unknown,
   },
 }));
 
+function walletSession(address: string) {
+  return { account: { address: { toString: () => address } } };
+}
+
 vi.mock("@solana/kit", () => ({
   address: (value: string) => value,
 }));
 
+vi.mock("@solana/react-hooks", () => ({
+  useWalletSession: () => mocks.session,
+}));
+
 vi.mock("@web3auth/modal/react", () => ({
+  useCheckout: () => ({
+    error: mocks.services.error,
+    loading: mocks.services.loading,
+    showCheckout: mocks.services.checkout,
+  }),
+  useReceive: () => ({
+    error: mocks.services.error,
+    loading: mocks.services.loading,
+    showReceive: mocks.services.receive,
+  }),
+  useWalletUI: () => ({
+    error: mocks.services.error,
+    loading: mocks.services.loading,
+    showWalletUI: mocks.services.walletUi,
+  }),
   useWeb3Auth: () => mocks.auth,
   useWeb3AuthConnect: () => ({
     connect: mocks.connect,
@@ -36,10 +72,15 @@ vi.mock("@web3auth/modal/react", () => ({
     isConnected: mocks.auth.isConnected,
     loading: mocks.connectState.loading,
   }),
-  useWeb3AuthDisconnect: () => ({
-    disconnect: mocks.disconnect,
-    error: mocks.disconnectState.error,
-    loading: mocks.disconnectState.loading,
+}));
+
+vi.mock("@/features/wallet/lib/use-sol-price", () => ({
+  formatUsd: (value: number) => `$${value.toFixed(2)}`,
+  useSolPrice: () => ({
+    status: "ready",
+    stale: false,
+    updatedAt: null,
+    usd: 150,
   }),
 }));
 
@@ -69,10 +110,16 @@ beforeEach(() => {
     isInitializing: false,
   };
   mocks.connectState = { error: null, loading: false };
-  mocks.disconnectState = { error: null, loading: false };
+  mocks.session = undefined;
+  mocks.services = {
+    checkout: vi.fn(async () => undefined),
+    error: null,
+    loading: false,
+    receive: vi.fn(async () => undefined),
+    walletUi: vi.fn(async () => undefined),
+  };
   mocks.wallet = { accounts: null, rpc: null };
   mocks.connect.mockClear();
-  mocks.disconnect.mockClear();
   writeText.mockClear();
   Object.defineProperty(navigator, "clipboard", {
     configurable: true,
@@ -80,7 +127,10 @@ beforeEach(() => {
   });
 });
 
-afterEach(cleanup);
+afterEach(() => {
+  cleanup();
+  vi.useRealTimers();
+});
 
 describe("WalletConnectionCard connection lifecycle", () => {
   it("does not open the provider on mount", () => {
@@ -136,22 +186,50 @@ describe("WalletConnectionCard connection lifecycle", () => {
     );
   });
 
-  it("warns when the provider is connected without a Solana account", () => {
+  it("waits for the Solana client session before reporting a missing account", () => {
+    vi.useFakeTimers();
     mocks.auth.isConnected = true;
     renderCard();
 
     expect(
       screen.getByRole("heading", {
-        name: "We couldn’t find a Solana wallet.",
+        name: "Setting up your Solana wallet.",
       }),
     ).toBeInTheDocument();
+
+    act(() => vi.advanceTimersByTime(8_000));
+
+    expect(
+      screen.getByRole("heading", {
+        name: "We couldn’t find a Solana wallet for this sign-in.",
+      }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Sign out and try again" }),
+    ).toHaveAttribute("href", "/sign-out");
+    expect(screen.queryByRole("button", { name: /disconnect/i })).toBeNull();
   });
 });
 
 describe("WalletConnectionCard address and balance", () => {
   beforeEach(() => {
     mocks.auth.isConnected = true;
+    mocks.session = walletSession(ADDRESS);
+  });
+
+  it("uses the reactive Solana client session even when the provider accounts array is empty", () => {
+    mocks.wallet.accounts = null;
+    renderCard();
+
+    expect(screen.getByTitle(ADDRESS)).toHaveTextContent("7xKX…gAsU");
+  });
+
+  it("falls back to the provider accounts array while the client session is pending", () => {
+    mocks.session = undefined;
     mocks.wallet.accounts = [ADDRESS];
+    renderCard();
+
+    expect(screen.getByTitle(ADDRESS)).toHaveTextContent("7xKX…gAsU");
   });
 
   it("shows the provider address, marks it unlinked, and copies the full value", async () => {
@@ -159,7 +237,7 @@ describe("WalletConnectionCard address and balance", () => {
 
     expect(screen.getByTitle(ADDRESS)).toHaveTextContent("7xKX…gAsU");
     expect(
-      screen.getByText(/isn’t linked to your Inverge account yet/),
+      screen.getByText(/Not linked to your Inverge account yet/),
     ).toBeInTheDocument();
 
     fireEvent.click(
@@ -178,8 +256,28 @@ describe("WalletConnectionCard address and balance", () => {
 
     renderCard();
 
-    expect(await screen.findByText(/0\.42/)).toBeInTheDocument();
+    expect((await screen.findAllByText(/0\.42/)).length).toBeGreaterThan(0);
     expect(getBalance).toHaveBeenCalledTimes(1);
+  });
+
+  it("opens wallet services for receive, send and add funds", () => {
+    renderCard();
+
+    fireEvent.click(screen.getByRole("button", { name: "Receive" }));
+    expect(mocks.services.receive).toHaveBeenCalledWith({ show: true });
+
+    fireEvent.click(screen.getByRole("button", { name: "Send" }));
+    expect(mocks.services.walletUi).toHaveBeenCalledWith({
+      show: true,
+      path: "send",
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: "Add funds" }));
+    expect(mocks.services.checkout).toHaveBeenCalledWith({
+      show: true,
+      tokenList: ["SOL"],
+      fiatList: ["USD", "NGN", "KES"],
+    });
   });
 
   it("says the balance is unavailable instead of showing zero when the read fails", async () => {
@@ -214,13 +312,15 @@ describe("WalletConnectionCard address and balance", () => {
       }),
     ).toBeInTheDocument();
     expect(screen.getByText(/linked to 9BB6…p3a8/)).toBeInTheDocument();
+    expect(
+      screen.getByRole("link", { name: "Sign out and try again" }),
+    ).toHaveAttribute("href", "/sign-out");
+    expect(screen.queryByRole("button", { name: /disconnect/i })).toBeNull();
   });
 
-  it("disconnects only when the user asks", () => {
+  it("shows the sign-out action instead of a disconnect control", () => {
     renderCard();
 
-    expect(mocks.disconnect).not.toHaveBeenCalled();
-    fireEvent.click(screen.getByRole("button", { name: "Disconnect wallet" }));
-    expect(mocks.disconnect).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("button", { name: /disconnect/i })).toBeNull();
   });
 });

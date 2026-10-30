@@ -73,6 +73,7 @@ export function WalletOverview({
   view: WalletView;
 }) {
   const network = getWalletNetwork(view.account.network);
+  const networkLabel = `${network.label.split(" ")[0]} • ${network.shortLabel}`;
   const recentActivity = view.activity.slice(0, 4);
   const preview = view.dataSource === "preview";
 
@@ -81,7 +82,7 @@ export function WalletOverview({
       <WalletAuthPanel
         account={view.account}
         authenticated={authenticated}
-        networkLabel={network.label}
+        networkLabel={networkLabel}
       />
 
       <div className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
@@ -199,6 +200,25 @@ export function WalletOverview({
           </Link>
         </aside>
       </div>
+
+      <section className="overflow-hidden rounded-2xl border border-brand/15 bg-brand/[0.06] p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-xl">
+            <h2 className="text-base font-semibold text-ink">
+              Your wallet, your growth
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              Support ideas, back campaigns and be part of something bigger.
+            </p>
+          </div>
+          <Link
+            href="/campaigns"
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+          >
+            Explore campaigns
+          </Link>
+        </div>
+      </section>
     </div>
   );
 }

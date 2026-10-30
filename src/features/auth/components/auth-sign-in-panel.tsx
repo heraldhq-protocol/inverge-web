@@ -1,6 +1,8 @@
 "use client";
 
+import { useWalletSession } from "@solana/react-hooks";
 import { useAuthTokenInfo, useWeb3AuthConnect } from "@web3auth/modal/react";
+import { useSolanaWallet } from "@web3auth/modal/react/solana";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -10,6 +12,10 @@ import {
   postAuthPath,
   type OnboardingIntent,
 } from "@/features/auth/lib/onboarding";
+import { isSolanaAddress } from "@/features/wallet/lib/address";
+
+/** How long the exchange waits for the provider's Solana account. */
+const WALLET_WAIT_MS = 2_500;
 
 type Phase = "idle" | "connecting" | "exchanging" | "error";
 
@@ -49,6 +55,14 @@ export function AuthSignInPanel({
     loading: connecting,
   } = useWeb3AuthConnect();
   const { getAuthTokenInfo } = useAuthTokenInfo();
+  const { accounts } = useSolanaWallet();
+  const session = useWalletSession();
+
+  const sessionAddress = session?.account.address.toString() ?? null;
+  const walletAddress =
+    sessionAddress && isSolanaAddress(sessionAddress)
+      ? sessionAddress
+      : (accounts?.find((candidate) => isSolanaAddress(candidate)) ?? null);
 
   const [phase, setPhase] = useState<Phase>("idle");
   const [errorMessage, setErrorMessage] = useState("");
@@ -62,12 +76,16 @@ export function AuthSignInPanel({
       const idToken = await getAuthTokenInfo();
       if (!idToken) throw new Error("missing_token");
 
-      // No wallet address is sent here. The provider's Solana address is not
-      // proven to match the token's attested key yet, and a rejected claim
-      // blocks sign-in entirely. The API links a wallet only when the token
-      // attests one; until then the wallet stays explicitly not provisioned.
+      // The provider's Solana address is sent only after the client has
+      // published it. The API verifies it against the identity token's wallet
+      // attestation before linking it; a mismatch rejects the session rather
+      // than storing an unverified address.
       const response = await fetch("/api/auth/session", {
-        body: JSON.stringify({ idToken, intent }),
+        body: JSON.stringify({
+          idToken,
+          intent,
+          ...(walletAddress ? { walletAddress } : {}),
+        }),
         headers: { "Content-Type": "application/json" },
         method: "POST",
       });
@@ -98,14 +116,26 @@ export function AuthSignInPanel({
       setErrorMessage(ERROR_COPY[code] ?? FALLBACK_ERROR);
       setPhase("error");
     }
-  }, [getAuthTokenInfo, intent, returnPath, router]);
+  }, [getAuthTokenInfo, intent, returnPath, router, walletAddress]);
 
   useEffect(() => {
     if (!isConnected || exchangeAttempted.current) return;
 
-    exchangeAttempted.current = true;
-    void completeSignIn();
-  }, [completeSignIn, isConnected]);
+    // A sign-in method without a Solana wallet must still finish. The timeout
+    // lets the exchange proceed, and the server decides what it can link. When
+    // the address is already available, a zero-delay task keeps the exchange
+    // out of the effect body.
+    const timeout = window.setTimeout(
+      () => {
+        if (exchangeAttempted.current) return;
+        exchangeAttempted.current = true;
+        void completeSignIn();
+      },
+      walletAddress ? 0 : WALLET_WAIT_MS,
+    );
+
+    return () => window.clearTimeout(timeout);
+  }, [completeSignIn, isConnected, walletAddress]);
 
   async function handleContinue() {
     setPhase("connecting");

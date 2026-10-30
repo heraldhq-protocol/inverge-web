@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "Refund status for contributions you have backed. Refund claims are not connected yet.",
 };
 
-export default function WalletRefundsPage() {
-  const view = getWalletView();
+export default async function WalletRefundsPage() {
+  const view = await getWalletView();
 
   return (
     <WalletPageShell

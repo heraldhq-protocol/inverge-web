@@ -24,7 +24,7 @@ export default async function WalletActivityPage({
   searchParams,
 }: WalletActivityPageProps) {
   const params = await searchParams;
-  const view = getWalletView();
+  const view = await getWalletView();
   const query = typeof params.q === "string" ? params.q.slice(0, 120) : "";
   const filter: WalletActivityFilter =
     typeof params.filter === "string" && isWalletActivityFilter(params.filter)

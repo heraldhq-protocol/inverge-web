@@ -2,16 +2,14 @@ import type { ReactNode } from "react";
 
 import { Tabs } from "@/components/ui/tabs";
 
-export type WalletSection =
-  "activity" | "overview" | "receive" | "refunds" | "security" | "send";
+export type WalletSection = "activity" | "overview" | "refunds" | "security";
 
 /**
  * The primary wallet destinations.
  *
- * Send, receive and security are still routes, but they are contextual rather
- * than primary: this build cannot sign, cannot show a deposit address, and keeps
- * security controls in Settings. A tab that only opens an unavailable page is
- * noise, so the tab bar stays at three.
+ * Security is contextual rather than primary: it keeps its own route but stays
+ * out of the tab bar. Send and receive are not routes at all — they open the
+ * Wallet Services UI from the overview card, so the tab bar stays at three.
  */
 const sections: readonly {
   href: string;

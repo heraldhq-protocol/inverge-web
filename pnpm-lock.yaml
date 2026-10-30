@@ -151,6 +151,9 @@ importers:
       '@web3auth/modal':
         specifier: 11.4.3
         version: 11.4.3(a209e05356760c704ca0b7e468b64350)
+      '@web3icons/react':
+        specifier: 4.1.24
+        version: 4.1.24(react@19.3.0)
       country-flag-icons:
         specifier: 1.6.20
         version: 1.6.20
@@ -3863,6 +3866,14 @@ packages:
     engines: {node: '>=22.x', npm: '>=10.x'}
     peerDependencies:
       '@babel/runtime': 7.x
+
+  '@web3icons/common@0.11.53':
+    resolution: {integrity: sha512-bNUB/Lfh9C+6T1juicWARU+oW27scRj7Xw/TkzCXlZBrJICEc/qTcIUStGpCjDq3jQuRfO6JHCbTIiiEPZAzBg==}
+
+  '@web3icons/react@4.1.24':
+    resolution: {integrity: sha512-fQelhpShAdD1z2+0a5sOhusfWHiE/8SE9I+IrXzdDmOHWB7/gzF87wjQYxXjqvjQD3mDGyS7U6r+8CYnu5VJsQ==}
+    peerDependencies:
+      react: ^18.0.0 || ^19.0.0
 
   '@xrplf/isomorphic@1.0.2':
     resolution: {integrity: sha512-ncZUdMXr6VlSXtdoiDi0jTH+gBrgGxwVeEidhoegII3PmyErbQsyj6e+j7acmR4LW/lvBkPkzb9QzRfJH0n3rA==}
@@ -11611,6 +11622,13 @@ snapshots:
       - typescript
       - utf-8-validate
       - zod
+
+  '@web3icons/common@0.11.53': {}
+
+  '@web3icons/react@4.1.24(react@19.3.0)':
+    dependencies:
+      '@web3icons/common': 0.11.53
+      react: 19.3.0
 
   '@xrplf/isomorphic@1.0.2':
     dependencies:

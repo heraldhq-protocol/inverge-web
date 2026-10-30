@@ -10,8 +10,8 @@ export const metadata: Metadata = {
     "How Inverge protects wallet signing, and what is deliberately unavailable in this build.",
 };
 
-export default function WalletSecurityPage() {
-  const view = getWalletView();
+export default async function WalletSecurityPage() {
+  const view = await getWalletView();
 
   return (
     <WalletPageShell
