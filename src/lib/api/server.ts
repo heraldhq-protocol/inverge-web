@@ -38,6 +38,7 @@ type ApiErrorEnvelope = {
   error?: {
     code?: unknown;
     message?: unknown;
+    details?: unknown;
   };
 };
 
@@ -104,4 +105,102 @@ export async function fetchApiJson<Payload>(
   }
 
   return (await response.json()) as Payload;
+}
+
+export type ApiWriteSuccess = {
+  ok: true;
+  data: unknown;
+  status: number;
+};
+
+export type ApiWriteFailure = {
+  ok: false;
+  status: number;
+  code: string;
+  message: string;
+  details?: unknown;
+};
+
+export type ApiWriteResult = ApiWriteSuccess | ApiWriteFailure;
+
+/**
+ * One state-changing call to the versioned API.
+ *
+ * Unlike `fetchApiJson`, failures are returned: a BFF route has to forward the
+ * API's status and error envelope (a 409 stale draft, a 403 entitlement, a 429
+ * quota) without flattening it into a generic 500. Network and configuration
+ * failures become 503 so they are always valid HTTP responses.
+ */
+export async function sendApiJson(
+  path: string,
+  options: {
+    method: "DELETE" | "GET" | "PATCH" | "POST";
+    token?: string | null;
+    body?: unknown;
+    timeoutMs?: number;
+  },
+): Promise<ApiWriteResult> {
+  const base = apiBaseUrl();
+  if (!base) {
+    return {
+      ok: false,
+      status: 503,
+      code: "API_NOT_CONFIGURED",
+      message: "This deployment has no API configured.",
+    };
+  }
+
+  const headers: Record<string, string> = {};
+  if (options.token) headers.authorization = `Bearer ${options.token}`;
+  if (options.body !== undefined) headers["content-type"] = "application/json";
+
+  let response: Response;
+  const init: RequestInit = {
+    cache: "no-store",
+    headers,
+    method: options.method,
+    signal: AbortSignal.timeout(options.timeoutMs ?? DEFAULT_TIMEOUT_MS),
+  };
+  if (options.body !== undefined) {
+    init.body = JSON.stringify(options.body);
+  }
+
+  try {
+    response = await fetch(
+      `${base}${path.startsWith("/") ? path : `/${path}`}`,
+      init,
+    );
+  } catch {
+    return {
+      ok: false,
+      status: 503,
+      code: "API_UNREACHABLE",
+      message: "The API could not be reached. Nothing was changed.",
+    };
+  }
+
+  const payload = (await response
+    .json()
+    .catch(() => null)) as ApiErrorEnvelope | null;
+
+  if (!response.ok) {
+    const message =
+      typeof payload?.error?.message === "string" &&
+      payload.error.message.trim()
+        ? payload.error.message
+        : `The API returned ${response.status}.`;
+    const code =
+      typeof payload?.error?.code === "string" && payload.error.code.trim()
+        ? payload.error.code
+        : "API_ERROR";
+    return {
+      ok: false,
+      status: response.status,
+      code,
+      message,
+      details: payload?.error?.details,
+    };
+  }
+
+  return { ok: true, data: payload, status: response.status };
 }

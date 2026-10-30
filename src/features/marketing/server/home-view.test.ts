@@ -32,6 +32,7 @@ function baseIdea(overrides: Partial<ApiIdea> = {}): ApiIdea {
     askBreakdown: { equipment: "4000", training: "6000" },
     category: "software",
     coverImageUrl: null,
+    demoUrl: null,
     createdAt: "2026-10-01T00:00:00.000Z",
     creator: null,
     currentAlternative: "Spreadsheets.",

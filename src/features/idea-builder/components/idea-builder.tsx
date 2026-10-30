@@ -64,6 +64,11 @@ import {
   type DraftIssue,
 } from "@/features/idea-builder/lib/validation";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
+import {
+  parseHostedVideoSource,
+  videoProviderLabel,
+} from "@/features/campaigns/lib/media";
+import { ImageUploadField } from "@/features/media/components/image-upload-field";
 import { sendJson } from "@/lib/api/client";
 
 const DRAFT_KEY = "inverge:idea-draft:new";
@@ -475,6 +480,14 @@ export function IdeaBuilder({
 
   const step = BUILDER_STEPS[stepIndex]?.id ?? "basics";
   const completeness = draftCompleteness(draft);
+  const demoStatus = draft.demoUrl.trim()
+    ? (() => {
+        const parsed = parseHostedVideoSource(draft.demoUrl);
+        return parsed.ok
+          ? { ok: true as const, provider: videoProviderLabel(parsed.source) }
+          : { ok: false as const, reason: parsed.reason };
+      })()
+    : null;
 
   const refreshAiAccess = useCallback(async () => {
     if (mode !== "live") {
@@ -1011,16 +1024,46 @@ export function IdeaBuilder({
                       label="Cover image"
                       optional
                       error={errorFor(issues, "coverUrl")}
-                      hint="An https:// image link. A fallback cover is used when this is empty."
+                      hint="Upload a photo, or paste an https:// image link. A fallback cover is used when this is empty."
                     >
-                      <Input
-                        type="url"
-                        value={draft.coverUrl}
-                        placeholder="https://images.example.com/your-idea.jpg"
-                        onChange={(event) =>
-                          update({ coverUrl: event.target.value })
-                        }
+                      <ImageUploadField
+                        allowUrlEntry
+                        aspect="photo"
+                        purpose="IDEA_COVER"
+                        value={draft.coverUrl.trim() || null}
+                        onChange={(src) => update({ coverUrl: src ?? "" })}
                       />
+                    </StepField>
+
+                    <StepField
+                      label="Demo video"
+                      optional
+                      error={errorFor(issues, "demoUrl")}
+                      hint="A YouTube or Vimeo link. It plays in the idea hero, so a long demo does not have to be uploaded here. Video files are not accepted."
+                    >
+                      <div>
+                        <Input
+                          type="url"
+                          value={draft.demoUrl}
+                          placeholder="https://www.youtube.com/watch?v=."
+                          onChange={(event) =>
+                            update({ demoUrl: event.target.value })
+                          }
+                        />
+                        {demoStatus ? (
+                          <p
+                            className={`mt-1.5 text-xs leading-5 ${
+                              demoStatus.ok
+                                ? "text-brand-strong"
+                                : "text-danger"
+                            }`}
+                          >
+                            {demoStatus.ok
+                              ? `${demoStatus.provider} video recognised. It plays in the hero.`
+                              : demoStatus.reason}
+                          </p>
+                        ) : null}
+                      </div>
                     </StepField>
                   </section>
                 </div>

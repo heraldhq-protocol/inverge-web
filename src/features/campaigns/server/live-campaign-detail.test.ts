@@ -41,7 +41,7 @@ function apiCampaign(
     },
     deadline: "2026-11-01T00:00:00.000Z",
     id: "campaign-1",
-    idea: {
+    story: null,    idea: {
       category: "software",
       coverImageUrl: null,
       currentAlternative: "Vendors count stock by hand.",

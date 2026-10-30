@@ -71,6 +71,7 @@ export type ApiIdea = {
   category: string;
   region: string | null;
   coverImageUrl: string | null;
+  demoUrl: string | null;
   risks: string | null;
   status: string;
   discoverabilityTier: string;
@@ -417,6 +418,7 @@ export function toIdeaDetail(idea: ApiIdea): IdeaDetail {
       ? { creatorBio: idea.creator.bio.trim() }
       : {}),
     creatorVerified: idea.creator?.identityVerified === true,
+    ...(idea.demoUrl?.trim() ? { demoUrl: idea.demoUrl.trim() } : {}),
     feedbackScore: Number(idea.feedbackScore ?? 0),
     ...(fundingIntent ? { fundingIntent } : {}),
     gate: {

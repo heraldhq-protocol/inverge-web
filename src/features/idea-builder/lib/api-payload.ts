@@ -17,6 +17,7 @@ export type IdeaApiPayload = {
   category: string;
   coverImageUrl?: string;
   currentAlternative: string;
+  demoUrl?: string;
   problem: string;
   region?: string;
   risks?: string;
@@ -89,6 +90,7 @@ export function toIdeaApiPayload(draft: IdeaDraft): IdeaApiPayload {
     ...(draft.coverUrl.trim()
       ? { coverImageUrl: draft.coverUrl.trim() }
       : {}),
+    ...(draft.demoUrl.trim() ? { demoUrl: draft.demoUrl.trim() } : {}),
     ...(draft.risks.trim() ? { risks: draft.risks.trim() } : {}),
     ...(draft.goals.funding
       ? { askAmount: Number(draft.funding.askAmount) || 0 }

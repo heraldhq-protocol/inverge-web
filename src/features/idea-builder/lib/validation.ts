@@ -6,8 +6,10 @@ import {
   validateCommunityUrl,
   validateFeedbackForm,
 } from "@/features/feedback/lib/feedback";
+import { parseHostedVideoSource } from "@/features/campaigns/lib/media";
 import type { BuilderStep } from "@/features/idea-builder/types";
 import type { IdeaDraft } from "@/features/idea-builder/types";
+import { isStoredMediaPath } from "@/lib/media-path";
 
 export type DraftIssue = { field: string; message: string };
 
@@ -39,12 +41,21 @@ export function validateDraftStep(
         issues.push({ field: "category", message: "Choose a category." });
       }
       if (draft.coverUrl.trim()) {
-        const cover = new URL(draft.coverUrl, "https://placeholder.invalid");
-        if (cover.protocol !== "https:") {
-          issues.push({
-            field: "coverUrl",
-            message: "Use an https:// image link.",
-          });
+        // Either an upload (resolved by our own read route) or an https image.
+        if (!isStoredMediaPath(draft.coverUrl)) {
+          const cover = new URL(draft.coverUrl, "https://placeholder.invalid");
+          if (cover.protocol !== "https:") {
+            issues.push({
+              field: "coverUrl",
+              message: "Upload a photo, or use an https:// image link.",
+            });
+          }
+        }
+      }
+      if (draft.demoUrl.trim()) {
+        const demo = parseHostedVideoSource(draft.demoUrl);
+        if (!demo.ok) {
+          issues.push({ field: "demoUrl", message: demo.reason });
         }
       }
       break;

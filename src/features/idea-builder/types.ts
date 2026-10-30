@@ -23,6 +23,8 @@ export type IdeaDraft = {
   category: DiscoveryCategory | "";
   region: string;
   coverUrl: string;
+  /** A YouTube or Vimeo page URL, played in the idea hero. Never a file. */
+  demoUrl: string;
   problem: string;
   targetUser: string;
   currentAlternative: string;
@@ -45,6 +47,7 @@ export const emptyIdeaDraft: IdeaDraft = {
   category: "",
   region: "",
   coverUrl: "",
+  demoUrl: "",
   problem: "",
   targetUser: "",
   currentAlternative: "",

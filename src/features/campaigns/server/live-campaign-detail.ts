@@ -1,6 +1,11 @@
 import { ApiRequestError, fetchApiJson } from "@/lib/api/server";
 import { decimalToUsdAmount, type MoneyAmount } from "@/lib/money";
 import {
+  parseImageSource,
+  parseVideoSource,
+} from "@/features/campaigns/lib/media";
+import type { CampaignMedia } from "@/features/campaigns/types";
+import {
   getLiveCampaignWindow,
   toLiveCampaign,
   type ApiCampaign,
@@ -35,6 +40,7 @@ type ApiCampaignMilestone = {
 
 export type ApiCampaignDetail = ApiCampaign & {
   ideaSnapshot: unknown;
+  story: unknown;
   videoUrl: string | null;
   videoPosterUrl: string | null;
   rewardTiers: unknown;
@@ -100,6 +106,15 @@ export type LiveCampaignDetail = LiveCampaign & {
   creatorBio: string | null;
   videoUrl: string | null;
   videoPosterUrl: string | null;
+  /**
+   * The creator's hero gallery, in their order. The first video is the hero
+   * player; the first image is the hero still. Parsed from the stored `story`
+   * JSON through the same allowlist the editor used, so an unusable entry is
+   * dropped rather than rendered.
+   */
+  heroMedia: readonly CampaignMedia[];
+  /** Media placed inside the story. Empty hides the block. */
+  storyMedia: readonly CampaignMedia[];
   launchedAt: string | null;
   story: LiveCampaignStory;
   roadmapSteps: readonly LiveRoadmapStep[];
@@ -221,6 +236,53 @@ export function parseRewardTiers(value: unknown): LiveRewardTier[] {
   });
 }
 
+/**
+ * Campaign media stored inside the `story` JSON, parsed into renderable items.
+ *
+ * The stored shape is the wizard's, which a creator can only produce through a
+ * control that already validated it; this re-checks anyway, because a campaign
+ * row can be older than the current rules or written by an older client. An
+ * entry that does not parse is dropped: a broken image must not take the page
+ * down, and an unvalidated URL must never reach an `<img>` or an `<iframe>`.
+ */
+export function parseLiveMedia(value: unknown): CampaignMedia[] {
+  if (!Array.isArray(value)) return [];
+
+  return value.flatMap((entry, index): CampaignMedia[] => {
+    const object = asObject(entry);
+    if (!object) return [];
+
+    const alt = asText(object.alt);
+    const src = asText(object.src);
+    if (!alt || !src) return [];
+
+    const id = asText(object.id) ?? `media-${index}`;
+    const caption = asText(object.caption);
+
+    if (object.kind === "video") {
+      const parsed = parseVideoSource(src);
+      if (!parsed.ok) return [];
+      const poster = parseImageSource(asText(object.poster) ?? "");
+      return [
+        {
+          alt,
+          caption,
+          id,
+          kind: "video",
+          poster: poster.ok ? poster.src : null,
+          source: parsed.source,
+        },
+      ];
+    }
+
+    if (object.kind !== "image") return [];
+    const parsed = parseImageSource(src);
+    if (!parsed.ok) return [];
+
+    return [{ alt, caption, id, kind: "image", src: parsed.src }];
+  });
+}
+
 export function toLiveCampaignDetail(
   campaign: ApiCampaignDetail,
 ): LiveCampaignDetail | null {
@@ -259,6 +321,7 @@ export function toLiveCampaignDetail(
         : "unsupported";
 
   const idea = campaign.idea;
+  const storedStory = asObject(campaign.story);
   const releasedCount = milestones.filter(
     (milestone) => milestone.state === "released",
   ).length;
@@ -267,6 +330,7 @@ export function toLiveCampaignDetail(
     ...base,
     creatorAvatar: asText(campaign.creator?.avatarUrl),
     creatorBio: asText(campaign.creator?.bio),
+    heroMedia: parseLiveMedia(storedStory?.heroMedia),
     ideaSlug: idea?.slug?.trim() || null,
     launchedAt:
       campaign.launchedAt && Number.isFinite(Date.parse(campaign.launchedAt))
@@ -279,6 +343,7 @@ export function toLiveCampaignDetail(
     rewardDataState,
     rewards,
     roadmapSteps: parseRoadmapSteps(idea?.roadmapSteps),
+    storyMedia: parseLiveMedia(storedStory?.media),
     story: {
       currentAlternative:
         asText(idea?.currentAlternative) ??
