@@ -36,6 +36,7 @@ export async function getSettingsView(): Promise<SettingsResult> {
         // the page does not render their preview controls in live mode.
         profile: {
           avatarUrl: user.avatarUrl,
+          bio: user.bio ?? "",
           displayName: user.displayName ?? "",
           email: user.email ?? "",
           location: "",

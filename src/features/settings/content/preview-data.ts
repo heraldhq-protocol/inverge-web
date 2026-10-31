@@ -3,6 +3,7 @@ import type { SettingsData } from "@/features/settings/types";
 export const settingsPreviewData: SettingsData = {
   profile: {
     avatarUrl: "/images/profile_img.png",
+    bio: "Building market tools for smallholder farmers across West Africa.",
     displayName: "Amara Okonkwo",
     email: "amara@example.com",
     location: "Lagos, Nigeria",

@@ -52,6 +52,7 @@ describe("toSessionUser", () => {
       }),
     ).toEqual({
       avatarUrl: null,
+      bio: null,
       displayName: "Amara Okonkwo",
       email: "amara@example.test",
       emailVerified: true,
@@ -75,6 +76,7 @@ describe("toSessionUser", () => {
       }),
     ).toEqual({
       avatarUrl: null,
+      bio: null,
       displayName: null,
       email: null,
       emailVerified: false,
@@ -144,9 +146,23 @@ describe("toSessionUser", () => {
     expect(toSessionUser("usr_123")).toBeNull();
   });
 
+  it("carries the public bio and trims a blank one away", () => {
+    expect(
+      toSessionUser({
+        creator: { bio: "  Builds tools for market vendors.  " },
+        id: "usr_123",
+      })?.bio,
+    ).toBe("Builds tools for market vendors.");
+
+    expect(
+      toSessionUser({ creator: { bio: "   " }, id: "usr_123" })?.bio,
+    ).toBeNull();
+  });
+
   it("ignores a creator field that is not an object", () => {
     expect(toSessionUser({ creator: "amara", id: "usr_123" })).toEqual({
       avatarUrl: null,
+      bio: null,
       displayName: null,
       email: null,
       emailVerified: false,
@@ -200,6 +216,7 @@ describe("toPreviewSessionUser", () => {
       accountType: null,
       contactName: null,
       avatarUrl: null,
+      bio: null,
       displayName: null,
       email: null,
       emailVerified: false,

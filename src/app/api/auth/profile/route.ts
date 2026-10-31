@@ -40,6 +40,8 @@ const profileSchema = z.object({
   // An uploaded picture is /api/media/<id>; a provider picture is https. The
   // API re-validates both shapes and enforces ownership of the asset.
   avatarUrl: z.string().trim().max(2048).optional(),
+  // Public bio. The API caps it at 280 characters and moderates it before saving.
+  bio: z.string().trim().max(280).optional(),
   displayName: z.string().trim().min(1).max(50),
   username: z
     .string()
@@ -122,6 +124,7 @@ export async function PATCH(request: Request) {
         ...(parsed.data.avatarUrl !== undefined
           ? { avatarUrl: parsed.data.avatarUrl }
           : {}),
+        ...(parsed.data.bio !== undefined ? { bio: parsed.data.bio } : {}),
       }),
       cache: "no-store",
       headers: {
