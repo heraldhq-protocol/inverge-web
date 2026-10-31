@@ -2222,9 +2222,9 @@ The provider is selected by `AI_PROVIDER`: `disabled` (no assistant), `stub`
 (deterministic offline JSON for tests and local UI work, rejected in production),
 or `anthropic` (the Anthropic Messages protocol; the current deployment points it
 at DeepSeek's Anthropic-compatible endpoint with model `deepseek-flash`). The
-assistant reads only `AI_*` values; `ANTHROPIC_*` configures moderation. Provider
-cost is not encoded in this decision; the operator must confirm the account's
-current pricing and set the daily request/token caps accordingly.
+assistant and the moderation classifier share the `AI_*` credentials and model.
+Provider cost is not encoded in this decision; the operator must confirm the
+account's current pricing and set the daily request/token caps accordingly.
 
 Alternatives: Auto-apply on response (irreversible without a history and unsafe on
 stale responses); let the browser call the provider (exposes the key and the
