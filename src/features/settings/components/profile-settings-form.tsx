@@ -1,12 +1,13 @@
 "use client";
 
-import { Camera, CheckCircle2 } from "lucide-react";
-import Image from "next/image";
-import { type ChangeEvent, type FormEvent, useState } from "react";
+import { CheckCircle2 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LocationPicker } from "@/components/ui/location-picker";
+import { AvatarPicker } from "@/features/settings/components/avatar-picker";
 import type { SettingsProfile } from "@/features/settings/types";
 
 export function ProfileSettingsForm({
@@ -16,23 +17,22 @@ export function ProfileSettingsForm({
   mode?: "live" | "preview";
   profile: SettingsProfile;
 }) {
-  const [photoName, setPhotoName] = useState("");
+  const router = useRouter();
+  const [avatarUrl, setAvatarUrl] = useState<string | null>(
+    profile.avatarUrl ?? null,
+  );
   const [location, setLocation] = useState(profile.location);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState("");
   const [saving, setSaving] = useState(false);
 
-  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
-    setPhotoName(event.target.files?.[0]?.name ?? "");
-    setSaved(false);
-    setError("");
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const form = new FormData(event.currentTarget);
     const displayName = String(form.get("displayName") ?? "").trim();
-    const username = String(form.get("username") ?? "").trim().toLowerCase();
+    const username = String(form.get("username") ?? "")
+      .trim()
+      .toLowerCase();
 
     if (!displayName || username.length < 3) {
       setError("Add a display name and a username of at least 3 characters.");
@@ -50,14 +50,25 @@ export function ProfileSettingsForm({
     setError("");
     setSaved(false);
 
+    const avatarChanged = (avatarUrl ?? "") !== (profile.avatarUrl ?? "");
+
     try {
       const response = await fetch("/api/auth/profile", {
-        body: JSON.stringify({ displayName, username }),
+        body: JSON.stringify({
+          displayName,
+          username,
+          // Only send a picture the creator actually changed: an unrelated
+          // rename must not re-bind (or release) the current one.
+          ...(avatarChanged ? { avatarUrl: avatarUrl ?? "" } : {}),
+        }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
       });
       if (!response.ok) throw new Error("profile save failed");
       setSaved(true);
+      // The picture is rendered by server components (topbar, shell), so the
+      // route has to re-read the session before the change is visible there.
+      router.refresh();
     } catch {
       setError("We couldn't save your profile. Try again.");
     } finally {
@@ -74,41 +85,19 @@ export function ProfileSettingsForm({
       }}
       className="rounded-2xl border border-border bg-surface p-4 shadow-[0_10px_35px_rgba(13,29,21,0.035)] sm:p-5"
     >
-      <div className="grid grid-cols-[auto_minmax(0,1fr)] items-center gap-4 border-b border-border pb-5 sm:flex sm:flex-wrap">
-        <Image
-          src={profile.avatarUrl || "/images/profile_img.png"}
-          alt={profile.displayName || "Your profile"}
-          width={80}
-          height={80}
-          className="size-18 rounded-full object-cover sm:size-20"
-          priority
+      <div className="border-b border-border pb-5">
+        <AvatarPicker
+          value={avatarUrl}
+          name={profile.displayName}
+          onChange={(src) => {
+            setAvatarUrl(src);
+            setSaved(false);
+            setError("");
+          }}
+          disabled={mode === "preview"}
         />
-        <div className="min-w-0 flex-1">
-          <p className="font-semibold text-ink">{profile.displayName}</p>
-          <p className="mt-0.5 text-xs text-muted">@{profile.username}</p>
-        </div>
-        <div className="col-span-2 sm:col-span-1">
-          <input
-            id="settings-profile-photo"
-            name="profilePhoto"
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            onChange={handlePhotoChange}
-            className="sr-only"
-          />
-          <label
-            htmlFor="settings-profile-photo"
-            className="inline-flex min-h-11 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-border bg-surface px-4 text-sm font-semibold text-ink transition-colors hover:border-brand/45 hover:bg-canvas focus-within:outline-2 focus-within:outline-offset-2 focus-within:outline-brand sm:w-auto"
-          >
-            <Camera className="size-4" aria-hidden="true" />
-            Change photo
-          </label>
-          {photoName ? (
-            <p className="mt-1 max-w-44 truncate text-xs text-muted">
-              {photoName}
-            </p>
-          ) : null}
-        </div>
+        <p className="mt-3 font-semibold text-ink">{profile.displayName}</p>
+        <p className="mt-0.5 text-xs text-muted">@{profile.username}</p>
       </div>
 
       <div className="mt-5 grid gap-4 md:grid-cols-2">
