@@ -37,6 +37,8 @@ export type SessionUser = {
    * allowlist. `null` means render initials.
    */
   avatarUrl: string | null;
+  /** Public bio, or null while the creator has not written one. */
+  bio: string | null;
   /**
    * The API's authoritative answer to "is the shared profile step unfinished?".
    * Defaults to `true` when the field is absent: skipping onboarding is the more
@@ -97,6 +99,10 @@ export function toSessionUser(payload: unknown): SessionUser | null {
 
   return {
     avatarUrl: safeAvatarUrl(creator?.avatarUrl),
+    bio:
+      typeof creator?.bio === "string" && creator.bio.trim()
+        ? creator.bio.trim()
+        : null,
     displayName:
       typeof creator?.displayName === "string" && creator.displayName.trim()
         ? creator.displayName.trim()
@@ -127,6 +133,7 @@ export function toPreviewSessionUser(preview: PreviewSession): SessionUser {
     email: null,
     emailVerified: false,
     avatarUrl: null,
+    bio: null,
     displayName: preview.displayName,
     role: "USER",
     username: preview.username,

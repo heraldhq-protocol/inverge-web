@@ -1,5 +1,7 @@
 export type SettingsProfile = {
   avatarUrl?: string | null;
+  /** Public bio; empty when the creator has not written one. */
+  bio: string;
   displayName: string;
   email: string;
   location: string;

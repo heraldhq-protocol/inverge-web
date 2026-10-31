@@ -7,6 +7,7 @@ import { type FormEvent, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { LocationPicker } from "@/components/ui/location-picker";
+import { Textarea } from "@/components/ui/textarea";
 import { AvatarPicker } from "@/features/settings/components/avatar-picker";
 import type { SettingsProfile } from "@/features/settings/types";
 
@@ -51,6 +52,8 @@ export function ProfileSettingsForm({
     setSaved(false);
 
     const avatarChanged = (avatarUrl ?? "") !== (profile.avatarUrl ?? "");
+    const bio = String(form.get("bio") ?? "").trim();
+    const bioChanged = bio !== profile.bio.trim();
 
     try {
       const response = await fetch("/api/auth/profile", {
@@ -60,6 +63,7 @@ export function ProfileSettingsForm({
           // Only send a picture the creator actually changed: an unrelated
           // rename must not re-bind (or release) the current one.
           ...(avatarChanged ? { avatarUrl: avatarUrl ?? "" } : {}),
+          ...(bioChanged ? { bio } : {}),
         }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",
@@ -134,6 +138,25 @@ export function ProfileSettingsForm({
             required
           />
           <p className="text-xs text-muted">inverge.com/u/{profile.username}</p>
+        </div>
+        <div className="space-y-1.5 md:col-span-2">
+          <label
+            htmlFor="settings-bio"
+            className="text-sm font-semibold text-ink"
+          >
+            Bio
+          </label>
+          <Textarea
+            id="settings-bio"
+            name="bio"
+            defaultValue={profile.bio}
+            rows={4}
+            maxLength={280}
+            placeholder="What you build, who it is for, and why it matters."
+          />
+          <p className="text-xs text-muted">
+            Shown on your public profile. Up to 280 characters.
+          </p>
         </div>
         <div className="md:col-span-2">
           <LocationPicker
