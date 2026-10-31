@@ -37,7 +37,12 @@ import { Button } from "@/components/ui/button";
 import { authHref, SIGN_OUT_PATH } from "@/features/auth/lib/auth-routes";
 import { WalletConnectionLoading } from "@/features/wallet/components/wallet-connection-states";
 import { isSolanaAddress, shortenAddress } from "@/features/wallet/lib/address";
+import { getUsdcMint } from "@/features/wallet/lib/networks";
 import { formatTokenAmount } from "@/features/wallet/lib/token-amount";
+import {
+  useSplTokenBalance,
+  type SplTokenBalance,
+} from "@/features/wallet/lib/use-spl-token-balance";
 import {
   formatUsd,
   useSolPrice,
@@ -179,12 +184,17 @@ function CopyAddressButton({
 function BalanceFigure({
   balance,
   price,
+  usdc,
   onRetry,
 }: {
   balance: SolanaBalance;
   price: SolPrice;
+  usdc: SplTokenBalance;
   onRetry?: (() => void) | undefined;
 }) {
+  const usdcAmount =
+    usdc.status === "ready" ? Number(usdc.atomic) / 10 ** usdc.decimals : null;
+
   if (balance.status === "loading" || balance.status === "idle") {
     return (
       <div aria-label="Reading balance" role="status">
@@ -206,9 +216,21 @@ function BalanceFigure({
       },
       { maxFractionDigits: 4 },
     );
-    const usd =
+    const solUsd =
       price.status === "ready"
         ? (Number(balance.lamports) / 1_000_000_000) * price.usd
+        : null;
+    const usd = solUsd !== null ? solUsd + (usdcAmount ?? 0) : null;
+    const usdcLabel =
+      usdc.status === "ready"
+        ? formatTokenAmount(
+            {
+              assetId: "USDC",
+              atomic: usdc.atomic.toString(),
+              decimals: usdc.decimals,
+            },
+            { maxFractionDigits: 2 },
+          )
         : null;
 
     return (
@@ -217,7 +239,7 @@ function BalanceFigure({
           className="mt-1 text-3xl font-semibold tracking-[-0.04em] tabular-nums text-white sm:text-4xl"
           title={
             usd !== null
-              ? "CoinGecko estimate, refreshed every 30 seconds"
+              ? "SOL at the live market price; USDC at $1.00"
               : undefined
           }
         >
@@ -231,11 +253,21 @@ function BalanceFigure({
           )}
         </p>
         <p className="mt-1 text-xs leading-5 text-white/55">
-          {usd !== null
-            ? `≈ ${sol} SOL${price.stale ? " · price may be stale" : ""}`
-            : price.status === "loading"
-              ? "Reading USD price…"
-              : "USD price unavailable"}
+          {usd !== null ? (
+            <>
+              {`≈ ${sol} SOL`}
+              {usdcLabel !== null
+                ? ` + ${usdcLabel} USDC`
+                : usdc.status === "unavailable" || usdc.status === "idle"
+                  ? " · USDC unavailable"
+                  : " · reading USDC…"}
+              {price.stale ? " · price may be stale" : ""}
+            </>
+          ) : price.status === "loading" ? (
+            "Reading USD price…"
+          ) : (
+            "USD price unavailable"
+          )}
         </p>
       </>
     );
@@ -312,10 +344,12 @@ function WalletAssetsCard({
   balance,
   networkLabel,
   price,
+  usdc,
 }: {
   balance: SolanaBalance;
   networkLabel: string;
   price: SolPrice;
+  usdc: SplTokenBalance;
 }) {
   const sol =
     balance.status === "ready"
@@ -334,6 +368,21 @@ function WalletAssetsCard({
     balance.status === "ready" && price.status === "ready"
       ? (Number(balance.lamports) / 1_000_000_000) * price.usd
       : null;
+  const usdcText =
+    usdc.status === "ready"
+      ? `${formatTokenAmount(
+          {
+            assetId: "USDC",
+            atomic: usdc.atomic.toString(),
+            decimals: usdc.decimals,
+          },
+          { maxFractionDigits: 2 },
+        )} USDC`
+      : usdc.status === "unavailable"
+        ? "Unavailable"
+        : "Reading…";
+  const usdcUsd =
+    usdc.status === "ready" ? Number(usdc.atomic) / 10 ** usdc.decimals : null;
 
   return (
     <section
@@ -368,17 +417,15 @@ function WalletAssetsCard({
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-sm font-semibold tabular-nums text-ink">
+            <p
+              className="text-lg font-bold tracking-[-0.02em] tabular-nums text-ink sm:text-xl"
+              title={
+                solUsd !== null
+                  ? "Estimated from the live SOL price, refreshed every 30 seconds"
+                  : undefined
+              }
+            >
               {solUsd !== null ? formatUsd(solUsd) : "—"}
-            </p>
-            <p className="mt-0.5 text-xs text-muted">
-              {solUsd !== null
-                ? price.stale
-                  ? "Price may be stale"
-                  : "CoinGecko"
-                : price.status === "loading"
-                  ? "Reading price…"
-                  : "Price unavailable"}
             </p>
           </div>
         </li>
@@ -395,20 +442,30 @@ function WalletAssetsCard({
                 USD Coin{" "}
                 <span className="text-xs font-medium text-muted">(USDC)</span>
               </p>
-              <p className="mt-0.5 text-xs text-muted">Not available</p>
+              <p className="mt-0.5 text-xs tabular-nums text-muted">
+                {usdcText}
+              </p>
             </div>
           </div>
           <div className="shrink-0 text-right">
-            <p className="text-xs font-semibold text-muted">Unavailable</p>
-            <p className="mt-0.5 text-xs text-muted">No verified mint</p>
+            <p
+              className="text-lg font-bold tracking-[-0.02em] tabular-nums text-ink sm:text-xl"
+              title={
+                usdcUsd !== null
+                  ? "USDC is valued at $1.00 for this display"
+                  : undefined
+              }
+            >
+              {usdcUsd !== null ? formatUsd(usdcUsd) : "—"}
+            </p>
           </div>
         </li>
       </ul>
 
       <p className="mt-3 text-xs leading-5 text-muted">
-        USD values are CoinGecko estimates, refreshed every 30 seconds; they are
-        not a quote. USDC is listed but not read: this build has no verified
-        mint address or chain index.
+        USD values are estimates, refreshed every 30 seconds; they are not a
+        quote. USDC is read from the Circle-issued mint for this network and
+        valued at $1.00.
       </p>
     </section>
   );
@@ -611,6 +668,7 @@ export function WalletConnectionCard({
     accounts,
   );
   const { balance, retry } = useSolanaBalance(rpc, owner);
+  const usdc = useSplTokenBalance(rpc, owner, getUsdcMint(account.network));
   const [copied, setCopied] = useState(false);
   const [copyFailed, setCopyFailed] = useState(false);
   const [actionFailed, setActionFailed] = useState(false);
@@ -907,6 +965,7 @@ export function WalletConnectionCard({
             <BalanceFigure
               balance={balance}
               price={price}
+              usdc={usdc}
               onRetry={rpc ? retry : undefined}
             />
             <p className="mt-2 text-[0.6875rem] leading-5 text-white/50">
@@ -962,6 +1021,7 @@ export function WalletConnectionCard({
           balance={balance}
           networkLabel={networkLabel}
           price={price}
+          usdc={usdc}
         />
         <WalletSafetyCard />
       </div>

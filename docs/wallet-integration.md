@@ -2,14 +2,14 @@
 
 The wallet is a first-class dashboard feature. MetaMask Embedded Wallets
 (formerly Web3Auth) is the chosen provider and its client sign-in is wired. A
-connected provider exposes its real Solana address and a real SOL balance on the
-overview. In API mode the sign-in exchange also sends that address, the API
-verifies it against the identity token's wallet attestation, and links it to the
-Inverge user; the wallet page then reads the linked embedded wallet from
-`GET /wallets`. **USDC balances, activity and refund records remain preview-only**:
-no verified USDC mint, chain index or refund service exists. No contribution or
-refund reads from a chain. The displayed USD value is a CoinGecko estimate of the
-live SOL balance, not a ledger fiat total or a quote.
+connected provider exposes its real Solana address and reads live SOL and USDC
+balances from the configured cluster. In API mode the sign-in exchange also
+sends that address, the API verifies it against the identity token's wallet
+attestation, and links it to the Inverge user; the wallet page then reads the
+linked embedded wallet from `GET /wallets`. **Activity and refund records remain
+preview-only**: no chain index or refund service exists. No contribution or
+refund reads from a chain. The displayed USD value is an estimate (live SOL
+price from CoinGecko, USDC at $1.00), not a ledger fiat total or a quote.
 
 Related decisions: D-008 (Privy, superseded for the web client), D-029 (payment
 routes), D-031 (preview scope), D-033 (MetaMask Embedded Wallets), D-060 (the
@@ -18,15 +18,16 @@ wallet overview is an account surface).
 ## What is live and what is preview
 
 - **Live:** the provider session, the Solana address returned by the wallet
-  client, the SOL balance read from the configured Solana RPC endpoint, the
-  SOL/USD estimate from CoinGecko, and (in API mode) the embedded wallet linked
-  to the authenticated user.
+  client, the SOL balance read from the configured Solana RPC endpoint, the USDC
+  balance read from the Circle-issued mint for the active network, the SOL/USD
+  estimate from CoinGecko, and (in API mode) the embedded wallet linked to the
+  authenticated user.
 - **Preview:** activity, refunds, and the contribution funding snapshot. They
   are labelled "Example data" and never presented as chain reads.
-- **Unavailable:** USDC (no verified mint or index), a ledger fiat total or
-  quote, Inverge-initiated sending/signing, deposits, withdrawals, refund
-  claims, and key export. Send, receive, and fiat funding are only available
-  through the embedded wallet's own Wallet Services UI.
+- **Unavailable:** a ledger fiat total or quote, Inverge-initiated
+  sending/signing, deposits, withdrawals, refund claims, and key export. Send,
+  receive, and fiat funding are only available through the embedded wallet's own
+  Wallet Services UI.
 - Manufacturing an address, balance, signature, deposit, withdrawal, or claim
   would misrepresent custody and money. None is manufactured; a failed balance
   read is shown as unavailable, never as zero.
@@ -106,15 +107,19 @@ signatures. Both live in the parent `Inverge/` workspace
   different linked address is a mismatch, not a silent fallback.
 - **Balance and fiat estimate.** When the provider has returned a validated
   address, the card calls `useSolanaWallet().rpc.getBalance(address)` against the
-  configured cluster and formats lamports as SOL. The read has loading, ready,
-  and unavailable states; a failure never renders zero, and a missing RPC client
-  is "unavailable", not a permanent loading skeleton. `useSolPrice()` polls
+  configured cluster and formats lamports as SOL. USDC is read with
+  `getTokenAccountsByOwner` for the Circle-issued mint selected by the active
+  network (devnet `4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU`, mainnet
+  `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`). Both reads have loading,
+  ready, and unavailable states; a failure never renders zero, and a missing RPC
+  client is "unavailable", not a permanent loading skeleton. `useSolPrice()` polls
   CoinGecko's public `simple/price` endpoint every 30 seconds and multiplies the
-  live SOL balance by that estimate. The USD figure is large and bold, with the
-  SOL amount underneath; if the price is unavailable the card falls back to the
-  SOL figure and says so, and a failed refresh keeps the last value marked
-  "price may be stale". The Assets section shows the same SOL/USD estimate and
-  lists USDC as unavailable instead of inventing a balance.
+  live SOL balance by that estimate; USDC is valued at $1.00 for display. The USD
+  figure is large and bold, with the SOL and USDC amounts underneath; if the price
+  is unavailable the card falls back to the SOL figure and says so, and a failed
+  refresh keeps the last value marked "price may be stale". The Assets section
+  shows the same SOL/USD estimate and the live USDC balance for the active
+  network.
 - **Overview layout.** The dark card is split into three desktop columns:
   wallet identity (MetaMask mark, name, network, address), total balance, and
   Receive/Send/Add funds. Below it, Assets and Keep your wallet safe share a row,
@@ -151,8 +156,8 @@ signatures. Both live in the parent `Inverge/` workspace
 
 ### Not wired yet
 
-- USDC and other token balances, chain-read activity, signing, on-ramp,
-  withdrawals, refund execution, export, and webhook verification.
+- Chain-read activity, other token balances, signing, on-ramp, withdrawals,
+  refund execution, export, and webhook verification.
 - The API's permission projection is not exposed to the web client, so
   capabilities are still derived from the session shape rather than from a
   server-authoritative claim. Programme administration keeps its existing
@@ -188,7 +193,7 @@ signatures. Both live in the parent `Inverge/` workspace
 | `/d/wallet/receive` | Permanent redirect to `/d/wallet`; receive now opens the Wallet Services UI. |
 | `/d/wallet/send` | Permanent redirect to `/d/wallet`; send now opens the Wallet Services UI. |
 | `/d/wallet/refunds` | Refund summary and records; no claim control while refund execution is missing. |
-| `/d/wallet/security` | Security posture and control status; export, sessions, and recovery unavailable. |
+| `/d/wallet/security` | Security posture and provider-hosted controls; opens the Wallet Services UI for recovery, export, and session options where supported. |
 
 `/d/wallet/loading.tsx` and `/d/wallet/error.tsx` provide the loading and error
 boundaries. Wallet navigation lives in the desktop sidebar and the account menu
@@ -276,7 +281,7 @@ address is never an authorization input.
 | Capability | Status when linked | Mechanism missing |
 | --- | --- | --- |
 | Wallet provisioning | available | — |
-| Balances | available for SOL; USDC unavailable | no verified USDC mint or index |
+| Balances | available for SOL and USDC | — |
 | Receive and deposit | provider Wallet Services UI | Inverge exposes no address or QR itself |
 | Activity history | preview | derived from preview contributions |
 | Signing and sending | unavailable in Inverge | the provider's Wallet Services UI is the only send path |
@@ -307,8 +312,7 @@ existing labelled "payment is not connected" handoff. Nothing is submitted.
 ## Clearly demo-only
 
 - The checkout's sample balances (1,250.50 USDC, 0.42 SOL). They are never
-  rendered on the wallet overview; the overview reads SOL from the provider and
-  says USDC is not connected.
+  rendered on the wallet overview; the overview reads SOL and USDC live.
 - Derived activity and refund records, every item `demo: true` with a null
   transaction and no explorer link, labelled "Example data" once per section.
 - The contribution handoff screen.
@@ -317,7 +321,7 @@ existing labelled "payment is not connected" handoff. Nothing is submitted.
 
 - Account binding: the web app can hold a session, but `inverge-api` does not link
   the provider address to a `WalletAccount`, and the web has no server wallet read.
-- USDC balances, chain activity, and escrow reconciliation.
+- Chain activity and escrow reconciliation.
 - Wallet signing, transfer submission, and on-chain confirmation.
 - On-ramp/card funding and any quote, rate, or fee.
 - Withdrawals and RPC fee quotes.
@@ -341,9 +345,9 @@ existing labelled "payment is not connected" handoff. Nothing is submitted.
    in `AuthService.authenticate()`.
 6. Replace `server/wallet.ts` with the authenticated API/provider read; set
    `addressAvailable` true only when the server projection has a linked address.
-7. ~~Read the connected SOL balance from the provider.~~ Done. Add the verified
-   USDC mint and a chain activity index before moving those capabilities out of
-   `preview`.
+7. ~~Read the connected SOL balance from the provider.~~ Done. ~~Read the USDC
+   balance from the verified network mint.~~ Done. Add a chain activity index
+   before moving activity out of `preview`.
 8. Enable on-ramp, refunds, withdrawals, and export only after their own provider,
    escrow, and security reviews.
 
@@ -454,5 +458,6 @@ is a reliable local fallback; the committed configuration is unchanged.
   never an authorization input.
 - The provider Client Secret is server-only. It is not in this repository, not in
   `.env.local`, and not in any `NEXT_PUBLIC_` variable.
-- `getPrivateKey` is not called; key export stays disabled.
+- `getPrivateKey` is not called by Inverge; key export is available only inside
+  the provider's own wallet UI and is never handled by this application.
 - No production blockchain writes are performed by this feature.

@@ -35,6 +35,7 @@ const mocks = vi.hoisted(() => ({
     accounts: null as string[] | null,
     rpc: null as unknown,
   },
+  usdc: { status: "ready", atomic: 0n, decimals: 6 } as unknown,
 }));
 
 function walletSession(address: string) {
@@ -84,6 +85,10 @@ vi.mock("@/features/wallet/lib/use-sol-price", () => ({
   }),
 }));
 
+vi.mock("@/features/wallet/lib/use-spl-token-balance", () => ({
+  useSplTokenBalance: () => mocks.usdc,
+}));
+
 vi.mock("@web3auth/modal/react/solana", () => ({
   useSolanaWallet: () => mocks.wallet,
 }));
@@ -119,6 +124,7 @@ beforeEach(() => {
     walletUi: vi.fn(async () => undefined),
   };
   mocks.wallet = { accounts: null, rpc: null };
+  mocks.usdc = { status: "ready", atomic: 0n, decimals: 6 };
   mocks.connect.mockClear();
   writeText.mockClear();
   Object.defineProperty(navigator, "clipboard", {
@@ -258,6 +264,34 @@ describe("WalletConnectionCard address and balance", () => {
 
     expect((await screen.findAllByText(/0\.42/)).length).toBeGreaterThan(0);
     expect(getBalance).toHaveBeenCalledTimes(1);
+  });
+
+  it("shows the USDC balance for the active network and adds it to the total", async () => {
+    mocks.wallet.rpc = {
+      getBalance: () => ({
+        send: () => Promise.resolve({ value: 420000000n }),
+      }),
+    };
+    mocks.usdc = { status: "ready", atomic: 10_000_000n, decimals: 6 };
+
+    renderCard();
+
+    expect(await screen.findByText("10 USDC")).toBeInTheDocument();
+    expect(await screen.findByText("$73.00")).toBeInTheDocument();
+  });
+
+  it("says USDC is unavailable instead of showing zero when its read fails", async () => {
+    mocks.wallet.rpc = {
+      getBalance: () => ({
+        send: () => Promise.resolve({ value: 420000000n }),
+      }),
+    };
+    mocks.usdc = { status: "unavailable" };
+
+    renderCard();
+
+    expect(await screen.findByText(/USDC unavailable/)).toBeInTheDocument();
+    expect(screen.queryByText(/0 USDC/)).toBeNull();
   });
 
   it("opens wallet services for receive, send and add funds", () => {

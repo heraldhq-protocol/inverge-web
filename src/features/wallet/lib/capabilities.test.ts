@@ -48,9 +48,8 @@ describe("auditWalletCapabilities", () => {
 
     expect(byId.get("balance")?.status).toBe("preview");
     expect(byId.get("activity")?.status).toBe("preview");
-    expect(byId.get("balance")?.reason).toMatch(/SOL balance is read live/i);
     expect(byId.get("balance")?.reason).toMatch(
-      /USDC balance is a labelled sample/i,
+      /neither the SOL nor the USDC balance can be read/i,
     );
   });
 

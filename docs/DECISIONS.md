@@ -2336,8 +2336,8 @@ land.
 Context: The wallet page had grown into six tabs and a diagnostic inventory:
 an account table, a "what is real here" panel, a capability audit, sample
 balances, a refund summary, and a separate sign-in card. The provider SDK can
-return a real Solana address and a real SOL balance, but no Inverge signing,
-USDC read, contribution settlement, refund execution, or quote exists.
+return a real Solana address plus live SOL and USDC balances, but no Inverge
+signing, contribution settlement, refund execution, or quote exists.
 Presenting all of that at once made a wallet with one real signal look both
 technical and finished.
 
@@ -2361,21 +2361,27 @@ connected-but-unlinked, linked, mismatched-address, and error states. The reacti
 not re-render when the wallet-standard account load completes; the provider array
 is only a fallback. A validated address is shown shortened with a copy action and
 a full address disclosure. SOL balance is read through the provider's documented
-`useSolanaWallet().rpc.getBalance`; a failed read or missing RPC client says
-"Balance unavailable" and never renders zero. The card shows a large USD estimate
-from CoinGecko's public `simple/price` endpoint, refreshed every 30 seconds, with
-the SOL amount underneath. The estimate falls back to SOL when no price is
-available, is marked stale after a failed refresh, and is never presented as a
-ledger total or quote. USDC is listed as unavailable because no verified mint or
-chain index exists. The provider's floating Wallet Services launcher is disabled
-(`walletServicesConfig.whiteLabel.showWidgetButton: false`) so Inverge's controls
-are the only entry points. Sample balances are no longer rendered on the
-overview; the fixtures remain only for the contribution checkout's labelled
-balance check. Activity and refund records stay labelled "Example data" until a
-real source replaces them, and a refund claim control is omitted rather than
-disabled. There is no disconnect control: the only disconnect path is
-`/sign-out`, because disconnecting the provider while leaving the Inverge session
-active strands the account in an unusable state.
+`useSolanaWallet().rpc.getBalance`; USDC is read with
+`getTokenAccountsByOwner` for the Circle-issued mint selected by the active
+network, so devnet and mainnet balances are never mixed. A failed read or missing
+RPC client says "Balance unavailable" and never renders zero. The card shows a
+large USD estimate from CoinGecko's public `simple/price` endpoint, refreshed
+every 30 seconds, with the SOL and USDC amounts underneath; USDC is valued at
+$1.00 for display. The estimate falls back to SOL when no price is available, is
+marked stale after a failed refresh, and is never presented as a ledger total or
+quote. The Assets section shows the live USDC balance for the active network and
+a large, bold USD figure for each asset. The provider's floating Wallet Services
+launcher is disabled (`walletServicesConfig.whiteLabel.showWidgetButton: false`)
+so Inverge's controls are the only entry points. Sample balances are no longer
+rendered on the overview; the fixtures remain only for the contribution
+checkout's labelled balance check. Activity and refund records stay labelled
+"Example data" until a real source replaces them, and a refund claim control is
+omitted rather than disabled. The security page explains the provider boundary
+without duplicating wallet details; its only action opens the provider's Wallet
+Services UI for recovery, export, and session controls. There is no disconnect
+control: the only disconnect path is `/sign-out`, because disconnecting the
+provider while leaving the Inverge session active strands the account in an
+unusable state.
 
 Alternatives: Keep the capability audit (turns a user-facing wallet into an
 engineering report); show sample balances next to the live address (mixes
@@ -2385,16 +2391,17 @@ backer's click is the only missing step); auto-connect on mount (opens a provide
 popup on every visit); expose a disconnect button (leaves the session and wallet
 out of sync).
 
-Consequences: The first chain read in the web client exists, and it is SOL only.
-The API now owns wallet linkage and verifies the claimed address at exchange.
-The overview is shorter, and the same projection carries a linked address without
-reworking the card. The mock-based tests prove state handling, not real
-provisioning. A staging smoke test with the configured SDK and a reachable API is
-still required before claiming connected-wallet behaviour is verified.
+Consequences: The first chain reads in the web client are SOL and USDC, each
+selected by the active cluster. The API now owns wallet linkage and verifies the
+claimed address at exchange. The overview is shorter, and the same projection
+carries a linked address without reworking the card. The mock-based tests prove
+state handling, not real provisioning. A staging smoke test with the configured
+SDK and a reachable API is still required before claiming connected-wallet
+behaviour is verified.
 
-Revisit when: USDC has a verified mint and balance read, the refund service or
-escrow index exists, the provider SDK changes its documented hooks, or a
-receive/deposit policy can expose the linked address as a stable payout address.
+Revisit when: Chain activity gains a verified index, the refund service or escrow
+index exists, the provider SDK changes its documented hooks, or a receive/deposit
+policy can expose the linked address as a stable payout address.
 
 ## Decision template
 

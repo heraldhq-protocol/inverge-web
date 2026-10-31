@@ -62,7 +62,7 @@ const definitions: readonly Definition[] = [
     unavailableReason: (input) =>
       input.addressAvailable
         ? null
-        : "The connected provider's SOL balance is read live. The USDC balance is a labelled sample until a verified mint and chain index exist.",
+        : "No public address has been returned yet, so neither the SOL nor the USDC balance can be read.",
   },
   {
     enabled: (input) =>
