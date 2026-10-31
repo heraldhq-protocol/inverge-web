@@ -1,5 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
+
+// The profile form refreshes server components after a save; there is no app
+// router mounted in a unit test.
+vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn() }) }));
 
 import { SettingsDashboard } from "@/features/settings/components/settings-dashboard";
 import { settingsPreviewData } from "@/features/settings/content/preview-data";
@@ -13,7 +17,7 @@ describe("SettingsDashboard", () => {
     expect(
       screen.getByRole("heading", { name: "Settings", level: 1 }),
     ).toBeInTheDocument();
-    expect(screen.getByRole("img", { name: "Amara Okonkwo" })).toBeVisible();
+    expect(screen.getByRole("img", { name: /Amara Okonkwo/i })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Profile" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Signing in" })).toBeVisible();
     expect(screen.getByRole("heading", { name: "Verification" })).toBeVisible();

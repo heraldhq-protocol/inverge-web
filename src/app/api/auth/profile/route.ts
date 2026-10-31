@@ -37,6 +37,9 @@ const profileSchema = z.object({
    */
   accountType: z.enum(ACCOUNT_TYPES).optional(),
   contactName: z.string().trim().min(1).max(50).optional(),
+  // An uploaded picture is /api/media/<id>; a provider picture is https. The
+  // API re-validates both shapes and enforces ownership of the asset.
+  avatarUrl: z.string().trim().max(2048).optional(),
   displayName: z.string().trim().min(1).max(50),
   username: z
     .string()
@@ -116,6 +119,9 @@ export async function PATCH(request: Request) {
       body: JSON.stringify({
         displayName: parsed.data.displayName,
         username: parsed.data.username,
+        ...(parsed.data.avatarUrl !== undefined
+          ? { avatarUrl: parsed.data.avatarUrl }
+          : {}),
       }),
       cache: "no-store",
       headers: {

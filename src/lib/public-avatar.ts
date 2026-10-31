@@ -1,7 +1,10 @@
+import { isStoredMediaPath } from "@/lib/media-path";
+
 /**
- * Avatars are external references, not uploads. Only hosts the Next image
- * loader is configured for may reach `next/image`; everything else falls back
- * to initials in the UI. Keep this list in sync with `images.remotePatterns` in
+ * Avatars are either a provider image or one of our own uploads. Only hosts the
+ * Next image loader is configured for may reach `next/image`; an upload is
+ * served by the media route instead; everything else falls back to initials in
+ * the UI. Keep this list in sync with `images.remotePatterns` in
  * `next.config.ts`.
  */
 const GOOGLE_AVATAR_HOSTS = new Set([
@@ -15,15 +18,22 @@ const GOOGLE_AVATAR_HOSTS = new Set([
 const MAX_AVATAR_URL_LENGTH = 2048;
 
 /**
- * Returns a public avatar URL only when it is an HTTPS URL on an allowlisted
- * host and path. Shared by the session projection and the public profile so a
- * provider image can never become an arbitrary remote request.
+ * Returns a public avatar reference only when it is either one of our own
+ * uploaded assets or an HTTPS URL on an allowlisted host and path. Shared by
+ * the session projection and the public profile so a provider image can never
+ * become an arbitrary remote request.
  */
 export function safeAvatarUrl(value: unknown): string | null {
   if (typeof value !== "string") return null;
 
   const raw = value.trim();
   if (!raw || raw.length > MAX_AVATAR_URL_LENGTH) return null;
+
+  // A picture the creator uploaded is addressed by its own asset id, not a
+  // URL: it is served same-origin by the media route, which authorises the
+  // viewer and redirects to a short-lived signed link. It never reaches the
+  // optimiser, so no host has to be allowlisted for it.
+  if (isStoredMediaPath(raw)) return raw;
 
   let url: URL;
   try {

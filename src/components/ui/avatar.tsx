@@ -1,5 +1,8 @@
 import Image from "next/image";
 
+import { MediaImage } from "@/components/ui/media-image";
+import { isStoredMediaPath } from "@/lib/media-path";
+
 const sizeClasses = {
   20: "size-5 text-[9px]",
   32: "size-8 text-xs",
@@ -42,13 +45,21 @@ export function Avatar({
   if (src) {
     return (
       <span className={shared}>
-        <Image
-          src={src}
-          alt={name ? `${name}'s profile picture` : "Profile picture"}
-          width={size}
-          height={size}
-          className="h-full w-full object-cover"
-        />
+        {isStoredMediaPath(src) ? (
+          <MediaImage
+            src={src}
+            alt={name ? `${name}'s profile picture` : "Profile picture"}
+            sizes={`${size}px`}
+          />
+        ) : (
+          <Image
+            src={src}
+            alt={name ? `${name}'s profile picture` : "Profile picture"}
+            width={size}
+            height={size}
+            className="h-full w-full object-cover"
+          />
+        )}
       </span>
     );
   }
