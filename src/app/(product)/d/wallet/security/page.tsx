@@ -7,18 +7,17 @@ import { getWalletView } from "@/features/wallet/server/wallet";
 export const metadata: Metadata = {
   title: "Wallet security",
   description:
-    "How Inverge protects wallet signing, and what is deliberately unavailable in this build.",
+    "How Inverge protects the embedded wallet and where provider-hosted security controls live.",
 };
 
-export default function WalletSecurityPage() {
-  const view = getWalletView();
+export default async function WalletSecurityPage() {
+  const view = await getWalletView();
 
   return (
     <WalletPageShell
       active="security"
-      description="What protects the wallet, what Inverge never asks for, and which security controls are actually connected."
+      description="What protects the wallet, what Inverge never asks for, and where to manage the provider-hosted controls."
       title="Security"
-      view={view}
     >
       <WalletSecurity view={view} />
     </WalletPageShell>

@@ -5,17 +5,18 @@ import { Web3AuthProvider } from "@web3auth/modal/react";
 import { SolanaProvider } from "@web3auth/modal/react/solana";
 import type { ReactNode } from "react";
 
-import { ConnectedWalletAuth } from "@/features/wallet/components/connected-wallet-auth";
 import type {
   WalletSdkConfig,
   WalletSdkNetwork,
 } from "@/features/wallet/lib/provider-config";
 
 /**
- * The only module that imports the provider SDK. It is reached through
- * `next/dynamic` with `ssr: false`, so the browser-only SDK never evaluates on
- * the server. The provider and network are fixed by config and must not change in
- * production: either one changes every user's wallet address.
+ * The only module that imports the provider SDK.
+ *
+ * It is reached through `next/dynamic` with `ssr: false`, so the browser-only
+ * SDK never evaluates on the server. The provider and network are fixed by
+ * config and must not change in production: either one changes every user's
+ * wallet address.
  *
  * `chains` is set deliberately. The dashboard's pre-configured networks are
  * EVM-only, and the SDK builds its Solana wallet only from the Solana entries in
@@ -28,6 +29,9 @@ import type {
  * `uiConfig` brands the provider's own modal with Inverge's name and colours.
  * No logo is supplied: the modal is rendered in the provider's origin, so a
  * relative asset could not be loaded, and there is no hosted brand asset yet.
+ *
+ * Mounting this provider never opens the modal. Only an explicit `connect()`
+ * from a child does that.
  */
 
 const WEB3AUTH_NETWORKS = {
@@ -51,8 +55,7 @@ export function WalletSdkBoundary({
   children,
 }: {
   config: WalletSdkConfig;
-  /** Defaults to the wallet sign-in card; the auth pages pass their own panel. */
-  children?: ReactNode;
+  children: ReactNode;
 }) {
   return (
     <Web3AuthProvider
@@ -62,11 +65,19 @@ export function WalletSdkBoundary({
           clientId: config.clientId,
           defaultChainId: config.defaultChainId,
           uiConfig: UI_CONFIG,
+          // The Wallet Services iframe ships a floating widget button by
+          // default. Inverge owns the wallet surface and opens the same services
+          // from its own Receive/Send/Add funds controls, so the duplicate
+          // bottom-left overlay stays off.
+          walletServicesConfig: {
+            loginMode: "plugin",
+            whiteLabel: { showWidgetButton: false },
+          },
           web3AuthNetwork: WEB3AUTH_NETWORKS[config.network],
         },
       }}
     >
-      <SolanaProvider>{children ?? <ConnectedWalletAuth />}</SolanaProvider>
+      <SolanaProvider>{children}</SolanaProvider>
     </Web3AuthProvider>
   );
 }

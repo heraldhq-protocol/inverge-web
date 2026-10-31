@@ -40,6 +40,21 @@ export const WALLET_NETWORKS: Readonly<Record<WalletNetworkId, WalletNetwork>> =
 
 export const DEFAULT_WALLET_NETWORK_ID: WalletNetworkId = "solana-devnet";
 
+/**
+ * Circle-issued USDC mints, verified against Circle's USDC contract-address
+ * table. Devnet uses Circle's Solana Devnet test mint; mainnet uses the
+ * canonical Solana USDC mint. A token balance is read only for the mint that
+ * belongs to the active wallet network.
+ */
+export const USDC_MINT_ADDRESSES: Readonly<Record<WalletNetworkId, string>> = {
+  "solana-devnet": "4zMMC9srt5Ri5X14GAgXhaHii3GnPAEERYPJgZJDncDU",
+  "solana-mainnet-beta": "EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v",
+};
+
+export function getUsdcMint(networkId: WalletNetworkId): string {
+  return USDC_MINT_ADDRESSES[networkId];
+}
+
 export type WalletAsset = {
   id: WalletAssetId;
   name: string;

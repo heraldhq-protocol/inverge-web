@@ -20,9 +20,9 @@ import type {
  *
  * The account is deliberately **not** provisioned and has **no address**. An
  * embedded-wallet SDK is a dependency now, and a Client ID may be present, but
- * there is still no authenticated Inverge session and no server-side wallet
- * read, so the account cannot be bound to a user. Nothing here may manufacture a
- * public address or a QR code to make the screen look finished.
+ * the API does not bind a provider address to a user, so this server projection
+ * cannot carry one. The browser card shows the provider's real address and SOL
+ * balance separately; nothing here manufactures an address or a QR code.
  *
  * The two balances are labelled samples so the contribution flow can demonstrate
  * a balance check and an insufficient-funds state. They are not presented as a

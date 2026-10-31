@@ -72,6 +72,19 @@ const config: NextConfig = {
         destination: "/d/settings/:path*",
         permanent: true,
       },
+      // Send and receive are Wallet Services moments, not pages. Old bookmarks
+      // land back on the wallet overview where those controls now open the
+      // embedded-wallet UI.
+      {
+        source: "/d/wallet/receive",
+        destination: "/d/wallet",
+        permanent: true,
+      },
+      {
+        source: "/d/wallet/send",
+        destination: "/d/wallet",
+        permanent: true,
+      },
     ];
   },
 };

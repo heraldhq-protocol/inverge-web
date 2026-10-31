@@ -62,7 +62,7 @@ const definitions: readonly Definition[] = [
     unavailableReason: (input) =>
       input.addressAvailable
         ? null
-        : "Balances shown in this build are labelled samples. No chain read exists.",
+        : "No public address has been returned yet, so neither the SOL nor the USDC balance can be read.",
   },
   {
     enabled: (input) =>
@@ -75,7 +75,7 @@ const definitions: readonly Definition[] = [
     unavailableReason: (input) =>
       input.addressAvailable
         ? null
-        : "No public address exists yet. This build does not invent one, so there is nothing to share or encode as a QR code.",
+        : "No linked public address exists yet. A device address is not exposed as a deposit address, so there is nothing to share or encode as a QR code.",
   },
   {
     enabled: (input) => input.addressAvailable,

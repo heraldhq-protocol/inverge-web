@@ -1,299 +1,222 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import {
-  Alert02Icon,
   ArrowRight01Icon,
-  CreditCardIcon,
   HandCoinsIcon,
-  QrCodeIcon,
+  ReceiptTextIcon,
   Shield01Icon,
   Undo03Icon,
-  Wallet01Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
-import { Amount } from "@/components/ui/amount";
-import { MetricCard } from "@/components/ui/metric-card";
 import { Pill } from "@/components/ui/pill";
-import { SectionHeading } from "@/components/ui/section-heading";
-import { formatShortDate } from "@/features/campaigns/lib/dates";
 import { WalletActivityList } from "@/features/wallet/components/wallet-activity-list";
 import { WalletAuthPanel } from "@/features/wallet/components/wallet-auth-panel";
-import { WalletBalanceGrid } from "@/features/wallet/components/wallet-balance-card";
-import {
-  CapabilityList,
-  WalletStatusPill,
-} from "@/features/wallet/components/wallet-status-pill";
-import { hasWalletAttention } from "@/features/wallet/content/preview-wallet";
 import { getWalletNetwork } from "@/features/wallet/lib/networks";
 import type { WalletView } from "@/features/wallet/types";
 
 /**
  * Wallet overview.
  *
- * It answers the four questions a backer has in order: is there an account, what
- * is in it, what needs me, and what can I actually do. Where the answer is "not
- * connected", the page says that and offers no control that pretends otherwise.
+ * The page answers three questions in order: what is my wallet doing, what can
+ * I do next, and what has already happened. Technical capability audits and
+ * sample balances live in the data layer, not on this screen. Every record that
+ * is still preview data is labelled once, at the section it belongs to.
  */
 
-function ActionLink({
+function QuickAction({
+  description,
   href,
   icon,
   label,
-  description,
 }: {
+  description: string;
   href: string;
   icon: IconSvgElement;
   label: string;
-  description: string;
 }) {
   return (
-    <Link
-      href={href}
-      className="group flex min-h-20 items-start gap-3 rounded-2xl border border-border bg-surface p-4 transition-colors hover:border-brand/45 hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-    >
-      <span
-        aria-hidden="true"
-        className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand-strong"
+    <li>
+      <Link
+        href={href}
+        className="group flex min-h-14 items-center gap-3 rounded-xl px-1.5 py-2 transition-colors hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
-        <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} />
-      </span>
-      <span className="min-w-0">
-        <span className="flex items-center gap-1 text-sm font-semibold text-ink">
-          {label}
-          <HugeiconsIcon
-            icon={ArrowRight01Icon}
-            size={14}
-            strokeWidth={1.9}
-            aria-hidden="true"
-            className="transition-transform group-hover:translate-x-0.5"
-          />
+        <span
+          aria-hidden="true"
+          className="grid size-9 shrink-0 place-items-center rounded-xl bg-brand/10 text-brand-strong"
+        >
+          <HugeiconsIcon icon={icon} size={18} strokeWidth={1.8} />
         </span>
-        <span className="mt-0.5 block text-xs leading-5 text-muted">
-          {description}
+        <span className="min-w-0 flex-1">
+          <span className="block text-sm font-semibold text-ink">{label}</span>
+          <span className="mt-0.5 block text-xs leading-5 text-muted">
+            {description}
+          </span>
         </span>
-      </span>
-    </Link>
+        <HugeiconsIcon
+          icon={ArrowRight01Icon}
+          size={15}
+          strokeWidth={1.9}
+          aria-hidden="true"
+          className="shrink-0 text-muted transition-transform group-hover:translate-x-0.5"
+        />
+      </Link>
+    </li>
   );
 }
 
-export function WalletOverview({ view }: { view: WalletView }) {
+export function WalletOverview({
+  authenticated,
+  view,
+}: {
+  authenticated: boolean;
+  view: WalletView;
+}) {
   const network = getWalletNetwork(view.account.network);
+  const networkLabel = `${network.label.split(" ")[0]} • ${network.shortLabel}`;
   const recentActivity = view.activity.slice(0, 4);
-  const attention = hasWalletAttention(view);
+  const preview = view.dataSource === "preview";
 
   return (
-    <div className="space-y-7">
-      {attention ? (
-        <div className="flex gap-3 rounded-2xl border border-warning/30 bg-warning/[0.07] px-4 py-3.5">
-          <HugeiconsIcon
-            icon={Alert02Icon}
-            size={18}
-            strokeWidth={1.9}
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-warning-strong"
-          />
-          <p className="text-sm leading-6 text-ink">
-            {view.counts.needsAttention === 1
-              ? "1 wallet record needs your attention."
-              : `${view.counts.needsAttention} wallet records need your attention.`}{" "}
-            <Link
-              href="/d/wallet/activity?filter=attention"
-              className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              Review them
-            </Link>
-          </p>
-        </div>
-      ) : null}
+    <div className="space-y-5 sm:space-y-6">
+      <WalletAuthPanel
+        account={view.account}
+        authenticated={authenticated}
+        networkLabel={networkLabel}
+      />
 
-      <WalletAuthPanel />
-
-      <section aria-labelledby="wallet-account-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2
-            id="wallet-account-title"
-            className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
-          >
-            Account
-          </h2>
-          <WalletStatusPill state={view.account.provisioning} />
-        </div>
-
-        <div className="mt-3 grid gap-3 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-          <div className="rounded-2xl border border-border bg-surface p-4 sm:p-5">
-            <dl className="space-y-2.5 text-sm">
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-muted">Provider</dt>
-                <dd className="font-medium text-ink">
-                  {view.account.provider.label}
-                </dd>
-              </div>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-muted">Network</dt>
-                <dd className="font-medium text-ink">{network.label}</dd>
-              </div>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-muted">Public address</dt>
-                <dd className="font-medium text-ink">
-                  {view.account.address ?? "No address linked yet"}
-                </dd>
-              </div>
-              <div className="flex flex-wrap items-baseline justify-between gap-2">
-                <dt className="text-muted">Provisioned</dt>
-                <dd className="font-medium text-ink">
-                  {view.account.provisionedAt
-                    ? formatShortDate(view.account.provisionedAt)
-                    : "Not provisioned"}
-                </dd>
-              </div>
-            </dl>
-
-            {view.account.address === null ? (
-              <p className="mt-3 rounded-xl border border-border bg-canvas p-3 text-xs leading-5 text-muted">
-                This build does not invent an address. Signing in above shows
-                your provider&rsquo;s address on this device only; receiving,
-                sending, and signing stay unavailable until that account is
-                linked to your Inverge identity.
-              </p>
-            ) : null}
-          </div>
-
-          <div className="rounded-2xl border border-border bg-canvas p-4 sm:p-5">
-            <div className="flex items-center gap-2">
-              <HugeiconsIcon
-                icon={Shield01Icon}
-                size={17}
-                strokeWidth={1.8}
-                aria-hidden="true"
-                className="text-brand-strong"
-              />
-              <p className="text-sm font-semibold text-ink">
-                What is real here
-              </p>
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.55fr)_minmax(0,1fr)] lg:items-start">
+        <section
+          aria-labelledby="wallet-recent-title"
+          className="order-2 lg:order-1"
+        >
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2
+                id="wallet-recent-title"
+                className="text-base font-semibold text-ink"
+              >
+                Recent activity
+              </h2>
+              {preview ? (
+                <Pill tone="neutral" size="xs">
+                  Example data
+                </Pill>
+              ) : null}
             </div>
-            <ul className="mt-2.5 space-y-1.5 text-xs leading-5 text-muted">
-              <li>
-                Activity is derived from preview contribution records, not a
-                chain index.
-              </li>
-              <li>
-                Balances are labelled samples. Nothing was deposited, withdrawn,
-                or confirmed.
-              </li>
-              <li>
-                No private key, seed phrase, or signing share is read, stored,
-                or shown by this page.
-              </li>
-            </ul>
+            <Link
+              href="/d/wallet/activity"
+              className="inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              View all
+              <HugeiconsIcon
+                icon={ArrowRight01Icon}
+                size={14}
+                strokeWidth={1.9}
+                aria-hidden="true"
+              />
+            </Link>
           </div>
-        </div>
-      </section>
 
-      <section aria-labelledby="wallet-balances-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
+          {preview ? (
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Sample contributions and refunds until live wallet activity is
+              connected.
+            </p>
+          ) : null}
+
+          <div className="mt-2.5">
+            {recentActivity.length > 0 ? (
+              <div className="rounded-2xl border border-border bg-surface px-4 sm:px-5">
+                <WalletActivityList items={recentActivity} />
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-border bg-surface p-5">
+                <p className="text-sm font-semibold text-ink">
+                  No activity yet
+                </p>
+                <p className="mt-1 text-sm leading-6 text-muted">
+                  Contributions and refunds appear here once they exist.
+                </p>
+                <Link
+                  href="/campaigns"
+                  className="mt-3 inline-flex min-h-9 items-center gap-1 text-sm font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Explore campaigns
+                  <HugeiconsIcon
+                    icon={ArrowRight01Icon}
+                    size={14}
+                    strokeWidth={1.9}
+                    aria-hidden="true"
+                  />
+                </Link>
+              </div>
+            )}
+          </div>
+        </section>
+
+        <aside
+          aria-labelledby="wallet-actions-title"
+          className="order-1 rounded-2xl border border-border bg-surface p-4 sm:p-5 lg:order-2"
+        >
           <h2
-            id="wallet-balances-title"
-            className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
+            id="wallet-actions-title"
+            className="text-base font-semibold text-ink"
           >
-            Balances
+            Quick actions
           </h2>
-          <Pill tone="neutral" size="xs">
-            Preview
-          </Pill>
-        </div>
-        <div className="mt-3">
-          <WalletBalanceGrid balances={view.balances} />
-        </div>
-      </section>
+          <ul className="mt-1.5 divide-y divide-border">
+            <QuickAction
+              description="Support a creator you believe in."
+              href="/campaigns"
+              icon={HandCoinsIcon}
+              label="Back a campaign"
+            />
+            <QuickAction
+              description="See every contribution and refund."
+              href="/d/wallet/activity"
+              icon={ReceiptTextIcon}
+              label="View activity"
+            />
+            <QuickAction
+              description="Check what is eligible and in progress."
+              href="/d/wallet/refunds"
+              icon={Undo03Icon}
+              label="Refunds"
+            />
+          </ul>
 
-      <section aria-labelledby="wallet-actions-title">
-        <h2
-          id="wallet-actions-title"
-          className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
-        >
-          What you can do
-        </h2>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <ActionLink
-            description="No address exists, so this page explains the handoff instead of showing a QR code."
-            href="/d/wallet/receive"
-            icon={QrCodeIcon}
-            label="Add funds"
-          />
-          <ActionLink
-            description="See every contribution and refund record with its own settlement state."
-            href="/d/wallet/activity"
-            icon={Wallet01Icon}
-            label="View activity"
-          />
-          <ActionLink
-            description="Back a campaign from the balance shown here once signing is connected."
+          <Link
+            href="/d/wallet/security"
+            className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded-lg text-xs font-semibold text-muted underline-offset-4 transition-colors hover:text-ink hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            <HugeiconsIcon
+              icon={Shield01Icon}
+              size={15}
+              strokeWidth={1.8}
+              aria-hidden="true"
+            />
+            Wallet security
+          </Link>
+        </aside>
+      </div>
+
+      <section className="overflow-hidden rounded-2xl border border-brand/15 bg-brand/[0.06] p-5 sm:p-6">
+        <div className="flex flex-wrap items-center justify-between gap-4">
+          <div className="max-w-xl">
+            <h2 className="text-base font-semibold text-ink">
+              Your wallet, your growth
+            </h2>
+            <p className="mt-1 text-sm leading-6 text-muted">
+              Support ideas, back campaigns and be part of something bigger.
+            </p>
+          </div>
+          <Link
             href="/campaigns"
-            icon={HandCoinsIcon}
-            label="Back a campaign"
-          />
-          <ActionLink
-            description="Card and bank funding needs a licensed provider quote. None is configured."
-            href="/d/wallet/receive#on-ramp"
-            icon={CreditCardIcon}
-            label="Card or bank funding"
-          />
-        </div>
-      </section>
-
-      <section aria-labelledby="wallet-refunds-title">
-        <SectionHeading
-          actionHref="/d/wallet/refunds"
-          actionLabel="All refunds"
-          description="Refund eligibility is a campaign outcome. This wallet shows what is claimable and what has been returned, not a claim it can execute."
-          title="Refunds"
-        />
-        <div className="grid gap-4 sm:grid-cols-3">
-          <MetricCard
-            label="Refundable"
-            icon={Undo03Icon}
-            value={<Amount value={view.totals.refundable} />}
-            hint="Claimable because a campaign missed its target."
-          />
-          <MetricCard
-            label="In progress"
-            icon={Wallet01Icon}
-            value={<Amount value={view.totals.refundsInProgress} />}
-            hint="Claimed and still being returned."
-          />
-          <MetricCard
-            label="Refunded"
-            icon={Shield01Icon}
-            value={<Amount value={view.totals.refunded} />}
-            hint="Confirmed as returned."
-          />
-        </div>
-      </section>
-
-      <section aria-labelledby="wallet-recent-title">
-        <SectionHeading
-          actionHref="/d/wallet/activity"
-          actionLabel="All activity"
-          description="Every row links back to the contribution record it came from."
-          title="Recent activity"
-        />
-        <WalletActivityList items={recentActivity} />
-      </section>
-
-      <section aria-labelledby="wallet-capabilities-title">
-        <h2
-          id="wallet-capabilities-title"
-          className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
-        >
-          Connected capabilities
-        </h2>
-        <p className="mt-1 max-w-2xl text-sm leading-5 text-muted">
-          A capability is only marked connected when its mechanism is actually
-          present in this build.
-        </p>
-        <div className="mt-3 rounded-2xl border border-border bg-surface p-4 sm:p-5">
-          <CapabilityList capabilities={view.capabilities} />
+            className="inline-flex min-h-10 items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white transition-colors hover:bg-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+          >
+            Explore campaigns
+          </Link>
         </div>
       </section>
     </div>

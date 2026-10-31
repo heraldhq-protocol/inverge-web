@@ -1,36 +1,37 @@
 import { HugeiconsIcon } from "@hugeicons/react";
 import {
-  Alert02Icon,
   ArrowRight01Icon,
-  HandCoinsIcon,
   InformationCircleIcon,
-  Undo03Icon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Amount } from "@/components/ui/amount";
-import { MetricCard } from "@/components/ui/metric-card";
+import { Pill } from "@/components/ui/pill";
 import { StatePanel } from "@/components/ui/state-panel";
 import { RefundPill } from "@/features/campaigns/components/campaign-status-pill";
 import { formatShortDate } from "@/features/campaigns/lib/dates";
 import { refundStateDescriptions } from "@/features/campaigns/lib/status";
-import { CapabilityStatusPill } from "@/features/wallet/components/wallet-status-pill";
 import { capabilityStatus } from "@/features/wallet/lib/capabilities";
 import { refundActionAvailability } from "@/features/wallet/lib/refunds";
 import type { WalletRefund, WalletView } from "@/features/wallet/types";
+import type { MoneyAmount } from "@/lib/money";
 
 /**
  * Refunds.
  *
- * A refund is a campaign outcome, not a wallet action. This page can show what
- * is claimable, what is on its way, and what has been returned, but it cannot
- * execute a claim: there is no refund service and no escrow index behind this
- * build. The action is present and disabled, with the reason attached, rather
- * than omitted — a backer with a refundable contribution needs to know that the
- * record exists and why the button does nothing yet.
+ * A refund is a campaign outcome, not a wallet action. This page shows what is
+ * eligible, what is on its way, and what has been returned. There is no refund
+ * service behind this build, so there is no claim control at all: a disabled
+ * button would suggest that the only missing step is the backer's click.
  */
 
-function RefundCard({ refund }: { refund: WalletRefund }) {
+function RefundCard({
+  executionAvailable,
+  refund,
+}: {
+  executionAvailable: boolean;
+  refund: WalletRefund;
+}) {
   const action = refundActionAvailability(refund.state);
 
   return (
@@ -40,14 +41,14 @@ function RefundCard({ refund }: { refund: WalletRefund }) {
           <p className="text-sm font-semibold leading-5 text-ink">
             {refund.campaignTitle}
           </p>
-          <p className="mt-0.5 text-xs text-muted">Refund record {refund.id}</p>
+          <p className="mt-0.5 text-xs text-muted">Contribution refund</p>
         </div>
         <RefundPill state={refund.state} />
       </div>
 
       <div className="mt-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-        <p className="text-xs text-muted">Eligible amount</p>
-        <p className="text-lg font-bold tabular-nums text-ink">
+        <p className="text-xs text-muted">Refund amount</p>
+        <p className="text-lg font-semibold tabular-nums text-ink">
           <Amount value={refund.eligibleAmount} />
         </p>
       </div>
@@ -62,146 +63,132 @@ function RefundCard({ refund }: { refund: WalletRefund }) {
         </p>
       ) : null}
 
-      <dl className="mt-3 grid gap-x-4 gap-y-1.5 text-xs sm:grid-cols-2">
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted">Contribution</dt>
-          <dd>
-            <Link
-              href={`/d/backing/${refund.contributionId}`}
-              className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              Open record
-            </Link>
-          </dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted">Claim submitted</dt>
-          <dd className="font-medium text-ink">
-            {refund.claimSubmittedAt
-              ? formatShortDate(refund.claimSubmittedAt)
-              : "Not submitted"}
-          </dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted">Confirmed</dt>
-          <dd className="font-medium text-ink">
-            {refund.confirmedAt
-              ? formatShortDate(refund.confirmedAt)
-              : "Not confirmed"}
-          </dd>
-        </div>
-        <div className="flex items-baseline justify-between gap-3">
-          <dt className="text-muted">Transaction</dt>
-          <dd className="font-medium text-ink">
-            {refund.transaction?.signature ?? "None exists"}
-          </dd>
-        </div>
-      </dl>
-
-      <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-border pt-3.5">
-        {action.canRequest ? (
-          <button
-            type="button"
-            disabled
-            aria-describedby={`refund-reason-${refund.id}`}
-            className="inline-flex min-h-11 cursor-not-allowed items-center justify-center rounded-xl bg-brand px-4 text-sm font-semibold text-white opacity-45"
-          >
-            {action.label}
-          </button>
-        ) : null}
-        <p
-          id={`refund-reason-${refund.id}`}
-          className="min-w-0 flex-1 text-xs leading-5 text-muted"
+      <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5 border-t border-border pt-3 text-xs">
+        <Link
+          href={`/d/backing/${refund.contributionId}`}
+          className="inline-flex min-h-9 items-center gap-1 font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
         >
-          {action.reason ??
-            "Refund execution is not connected in this build, so this claim cannot be submitted."}
-        </p>
+          View contribution
+          <HugeiconsIcon
+            icon={ArrowRight01Icon}
+            size={13}
+            strokeWidth={1.9}
+            aria-hidden="true"
+          />
+        </Link>
+        {refund.claimSubmittedAt ? (
+          <span className="text-muted">
+            Claim submitted {formatShortDate(refund.claimSubmittedAt)}
+          </span>
+        ) : null}
+        {refund.confirmedAt ? (
+          <span className="text-muted">
+            Returned {formatShortDate(refund.confirmedAt)}
+          </span>
+        ) : null}
       </div>
+
+      {action.canRequest && !executionAvailable ? (
+        <p className="mt-2 text-xs leading-5 text-muted">
+          {action.reason ?? "Claiming isn’t available yet."}
+        </p>
+      ) : null}
     </li>
+  );
+}
+
+function SummaryCell({
+  hint,
+  label,
+  value,
+}: {
+  hint: string;
+  label: string;
+  value: MoneyAmount;
+}) {
+  return (
+    <div className="p-4">
+      <p className="text-xs font-medium text-muted">{label}</p>
+      <p className="mt-1 text-xl font-semibold tabular-nums text-ink">
+        <Amount value={value} />
+      </p>
+      <p className="mt-0.5 text-[0.6875rem] leading-5 text-muted">{hint}</p>
+    </div>
   );
 }
 
 export function WalletRefunds({ view }: { view: WalletView }) {
   const refunds = view.refunds;
-  const refundsStatus = capabilityStatus(view.capabilities, "refunds");
-  const refundsCapability = view.capabilities.find(
-    (capability) => capability.id === "refunds",
-  );
+  const preview = view.dataSource === "preview";
+  const executionAvailable =
+    capabilityStatus(view.capabilities, "refunds") === "available";
 
   return (
-    <div className="space-y-7">
+    <div className="space-y-5 sm:space-y-6">
       <section aria-labelledby="refund-summary-title">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h2
-              id="refund-summary-title"
-              className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
-            >
-              Refund summary
-            </h2>
-            <p className="mt-1 max-w-2xl text-sm leading-5 text-muted">
-              Refund eligibility comes from the campaign outcome. These figures
-              are derived from preview contribution records, not from a refund
-              service.
-            </p>
-          </div>
-          <CapabilityStatusPill status={refundsStatus} />
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <h2
+            id="refund-summary-title"
+            className="text-base font-semibold text-ink"
+          >
+            Refund summary
+          </h2>
+          {preview ? (
+            <Pill tone="neutral" size="xs">
+              Example data
+            </Pill>
+          ) : null}
         </div>
 
-        <div className="mt-3 grid gap-3 sm:grid-cols-3">
-          <MetricCard
+        <div className="mt-2.5 grid divide-y divide-border overflow-hidden rounded-2xl border border-border bg-surface sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+          <SummaryCell
             label="Refundable"
-            icon={Undo03Icon}
-            value={<Amount value={view.totals.refundable} />}
-            hint="Eligible now because a campaign missed its target."
+            value={view.totals.refundable}
+            hint="Eligible because a campaign missed its target."
           />
-          <MetricCard
+          <SummaryCell
             label="In progress"
-            icon={HandCoinsIcon}
-            value={<Amount value={view.totals.refundsInProgress} />}
+            value={view.totals.refundsInProgress}
             hint="Claimed and still being returned."
           />
-          <MetricCard
-            label="Refunded"
-            icon={InformationCircleIcon}
-            value={<Amount value={view.totals.refunded} />}
-            hint="Confirmed as returned to the source of the contribution."
+          <SummaryCell
+            label="Returned"
+            value={view.totals.refunded}
+            hint="Confirmed back to the contributing wallet."
           />
         </div>
 
-        <div className="mt-3 flex gap-2.5 rounded-2xl border border-warning/30 bg-warning/[0.07] px-4 py-3.5">
-          <HugeiconsIcon
-            icon={Alert02Icon}
-            size={17}
-            strokeWidth={1.9}
-            aria-hidden="true"
-            className="mt-0.5 shrink-0 text-warning-strong"
-          />
-          <p className="text-sm leading-6 text-muted">
-            {refundsCapability?.reason ??
-              "Refund records are preview data and cannot be claimed here."}{" "}
-            {refunds.length > 0
-              ? "The records below show what the live product must display; none of them moves money."
-              : null}
+        {!executionAvailable ? (
+          <p className="mt-2 flex items-start gap-2 text-xs leading-5 text-muted">
+            <HugeiconsIcon
+              icon={InformationCircleIcon}
+              size={15}
+              strokeWidth={1.8}
+              aria-hidden="true"
+              className="mt-0.5 shrink-0"
+            />
+            Refund claims can&rsquo;t be submitted yet. These records are
+            examples until the refund service is connected, and nothing on this
+            page moves money.
           </p>
-        </div>
+        ) : null}
       </section>
 
       <section aria-labelledby="refund-records-title">
         <h2
           id="refund-records-title"
-          className="text-lg font-bold tracking-[-0.025em] text-ink sm:text-xl"
+          className="text-base font-semibold text-ink"
         >
           Refund records
         </h2>
 
         {refunds.length === 0 ? (
-          <div className="mt-3">
+          <div className="mt-2.5">
             <StatePanel
               variant="empty"
               eyebrow="No refunds"
               title="Nothing is refundable right now"
-              description="A refund appears here only when a contribution's campaign outcome makes one due or one is already being returned. This preview has no refund records to show."
+              description="If a campaign you backed doesn’t reach its target, any refund will appear here with its own status."
               action={
                 <Link
                   href="/d/backing"
@@ -219,9 +206,13 @@ export function WalletRefunds({ view }: { view: WalletView }) {
             />
           </div>
         ) : (
-          <ul className="mt-3 space-y-3">
+          <ul className="mt-2.5 space-y-3">
             {refunds.map((refund) => (
-              <RefundCard key={refund.id} refund={refund} />
+              <RefundCard
+                executionAvailable={executionAvailable}
+                key={refund.id}
+                refund={refund}
+              />
             ))}
           </ul>
         )}
