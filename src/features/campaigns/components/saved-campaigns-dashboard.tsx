@@ -90,7 +90,7 @@ export function SavedCampaignsDashboard({
             Your space
           </p>
         </div>
-        <h1 className="mt-2 text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
+        <h1 className="mt-2 text-balance text-2xl font-bold leading-tight tracking-[-0.045em] text-ink sm:text-4xl">
           Saved campaigns
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted sm:text-[0.9375rem]">

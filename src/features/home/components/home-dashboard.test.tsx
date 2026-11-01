@@ -102,7 +102,7 @@ describe("HomeDashboard", () => {
     expect(screen.getByText("Promoted idea")).toBeInTheDocument();
     expect(
       screen.getByRole("link", { name: /Explore this idea/ }),
-    ).toHaveAttribute("href", "/ideas/campus-konekt");
+    ).toHaveAttribute("href", "/ideas/campus-konekt?source=feed");
   });
 
   it("quick actions point at destinations that exist", () => {
@@ -129,7 +129,7 @@ describe("HomeDashboard", () => {
     expect(grid.queryByText("CampusKonekt")).not.toBeInTheDocument();
     expect(
       grid.getByRole("link", { name: /SunGrid Community Power/ }),
-    ).toHaveAttribute("href", "/ideas/sungrid-community-power");
+    ).toHaveAttribute("href", "/ideas/sungrid-community-power?source=feed");
   });
 
   it("renders activity from the notification projection", () => {

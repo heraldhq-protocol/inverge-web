@@ -77,7 +77,7 @@ function DiscoveryHero({ idea }: { idea: HeroFeaturedIdea | undefined }) {
       <Container className="grid items-center gap-7 py-8 sm:py-10 lg:grid-cols-[1.02fr_1.08fr] lg:gap-10 lg:py-11">
         <div className="max-w-xl">
           <Eyebrow>Discover ideas</Eyebrow>
-          <h1 className="mt-3 text-balance text-[2.1rem] font-bold leading-[1.06] tracking-[-0.045em] text-ink sm:text-5xl lg:text-[3.25rem]">
+          <h1 className="mt-3 text-balance text-2xl font-bold leading-[1.1] tracking-[-0.045em] text-ink sm:text-5xl lg:text-[3.25rem]">
             Real ideas. Real people.{" "}
             <span className="block text-brand">A bigger tomorrow.</span>
           </h1>
