@@ -5,6 +5,7 @@ import "@/app/globals.css";
 import "@/lib/env/server";
 
 import { JsonLd } from "@/components/shared/json-ld";
+import { ScrollToTop } from "@/components/shared/scroll-to-top";
 import { organizationJsonLd, websiteJsonLd } from "@/lib/seo/json-ld";
 import { buildOgImageUrl } from "@/lib/seo/og-url";
 import {
@@ -87,6 +88,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} ${outfit.variable}`}
     >
       <body className="min-h-dvh bg-canvas font-sans text-ink antialiased">
+        <ScrollToTop />
         <JsonLd data={[organizationJsonLd(), websiteJsonLd()]} />
         {children}
       </body>
