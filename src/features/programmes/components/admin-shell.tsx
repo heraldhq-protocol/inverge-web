@@ -80,7 +80,7 @@ export function AdminShell({
         </div>
       </aside>
 
-      <div className="flex min-h-dvh min-w-0 flex-col">
+      <div className="flex min-h-dvh min-w-0 flex-col overflow-x-hidden">
         <header className="sticky top-0 z-30 border-b border-border/75 bg-canvas/92 backdrop-blur">
           <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
             <div className="flex items-center gap-3 lg:hidden">
