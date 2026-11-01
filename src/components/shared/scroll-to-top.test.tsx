@@ -14,7 +14,7 @@ describe("ScrollToTop", () => {
 
   beforeEach(() => {
     scrollToMock = vi.fn();
-    window.scrollTo = scrollToMock;
+    window.scrollTo = scrollToMock as unknown as typeof window.scrollTo;
     window.location.hash = "";
   });
 
