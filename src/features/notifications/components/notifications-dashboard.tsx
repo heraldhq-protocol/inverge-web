@@ -51,7 +51,7 @@ export function NotificationsDashboard({
             {dataSource === "live" ? "Live updates" : "Sample data"}
           </span>
         </div>
-        <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
+        <h1 className="mt-2 text-balance text-2xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
           Notifications
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted sm:text-base">

@@ -101,6 +101,13 @@ export function SettingsDashboard({
                 : "Settings could not be loaded from the API. Your signed-in identity is shown, and controls stay read-only until it reconnects."}
           </p>
         </div>
+        <h1 className="mt-2 text-balance text-2xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
+          Settings
+        </h1>
+        <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted sm:text-base">
+          Manage your profile, sign-in preferences, discovery, and account
+          controls.
+        </p>
       </header>
 
       <div className="mt-4">

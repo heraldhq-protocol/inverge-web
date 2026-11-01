@@ -48,7 +48,7 @@ export function WalletPageShell({
   return (
     <div className="mx-auto w-full max-w-6xl px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10">
       <header className="max-w-2xl">
-        <h1 className="text-balance text-[1.75rem] font-bold leading-tight tracking-[-0.04em] text-ink sm:text-4xl">
+        <h1 className="text-balance text-2xl font-bold leading-tight tracking-[-0.04em] text-ink sm:text-4xl">
           {title}
         </h1>
         <p className="mt-2 text-base leading-6 text-muted sm:text-[0.9375rem]">
