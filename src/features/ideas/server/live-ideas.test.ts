@@ -323,6 +323,7 @@ describe("live idea comments", () => {
 
     // #then
     expect(thread.hasMore).toBe(false);
+    expect(thread.nextCursor).toBeNull();
     expect(thread.comments).toEqual([
       expect.objectContaining({
         author: "Ada Obi",
@@ -332,25 +333,27 @@ describe("live idea comments", () => {
         pinned: true,
       }),
       expect.objectContaining({
-        author: "Inverge creator",
-        authorInitials: "IC",
+        author: "Community member",
+        authorId: "user-2",
+        authorInitials: "CM",
         id: "comment-2",
-        pinned: false,
       }),
     ]);
-    expect(fetchMock).toHaveBeenCalledWith("/ideas/idea-1/comments?limit=20");
+    expect(fetchMock).toHaveBeenCalledWith(
+      "/ideas/idea-1/comments?limit=20",
+      {},
+    );
   });
 
-  it("returns an empty thread for a missing idea and rethrows outages", async () => {
+  it("reports a missing or failed thread instead of pretending it is empty", async () => {
     // #given
     fetchMock.mockRejectedValueOnce(
       Object.assign(new Error("not found"), { status: 404 }),
     );
 
     // #when / #then
-    await expect(getLiveIdeaComments("missing")).resolves.toEqual({
-      comments: [],
-      hasMore: false,
+    await expect(getLiveIdeaComments("missing")).rejects.toMatchObject({
+      status: 404,
     });
 
     // #given

@@ -88,6 +88,7 @@ type PostAuthPathInput = {
 };
 
 /**
+/**
  * The email-confirmation URL, carrying the destination and door so the flow
  * resumes in the right place after the code is accepted.
  */
@@ -116,32 +117,76 @@ export function emailVerificationPath({
 }
 
 /**
+ * Appends a return destination to an internal path without ever making it
+ * absolute. The value is expected to have passed `safeReturnPath` already; the
+ * structural checks here keep a malformed value from being re-encoded into one.
+ */
+export function withNextPath(path: string, returnPath?: string): string {
+  const candidate = returnPath?.trim();
+  if (
+    !candidate ||
+    candidate === DASHBOARD_HOME_PATH ||
+    candidate === "/" ||
+    !candidate.startsWith("/") ||
+    candidate.startsWith("//")
+  ) {
+    return path;
+  }
+
+  const [pathname, search = ""] = path.split("?");
+  const params = new URLSearchParams(search);
+  params.set("next", candidate);
+  return `${pathname}?${params.toString()}`;
+}
+
+/** True when the visitor asked for a page other than the dashboard. */
+export function hasSpecificReturnPath(
+  returnPath: string | undefined,
+): returnPath is string {
+  return Boolean(
+    returnPath && returnPath !== DASHBOARD_HOME_PATH && returnPath !== "/",
+  );
+}
+
+/**
  * Where a visitor goes immediately after the session exchange.
  *
- * Email confirmation is a non-blocking account task: it is prompted in the app
- * shell and settings, but it never stands between sign-in and the dashboard,
- * onboarding, or supporting an idea. Authored actions re-check it server-side.
+ * An incomplete profile always wins: no intent may skip account setup, and the
+ * original destination travels in `next` so it is not lost. Once the profile
+ * exists, creator intent opens Creator Studio only when the visitor did not ask
+ * for a specific page; every other visitor continues to the page they
+ * originally asked for. Email confirmation remains a non-blocking account task.
  */
 export function postAuthPath({
   intent,
   requiresOnboarding,
   returnPath,
 }: PostAuthPathInput): string {
-  if (requiresOnboarding) return PROFILE_ONBOARDING_PATH;
-  if (intent === "creator") return CREATOR_HOME_PATH;
-  return returnPath;
+  if (requiresOnboarding) {
+    return withNextPath(PROFILE_ONBOARDING_PATH, returnPath);
+  }
+  if (intent === "creator" && !hasSpecificReturnPath(returnPath)) {
+    return CREATOR_HOME_PATH;
+  }
+  return returnPath || DASHBOARD_HOME_PATH;
 }
 
 /**
  * Where the shared profile step sends the visitor once the API has stored it.
  *
  * Every completed profile sees the starting-point question, because it is the
- * same onboarding for both doors. Creator intent travels in the query string so
- * the question can pre-select "Build & validate" without answering it for the
- * visitor.
+ * same onboarding for both doors. Creator intent and the original destination
+ * travel in the query string, so the question can pre-select "Build & validate"
+ * without answering it for the visitor and the discussion they came from is not
+ * lost.
  */
-export function postProfilePath(intent: OnboardingIntent): string {
-  return intent === "creator"
-    ? `${ROLE_ONBOARDING_PATH}?intent=creator`
-    : ROLE_ONBOARDING_PATH;
+export function postProfilePath(
+  intent: OnboardingIntent,
+  returnPath?: string,
+): string {
+  const path =
+    intent === "creator"
+      ? `${ROLE_ONBOARDING_PATH}?intent=creator`
+      : ROLE_ONBOARDING_PATH;
+  return withNextPath(path, returnPath);
 }

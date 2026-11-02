@@ -13,6 +13,8 @@ import {
   campaignTaxonomyText,
 } from "@/features/campaigns/lib/filters";
 import { getCampaignDetailSurface } from "@/features/campaigns/server/campaign-surfaces";
+import { getLiveCampaignComments } from "@/features/campaigns/server/live-campaign-comments";
+import { readSessionUser } from "@/features/auth/server/session-user";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -69,7 +71,10 @@ export default async function CampaignPage({
   searchParams,
 }: PageProps) {
   const { slug } = await params;
-  const surface = await getCampaignDetailSurface(slug);
+  const [surface, user] = await Promise.all([
+    getCampaignDetailSurface(slug),
+    readSessionUser(),
+  ]);
   if (!surface) notFound();
 
   const requested = (await searchParams).tab;
@@ -77,6 +82,7 @@ export default async function CampaignPage({
 
   if (surface.dataSource === "live") {
     const { campaign } = surface.view;
+    const discussion = await getLiveCampaignComments(campaign.id);
 
     return (
       <>
@@ -96,8 +102,19 @@ export default async function CampaignPage({
           ])}
         />
         <LiveCampaignDetailPage
+          discussion={discussion}
           requestedTab={requestedTab}
           view={surface.view}
+          viewer={
+            user
+              ? {
+                  avatarUrl: user.avatarUrl,
+                  displayName: user.displayName,
+                  id: user.id,
+                  signedIn: true,
+                }
+              : undefined
+          }
         />
       </>
     );

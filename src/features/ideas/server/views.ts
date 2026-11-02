@@ -83,6 +83,9 @@ export type IdeaDetailView = {
    * intact. The page keeps rendering and only the thread reports the failure.
    */
   commentsState: IdeaCommentsState;
+  /** The cursor for the next page, or null when the first page is the last. */
+  commentsNextCursor: string | null;
+  commentsHasMore: boolean;
   /** The viewer's own support/pre-pledge state; empty for a visitor. */
   signals: IdeaSignals;
   viewer: IdeaViewer;
@@ -96,6 +99,8 @@ export const getIdeaDetailView = cache(
       return {
         comments: [],
         commentsState: "preview",
+        commentsHasMore: false,
+        commentsNextCursor: null,
         dataSource: "preview",
         idea,
         ideas: allPublicIdeas(ideasPreviewData),
@@ -134,6 +139,8 @@ export const getIdeaDetailView = cache(
     return {
       comments: thread?.comments ?? [],
       commentsState: thread ? "live" : "unavailable",
+      commentsHasMore: thread?.hasMore ?? false,
+      commentsNextCursor: thread?.nextCursor ?? null,
       dataSource: "live",
       idea,
       ideas,

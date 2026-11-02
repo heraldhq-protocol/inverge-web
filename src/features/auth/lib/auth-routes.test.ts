@@ -18,6 +18,8 @@ describe("safeReturnPath", () => {
       "https://evil.test",
       "//evil.test",
       "/\\evil.test",
+      "/%2F%2Fevil.test",
+      "/%5Cevil.test",
       "javascript:alert(1)",
       "/d\u0000evil",
       "/auth",
@@ -28,6 +30,15 @@ describe("safeReturnPath", () => {
     ]) {
       expect(safeReturnPath(candidate)).toBe("/d");
     }
+  });
+
+  it("keeps the query and fragment that make a discussion return exact", () => {
+    expect(
+      safeReturnPath("/campaigns/community-power?tab=discussion&compose=1"),
+    ).toBe("/campaigns/community-power?tab=discussion&compose=1");
+    expect(safeReturnPath("/ideas/abc?compose=1#idea-discussion")).toBe(
+      "/ideas/abc?compose=1#idea-discussion",
+    );
   });
 });
 

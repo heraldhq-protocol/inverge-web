@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { type FormEvent, useState } from "react";
 
 import {
+  hasSpecificReturnPath,
   initialStartingPoint,
   type OnboardingIntent,
   skipStartingPointPath,
@@ -33,7 +34,13 @@ const startingPoints = [
   },
 ] as const;
 
-export function RoleOnboardingForm({ intent }: { intent: OnboardingIntent }) {
+export function RoleOnboardingForm({
+  intent,
+  returnPath,
+}: {
+  intent: OnboardingIntent;
+  returnPath?: string;
+}) {
   const router = useRouter();
   const [startingPoint, setStartingPoint] = useState<StartingPoint | null>(
     initialStartingPoint(intent),
@@ -49,13 +56,24 @@ export function RoleOnboardingForm({ intent }: { intent: OnboardingIntent }) {
     }
 
     setStatus("");
-    router.push(startingPointPath(startingPoint));
+    // A visitor who started from a specific page (an idea discussion, a
+    // campaign they were backing) finishes onboarding at that page. The
+    // starting-point answer is a fallback for everybody else.
+    router.push(
+      hasSpecificReturnPath(returnPath)
+        ? returnPath
+        : startingPointPath(startingPoint),
+    );
   }
 
   function handleSkip() {
     setStartingPoint(null);
     setStatus("");
-    router.push(skipStartingPointPath(intent));
+    router.push(
+      hasSpecificReturnPath(returnPath)
+        ? returnPath
+        : skipStartingPointPath(intent),
+    );
   }
 
   return (

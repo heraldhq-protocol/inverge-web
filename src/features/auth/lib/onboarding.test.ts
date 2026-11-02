@@ -42,9 +42,9 @@ describe("postAuthPath", () => {
       postAuthPath({
         intent: "creator",
         requiresOnboarding: false,
-        returnPath: "/d/wallet",
+        returnPath: DASHBOARD_HOME_PATH,
       }),
-    ).toBe("/d/creator");
+    ).toBe(CREATOR_HOME_PATH);
     expect(
       postAuthPath({
         intent: "general",
@@ -54,31 +54,51 @@ describe("postAuthPath", () => {
     ).toBe("/d/settings");
   });
 
-  it("always finishes an incomplete profile first", () => {
-    expect(
-      postAuthPath({
-        intent: "creator",
-        requiresOnboarding: true,
-        returnPath: "/d/wallet",
-      }),
-    ).toBe(PROFILE_ONBOARDING_PATH);
-    expect(
-      postAuthPath({
-        intent: "general",
-        requiresOnboarding: true,
-        returnPath: "/d/wallet",
-      }),
-    ).toBe(PROFILE_ONBOARDING_PATH);
-  });
-
-  it("opens Creator Studio only after a completed profile", () => {
+  it("keeps creator intent from replacing a specific destination", () => {
     expect(
       postAuthPath({
         intent: "creator",
         requiresOnboarding: false,
         returnPath: "/d/wallet",
       }),
+    ).toBe("/d/wallet");
+  });
+
+  it("finishes an incomplete profile first without losing the destination", () => {
+    expect(
+      postAuthPath({
+        intent: "creator",
+        requiresOnboarding: true,
+        returnPath: "/d/wallet",
+      }),
+    ).toBe(`${PROFILE_ONBOARDING_PATH}?next=%2Fd%2Fwallet`);
+    expect(
+      postAuthPath({
+        intent: "general",
+        requiresOnboarding: true,
+        returnPath: "/ideas/idea-1?compose=1",
+      }),
+    ).toBe(`${PROFILE_ONBOARDING_PATH}?next=%2Fideas%2Fidea-1%3Fcompose%3D1`);
+  });
+
+  it("opens Creator Studio when creator intent has no specific destination", () => {
+    expect(
+      postAuthPath({
+        intent: "creator",
+        requiresOnboarding: false,
+        returnPath: DASHBOARD_HOME_PATH,
+      }),
     ).toBe(CREATOR_HOME_PATH);
+  });
+
+  it("returns a creator to the page they explicitly asked for", () => {
+    expect(
+      postAuthPath({
+        intent: "creator",
+        requiresOnboarding: false,
+        returnPath: "/campaigns/community-power?tab=discussion",
+      }),
+    ).toBe("/campaigns/community-power?tab=discussion");
   });
 
   it("returns a general visitor to the page they asked for", () => {
@@ -114,6 +134,15 @@ describe("postProfilePath", () => {
     expect(postProfilePath("general")).toBe(ROLE_ONBOARDING_PATH);
     expect(postProfilePath("creator")).toBe(
       `${ROLE_ONBOARDING_PATH}?intent=creator`,
+    );
+  });
+
+  it("carries the original destination into the starting-point question", () => {
+    expect(postProfilePath("general", "/campaigns/c?tab=discussion")).toBe(
+      `${ROLE_ONBOARDING_PATH}?next=%2Fcampaigns%2Fc%3Ftab%3Ddiscussion`,
+    );
+    expect(postProfilePath("creator", "/ideas/i?compose=1")).toBe(
+      `${ROLE_ONBOARDING_PATH}?intent=creator&next=%2Fideas%2Fi%3Fcompose%3D1`,
     );
   });
 });

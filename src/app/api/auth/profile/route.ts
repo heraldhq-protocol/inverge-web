@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 
 import { ACCOUNT_TYPES, postProfilePath } from "@/features/auth/lib/onboarding";
+import { safeReturnPath } from "@/features/auth/lib/auth-routes";
 import { isPreviewAuth } from "@/features/auth/server/auth-mode";
 import { isSameOriginRequest } from "@/features/auth/server/origin";
 import {
@@ -42,6 +43,8 @@ const profileSchema = z.object({
   avatarUrl: z.string().trim().max(2048).optional(),
   // Public bio. The API caps it at 280 characters and moderates it before saving.
   bio: z.string().trim().max(280).optional(),
+  /** The page the visitor asked for before sign-in, if any. */
+  next: z.string().max(2048).optional(),
   displayName: z.string().trim().min(1).max(50),
   username: z
     .string()
@@ -100,7 +103,12 @@ export async function PATCH(request: Request) {
     const intent = await readOnboardingIntent();
     await clearOnboardingIntent();
 
-    return NextResponse.json({ nextPath: postProfilePath(intent) });
+    return NextResponse.json({
+      nextPath: postProfilePath(
+        intent,
+        safeReturnPath(parsed.data.next),
+      ),
+    });
   }
 
   const base = apiBaseUrl();
@@ -166,5 +174,7 @@ export async function PATCH(request: Request) {
   const intent = await readOnboardingIntent();
   await clearOnboardingIntent();
 
-  return NextResponse.json({ nextPath: postProfilePath(intent) });
+  return NextResponse.json({
+    nextPath: postProfilePath(intent, safeReturnPath(parsed.data.next)),
+  });
 }

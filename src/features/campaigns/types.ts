@@ -22,9 +22,7 @@ import type { MoneyAmount } from "@/lib/money";
  */
 
 /** The asset a campaign is denominated in (SRS §5, FR-301). USDC is 1:1 with the USD money model. */
-export type FundingAsset = "USDC";
-
-/**
+export type FundingAsset = "USDC";/**
  * An asset a contribution may settle in.
  *
  * `cNGN` is modelled because FR-401 names it "where supported"; a campaign that
@@ -841,3 +839,16 @@ export function isCampaignShowFilter(
 export function isCampaignView(value: string): value is "grid" | "list" {
   return (CAMPAIGN_VIEWS as readonly string[]).includes(value);
 }
+
+/** One campaign discussion comment, as the API projects it publicly. */
+export type CampaignComment = {
+  id: string;
+  body: string;
+  createdAt: string;
+  author: {
+    id: string;
+    displayName: string | null;
+    avatarUrl: string | null;
+    isCreator: boolean;
+  };
+};

@@ -10,6 +10,7 @@ import {
 } from "@/features/analytics/server/ingest";
 import { IdeaDetail } from "@/features/ideas/components/idea-detail";
 import { getIdeaDetailView } from "@/features/ideas/server/views";
+import { readSessionUser } from "@/features/auth/server/session-user";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
@@ -72,7 +73,10 @@ export default async function IdeaDetailPage({
   await connection();
 
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const view = await getIdeaDetailView(id);
+  const [view, user] = await Promise.all([
+    getIdeaDetailView(id),
+    readSessionUser(),
+  ]);
   if (!view) notFound();
 
   const { idea } = view;
@@ -98,6 +102,8 @@ export default async function IdeaDetailPage({
       />
       <IdeaDetail
         comments={view.comments}
+        commentsHasMore={view.commentsHasMore}
+        commentsNextCursor={view.commentsNextCursor}
         commentsState={view.commentsState}
         dataSource={view.dataSource}
         idea={idea}
@@ -105,6 +111,16 @@ export default async function IdeaDetailPage({
         signals={view.signals}
         topics={view.topics}
         viewer={view.viewer}
+        commentViewer={
+          user
+            ? {
+                avatarUrl: user.avatarUrl,
+                displayName: user.displayName,
+                id: user.id,
+                signedIn: true,
+              }
+            : undefined
+        }
       />
     </>
   );

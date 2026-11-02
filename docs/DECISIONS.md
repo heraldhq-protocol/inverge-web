@@ -2439,6 +2439,45 @@ Revisit when: email delivery moves to a different provider, the product adds
 more granular notification topics, or an account-deletion workflow with
 retention automation exists.
 
+### D-062: Authentication returns the visitor to the page they left
+
+- Date: 2026-11-02
+- Status: Accepted
+- Owner: Web
+
+Context: Discussion, support and saving actions send a signed-out visitor to
+`/auth`. Before this decision several entry points linked to `/auth` with no
+destination, and the onboarding flow redirected a new account to `/d` after the
+profile step. A visitor who tried to comment on an idea or campaign lost the
+page, the selected tab and the fact that they had opened the composer.
+
+Decision: One return destination, carried as the existing `?next=` query
+parameter and validated by `safeReturnPath` at every read. The auth page passes
+it to `postAuthPath`; an incomplete profile receives it as
+`/onboarding/profile?next=...`, the profile form forwards it to the BFF, and the
+starting-point form sends the visitor back to it. Discussion sign-in links add a
+`compose=1` hint, which focuses the composer on return and is removed with
+`history.replaceState`. The hint never carries text and nothing is posted
+automatically.
+
+`safeReturnPath` now parses the value against a fixed origin, returns only its
+path/query/fragment, and rejects protocol-relative, encoded-separator,
+backslash, control-character and absolute URLs with the dashboard fallback.
+
+Alternatives: Keep a page-specific redirect chain (does not survive the Web3Auth
+modal or onboarding); store the destination in localStorage (client-readable,
+lost across the OAuth redirect, and another place to leak state); encode the
+composer text in the URL (leaks user content and risks replay); deep-link into a
+payment or transaction after auth (replays money without confirmation).
+
+Consequences: Every authentication entry point uses the same sanitised path. A
+new account finishes onboarding before returning to the discussion, not instead
+of it. Transactions, pre-pledges and campaign submissions still require a fresh
+explicit confirmation after the return.
+
+Revisit when: the provider changes its callback shape, or a native app needs a
+deep-link equivalent.
+
 ## Decision template
 
 Copy this section for a new decision.

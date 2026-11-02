@@ -170,10 +170,13 @@ export type IdeaDetailRecord = Omit<
 
 export type IdeaComment = {
   author: string;
+  authorAvatarUrl?: string | null;
+  authorId?: string;
   authorInitials: string;
   body: string;
   createdAt: string;
   id: string;
+  isCreator?: boolean;
   pinned?: boolean;
 };
 

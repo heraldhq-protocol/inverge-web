@@ -15,6 +15,7 @@ import { Eyebrow } from "@/components/ui/eyebrow";
 import { Meter } from "@/components/ui/meter";
 import { Pill, type PillTone } from "@/components/ui/pill";
 import { CampaignBreadcrumbs } from "@/features/campaigns/components/campaign-breadcrumbs";
+import { CampaignDiscussion } from "@/features/campaigns/components/campaign-discussion";
 import {
   CampaignTabs,
   type CampaignTabPanel,
@@ -34,6 +35,8 @@ import type {
   LiveRewardTier,
 } from "@/features/campaigns/server/live-campaign-detail";
 import type { LiveCampaignStatus } from "@/features/campaigns/server/live-campaigns";
+import type { CampaignDiscussionView } from "@/features/campaigns/server/live-campaign-comments";
+import type { DiscussionViewer } from "@/features/discussions/types";
 import { formatMoney } from "@/lib/money";
 
 const STATUS_TONES: Readonly<Record<LiveCampaignStatus, PillTone>> = {
@@ -64,6 +67,7 @@ function tabsFor(campaign: LiveCampaignDetail): CampaignTab[] {
     tabs.push({ id: "milestones", label: "Milestones" });
   }
   tabs.push({ id: "rewards", label: "Rewards" });
+  tabs.push({ id: "discussion", label: "Discussion" });
   return tabs;
 }
 
@@ -416,11 +420,15 @@ function EscrowNote() {
  * they are the indexed record.
  */
 export function LiveCampaignDetailPage({
+  discussion,
   requestedTab,
   view,
+  viewer,
 }: {
+  discussion: CampaignDiscussionView;
   requestedTab?: string | undefined;
   view: LiveCampaignDetailView;
+  viewer?: DiscussionViewer | undefined;
 }) {
   const { campaign, related, relatedState } = view;
   const tabs = tabsFor(campaign);
@@ -437,7 +445,18 @@ export function LiveCampaignDetailPage({
     : null;
 
   const content: Record<CampaignTabId, ReactNode> = {
-    discussion: null,
+    discussion: (
+      <CampaignDiscussion
+        campaignId={campaign.id}
+        comments={discussion.comments}
+        initialHasMore={discussion.hasMore}
+        initialNextCursor={discussion.nextCursor}
+        slug={campaign.slug}
+        source="live"
+        unavailable={discussion.state === "unavailable"}
+        viewer={viewer}
+      />
+    ),
     facts: null,
     faqs: null,
     milestones: <MilestonesPanel campaign={campaign} />,

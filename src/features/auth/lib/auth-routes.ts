@@ -22,8 +22,10 @@ const DEFAULT_RETURN_PATH = "/d";
  *
  * Only a same-site absolute path is allowed. A protocol-relative value
  * (`//evil.test`), an absolute URL, a backslash (which some URL parsers treat as
- * a slash), or a control character would turn the return link into an open
- * redirect, so each is dropped in favour of the dashboard.
+ * a slash), an encoded separator, or a control character would turn the return
+ * link into an open redirect, so each is dropped in favour of the dashboard.
+ * The value is parsed against a fixed origin and only its path, query and
+ * fragment are returned, so a crafted scheme cannot survive normalisation.
  */
 export function safeReturnPath(value: string | string[] | undefined): string {
   const candidate = Array.isArray(value) ? value[0] : value;
@@ -35,20 +37,43 @@ export function safeReturnPath(value: string | string[] | undefined): string {
   // Control characters are rejected: some URL parsers strip them.
   if (/[\u0000-\u001f\u007f]/.test(candidate)) return DEFAULT_RETURN_PATH;
 
-  // Returning to the sign-in or sign-out page would bounce the visitor between
-  // that page and its own redirect.
+  // One decode catches `%2F%2Fevil.test`, `%5Cevil.test` and encoded control
+  // characters before a downstream proxy can decode them into a redirect.
+  let decoded: string;
+  try {
+    decoded = decodeURIComponent(candidate);
+  } catch {
+    return DEFAULT_RETURN_PATH;
+  }
   if (
-    candidate === AUTH_PATH ||
-    candidate.startsWith(`${AUTH_PATH}?`) ||
-    candidate === EMAIL_VERIFICATION_PATH ||
-    candidate.startsWith(`${EMAIL_VERIFICATION_PATH}?`) ||
-    candidate === SIGN_OUT_PATH ||
-    candidate.startsWith(`${SIGN_OUT_PATH}?`)
+    decoded.startsWith("//") ||
+    decoded.includes("\\") ||
+    /[\u0000-\u001f\u007f]/.test(decoded)
   ) {
     return DEFAULT_RETURN_PATH;
   }
 
-  return candidate;
+  let url: URL;
+  try {
+    url = new URL(candidate, "https://inverge.local");
+  } catch {
+    return DEFAULT_RETURN_PATH;
+  }
+  if (url.origin !== "https://inverge.local" || !url.pathname.startsWith("/")) {
+    return DEFAULT_RETURN_PATH;
+  }
+
+  // Returning to the sign-in or sign-out page would bounce the visitor between
+  // that page and its own redirect.
+  if (
+    url.pathname === AUTH_PATH ||
+    url.pathname === EMAIL_VERIFICATION_PATH ||
+    url.pathname === SIGN_OUT_PATH
+  ) {
+    return DEFAULT_RETURN_PATH;
+  }
+
+  return `${url.pathname}${url.search}${url.hash}`;
 }
 
 /**

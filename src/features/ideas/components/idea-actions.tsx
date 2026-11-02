@@ -13,6 +13,7 @@ import { type FormEvent, useState } from "react";
 
 import { Button } from "@/components/ui/button";
 import { Field } from "@/components/ui/field";
+import { authHref } from "@/features/auth/lib/auth-routes";
 import { FeedbackDialog } from "@/features/feedback/components/feedback-dialog";
 import {
   atomicToWholeInput,
@@ -62,18 +63,24 @@ async function failureMessage(
   return fallback;
 }
 
-function SignInGate({ action }: { action: string }) {
+function SignInGate({
+  action,
+  returnPath,
+}: {
+  action: string;
+  returnPath: string;
+}) {
   return (
     <p className="text-sm leading-6 text-muted">
       <Link
-        href="/auth"
+        href={authHref(returnPath)}
         className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         Sign in
       </Link>{" "}
       or{" "}
       <Link
-        href="/auth"
+        href={authHref(returnPath)}
         className="font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
       >
         create an account
@@ -88,6 +95,7 @@ function SupportAction({
   error,
   mode,
   onToggle,
+  returnPath,
   signals,
   viewer,
 }: {
@@ -95,6 +103,7 @@ function SupportAction({
   error: string | null;
   mode: "live" | "preview";
   onToggle: () => void;
+  returnPath: string;
   signals: IdeaSignals;
   viewer: IdeaViewer;
 }) {
@@ -113,7 +122,7 @@ function SupportAction({
 
       {viewer === "visitor" ? (
         <div className="mt-3">
-          <SignInGate action="support this idea" />
+          <SignInGate action="support this idea" returnPath={returnPath} />
         </div>
       ) : (
         <Button
@@ -217,6 +226,7 @@ function PrePledgeAction({
   mode,
   onSave,
   onWithdraw,
+  returnPath,
   signals,
   viewer,
 }: {
@@ -224,6 +234,7 @@ function PrePledgeAction({
   mode: "live" | "preview";
   onSave: (amount: MoneyAmount) => string | null | Promise<string | null>;
   onWithdraw: () => string | null | Promise<string | null>;
+  returnPath: string;
   signals: IdeaSignals;
   viewer: IdeaViewer;
 }) {
@@ -285,7 +296,7 @@ function PrePledgeAction({
 
       {viewer === "visitor" ? (
         <div className="mt-3">
-          <SignInGate action="record a pre-pledge" />
+          <SignInGate action="record a pre-pledge" returnPath={returnPath} />
         </div>
       ) : existing && !editing ? (
         <div className="mt-3">
@@ -510,6 +521,7 @@ export function IdeaActions({
   const [actionError, setActionError] = useState<string | null>(null);
 
   const form = idea.feedbackForm;
+  const returnPath = `/ideas/${idea.id}`;
   const openForInput =
     mode === "preview" ||
     !idea.status ||
@@ -628,6 +640,7 @@ export function IdeaActions({
           busy={busy}
           error={actionError}
           mode={mode}
+          returnPath={returnPath}
           signals={signals}
           viewer={viewer}
           onToggle={() => {
@@ -651,6 +664,7 @@ export function IdeaActions({
               <PrePledgeAction
                 busy={busy}
                 mode={mode}
+                returnPath={returnPath}
                 signals={signals}
                 viewer={viewer}
                 onSave={savePrePledge}
