@@ -65,6 +65,19 @@ describe("toSessionUser", () => {
     });
   });
 
+  it("keeps an unverified email explicit", () => {
+    // #given / #when
+    const user = toSessionUser({
+      email: "amara@example.test",
+      emailVerified: false,
+      id: "usr_123",
+      requiresOnboarding: false,
+    });
+
+    // #then
+    expect(user?.emailVerified).toBe(false);
+  });
+
   it("keeps a user whose provider did not supply an email", () => {
     expect(
       toSessionUser({

@@ -54,6 +54,8 @@ type ProfileOnboardingFormProps = {
    * shared name/username form rather than collecting data it would discard.
    */
   preview?: boolean;
+  /** Where the visitor asked to go before sign-in; carried through onboarding. */
+  returnPath?: string;
 };
 
 export function ProfileOnboardingForm({
@@ -62,6 +64,7 @@ export function ProfileOnboardingForm({
   initialDisplayName,
   initialUsername,
   preview = false,
+  returnPath,
 }: ProfileOnboardingFormProps) {
   const router = useRouter();
   const [accountType, setAccountType] = useState<AccountType | null>(
@@ -210,6 +213,7 @@ export function ProfileOnboardingForm({
             : {}),
           displayName: cleanPublicName,
           username: cleanUsername,
+          ...(returnPath ? { next: returnPath } : {}),
         }),
         headers: { "Content-Type": "application/json" },
         method: "PATCH",

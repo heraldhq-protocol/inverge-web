@@ -77,7 +77,14 @@ export function CampaignDetail({
   const categoryText = campaignTaxonomyText(campaign);
 
   const content: Record<CampaignTabId, ReactNode> = {
-    discussion: <CampaignDiscussion slug={campaign.slug} />,
+    discussion: (
+      <CampaignDiscussion
+        campaignId={campaign.id}
+        comments={[]}
+        slug={campaign.slug}
+        source="preview"
+      />
+    ),
     facts: <CampaignFactsTab campaign={campaign} />,
     faqs: <CampaignFaq campaign={campaign} />,
     milestones: <CampaignMilestoneTimeline campaign={campaign} nowIso={now} />,

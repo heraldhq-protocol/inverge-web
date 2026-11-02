@@ -23,6 +23,7 @@ import type {
   MyIdea,
   RoadmapStep,
 } from "@/features/ideas/types";
+import { fetchDiscussionPage } from "@/features/discussions/server/comments-api";
 import { fetchApiJson } from "@/lib/api/server";
 import {
   creatorNameFor,
@@ -725,42 +726,40 @@ export const COMMENT_PAGE_LIMIT = 20;
  *
  * Comment bodies are public; author identity is the API's projection and never
  * includes a wallet, email or internal user id beyond the opaque account id.
- * A failed or missing thread is the caller's decision - this function throws so
- * the page can distinguish "no comments" from "could not load".
+ * The next cursor is returned so the client can load more without re-reading
+ * the whole page. A failed or missing thread is the caller's decision - this
+ * function throws so the page can distinguish "no comments" from "could not
+ * load".
  */
 export async function getLiveIdeaComments(
   idOrSlug: string,
   limit = COMMENT_PAGE_LIMIT,
-): Promise<{ comments: IdeaComment[]; hasMore: boolean }> {
-  try {
-    const page = await fetchApiJson<ApiCommentPage>(
-      `/ideas/${encodeURIComponent(idOrSlug)}/comments?limit=${limit}`,
-    );
+): Promise<{ comments: IdeaComment[]; hasMore: boolean; nextCursor: string | null }> {
+  const page = await fetchDiscussionPage(
+    `/ideas/${encodeURIComponent(idOrSlug)}/comments`,
+    { limit },
+  );
 
-    return {
-      comments: page.data.map((comment) => {
-        const author = creatorNameFor({
-          displayName: comment.author.displayName,
-          id: comment.author.id,
-          username: comment.author.id,
-        });
-        return {
-          author,
-          authorInitials: initialsFor(author),
-          body: comment.body,
-          createdAt: comment.createdAt,
-          id: comment.id,
-          pinned: comment.highlighted,
-        };
-      }),
-      hasMore: page.page.hasMore,
-    };
-  } catch (error) {
-    if (error instanceof Error && "status" in error && error.status === 404) {
-      return { comments: [], hasMore: false };
-    }
-    throw error;
-  }
+  return {
+    comments: page.comments.map((comment) => ({
+      author:
+        comment.author.displayName ??
+        (comment.author.isCreator ? "Idea creator" : "Community member"),
+      authorAvatarUrl: comment.author.avatarUrl,
+      authorId: comment.author.id,
+      authorInitials: initialsFor(
+        comment.author.displayName ??
+          (comment.author.isCreator ? "Idea creator" : "Community member"),
+      ),
+      body: comment.body,
+      createdAt: comment.createdAt,
+      id: comment.id,
+      isCreator: comment.author.isCreator,
+      ...(comment.pinned ? { pinned: true } : {}),
+    })),
+    hasMore: page.hasMore,
+    nextCursor: page.nextCursor,
+  };
 }
 
 /**

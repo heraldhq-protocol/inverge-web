@@ -36,6 +36,7 @@ import { IdeaActions } from "@/features/ideas/components/idea-actions";
 import { IdeaCover } from "@/features/ideas/components/idea-cover";
 import { IdeaDiscoveryCard } from "@/features/ideas/components/idea-discovery-card";
 import { IdeaDiscussion } from "@/features/ideas/components/idea-discussion";
+import type { DiscussionViewer } from "@/features/discussions/types";
 import { CommunityInvite } from "@/features/feedback/components/community-invite";
 import { IdeaFollow } from "@/features/ideas/components/idea-follow";
 import { IdeaGoalsStrip } from "@/features/feedback/components/idea-goals-strip";
@@ -278,7 +279,10 @@ export function IdeaDetail({
   ideas,
   topics,
   comments = [],
+  commentsHasMore = false,
+  commentsNextCursor = null,
   commentsState = "preview",
+  commentViewer,
   signals = emptySignals,
   viewer = "visitor",
 }: {
@@ -287,7 +291,10 @@ export function IdeaDetail({
   ideas: readonly DiscoveryIdea[];
   topics: readonly Topic[];
   comments?: readonly IdeaComment[];
+  commentsHasMore?: boolean;
+  commentsNextCursor?: string | null;
   commentsState?: "live" | "preview" | "unavailable";
+  commentViewer?: DiscussionViewer | undefined;
   signals?: IdeaSignals;
   viewer?: IdeaViewer;
 }) {
@@ -724,10 +731,18 @@ export function IdeaDetail({
 
             {live ? (
               <IdeaDiscussion
-                canPost={false}
+                canPost={
+                  idea.status === "validating" ||
+                  idea.status === "threshold-met"
+                }
                 comments={comments}
+                ideaId={idea.id}
+                initialHasMore={commentsHasMore}
+                initialNextCursor={commentsNextCursor}
+                returnPath={`/ideas/${idea.id}`}
                 source="live"
                 unavailable={commentsState === "unavailable"}
+                viewer={commentViewer}
               />
             ) : (
               <IdeaDiscussion comments={previewComments[idea.id] ?? []} />
