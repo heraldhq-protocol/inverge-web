@@ -5,31 +5,41 @@ function Skeleton({ className }: { className: string }) {
 export default function SettingsLoading() {
   return (
     <div
-      className="mx-auto w-full max-w-7xl px-4 py-5 motion-safe:animate-pulse sm:px-6 sm:py-7 lg:px-8 lg:py-8 xl:px-10"
+      className="mx-auto w-full max-w-7xl px-4 py-5 motion-safe:animate-pulse sm:px-6 sm:py-6 lg:px-8 lg:py-7 xl:px-10"
       aria-label="Loading settings"
       role="status"
     >
       <span className="sr-only">Loading settings</span>
-      <Skeleton className="h-12 max-w-2xl" />
-      <div className="mt-10">
-        <Skeleton className="h-3 w-20" />
-        <Skeleton className="mt-4 h-9 w-56" />
-        <Skeleton className="mt-3 h-4 w-[32rem] max-w-full" />
-      </div>
-      <div className="mt-8 flex gap-2 overflow-hidden border-y border-border py-2">
+      <Skeleton className="h-44 w-full rounded-2xl sm:h-48" />
+      <Skeleton className="mt-4 h-32 w-full rounded-2xl" />
+      <div className="mt-4 flex gap-2 overflow-hidden rounded-xl border border-border/70 px-2 py-2.5">
         <Skeleton className="h-10 w-24 shrink-0" />
         <Skeleton className="h-10 w-24 shrink-0" />
+        <Skeleton className="h-10 w-20 shrink-0" />
         <Skeleton className="h-10 w-28 shrink-0" />
         <Skeleton className="h-10 w-24 shrink-0" />
       </div>
-      <div className="mt-10 max-w-5xl space-y-10">
-        <div>
-          <Skeleton className="h-6 w-32" />
-          <Skeleton className="mt-3 h-72 w-full" />
+      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_19rem]">
+        <div className="space-y-5">
+          <div className="rounded-2xl border border-border bg-surface p-5">
+            <Skeleton className="h-10 w-48" />
+            <Skeleton className="mt-5 h-40 w-full" />
+          </div>
+          <div className="grid gap-5 lg:grid-cols-2">
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <Skeleton className="h-10 w-40" />
+              <Skeleton className="mt-5 h-44 w-full" />
+            </div>
+            <div className="rounded-2xl border border-border bg-surface p-5">
+              <Skeleton className="h-10 w-36" />
+              <Skeleton className="mt-5 h-44 w-full" />
+            </div>
+          </div>
         </div>
-        <div>
-          <Skeleton className="h-6 w-36" />
-          <Skeleton className="mt-3 h-52 w-full" />
+        <div className="hidden rounded-2xl border border-border bg-surface p-5 xl:block">
+          <Skeleton className="h-8 w-40" />
+          <Skeleton className="mt-4 h-32 w-full" />
+          <Skeleton className="mt-4 h-24 w-full" />
         </div>
       </div>
     </div>
