@@ -134,7 +134,7 @@ export type ApiWriteResult = ApiWriteSuccess | ApiWriteFailure;
 export async function sendApiJson(
   path: string,
   options: {
-    method: "DELETE" | "GET" | "PATCH" | "POST";
+    method: "DELETE" | "GET" | "PATCH" | "POST" | "PUT";
     token?: string | null;
     body?: unknown;
     timeoutMs?: number;

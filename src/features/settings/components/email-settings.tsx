@@ -1,52 +1,143 @@
-import { Mail } from "lucide-react";
-import Link from "next/link";
+"use client";
 
-import { SettingsCard } from "@/features/settings/components/settings-section";
+import { Mail } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+
+import { Button } from "@/components/ui/button";
+import { StatusBadge } from "@/components/ui/status-badge";
+import { EmailVerificationDialog } from "@/features/settings/components/email-verification-dialog";
 import { SettingsRow } from "@/features/settings/components/settings-row";
+import { SettingsCard } from "@/features/settings/components/settings-section";
+import type {
+  EmailVerificationChallenge,
+  SettingsAccount,
+  SettingsData,
+} from "@/features/settings/types";
+import { sendJson } from "@/lib/api/client";
 
 export function EmailSettings({
-  email,
-  verified,
+  account,
+  challenge,
+  fallbackEmail,
+  pendingEmail,
+  source,
 }: {
-  email: string | null;
-  verified: boolean;
+  account: SettingsAccount;
+  challenge: EmailVerificationChallenge | null;
+  fallbackEmail: string;
+  pendingEmail: string | null;
+  source: SettingsData["source"];
 }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
+  const [notice, setNotice] = useState("");
+  const [error, setError] = useState("");
+
+  const email = account.email ?? fallbackEmail;
+  const verified = account.emailVerified;
+  const hasEmail = email.length > 0;
+
+  async function cancelPending() {
+    setCancelling(true);
+    setNotice("");
+    setError("");
+    const result = await sendJson<{ pendingEmail: null }>(
+      "/api/settings/email/pending",
+      { method: "DELETE" },
+    );
+    setCancelling(false);
+    if (!result.ok) {
+      setError(result.message);
+      return;
+    }
+    setNotice("Pending email change cancelled.");
+    router.refresh();
+  }
+
   return (
-    <SettingsCard>
-      <SettingsRow
-        icon={Mail}
-        title="Email address"
-        description={
-          email
-            ? verified
-              ? `${email} is confirmed. It is used for account notices and email verification.`
-              : `${email} has not been confirmed. Confirm it to comment, publish ideas, and submit campaigns.`
-            : "No address is attached to this account yet. Add one to unlock authored actions."
-        }
-        action={
-          <div className="flex flex-wrap items-center justify-end gap-2">
-            <span
-              className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-                verified
-                  ? "bg-brand-soft text-brand-strong"
-                  : "bg-warning/10 text-warning-strong"
-              }`}
-            >
-              {verified ? "Verified" : "Not verified"}
-            </span>
-            <Link
-              href="/auth/email?next=%2Fd%2Fsettings&change=1"
-              className="inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand/[0.07] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              {verified ? "Change" : email ? "Confirm" : "Add email"}
-            </Link>
-          </div>
-        }
-      />
-      <li className="px-4 py-3 text-xs leading-5 text-muted sm:px-5">
-        Email confirmation proves you can receive mail at this address. It is
-        separate from identity verification (KYC) and does not replace it.
-      </li>
-    </SettingsCard>
+    <>
+      <SettingsCard>
+        <SettingsRow
+          icon={Mail}
+          title="Account email"
+          description={
+            hasEmail
+              ? `${email} · Used for account notices, receipts and security alerts.`
+              : "No email is stored on this account yet. Add one to receive account notices and receipts."
+          }
+          action={
+            <div className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
+              <StatusBadge
+                variant={
+                  verified ? "success" : hasEmail ? "warning" : "neutral"
+                }
+              >
+                {verified ? "Verified" : hasEmail ? "Not verified" : "No email"}
+              </StatusBadge>
+              {pendingEmail ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="ghost"
+                  disabled={cancelling || source !== "api"}
+                  onClick={cancelPending}
+                >
+                  {cancelling ? "Cancelling…" : "Cancel change"}
+                </Button>
+              ) : null}
+              <Button
+                type="button"
+                size="sm"
+                variant="ghost"
+                onClick={() => {
+                  setNotice("");
+                  setError("");
+                  setOpen(true);
+                }}
+              >
+                {pendingEmail
+                  ? "Finish change"
+                  : challenge
+                    ? "Enter code"
+                    : verified
+                      ? "Change email"
+                      : hasEmail
+                        ? "Verify email"
+                        : "Add email"}
+              </Button>
+            </div>
+          }
+        />
+      </SettingsCard>
+
+      {pendingEmail ? (
+        <p className="px-4 py-2.5 text-xs leading-5 text-warning-strong sm:px-5">
+          Waiting for confirmation at {pendingEmail}. Your current address stays
+          active until the new one is verified.
+        </p>
+      ) : (
+        <p
+          aria-live="polite"
+          className="min-h-5 px-4 py-2.5 text-xs leading-5 text-muted sm:px-5"
+        >
+          {notice ||
+            error ||
+            "Changing your email requires a six-digit code from the new inbox before it becomes the account address."}
+        </p>
+      )}
+
+      {open ? (
+        <EmailVerificationDialog
+          account={account}
+          challenge={challenge}
+          onClose={() => setOpen(false)}
+          open={open}
+          pendingEmail={pendingEmail}
+          source={source}
+        />
+      ) : null}
+    </>
   );
 }

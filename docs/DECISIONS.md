@@ -67,6 +67,7 @@ choices.
 | D-058 | 2026-10-30 | Accepted | Creator feedback reads the anonymous `GET /me/feedback` projection; responses never carry respondent identity, and the inbox shows only the current form's resolvable answers. |
 | D-059 | 2026-10-30 | Accepted | Creator campaigns read `GET /campaigns?mine=true` and the creator-readable detail route for live sessions; the workspace shows funding and milestones but omits escrow and claim writes until those surfaces exist. |
 | D-060 | 2026-10-30 | Accepted | The wallet is a three-destination account surface; the SDK owns provider connection, the server projection owns account linkage, live SOL balance plus a CoinGecko USD estimate are the only live figures, and preview activity/refunds stay labelled. |
+| D-061 | 2026-11-02 | Accepted | Settings reads `GET /me/settings` and writes through same-origin BFF routes to the API; preview and unreachable-API sessions are read-only, and account deletion is an auditable request rather than an immediate delete. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2402,6 +2403,41 @@ behaviour is verified.
 Revisit when: Chain activity gains a verified index, the refund service or escrow
 index exists, the provider SDK changes its documented hooks, or a receive/deposit
 policy can expose the linked address as a stable payout address.
+
+### D-061: Settings writes go through the API, and preview sessions are read-only
+
+- Date: 2026-11-02
+- Status: Accepted
+- Owner: Web + API
+
+Context: The redesigned settings screen previously stored values in client state
+and labelled them as a preview. That was honest about the missing backend, but
+the product needs a real save path for profile, feed, notifications, email
+verification and account requests. A local preview session still exists for
+design review and must not look like a live account.
+
+Decision: `GET /me/settings` is the single read aggregate. Profile data uses the
+existing `PATCH /auth/me/profile` (extended with `location`). Feed and
+notification preferences have focused `PUT` routes. Email verification uses the
+six-digit Resend-backed challenge flow. Data export and deletion create auditable
+support requests. Every write goes through a same-origin BFF route that forwards
+the API status and message. A preview or unreachable-API page renders read-only
+controls with an explicit banner; it never fakes a save or a success state.
+
+Alternatives: Keep client-only state (no persistence); write directly from the
+browser to the API (exposes the bearer token and breaks the HttpOnly-cookie
+boundary); treat preview as live (misrepresents a sample account); delete the
+account immediately (violates retention and campaign obligations).
+
+Consequences: Settings are real on a live account, and the API remains the source
+of truth. Preview screenshots remain available but cannot be confused with a
+successful write. The API now owns six-digit email codes, notification
+preferences, profile location and account requests. Account deletion is a
+reviewable request, not a destructive button.
+
+Revisit when: email delivery moves to a different provider, the product adds
+more granular notification topics, or an account-deletion workflow with
+retention automation exists.
 
 ## Decision template
 
