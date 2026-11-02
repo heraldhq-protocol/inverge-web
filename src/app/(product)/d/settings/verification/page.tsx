@@ -14,8 +14,14 @@ export const metadata: Metadata = {
     "Complete identity, AML and business verification before creating or funding campaigns.",
 };
 
-export default async function VerificationSettingsPage() {
+export default async function VerificationSettingsPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const preview = verificationPreviewMode();
+  const params = await searchParams;
+  const returnedFromProvider = typeof params.verificationSessionId === "string";
   let initial: VerificationState | null = null;
   let error: string | undefined;
 
@@ -37,17 +43,18 @@ export default async function VerificationSettingsPage() {
         ← Settings
       </Link>
       <h1 className="mt-3 text-2xl font-bold tracking-[-0.03em] text-ink sm:text-3xl">
-        Verification
+        Identity verification
       </h1>
       <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">
-        Verification is required before a campaign can be submitted and before a
-        contribution crosses the backer threshold. It cannot be completed by a
-        button click on this page: the provider returns the outcome to Inverge.
+        Verify your identity and sanctions status before submitting a campaign
+        or contributing above the backer threshold. The provider returns the
+        outcome to Inverge; this page never treats a redirect as proof.
       </p>
       <div className="mt-6">
         <VerificationPanel
           initial={initial}
           mode={preview ? "preview" : "live"}
+          returnedFromProvider={returnedFromProvider}
           {...(error === undefined ? {} : { error })}
         />
       </div>
