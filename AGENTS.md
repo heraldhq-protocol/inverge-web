@@ -109,5 +109,18 @@ Use the scripts defined in `package.json`; do not assume script names. If a chec
 cannot run, state exactly which check and why. Never claim a check passed unless
 you ran it successfully.
 
+A change that alters rendered UI also needs a browser pass; the scripts above do
+not prove a route renders or an interaction works. Start the dev server
+(`pnpm dev`, default `http://localhost:3000`) and drive the affected route with
+the `playwright` MCP tools: navigate, perform the interaction the change is
+about, and read the result back with a snapshot.
+
+Cover the states the route can be in — loading, empty, error, populated — plus one
+mobile viewport (`browser_resize` to 390x844). Check the console and network
+activity for that pass; a new console error or a failed request the change caused
+fails the change. Screenshot only when the visual result itself is under review.
+For a route behind authentication, use the real sign-in flow; if credentials or a
+required service are unavailable, report that route as unverified.
+
 End each task with a short account of what changed, what was verified, and any
 remaining decision or risk.

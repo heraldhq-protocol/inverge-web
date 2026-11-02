@@ -12,12 +12,15 @@ coverage/
 # TypeScript cache
 *.tsbuildinfo
 
-# Environment files
+# Environment files — real values only ever live in an untracked file.
+# Staging templates are committed (*.example); generated staging files are not.
 .env*
 !.env.example
+!.env.*.example
 
 # Local tooling and logs
 *.log
 .vercel/
+.playwright-mcp/
 .DS_Store
 Thumbs.db
