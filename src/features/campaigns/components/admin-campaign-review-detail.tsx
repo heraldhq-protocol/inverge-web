@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Pill } from "@/components/ui/pill";
 import { Textarea } from "@/components/ui/textarea";
+import { sendJson } from "@/lib/api/client";
 import { adminCan, type AdminActor } from "@/features/admin/permissions";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
 import {
@@ -102,6 +103,16 @@ export function AdminCampaignReviewDetail({
 
     setAction(null);
     setReason("");
+
+    if (typeof window !== "undefined") {
+      void sendJson(
+        `/api/admin/campaigns/${encodeURIComponent(campaign.id)}/review`,
+        {
+          method: "POST",
+          body: { action, reason: reason.trim() || undefined },
+        },
+      ).catch(() => undefined);
+    }
     setError(null);
     setNotice(
       `${campaignReviewPastLabels[result.decision.event.action]} recorded in this browser. It has not been sent to the API.`,
