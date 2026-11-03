@@ -8,7 +8,7 @@ import { deleteDiscussionComment } from "@/features/discussions/server/comments-
 import { apiFailureResponse, previewAuthResponse } from "@/lib/api/route";
 
 type RouteContext = {
-  params: Promise<{ ideaId: string; commentId: string }>;
+  params: Promise<{ id: string; commentId: string }>;
 };
 
 /**
@@ -22,9 +22,9 @@ export async function DELETE(request: Request, context: RouteContext) {
   const auth = await requireApiToken("Sign in before deleting a comment.");
   if (!auth.ok) return apiFailureResponse(auth);
 
-  const { ideaId, commentId } = await context.params;
+  const { id, commentId } = await context.params;
   const result = await deleteDiscussionComment(
-    `/ideas/${encodeURIComponent(ideaId)}/comments`,
+    `/ideas/${encodeURIComponent(id)}/comments`,
     auth.token,
     commentId,
   );
