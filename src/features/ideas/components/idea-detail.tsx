@@ -198,7 +198,7 @@ function GateMeter({ idea }: { idea: IdeaDetailModel }) {
     <div className="border-t border-border pt-4">
       <div className="flex items-center justify-between gap-3">
         <p className="text-xs font-semibold text-ink">Progress to launch</p>
-        <span className="text-[0.6875rem] text-muted">FR-204 threshold</span>
+        <span className="text-[0.6875rem] text-muted">Launch threshold</span>
       </div>
       <ul className="mt-3 space-y-3.5">
         {gate.checks.map((check) =>

@@ -175,8 +175,8 @@ export function routeAvailability(
       available: false,
       blockedReason: ON_RAMP_BLOCKED,
       description: settlesInCngn
-        ? "Pay by card or bank transfer in your own currency. The licensed provider converts it to USDC or cNGN and completes the contribution in one flow (FR-402), and quotes the rate, its fee, and the amount that settles."
-        : "Pay by card or bank transfer in your own currency. The licensed provider converts it to USDC and completes the contribution in one flow (FR-402), and quotes the rate, its fee, and the amount that settles.",
+        ? "Pay by card or bank transfer in your own currency. The licensed provider converts it to USDC or cNGN and completes the contribution in one flow, and quotes the rate, its fee, and the amount that settles."
+        : "Pay by card or bank transfer in your own currency. The licensed provider converts it to USDC and completes the contribution in one flow, and quotes the rate, its fee, and the amount that settles.",
       label: "Card or bank transfer",
       route: "fiat-on-ramp",
     },

@@ -66,10 +66,8 @@ describe("AdminCampaignReviewDetail", () => {
   it("names the preconditions it has not verified", async () => {
     await renderDetail(REVIEWER, fixture("campaign-naija-craft"));
 
-    expect(screen.getByText("Identity verification (FR-103)")).toBeDefined();
-    expect(
-      screen.getByText("Application fee confirmed (FR-311)"),
-    ).toBeDefined();
+    expect(screen.getByText("Identity verification")).toBeDefined();
+    expect(screen.getByText("Application fee confirmed")).toBeDefined();
     expect(screen.getAllByText("Missing")).toHaveLength(4);
   });
 

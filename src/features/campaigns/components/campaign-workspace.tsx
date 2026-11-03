@@ -40,7 +40,7 @@ import { formatMoney } from "@/lib/money";
 const payoutNotes = {
   "not-started": {
     label: "No payout yet",
-    note: "This build has no off-ramp. A released tranche stays as USDC in the connected wallet; converting it to naira is a partner integration (FR-405) that is not connected here.",
+    note: "This build has no off-ramp. A released tranche stays as USDC in the connected wallet; converting it to naira is a partner integration that is not connected here.",
     tone: "muted" as const,
   },
   pending: {

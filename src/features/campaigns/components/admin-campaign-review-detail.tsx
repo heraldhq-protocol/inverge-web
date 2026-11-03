@@ -193,8 +193,9 @@ export function AdminCampaignReviewDetail({
                   ? "marked verified"
                   : "not marked"}
               </span>
-              . This is a fixture value, not a KYC provider result. FR-103 must
-              be confirmed by the API before this queue is authoritative.
+              . This is a fixture value, not a KYC provider result. Identity
+              verification must be confirmed by the API before this queue is
+              authoritative.
             </p>
           </section>
 
@@ -535,8 +536,8 @@ export function AdminCampaignReviewDetail({
             </div>
             <ul className="mt-2 space-y-1.5">
               {[
-                "Identity verification (FR-103)",
-                "Application fee confirmed (FR-311)",
+                "Identity verification",
+                "Application fee confirmed",
                 "Escrow funded and indexed",
                 "Publication to the live discovery reader",
               ].map((label) => (

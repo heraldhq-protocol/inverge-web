@@ -106,8 +106,8 @@ export function AdminCampaignReviewQueue({
           The API exposes the authoritative review endpoint (POST
           /admin/campaigns/:id/review), but this preview is not connected to it,
           so a decision here is a named preview record, not a production state
-          change. KYC status and the application fee — FR-103 and FR-311 — are
-          enforced by the API and are not confirmed anywhere in this queue.
+          change. KYC status and the application fee are enforced by the API and
+          are not confirmed anywhere in this queue.
         </p>
       </section>
 
