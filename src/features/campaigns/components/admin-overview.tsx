@@ -280,7 +280,8 @@ export function AdminOverview({
             <h2 className="text-sm font-bold text-ink">Not authoritative</h2>
             <p className="mt-1 text-[0.6875rem] leading-4 text-muted">
               The API must repeat the state and permission checks, append the
-              audit record, and enforce FR-103 and FR-311 before review happens.
+              audit record, and enforce identity verification and the
+              application fee before review happens.
             </p>
           </section>
         </aside>

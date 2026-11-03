@@ -59,6 +59,12 @@ export type DraftSaveOptions = {
   draft: CampaignDraft;
   enabled: boolean;
   initial: DraftSaveInitial;
+  /**
+   * When set, the first save converts this idea into the campaign draft instead
+   * of creating an unlinked campaign. The idea lifecycle transition and the
+   * draft creation are one API call; later saves PATCH the draft as usual.
+   */
+  convertIdeaId?: string | null;
   /** Called once, when a create response makes the draft resumable by URL. */
   onCreated?: (id: string) => void;
   debounceMs?: number;
@@ -68,6 +74,7 @@ const DEFAULT_DEBOUNCE_MS = 1_200;
 const REQUEST_TIMEOUT_MS = 15_000;
 
 export function useCampaignDraftAutosave({
+  convertIdeaId = null,
   debounceMs = DEFAULT_DEBOUNCE_MS,
   draft,
   enabled,
@@ -145,6 +152,12 @@ export function useCampaignDraftAutosave({
           const id = idRef.current;
           const version = versionRef.current;
           const body = ready.payload;
+          const conversionTarget = id === null ? convertIdeaId : null;
+          const endpoint = id
+            ? `/api/campaigns/${encodeURIComponent(id)}`
+            : conversionTarget
+              ? `/api/ideas/${encodeURIComponent(conversionTarget)}/convert`
+              : "/api/campaigns";
 
           setState((current) => ({
             ...current,
@@ -154,21 +167,16 @@ export function useCampaignDraftAutosave({
 
           let response: Response;
           try {
-            response = await fetch(
-              id
-                ? `/api/campaigns/${encodeURIComponent(id)}`
-                : "/api/campaigns",
-              {
-                body: JSON.stringify(
-                  id ? { ...body, version: version ?? 0 } : body,
-                ),
-                cache: "no-store",
-                credentials: "same-origin",
-                headers: { "Content-Type": "application/json" },
-                method: id ? "PATCH" : "POST",
-                signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
-              },
-            );
+            response = await fetch(endpoint, {
+              body: JSON.stringify(
+                id ? { ...body, version: version ?? 0 } : body,
+              ),
+              cache: "no-store",
+              credentials: "same-origin",
+              headers: { "Content-Type": "application/json" },
+              method: id ? "PATCH" : "POST",
+              signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
+            });
           } catch {
             if (!mountedRef.current) return;
             setState((current) => ({
@@ -265,7 +273,7 @@ export function useCampaignDraftAutosave({
     }, debounceMs);
 
     return () => clearTimeout(timer);
-  }, [debounceMs, draft, enabled]);
+  }, [convertIdeaId, debounceMs, draft, enabled]);
 
   return state;
 }

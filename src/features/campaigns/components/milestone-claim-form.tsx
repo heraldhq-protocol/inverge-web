@@ -177,8 +177,7 @@ export function MilestoneClaimForm({
           {milestone.evidence}
         </p>
         <p className="mt-1.5 text-xs leading-5 text-muted">
-          Fixed when the campaign was approved (FR-302). You cannot change it
-          here.
+          Fixed when the campaign was approved. You cannot change it here.
         </p>
       </div>
 

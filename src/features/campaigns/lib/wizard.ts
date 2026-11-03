@@ -1127,8 +1127,7 @@ export function validateCampaignStep(
       if (workingCapital !== WORKING_CAPITAL_BPS) {
         issues.push({
           field: "workingCapitalPercent",
-          message:
-            "The working-capital tranche is fixed at 20% of the target (FR-503a).",
+          message: "The working-capital tranche is fixed at 20% of the target.",
         });
       }
 
@@ -1275,7 +1274,7 @@ export type SubmissionPrecondition = {
 };
 
 const IDENTITY_PRECONDITION_DESCRIPTION =
-  "Creators complete identity verification before a campaign can be submitted (FR-103).";
+  "Creators complete identity verification before a campaign can be submitted.";
 
 /**
  * Preconditions that must be true before a campaign may enter the review queue.
@@ -1293,10 +1292,10 @@ export function submissionPreconditions(
   const feePaid = isApplicationFeePaid(applicationFee);
   const feeDescription =
     applicationFee?.status === "PENDING"
-      ? "An application-fee payment is already pending. Resume that checkout rather than starting a second payment (FR-311)."
+      ? "An application-fee payment is already pending. Resume that checkout rather than starting a second payment."
       : applicationFee?.status === "FAILED"
-        ? "The last application-fee payment did not complete. Try the payment again; the fee is only charged on a successful checkout (FR-311)."
-        : "Submission requires a flat, non-refundable application fee, paid before the campaign joins the review queue (FR-311).";
+        ? "The last application-fee payment did not complete. Try the payment again; the fee is only charged on a successful checkout."
+        : "Submission requires a flat, non-refundable application fee, paid before the campaign joins the review queue.";
 
   return [
     {
@@ -1304,7 +1303,7 @@ export function submissionPreconditions(
         gate === null
           ? IDENTITY_PRECONDITION_DESCRIPTION
           : gate.eligible
-            ? "Identity and AML checks are complete on this account (FR-103)."
+            ? "Identity and AML checks are complete on this account."
             : gate.blockers.join(" ") || IDENTITY_PRECONDITION_DESCRIPTION,
       id: "kyc",
       label: "Identity verification",
@@ -1313,7 +1312,7 @@ export function submissionPreconditions(
     },
     {
       description: feePaid
-        ? "The non-refundable application fee is paid and linked to this campaign (FR-311)."
+        ? "The non-refundable application fee is paid and linked to this campaign."
         : feeDescription,
       id: "application-fee",
       label: "Application fee",

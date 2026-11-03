@@ -68,6 +68,8 @@ export type ApiIdea = {
   id: string;
   slug: string;
   title: string;
+  /** Present on detail reads; the API projection includes the owner id. */
+  creatorId?: string;
   problem: string;
   solution: string;
   targetUser: string;

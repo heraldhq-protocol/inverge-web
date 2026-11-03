@@ -9,6 +9,7 @@ import {
   recordPageView,
 } from "@/features/analytics/server/ingest";
 import { IdeaDetail } from "@/features/ideas/components/idea-detail";
+import { getIdeaConversionOffer } from "@/features/ideas/server/conversion";
 import { getIdeaDetailView } from "@/features/ideas/server/views";
 import { readSessionUser } from "@/features/auth/server/session-user";
 import { breadcrumbJsonLd } from "@/lib/seo/json-ld";
@@ -73,9 +74,10 @@ export default async function IdeaDetailPage({
   await connection();
 
   const [{ id }, query] = await Promise.all([params, searchParams]);
-  const [view, user] = await Promise.all([
+  const [view, user, conversion] = await Promise.all([
     getIdeaDetailView(id),
     readSessionUser(),
+    getIdeaConversionOffer(id),
   ]);
   if (!view) notFound();
 
@@ -105,6 +107,7 @@ export default async function IdeaDetailPage({
         commentsHasMore={view.commentsHasMore}
         commentsNextCursor={view.commentsNextCursor}
         commentsState={view.commentsState}
+        conversion={conversion}
         dataSource={view.dataSource}
         idea={idea}
         ideas={view.ideas}

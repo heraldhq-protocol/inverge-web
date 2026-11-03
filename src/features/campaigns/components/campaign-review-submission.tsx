@@ -297,8 +297,7 @@ export function CampaignReviewSubmission({
             <p className="mt-2 text-sm leading-6 text-muted">
               A flat, non-refundable fee paid before the campaign joins the
               review queue. It is not campaign funding, is not credited to the
-              campaign, and is not returned if the campaign is not approved
-              (FR-311).
+              campaign, and is not returned if the campaign is not approved.
             </p>
             {applicationFee?.status === "PENDING" ? (
               <p className="mt-2 rounded-xl border border-warning/30 bg-warning/[0.07] px-3 py-2 text-xs leading-5 text-ink">
