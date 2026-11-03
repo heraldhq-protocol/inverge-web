@@ -62,6 +62,21 @@ describe("AdminUserRow", () => {
     expect(screen.queryByRole("button", { name: "Change role" })).toBeNull();
   });
 
+  it("reads KYC as quiet metadata instead of another pill", () => {
+    renderRow(member);
+
+    expect(screen.getByText(/KYC pending/)).toBeDefined();
+    // The opaque provider id is noise on a row that already has an address.
+    expect(screen.queryByText("did:privy:zainab")).toBeNull();
+  });
+
+  it("shows the provider id when the account has no email", () => {
+    renderRow({ ...member, email: null });
+
+    expect(screen.getByText("No email on file")).toBeDefined();
+    expect(screen.getByText("did:privy:zainab")).toBeDefined();
+  });
+
   it("shows a preview change without calling the API", async () => {
     renderRow(member, { preview: true });
 

@@ -1,10 +1,9 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon } from "@hugeicons/core-free-icons";
+import { Alert02Icon, Search01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
-import { Input } from "@/components/ui/input";
 import { Pill } from "@/components/ui/pill";
 import { AdminUserRow } from "@/features/admin/components/admin-user-row";
 import {
@@ -103,39 +102,56 @@ export function AdminUsersDirectory({
           Accounts
         </h2>
 
-        <div className="flex flex-col gap-3 border-b border-border p-4 xl:flex-row xl:items-center xl:justify-between">
-          <form
-            action="/admin/users"
-            method="get"
-            role="search"
-            className="flex flex-col gap-2 sm:flex-row sm:items-center"
-          >
-            <label htmlFor="admin-user-search" className="sr-only">
-              Search accounts by email or provider ID
-            </label>
-            <Input
-              id="admin-user-search"
-              name="q"
-              type="search"
-              defaultValue={query}
-              placeholder="Email or provider ID"
-              autoComplete="off"
-              spellCheck={false}
-              className="sm:w-72"
-            />
-            {role ? <input type="hidden" name="role" value={role} /> : null}
-            <Button type="submit" variant="secondary" size="sm">
-              Search
-            </Button>
+        <div className="flex flex-col gap-3 border-b border-border p-4 sm:px-5 xl:flex-row xl:items-center xl:justify-between">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+            <form
+              action="/admin/users"
+              method="get"
+              role="search"
+              className="min-w-0 sm:w-80"
+            >
+              {role ? <input type="hidden" name="role" value={role} /> : null}
+              {/* One field: the input and its submit share a single border, so
+                  they cannot drift out of height against each other. */}
+              <div className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface pl-3 pr-1 transition-colors focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/12">
+                <HugeiconsIcon
+                  icon={Search01Icon}
+                  size={16}
+                  strokeWidth={1.8}
+                  aria-hidden="true"
+                  className="shrink-0 text-muted/70"
+                />
+                <label htmlFor="admin-user-search" className="sr-only">
+                  Search accounts by email or provider ID
+                </label>
+                <input
+                  id="admin-user-search"
+                  name="q"
+                  type="search"
+                  defaultValue={query}
+                  placeholder="Email or provider ID"
+                  autoComplete="off"
+                  spellCheck={false}
+                  className="min-h-9 w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-muted/60"
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="my-1 min-h-9 shrink-0 rounded-lg px-3 text-xs"
+                >
+                  Search
+                </Button>
+              </div>
+            </form>
             {filtered ? (
               <Link
                 href="/admin/users"
-                className="inline-flex min-h-11 items-center px-1 text-xs font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
+                className="inline-flex min-h-9 items-center px-1 text-xs font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
               >
                 Clear
               </Link>
             ) : null}
-          </form>
+          </div>
 
           <nav aria-label="Filter by role" className="flex flex-wrap gap-1.5">
             {ROLE_FILTERS.map((option) => {
@@ -145,10 +161,10 @@ export function AdminUsersDirectory({
                   key={option.label}
                   href={adminUsersHref({ query, role: option.value })}
                   aria-current={active ? "true" : undefined}
-                  className={`inline-flex min-h-9 items-center rounded-lg border px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  className={`inline-flex min-h-9 items-center rounded-full border px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                     active
                       ? "border-brand/35 bg-brand-soft text-brand-strong"
-                      : "border-border bg-surface text-muted hover:border-brand/30 hover:text-ink"
+                      : "border-border bg-surface text-muted hover:border-muted/40 hover:text-ink"
                   }`}
                 >
                   {option.label}
@@ -187,7 +203,7 @@ export function AdminUsersDirectory({
           </ul>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 sm:px-5">
           <p className="text-xs text-muted">
             {users.length === 0
               ? "No accounts on this page."
