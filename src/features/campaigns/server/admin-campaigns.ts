@@ -9,7 +9,14 @@ import type {
   Campaign,
   CampaignPhase,
   CampaignReview,
+  CampaignTaxonomy,
+  MilestoneState,
 } from "@/features/campaigns/types";
+import {
+  isCampaignCategorySlug,
+  isCampaignSubcategoryOf,
+  type CampaignSubcategorySlug,
+} from "@/features/campaigns/lib/taxonomy";
 import { decimalToUsdAmount } from "@/lib/money";
 import {
   ApiRequestError,
@@ -137,10 +144,23 @@ type ApiAdminCampaign = {
 type ApiAdminCampaignListResponse = ApiAdminCampaign[] | { data: ApiAdminCampaign[] };
 type ApiAdminCampaignDetailResponse = ApiAdminCampaign | { data: ApiAdminCampaign };
 
-function toMilestoneState(status?: string): "upcoming" | "active" | "submitted" | "approved" | "rejected" {
+function toCampaignTaxonomy(raw: ApiAdminCampaign["taxonomy"]): CampaignTaxonomy | null {
+  if (!raw || !raw.category) return null;
+  if (!isCampaignCategorySlug(raw.category)) return null;
+  const subcategory =
+    raw.subcategory && isCampaignSubcategoryOf(raw.category, raw.subcategory)
+      ? (raw.subcategory as CampaignSubcategorySlug)
+      : null;
+  return {
+    category: raw.category,
+    subcategory,
+  };
+}
+
+function toMilestoneState(status?: string): MilestoneState {
   const norm = (status ?? "").toLowerCase();
-  if (norm === "active" || norm === "submitted" || norm === "approved" || norm === "rejected") {
-    return norm;
+  if (norm === "active" || norm === "claim-submitted" || norm === "objection-window" || norm === "approved" || norm === "released" || norm === "failed" || norm === "disputed" || norm === "refund-available") {
+    return norm as MilestoneState;
   }
   return "upcoming";
 }
@@ -168,7 +188,7 @@ function toAdminCampaign(raw: ApiAdminCampaign): Campaign {
     title,
     summary,
     category: "creative",
-    taxonomy: raw.taxonomy ?? null,
+    taxonomy: toCampaignTaxonomy(raw.taxonomy),
     location: raw.idea?.region ?? raw.location ?? "Africa",
     cover: raw.coverImageUrl ?? raw.idea?.coverImageUrl ?? null,
     creator: {
@@ -192,12 +212,17 @@ function toAdminCampaign(raw: ApiAdminCampaign): Campaign {
     milestones: Array.isArray(raw.milestones)
       ? raw.milestones.map((m, index) => ({
           id: m.id ?? `milestone-${index}`,
+          sequence: index + 1,
           title: m.title ?? `Milestone ${index + 1}`,
           deliverable: m.deliverable ?? "",
           allocationBps: typeof m.allocationBps === "number" ? m.allocationBps : typeof m.tranchePct === "number" ? m.tranchePct * 100 : 0,
-          expectedAt: m.expectedAt ?? "",
+          expectedAt: m.expectedAt ?? null,
           evidence: typeof m.evidenceDefinition === "string" ? m.evidenceDefinition : "",
           state: toMilestoneState(m.status),
+          submission: null,
+          objectionClosesAt: null,
+          objectionBps: 0,
+          decision: null,
         }))
       : [],
     media: [],

@@ -120,7 +120,9 @@ describe("admin campaigns server helper", () => {
         action: "APPROVE",
       });
       expect(result.ok).toBe(false);
-      expect(result.code).toBe("NOT_SIGNED_IN");
+      if (!result.ok) {
+        expect(result.code).toBe("NOT_SIGNED_IN");
+      }
       expect(sendApiJsonMock).not.toHaveBeenCalled();
     });
 
