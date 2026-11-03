@@ -17,7 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Pill } from "@/components/ui/pill";
 import { Textarea } from "@/components/ui/textarea";
-import { sendJson } from "@/lib/api/client";
 import { adminCan, type AdminActor } from "@/features/admin/permissions";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
 import {
@@ -60,7 +59,7 @@ import type { Campaign } from "@/features/campaigns/types";
  * state only, and it neither verifies identity (FR-103) nor confirms the
  * application fee (FR-311).
  */
-export function AdminCampaignReviewDetail({
+export function PreviewAdminCampaignReviewDetail({
   actor,
   initialCampaign,
 }: {
@@ -111,20 +110,6 @@ export function AdminCampaignReviewDetail({
     setError(null);
 
     try {
-      const response = await sendJson<{ preview?: boolean; action: string }>(
-        `/api/admin/campaigns/${encodeURIComponent(campaign.id)}/review`,
-        {
-          method: "POST",
-          body: { action, reason: reason.trim() || undefined },
-        },
-      );
-
-      if (!response.ok) {
-        setError(response.message || "Failed to record decision.");
-        setIsSubmitting(false);
-        return;
-      }
-
       const result = recordCampaignReview(campaign, { action, actor, reason });
       if (!result.ok) {
         setError(result.message);
@@ -135,11 +120,8 @@ export function AdminCampaignReviewDetail({
       setAction(null);
       setReason("");
       setError(null);
-      const isPreview = response.data?.preview;
       setNotice(
-        isPreview
-          ? `${campaignReviewPastLabels[result.decision.event.action]} recorded in preview mode. Changes are saved in this browser.`
-          : `${campaignReviewPastLabels[result.decision.event.action]} confirmed and recorded by the API.`,
+        `${campaignReviewPastLabels[result.decision.event.action]} recorded in preview mode. Changes are saved in this browser.`,
       );
     } catch (err) {
       setError(

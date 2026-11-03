@@ -1089,6 +1089,15 @@ store; it is now explicitly a disconnected preview of an endpoint that exists,
 not a stand-in for a missing one. Replacing `admin-review-store` with an API
 client sits with the authenticated-session work.
 
+Revisited 2026-11-03: The live admin campaign routes now use validated backend
+queue/detail projections and the backend's confirmed decision receipt. Local
+review storage is confined to explicit development preview access. Live failures
+never substitute preview fixtures, and approval changes review state only; the
+funding lifecycle and publication remain backend-owned separate transitions.
+The existing preview simulation keeps its labelled local phase changes. The
+response contract and backend content omissions are recorded in
+`docs/ADMIN_WORKSPACE.md`. Live verification is deferred until the API is deployed.
+
 ### D-031: The wallet is provider-agnostic and preview-only until an SDK and session exist
 
 - Date: 2026-10-19

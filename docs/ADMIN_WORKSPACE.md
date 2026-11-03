@@ -20,7 +20,7 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | :--- | :--- | :--- | :--- | :--- |
 | **Admin Shell & Nav** | `/admin/*` | **Functional Preview** | Layout, responsive drawer (`AdminNavigation`), RBAC access gate (`getProgrammeAdminAccess`), session display | Mobile font scaling consistency; live session identity |
 | **Overview** | `/admin` | **API wired; live browser verification pending** | Public summary, reported escrow, and admin analytics with independent failure states, source timestamps, period selection and refresh; legacy preview is isolated to preview auth | Confirm against a running API and real admin session; backend escrow reconciliation remains unresolved |
-| **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **Live API Wired (Preview fallback)** | Complete review queue, pitch & milestone inspection, live server reads (`getAdminCampaigns`, `getAdminCampaignDetail`), async BFF decision route (`/api/admin/campaigns/[id]/review`), strict failure handling | On-chain metadata hash generation on approval (FR-303); listing freeze action (FR-903) |
+| **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **API wired; live verification deferred** | Validated paginated queue, detail, approval checks, review history and confirmed decisions; preview auth is isolated | Backend review projection omits authored story/disclosures and milestone deadlines; validate against the deployed API; listing freeze endpoint (FR-903) |
 | **Verification & KYC** | `/admin/verification`<br>`/admin/verification/[id]` | **Live API Wired** | Queue table, risk categorization (`Low`, `Medium`, `High`), case detail view, `ResolveRiskForm` with decision submission | Verification webhooks integration; strike tracking & strike decay ledger (FR-310) |
 | **Users & Roles** | `/admin/users` | **API wired; live verification pending** | Session-gated directory with email/provider search, role filter, paging and a per-account role editor; preview accounts are isolated and a preview change is never described as saved; the mobile admin nav wraps below the sticky header instead of scrolling sideways | Widen `UpdateUserRoleDto` before offering `COMPLIANCE_REVIEWER`; the list endpoint returns no total, so paging is inferred from a full page; confirm against a deployed API and a real admin session |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
@@ -86,19 +86,61 @@ tests now live under `[id]/convert`, with the parameter bound to the same intern
 ### Campaign review integration (2026-11-03)
 
 `src/features/campaigns/server/admin-campaigns.ts` and
-`src/app/api/admin/campaigns/[id]/review/route.ts` wire the campaign review
-workflow to the backend API:
+`src/app/api/admin/campaigns/[id]/review/route.ts` connect the campaign review
+workflow to the backend API. Request contracts follow `docs/api/openapi.json`.
+The specification omits response schemas, so runtime response validation follows
+[CampaignReviewService at revision 01e324a](https://github.com/heraldhq-protocol/inverge-api/blob/01e324ae41bc891a47e9a6ff130b13b13a1226a0/src/modules/campaigns/campaign-review.service.ts)
+and its controller, DTO, preconditions and review rules.
 
 | Endpoint | Method | Operation & Contract |
 | --- | --- | --- |
-| `/api/v1/admin/campaigns` | `GET` | Lists campaigns with review status filters (`reviewStatus=ALL`). Returns mapped domain models with `previewCampaigns` fallback when unconfigured. |
-| `/api/v1/admin/campaigns/{id}` | `GET` | Fetches full campaign pitch, milestones, disclosures, and story. |
-| `/api/v1/admin/campaigns/{id}/review` | `POST` | Submits decision (`APPROVE`, `REQUEST_CHANGES`, `REJECT`) with required reason (min 20 characters for rejection/changes). Same-origin and `getProgrammeAdminAccess` enforced. |
+| `/api/v1/admin/campaigns` | `GET` | Reads `{ items, total, skip, take, reviewStatus }`. UI filters all six supported states, defaults to `IN_REVIEW` and pages in batches of 50. Counts come from the response. |
+| `/api/v1/admin/campaigns/{id}` | `GET` | Reads `{ campaign, applicationFee, preconditions, reviewEvents }`. Renders identity/fee checks, linked idea snapshot, supplied media links, structured evidence, reward tiers, and actual decision history. A 404 is distinct from an unavailable or malformed response. |
+| `/api/v1/admin/campaigns/{id}/review` | `POST` | Sends `APPROVE`, `REQUEST_CHANGES` or `REJECT`. Reasons are trimmed, limited to 2,000 characters and require at least 20 characters for changes/rejection. Same-origin, live admin access and a real session are enforced. |
 
-The client mutation in `AdminCampaignReviewDetail` is strictly asynchronous and
-never infers a confirmed state optimistically: the UI disables submission, awaits
-the BFF response, surfaces any upstream error verbatim (e.g. 403 Forbidden or
-422 Unprocessable), and only commits local state upon a confirmed 200 OK.
+The live components use a dedicated admin projection rather than inventing a
+complete preview `Campaign`. Missing money and dates remain missing. Targets
+retain exact USD cents; the UI does not compute balances or tranche amounts.
+The fee's numeric amount is not used because the backend converts its Decimal to
+`Number`; the authoritative fee eligibility check and payment status are shown.
+
+`LiveAdminCampaignDetail` updates only from a validated receipt with matching
+campaign ID, action, review status, reviewer and event. The BFF response is
+`{ mode: "live", decision }`. The client renders those confirmed facts, refreshes
+server state, and never writes live decisions to localStorage. Approval changes
+the review status only; publication, funding and escrow state are separate.
+The backend rechecks identity and fee gates (FR-103/FR-311) on approval and owns
+the immutable review event (FR-304).
+
+Validation, authorization and upstream errors remain visible. Approval blockers
+are rendered from the failure details. A stale decision (409), network failure,
+server error or invalid success response requires a reload before another write;
+a timeout is not presented as proof that the backend did not commit.
+
+Preview components are selected only by explicit development preview access.
+They keep the existing labelled browser-local workflow and make no review API
+calls. The live write route refuses preview identities. Missing configuration,
+expired sessions and failed reads never select fixtures.
+
+Backend limits: the admin select does not return the authored campaign title,
+summary, story, use of funds, disclosures or milestone deadlines. Queue titles
+therefore use the linked idea title or the campaign ID, and the detail clearly
+labels the idea snapshot as conversion-time material. The API must extend this
+projection for a reviewer to inspect all current campaign content. Terms hashes
+are shown when supplied; this review endpoint does not generate an on-chain hash.
+Live verification is deferred because the backend is not deployed.
+
+Local validation of the campaign review and role DTO changes: 118 focused tests
+across 13 files passed in separate runs, including preview regressions. Initial
+preview cold-import and Vitest worker-start issues were resolved by resetting
+preview storage without re-importing the icon graph and rerunning the affected
+suite. `pnpm typecheck`, `pnpm build`, scoped ESLint, scoped Prettier and
+`git diff --check` passed. The build includes both campaign review pages and the
+campaign/role mutation routes. The full formatting check reported 43 files
+outside this change; full lint still reports the two existing errors in the
+feedback and media hooks, plus warnings. Authenticated browser verification
+remains deferred: the backend is not live and Playwright MCP is unavailable in
+this session. Unit/component results do not substitute for that browser pass.
 
 ### Users & roles integration (2026-11-03)
 
@@ -156,10 +198,10 @@ HTTP renders and component tests above are not a substitute.
 
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
-- [x] Detailed campaign pitch, media, use-of-funds, and milestone inspection (`/admin/campaigns/[id]`).
-- [x] Reasoned decision modal with structured approval/rejection forms.
-- [x] **Task 1.1**: Connect `/admin/campaigns` and `/admin/campaigns/[id]` to live server-side campaign queue queries (`getAdminCampaigns()`, `getAdminCampaignDetail()`) and BFF route (`/api/admin/campaigns/[id]/review`) with true async submission and fallback fixtures.
-- [ ] **Task 1.2**: Implement real approval mutation that hashes the approved milestone plan for on-chain anchoring (FR-303).
+- [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
+- [x] Inline approval, change-request and rejection form with reason validation.
+- [x] **Task 1.1**: Connect `/admin/campaigns` and `/admin/campaigns/[id]` to validated live reads and confirmed BFF decisions, with explicit preview isolation and independent funding/review states.
+- [ ] **Task 1.2**: Verify terms-hash anchoring in the separate publication/deployment flow (FR-303); the curation endpoint only records a review decision.
 - [ ] **Task 1.3**: Add explicit campaign "Freeze" action (FR-903) allowing admins to take down public listings without touching escrow assets.
 
 ---
@@ -200,8 +242,8 @@ HTTP renders and component tests above are not a substitute.
 ---
 
 ### Phase 6: Unsurfaced Backend Capabilities (`docs/api/openapi.json`)
-The backend specification contains several admin endpoints that currently have no frontend view in `inverge-web`:
-- [ ] **Task 6.1**: **User & Role Management**: Wire `GET /api/v1/admin/users` and `PATCH /api/v1/admin/users/{id}/role` to manage platform administrators and role assignments.
+The backend specification defines these additional admin capabilities. User management now has a frontend; the remaining areas still need views:
+- [ ] **Task 6.1**: **User & Role Management**: `/admin/users` and its role-update BFF are present; the broader directory integration still needs verification. `UpdateUserRoleDto.role` accepts only `USER` or `ADMIN`. The frontend now shares this schema across the BFF and server write helper, checks that the confirmed role matches the request, and keeps session roles separate. The generated OpenAPI already declares the correct values. `platform_admin` is a frontend programme permission role, not a request value. `COMPLIANCE_REVIEWER` can occur in session reads but cannot be assigned by this DTO; `compliance_officer` is not a supported update value.
 - [ ] **Task 6.2**: **AI Assistant Access Requests**: Wire `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` to adjudicate Creator Studio AI access.
 - [ ] **Task 6.3**: **Analytics Access Requests**: Wire `GET /api/v1/admin/analytics/access-requests` and `PATCH /api/v1/admin/analytics/access-requests/{id}` to grant premium platform analytics access.
 - [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.

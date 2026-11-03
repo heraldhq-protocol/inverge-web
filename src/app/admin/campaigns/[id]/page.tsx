@@ -1,14 +1,17 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
-import { AdminCampaignReviewDetail } from "@/features/campaigns/components/admin-campaign-review-detail";
+import { PreviewAdminCampaignReviewDetail } from "@/features/campaigns/components/admin-campaign-review-detail";
+import { LiveAdminCampaignDetail } from "@/features/campaigns/components/live-admin-campaign-detail";
+import { AdminReviewUnavailable } from "@/features/campaigns/components/admin-review-refresh";
+import { findPreviewCampaignById } from "@/features/campaigns/content/preview-campaigns";
 import { getAdminCampaignDetail } from "@/features/campaigns/server/admin-campaigns";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
 
 export const metadata: Metadata = {
   title: "Campaign review detail admin",
   description:
-    "Review one submitted campaign: pitch, milestone plan, disclosures, and decision.",
+    "Review a campaign's supplied plan, approval checks, history, and decision.",
   robots: { follow: false, index: false },
 };
 
@@ -21,13 +24,26 @@ export default async function AdminCampaignReviewPage({ params }: PageProps) {
   if (!access.allowed) return null;
 
   const { id } = await params;
-  const campaign = await getAdminCampaignDetail(id);
-  if (!campaign) notFound();
-
+  if (access.preview) {
+    const campaign = findPreviewCampaignById(id);
+    if (!campaign) notFound();
+    return (
+      <PreviewAdminCampaignReviewDetail
+        actor={access.actor}
+        initialCampaign={campaign}
+      />
+    );
+  }
+  const result = await getAdminCampaignDetail(id);
+  if (result.status === "not-found") notFound();
+  if (result.status === "unavailable")
+    return <AdminReviewUnavailable message={result.message} />;
+  const campaign = result.data.campaign;
   return (
-    <AdminCampaignReviewDetail
+    <LiveAdminCampaignDetail
+      key={`${campaign.id}:${campaign.reviewStatus}:${campaign.reviewedAt}:${campaign.submittedAt}`}
       actor={access.actor}
-      initialCampaign={campaign}
+      detail={result.data}
     />
   );
 }
