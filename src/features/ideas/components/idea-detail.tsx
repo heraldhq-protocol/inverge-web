@@ -54,6 +54,7 @@ import { emptySignals, type IdeaSignals } from "@/features/ideas/lib/signals";
 import type {
   DiscoveryIdea,
   IdeaComment,
+  IdeaConversionOffer,
   IdeaDetail as IdeaDetailModel,
   Topic,
 } from "@/features/ideas/types";
@@ -285,6 +286,7 @@ export function IdeaDetail({
   commentViewer,
   signals = emptySignals,
   viewer = "visitor",
+  conversion = null,
 }: {
   dataSource?: "live" | "preview";
   idea: IdeaDetailModel;
@@ -297,6 +299,8 @@ export function IdeaDetail({
   commentViewer?: DiscussionViewer | undefined;
   signals?: IdeaSignals;
   viewer?: IdeaViewer;
+  /** Creator-only conversion action. Null for every other viewer. */
+  conversion?: IdeaConversionOffer | null;
 }) {
   const live = dataSource === "live";
   const ideaTopics = topicsForIdea(topics, idea.id);
@@ -306,11 +310,16 @@ export function IdeaDetail({
     { prePledged: idea.prePledged, supporters: idea.supporters },
     idea.gate,
   );
-  const stage = gate.convertible
-    ? "Ready to launch"
-    : idea.changes && idea.changes.length > 0
-      ? "Revised after feedback"
-      : "Collecting feedback";
+  const convertible =
+    live && conversion ? conversion.canConvert : gate.convertible;
+  const converted = live && conversion?.alreadyConverted === true;
+  const stage = converted
+    ? "Converted to campaign"
+    : convertible
+      ? "Ready to launch"
+      : idea.changes && idea.changes.length > 0
+        ? "Revised after feedback"
+        : "Collecting feedback";
   const taxonomyHref = ideaTaxonomyHref(idea);
   const taxonomyText = ideaTaxonomyText(idea);
   // A demo video is the strongest thing an idea can show, so it takes the hero
@@ -402,7 +411,7 @@ export function IdeaDetail({
                 <span className="text-border-strong" aria-hidden="true">
                   ·
                 </span>
-                <Pill tone={gate.convertible ? "accent" : "neutral"} size="xs">
+                <Pill tone={convertible ? "accent" : "neutral"} size="xs">
                   {stage}
                 </Pill>
                 <span className="text-muted">
@@ -899,7 +908,7 @@ export function IdeaDetail({
               </div>
             ) : null}
 
-            {live ? null : (
+            {!live || conversion ? (
               <div className="mt-3 rounded-2xl border border-border bg-brand-tint p-4">
                 <div className="flex items-start gap-3">
                   <span className="grid size-8 shrink-0 place-items-center rounded-lg bg-brand/10 text-brand-strong">
@@ -910,21 +919,54 @@ export function IdeaDetail({
                       aria-hidden="true"
                     />
                   </span>
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-sm font-bold text-ink">
-                      {gate.convertible
-                        ? "Ready for a campaign"
-                        : "This idea is in early access"}
+                      {converted
+                        ? "This idea is now a campaign draft"
+                        : convertible
+                          ? "Ready for a campaign"
+                          : "This idea is in early access"}
                     </p>
                     <p className="mt-1 text-xs leading-5 text-muted">
-                      {gate.convertible
-                        ? "The creator has reached the validation threshold. Supporters will be notified first if a campaign opens."
-                        : "The creator is still gathering signal. Once they publish updates, supporters see them here first."}
+                      {converted
+                        ? "The plan continues in Creator Studio. Nothing is published and no fee has been charged."
+                        : convertible
+                          ? live
+                            ? "Turn this validated idea into a private campaign draft. Nothing is published and no fee is charged until you submit it for review."
+                            : "The creator has reached the validation threshold. Supporters will be notified first if a campaign opens."
+                          : "The creator is still gathering signal. Once they publish updates, supporters see them here first."}
                     </p>
+                    {converted && conversion?.campaignId ? (
+                      <Link
+                        className="mt-3 inline-flex items-center gap-1.5 rounded text-xs font-bold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                        href={`/d/creator/campaigns/new?draft=${encodeURIComponent(conversion.campaignId)}`}
+                      >
+                        Continue the campaign
+                        <HugeiconsIcon
+                          icon={ArrowUpRight01Icon}
+                          size={14}
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                      </Link>
+                    ) : convertible && live ? (
+                      <Link
+                        className="mt-3 inline-flex items-center gap-1.5 rounded text-xs font-bold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                        href={`/d/creator/campaigns/new?idea=${encodeURIComponent(idea.id)}`}
+                      >
+                        Plan the campaign
+                        <HugeiconsIcon
+                          icon={ArrowUpRight01Icon}
+                          size={14}
+                          strokeWidth={1.8}
+                          aria-hidden="true"
+                        />
+                      </Link>
+                    ) : null}
                   </div>
                 </div>
               </div>
-            )}
+            ) : null}
 
             {live ? null : (
               <div className="mt-3">

@@ -98,6 +98,20 @@ export type AskBreakdownItem = {
   amount: MoneyAmount;
 };
 
+/**
+ * What the signed-in creator may do with an idea on the public page.
+ *
+ * Only the API can decide eligibility; this is the projection the server hands
+ * the page so an ineligible idea never renders a conversion action. `null` means
+ * the viewer is not the creator (or is not signed in), so no action is shown.
+ */
+export type IdeaConversionOffer = {
+  canConvert: boolean;
+  alreadyConverted: boolean;
+  /** The draft this idea became, when the API can identify it. */
+  campaignId: string | null;
+};
+
 export type IdeaDetail = DiscoveryIdea & {
   /** Unsplash address, or `null` to fall back to the gradient cover. */
   cover: string | null;

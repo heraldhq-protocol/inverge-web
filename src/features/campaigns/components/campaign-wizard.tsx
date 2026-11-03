@@ -233,6 +233,7 @@ export function CampaignWizard({
   mode = "create",
   saved = null,
   loadError = null,
+  sourceIdea = null,
 }: {
   draft: CampaignDraft;
   /** Live creator verification gate, read server-side. Null means "not readable". */
@@ -240,6 +241,8 @@ export function CampaignWizard({
   mode?: "create" | "edit";
   saved?: DraftSaveInitial;
   loadError?: string | null;
+  /** The idea this plan converts, when the wizard was opened from one. */
+  sourceIdea?: { id: string; title: string } | null;
 }) {
   const locked = mode === "edit";
   const [draft, setDraft] = useState<CampaignDraft>(() =>
@@ -256,10 +259,12 @@ export function CampaignWizard({
     // navigation that would remount this form and drop in-flight edits.
     const url = new URL(window.location.href);
     url.searchParams.set("draft", id);
+    url.searchParams.delete("idea");
     window.history.replaceState(null, "", url);
   }, []);
 
   const save = useCampaignDraftAutosave({
+    convertIdeaId: sourceIdea?.id ?? null,
     draft,
     enabled: !locked,
     initial: saved,
@@ -379,6 +384,18 @@ export function CampaignWizard({
         {loadError ? (
           <div className="mb-4 rounded-2xl border border-warning/30 bg-warning/[0.07] p-4 text-sm leading-6 text-ink">
             {loadError}
+          </div>
+        ) : null}
+        {sourceIdea ? (
+          <div className="mb-4 rounded-2xl border border-brand/25 bg-brand-tint p-4">
+            <p className="text-sm font-bold text-ink">
+              Starting from “{sourceIdea.title}”
+            </p>
+            <p className="mt-1 text-xs leading-5 text-muted">
+              Saving a complete plan turns the idea into a private campaign
+              draft. Nothing is published and no fee is charged. The idea stops
+              collecting new support once the draft exists.
+            </p>
           </div>
         ) : null}
         <div className="rounded-3xl border border-border bg-surface p-5 sm:p-7">
@@ -1081,7 +1098,7 @@ export function CampaignWizard({
                 <p className="mt-1.5 text-sm leading-6 text-muted">
                   A campaign with no rewards is donation-based, and backers
                   contribute any amount. A reward changes what you promise to
-                  send - never what is charged, and never the published
+                  send — never what is charged, and never the published
                   milestone plan.
                 </p>
               </div>
