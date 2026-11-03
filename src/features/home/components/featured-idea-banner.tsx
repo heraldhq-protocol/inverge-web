@@ -35,7 +35,7 @@ export function FeaturedIdeaBanner({ idea }: { idea: DiscoveryIdea }) {
 
           <h2
             id="featured-heading"
-            className="mt-3 text-balance text-2xl font-bold leading-[1.1] tracking-[-0.04em] text-ink sm:text-3xl lg:text-[2.35rem]"
+            className="mt-3 text-balance text-xl font-bold leading-[1.15] tracking-[-0.04em] text-ink sm:text-3xl lg:text-[2.35rem]"
           >
             Real ideas. Local impact.
           </h2>

@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 
 import { AdminCampaignReviewDetail } from "@/features/campaigns/components/admin-campaign-review-detail";
-import { findPreviewCampaignById } from "@/features/campaigns/content/preview-campaigns";
+import { getAdminCampaignDetail } from "@/features/campaigns/server/admin-campaigns";
 import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
 
 export const metadata: Metadata = {
@@ -21,7 +21,7 @@ export default async function AdminCampaignReviewPage({ params }: PageProps) {
   if (!access.allowed) return null;
 
   const { id } = await params;
-  const campaign = findPreviewCampaignById(id);
+  const campaign = await getAdminCampaignDetail(id);
   if (!campaign) notFound();
 
   return (

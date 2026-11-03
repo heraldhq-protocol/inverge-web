@@ -21,18 +21,18 @@ import {
 } from "@/lib/api/route";
 import { fetchApiJson } from "@/lib/api/server";
 
-type RouteContext = { params: Promise<{ ideaId: string }> };
+type RouteContext = { params: Promise<{ id: string }> };
 
 /** Public read of an idea discussion. Unpublished ideas answer 404 upstream. */
 export async function GET(request: Request, context: RouteContext) {
-  const { ideaId } = await context.params;
+  const { id } = await context.params;
   const params = new URLSearchParams({ limit: String(DISCUSSION_PAGE_SIZE) });
   const cursor = discussionCursorFrom(request);
   if (cursor) params.set("cursor", cursor);
 
   try {
     const page = await fetchApiJson(
-      `/ideas/${encodeURIComponent(ideaId)}/comments?${params.toString()}`,
+      `/ideas/${encodeURIComponent(id)}/comments?${params.toString()}`,
     );
     return NextResponse.json(page);
   } catch (error) {
@@ -58,9 +58,9 @@ export async function POST(request: Request, context: RouteContext) {
   const parsed = discussionCreateSchema.safeParse(payload);
   if (!parsed.success) return invalidDiscussionBody();
 
-  const { ideaId } = await context.params;
+  const { id } = await context.params;
   const result = await createDiscussionComment(
-    `/ideas/${encodeURIComponent(ideaId)}/comments`,
+    `/ideas/${encodeURIComponent(id)}/comments`,
     auth.token,
     parsed.data.body,
   );

@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Pill } from "@/components/ui/pill";
 import { Textarea } from "@/components/ui/textarea";
+import { sendJson } from "@/lib/api/client";
 import { adminCan, type AdminActor } from "@/features/admin/permissions";
 import { PhasePill } from "@/features/campaigns/components/campaign-status-pill";
 import {
@@ -90,22 +91,63 @@ export function AdminCampaignReviewDetail({
     campaign.story.useOfFunds.map((line) => line.amount),
   );
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!action) return;
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-    const result = recordCampaignReview(campaign, { action, actor, reason });
-    if (!result.ok) {
-      setError(result.message);
+  async function onSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!action || isSubmitting) return;
+
+    if (
+      (action === "request-changes" || action === "reject") &&
+      reason.trim().length < CAMPAIGN_REVIEW_MIN_REASON
+    ) {
+      setError(
+        `Give the creator a reason of at least ${CAMPAIGN_REVIEW_MIN_REASON} characters.`,
+      );
       return;
     }
 
-    setAction(null);
-    setReason("");
+    setIsSubmitting(true);
     setError(null);
-    setNotice(
-      `${campaignReviewPastLabels[result.decision.event.action]} recorded in this browser. It has not been sent to the API.`,
-    );
+
+    try {
+      const response = await sendJson<{ preview?: boolean; action: string }>(
+        `/api/admin/campaigns/${encodeURIComponent(campaign.id)}/review`,
+        {
+          method: "POST",
+          body: { action, reason: reason.trim() || undefined },
+        },
+      );
+
+      if (!response.ok) {
+        setError(response.message || "Failed to record decision.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const result = recordCampaignReview(campaign, { action, actor, reason });
+      if (!result.ok) {
+        setError(result.message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      setAction(null);
+      setReason("");
+      setError(null);
+      const isPreview = response.data?.preview;
+      setNotice(
+        isPreview
+          ? `${campaignReviewPastLabels[result.decision.event.action]} recorded in preview mode. Changes are saved in this browser.`
+          : `${campaignReviewPastLabels[result.decision.event.action]} confirmed and recorded by the API.`,
+      );
+    } catch (err) {
+      setError(
+        err instanceof Error ? err.message : "Failed to record decision.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -507,11 +549,13 @@ export function AdminCampaignReviewDetail({
                 <Button
                   type="submit"
                   className="w-full"
-                  disabled={!actionable || !action}
+                  disabled={!actionable || !action || isSubmitting}
                 >
-                  {action
-                    ? campaignReviewActionLabels[action]
-                    : "Choose a decision"}
+                  {isSubmitting
+                    ? "Recording decision..."
+                    : action
+                      ? campaignReviewActionLabels[action]
+                      : "Choose a decision"}
                 </Button>
                 <p className="text-[0.625rem] leading-4 text-muted">
                   This records a preview decision in this browser. It does not

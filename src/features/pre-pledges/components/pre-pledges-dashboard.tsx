@@ -69,7 +69,7 @@ export function PrePledgesDashboard({
                 </span>
               ) : null}
             </div>
-            <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
+            <h1 className="mt-2 text-balance text-2xl font-bold tracking-[-0.045em] text-ink sm:text-4xl">
               Your pre-pledges
             </h1>
             <p className="mt-1.5 text-sm leading-6 text-muted sm:text-base">

@@ -419,7 +419,7 @@ export function IdeaDetail({
                   {formatDate(idea.publishedAt)}
                 </span>
               </div>
-              <h1 className="mt-2 text-balance text-3xl font-bold tracking-[-0.045em] text-ink sm:text-[2.5rem] sm:leading-[1.08]">
+              <h1 className="mt-2 text-balance text-2xl font-bold tracking-[-0.045em] text-ink sm:text-[2.5rem] sm:leading-[1.08]">
                 {idea.title}
               </h1>
               <p className="mt-3 max-w-2xl text-base leading-7 text-muted">

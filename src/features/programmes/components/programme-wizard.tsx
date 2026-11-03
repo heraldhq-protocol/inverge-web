@@ -263,6 +263,84 @@ function issueFor(
   )?.message;
 }
 
+/**
+ * Step navigation below the `xl` breakpoint, where the labelled sidebar does
+ * not fit. Phones get a single segmented progress bar; wider screens get the
+ * same steps as wrapping chips so an admin can jump directly between steps
+ * without horizontal rail overflow. Follows the pattern in `idea-builder.tsx`.
+ */
+function ProgrammeStepNav({
+  onSelect,
+  stepIndex,
+}: {
+  onSelect: (index: number) => void;
+  stepIndex: number;
+}) {
+  return (
+    <>
+      <div
+        aria-label="Programme creation progress"
+        aria-valuemax={STEPS.length}
+        aria-valuemin={1}
+        aria-valuenow={stepIndex + 1}
+        aria-valuetext={`Step ${stepIndex + 1} of ${STEPS.length}: ${STEPS[stepIndex]?.label ?? ""}`}
+        className="grid grid-cols-8 gap-1 sm:hidden"
+        role="progressbar"
+      >
+        {STEPS.map((item, index) => (
+          <span
+            aria-hidden="true"
+            className={`h-1.5 rounded-full ${
+              index <= stepIndex ? "bg-brand" : "bg-ink/[0.08]"
+            }`}
+            key={item.id}
+          />
+        ))}
+      </div>
+
+      <ol className="hidden flex-wrap gap-1.5 sm:flex xl:hidden">
+        {STEPS.map((item, index) => {
+          const current = index === stepIndex;
+          const passed = index < stepIndex;
+          return (
+            <li className="min-w-0" key={item.id}>
+              <button
+                type="button"
+                aria-current={current ? "step" : undefined}
+                onClick={() => onSelect(index)}
+                className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg border px-2.5 text-xs transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  current
+                    ? "border-brand/35 bg-brand-soft font-semibold text-brand-strong"
+                    : passed
+                      ? "border-border bg-surface font-medium text-ink hover:border-brand/35"
+                      : "border-border/60 bg-surface/60 text-muted"
+                }`}
+              >
+                <span
+                  className={`grid size-5 shrink-0 place-items-center rounded-full text-[0.5625rem] font-bold tabular-nums ${
+                    passed
+                      ? "bg-brand text-white"
+                      : current
+                        ? "bg-brand/15 text-brand-strong"
+                        : "bg-ink/[0.06] text-muted"
+                  }`}
+                >
+                  {passed ? (
+                    <span aria-hidden="true">✓</span>
+                  ) : (
+                    index + 1
+                  )}
+                </span>
+                {item.label}
+              </button>
+            </li>
+          );
+        })}
+      </ol>
+    </>
+  );
+}
+
 export function ProgrammeWizard({
   duplicateFrom,
 }: {
@@ -420,11 +498,11 @@ export function ProgrammeWizard({
             Preview only
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <Button type="button" variant="outline" size="md" onClick={saveDraft}>
+        <div className="flex flex-wrap gap-2 max-sm:w-full">
+          <Button type="button" variant="outline" size="md" onClick={saveDraft} className="max-sm:w-full">
             Save draft
           </Button>
-          <Button type="button" size="md" onClick={publish}>
+          <Button type="button" size="md" onClick={publish} className="max-sm:w-full">
             <HugeiconsIcon
               icon={Calendar03Icon}
               size={16}
@@ -448,7 +526,7 @@ export function ProgrammeWizard({
       <div className="mt-5 grid gap-5 xl:grid-cols-[14rem_minmax(0,1fr)_18rem]">
         <aside
           aria-label="Programme steps"
-          className="xl:sticky xl:top-24 xl:self-start"
+          className="hidden min-w-0 xl:sticky xl:top-24 xl:block xl:self-start"
         >
           <div className="flex items-center justify-between gap-2">
             <Eyebrow>Steps</Eyebrow>
@@ -457,12 +535,12 @@ export function ProgrammeWizard({
               ready
             </span>
           </div>
-          <ol className="mt-2 flex gap-1 overflow-x-auto pb-1 xl:flex-col xl:overflow-visible">
+          <ol className="mt-2 flex flex-col gap-1">
             {STEPS.map((item, index) => {
               const current = item.id === step;
               const passed = index < stepIndex;
               return (
-                <li key={item.id} className="shrink-0 xl:w-full">
+                <li key={item.id} className="w-full">
                   <button
                     type="button"
                     aria-current={current ? "step" : undefined}
@@ -489,7 +567,7 @@ export function ProgrammeWizard({
                     >
                       {passed ? <span aria-hidden="true">✓</span> : index + 1}
                     </span>
-                    <span className="whitespace-nowrap">{item.label}</span>
+                    <span className="truncate">{item.label}</span>
                   </button>
                 </li>
               );
@@ -498,6 +576,15 @@ export function ProgrammeWizard({
         </aside>
 
         <div className="min-w-0 rounded-2xl border border-border bg-surface p-4 sm:p-5">
+          <div className="mb-4 xl:hidden">
+            <ProgrammeStepNav
+              onSelect={(index) => {
+                setStepIndex(index);
+                setShowValidation(false);
+              }}
+              stepIndex={stepIndex}
+            />
+          </div>
           <div className="flex flex-wrap items-start justify-between gap-2">
             <div>
               <p className="text-[0.6875rem] font-semibold tabular-nums text-muted">
@@ -1136,12 +1223,13 @@ export function ProgrammeWizard({
             ) : null}
           </div>
 
-          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+          <div className="mt-5 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3 max-sm:flex-col-reverse max-sm:items-stretch">
             <Button
               type="button"
               variant="outline"
               size="md"
               disabled={stepIndex === 0}
+              className="max-sm:w-full"
               onClick={() => {
                 setShowValidation(false);
                 setStepIndex((index) => Math.max(0, index - 1));
@@ -1155,17 +1243,18 @@ export function ProgrammeWizard({
               />
               Back
             </Button>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 max-sm:w-full max-sm:grid max-sm:grid-cols-2">
               <Button
                 type="button"
                 variant="ghost"
                 size="md"
                 onClick={saveDraft}
+                className="max-sm:w-full"
               >
                 Save draft
               </Button>
               {step === "review" ? (
-                <Button type="button" size="md" onClick={publish}>
+                <Button type="button" size="md" onClick={publish} className="max-sm:w-full">
                   <HugeiconsIcon
                     icon={Calendar03Icon}
                     size={16}
@@ -1175,7 +1264,7 @@ export function ProgrammeWizard({
                   Schedule programme
                 </Button>
               ) : (
-                <Button type="button" size="md" onClick={goNext}>
+                <Button type="button" size="md" onClick={goNext} className="max-sm:w-full">
                   Next
                   <HugeiconsIcon
                     icon={ArrowRight02Icon}
@@ -1191,7 +1280,7 @@ export function ProgrammeWizard({
 
         <aside
           aria-label="Programme preview"
-          className="space-y-3 xl:sticky xl:top-24 xl:self-start"
+          className="min-w-0 space-y-3 xl:sticky xl:top-24 xl:self-start"
         >
           <div className="overflow-hidden rounded-2xl border border-border bg-surface">
             <div className="relative aspect-[16/9] bg-brand-soft">
@@ -1535,11 +1624,12 @@ function JudgingEditor({
         {programme.rubric.criteria.map((criterion, index) => (
           <li
             key={criterion.id}
-            className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-[minmax(0,1fr)_5rem_auto]"
+            className="grid gap-2 rounded-xl border border-border p-3 max-sm:grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_5rem_auto]"
           >
             <Input
               aria-label={`Criterion ${index + 1} label`}
               value={criterion.label}
+              className="max-sm:col-span-2"
               onChange={(event) =>
                 updateCriterion(index, { label: event.target.value })
               }
@@ -1652,11 +1742,12 @@ function JudgingEditor({
           {programme.rubric.judges.map((judge, index) => (
             <li
               key={judge.id}
-              className="grid gap-2 rounded-xl border border-border p-3 sm:grid-cols-3"
+              className="grid gap-2 rounded-xl border border-border p-3 max-sm:grid-cols-[minmax(0,1fr)_auto] sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]"
             >
               <Input
                 aria-label={`Judge ${index + 1} name`}
                 value={judge.name}
+                className="max-sm:col-span-2"
                 placeholder="Name"
                 onChange={(event) =>
                   update({

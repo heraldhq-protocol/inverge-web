@@ -1,6 +1,12 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
+const sendJsonMock = vi.fn();
+
+vi.mock("@/lib/api/client", () => ({
+  sendJson: (...args: unknown[]) => sendJsonMock(...args),
+}));
+
 import type { AdminActor } from "@/features/admin/permissions";
 import { findPreviewCampaignById } from "@/features/campaigns/content/preview-campaigns";
 import { CAMPAIGN_REVIEW_MIN_REASON } from "@/features/campaigns/lib/admin-review";
@@ -41,6 +47,7 @@ async function renderDetail(actor: AdminActor, campaign: Campaign) {
 beforeEach(() => {
   vi.resetModules();
   window.localStorage.clear();
+  sendJsonMock.mockReset();
 });
 
 afterEach(() => {
@@ -105,9 +112,16 @@ describe("AdminCampaignReviewDetail", () => {
       ),
     ).toBeDefined();
     expect(window.localStorage.getItem(getCampaignReviewStoreKey())).toBeNull();
+    expect(sendJsonMock).not.toHaveBeenCalled();
   });
 
-  it("records an approval locally and says it was not sent to the API", async () => {
+  it("records an approval when API responds with preview mode", async () => {
+    sendJsonMock.mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: { preview: true, action: "APPROVE" },
+    });
+
     await renderDetail(REVIEWER, fixture("campaign-naija-craft"));
 
     fireEvent.click(screen.getByRole("radio", { name: /Approve for funding/ }));
@@ -115,9 +129,8 @@ describe("AdminCampaignReviewDetail", () => {
       screen.getByRole("button", { name: "Approve for funding" }),
     );
 
-    expect(screen.getByRole("status").textContent).toContain(
-      "recorded in this browser. It has not been sent to the API.",
-    );
+    const statusNotice = await screen.findByRole("status");
+    expect(statusNotice.textContent).toContain("recorded in preview mode");
     expect(screen.getByText("Approved for funding")).toBeDefined();
     expect(screen.getByText(/Awaiting review/)).toBeDefined();
     expect(
@@ -126,5 +139,27 @@ describe("AdminCampaignReviewDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Approve for funding" }),
     ).toBeNull();
+  });
+
+  it("refuses to record a confirmed state when the API returns an error", async () => {
+    sendJsonMock.mockResolvedValue({
+      ok: false,
+      status: 403,
+      code: "FORBIDDEN",
+      message: "Only platform administrators can review campaigns.",
+    });
+
+    await renderDetail(REVIEWER, fixture("campaign-naija-craft"));
+
+    fireEvent.click(screen.getByRole("radio", { name: /Approve for funding/ }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Approve for funding" }),
+    );
+
+    const errorAlert = await screen.findByText("Only platform administrators can review campaigns.");
+    expect(errorAlert).toBeDefined();
+    // Must NOT record in local store or show success status
+    expect(window.localStorage.getItem(getCampaignReviewStoreKey())).toBeNull();
+    expect(screen.queryByRole("status")).toBeNull();
   });
 });

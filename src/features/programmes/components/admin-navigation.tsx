@@ -75,7 +75,7 @@ export function AdminMobileNavigation() {
   return (
     <nav
       aria-label="Admin sections"
-      className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 lg:hidden"
+      className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:hidden [&::-webkit-scrollbar]:hidden"
     >
       {items.map(({ href, icon, label }) => {
         const active = current(pathname, href);
