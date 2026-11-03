@@ -10,7 +10,7 @@ vi.mock("@/features/auth/server/auth-mode", () => ({
 vi.mock("@/features/auth/server/api-token", () => ({ requireApiToken }));
 vi.mock("@/lib/api/server", () => ({ sendApiJson }));
 
-import { POST } from "@/app/api/ideas/[ideaId]/convert/route";
+import { POST } from "@/app/api/ideas/[id]/convert/route";
 
 const APP_ORIGIN = "https://inverge.africa";
 
@@ -54,7 +54,7 @@ function request(
 }
 
 function context(ideaId = "idea_1") {
-  return { params: Promise.resolve({ ideaId }) };
+  return { params: Promise.resolve({ id: ideaId }) };
 }
 
 function success(data: unknown) {

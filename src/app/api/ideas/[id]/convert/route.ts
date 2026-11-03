@@ -11,7 +11,7 @@ import {
 } from "@/lib/api/route";
 import { sendApiJson, type ApiWriteFailure } from "@/lib/api/server";
 
-type RouteContext = { params: Promise<{ ideaId: string }> };
+type RouteContext = { params: Promise<{ id: string }> };
 
 type CampaignRow = { id?: unknown; ideaId?: unknown };
 
@@ -114,7 +114,7 @@ export async function POST(request: Request, context: RouteContext) {
     );
   }
 
-  const { ideaId } = await context.params;
+  const { id: ideaId } = await context.params;
   const convert = await sendApiJson(
     `/ideas/${encodeURIComponent(ideaId)}/convert`,
     { body: plan.payload, method: "POST", token: auth.token },
