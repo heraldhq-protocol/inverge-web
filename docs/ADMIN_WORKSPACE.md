@@ -20,7 +20,7 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | :--- | :--- | :--- | :--- | :--- |
 | **Admin Shell & Nav** | `/admin/*` | **Functional Preview** | Layout, responsive drawer (`AdminNavigation`), RBAC access gate (`getProgrammeAdminAccess`), session display | Mobile font scaling consistency; live session identity |
 | **Overview** | `/admin` | **API wired; live browser verification pending** | Public summary, reported escrow, and admin analytics with independent failure states, source timestamps, period selection and refresh; legacy preview is isolated to preview auth | Confirm against a running API and real admin session; backend escrow reconciliation remains unresolved |
-| **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **Interactive UI (Mock Data)** | Complete review queue, state filtering (`UNDER_REVIEW`, `CHANGES_REQUESTED`, `APPROVED`, `REJECTED`), pitch & milestone plan inspection, decision modal with rationale | Wire live submissions API (replace `previewCampaigns`); on-chain metadata hash generation on approval; listing freeze action (FR-903) |
+| **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **Live API Wired (Preview fallback)** | Complete review queue, pitch & milestone inspection, live server reads (`getAdminCampaigns`, `getAdminCampaignDetail`), async BFF decision route (`/api/admin/campaigns/[id]/review`), strict failure handling | On-chain metadata hash generation on approval (FR-303); listing freeze action (FR-903) |
 | **Verification & KYC** | `/admin/verification`<br>`/admin/verification/[id]` | **Live API Wired** | Queue table, risk categorization (`Low`, `Medium`, `High`), case detail view, `ResolveRiskForm` with decision submission | Verification webhooks integration; strike tracking & strike decay ledger (FR-310) |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
@@ -82,11 +82,28 @@ The dev-server check also exposed a pre-existing route collision between
 tests now live under `[id]/convert`, with the parameter bound to the same internal
 `ideaId` variable. Its public URL and conversion behavior are unchanged.
 
+### Campaign review integration (2026-11-03)
+
+`src/features/campaigns/server/admin-campaigns.ts` and
+`src/app/api/admin/campaigns/[id]/review/route.ts` wire the campaign review
+workflow to the backend API:
+
+| Endpoint | Method | Operation & Contract |
+| --- | --- | --- |
+| `/api/v1/admin/campaigns` | `GET` | Lists campaigns with review status filters (`reviewStatus=ALL`). Returns mapped domain models with `previewCampaigns` fallback when unconfigured. |
+| `/api/v1/admin/campaigns/{id}` | `GET` | Fetches full campaign pitch, milestones, disclosures, and story. |
+| `/api/v1/admin/campaigns/{id}/review` | `POST` | Submits decision (`APPROVE`, `REQUEST_CHANGES`, `REJECT`) with required reason (min 20 characters for rejection/changes). Same-origin and `getProgrammeAdminAccess` enforced. |
+
+The client mutation in `AdminCampaignReviewDetail` is strictly asynchronous and
+never infers a confirmed state optimistically: the UI disables submission, awaits
+the BFF response, surfaces any upstream error verbatim (e.g. 403 Forbidden or
+422 Unprocessable), and only commits local state upon a confirmed 200 OK.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detailed campaign pitch, media, use-of-funds, and milestone inspection (`/admin/campaigns/[id]`).
 - [x] Reasoned decision modal with structured approval/rejection forms.
-- [ ] **Task 1.1**: Connect `/admin/campaigns` to live server-side campaign queue query (`getAdminCampaigns()`) instead of `previewCampaigns`.
+- [x] **Task 1.1**: Connect `/admin/campaigns` and `/admin/campaigns/[id]` to live server-side campaign queue queries (`getAdminCampaigns()`, `getAdminCampaignDetail()`) and BFF route (`/api/admin/campaigns/[id]/review`) with true async submission and fallback fixtures.
 - [ ] **Task 1.2**: Implement real approval mutation that hashes the approved milestone plan for on-chain anchoring (FR-303).
 - [ ] **Task 1.3**: Add explicit campaign "Freeze" action (FR-903) allowing admins to take down public listings without touching escrow assets.
 
@@ -124,3 +141,12 @@ tests now live under `[id]/convert`, with the parameter bound to the same intern
 - [ ] **Task 5.1**: Reconcile live payment gateway webhooks for application fees (FR-311, FR-406).
 - [ ] **Task 5.2**: Connect platform success fee tracker (5% per released escrow tranche) to live indexing data (FR-505).
 - [ ] **Task 5.3**: Stream live immutable audit log events into `/admin/audit` from server-side mutations.
+
+---
+
+### Phase 6: Unsurfaced Backend Capabilities (`docs/api/openapi.json`)
+The backend specification contains several admin endpoints that currently have no frontend view in `inverge-web`:
+- [ ] **Task 6.1**: **User & Role Management**: Wire `GET /api/v1/admin/users` and `PATCH /api/v1/admin/users/{id}/role` to manage platform administrators and role assignments.
+- [ ] **Task 6.2**: **AI Assistant Access Requests**: Wire `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` to adjudicate Creator Studio AI access.
+- [ ] **Task 6.3**: **Analytics Access Requests**: Wire `GET /api/v1/admin/analytics/access-requests` and `PATCH /api/v1/admin/analytics/access-requests/{id}` to grant premium platform analytics access.
+- [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.
