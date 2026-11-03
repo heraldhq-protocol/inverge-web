@@ -12,6 +12,7 @@ import {
   Megaphone01Icon,
   Note01Icon,
   TrophyIcon,
+  UserGroupIcon,
 } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -25,6 +26,7 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
       icon: IdentityCardIcon,
       label: "Verification",
     },
+    { href: "/admin/users", icon: UserGroupIcon, label: "Users" },
     { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
@@ -75,7 +77,7 @@ export function AdminMobileNavigation() {
   return (
     <nav
       aria-label="Admin sections"
-      className="flex gap-1 overflow-x-auto border-b border-border bg-surface px-3 py-2 [scrollbar-width:none] [-ms-overflow-style:none] lg:hidden [&::-webkit-scrollbar]:hidden"
+      className="flex flex-wrap gap-1 border-b border-border bg-surface px-3 py-2 lg:hidden"
     >
       {items.map(({ href, icon, label }) => {
         const active = current(pathname, href);
@@ -84,7 +86,7 @@ export function AdminMobileNavigation() {
             key={href}
             href={href}
             aria-current={active ? "page" : undefined}
-            className={`inline-flex min-h-10 shrink-0 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+            className={`inline-flex min-h-10 items-center gap-1.5 rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
               active
                 ? "bg-brand-soft text-brand-strong"
                 : "text-muted hover:bg-canvas hover:text-ink"

@@ -96,8 +96,10 @@ export function AdminShell({
               {access.preview ? "Preview · not persisted" : "Authorised"}
             </span>
           </div>
-          <AdminMobileNavigation />
         </header>
+        {/* Outside the sticky header: wrapping to three rows on a small screen
+            must not pin that height over every page's content. */}
+        <AdminMobileNavigation />
         <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
           {children}
         </main>

@@ -27,6 +27,7 @@ export type AdminPermission =
   | "campaign:review"
   | "advertising:manage"
   | "advertising:approve"
+  | "users:manage"
   | "settings:manage";
 
 export const ROLE_PERMISSIONS: Readonly<
@@ -46,6 +47,7 @@ export const ROLE_PERMISSIONS: Readonly<
     "campaign:review",
     "advertising:manage",
     "advertising:approve",
+    "users:manage",
     "settings:manage",
   ],
   organiser: [

@@ -22,6 +22,7 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | **Overview** | `/admin` | **API wired; live browser verification pending** | Public summary, reported escrow, and admin analytics with independent failure states, source timestamps, period selection and refresh; legacy preview is isolated to preview auth | Confirm against a running API and real admin session; backend escrow reconciliation remains unresolved |
 | **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **Live API Wired (Preview fallback)** | Complete review queue, pitch & milestone inspection, live server reads (`getAdminCampaigns`, `getAdminCampaignDetail`), async BFF decision route (`/api/admin/campaigns/[id]/review`), strict failure handling | On-chain metadata hash generation on approval (FR-303); listing freeze action (FR-903) |
 | **Verification & KYC** | `/admin/verification`<br>`/admin/verification/[id]` | **Live API Wired** | Queue table, risk categorization (`Low`, `Medium`, `High`), case detail view, `ResolveRiskForm` with decision submission | Verification webhooks integration; strike tracking & strike decay ledger (FR-310) |
+| **Users & Roles** | `/admin/users` | **API wired; live verification pending** | Session-gated directory with email/provider search, role filter, paging and a per-account role editor; preview accounts are isolated and a preview change is never described as saved; the mobile admin nav wraps below the sticky header instead of scrolling sideways | Widen `UpdateUserRoleDto` before offering `COMPLIANCE_REVIEWER`; the list endpoint returns no total, so paging is inferred from a full page; confirm against a deployed API and a real admin session |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
 | **Payments & Treasury** | `/admin/payments` | **Interactive UI (Mock Data)** | Reconciliations ledger, application fee records (FR-311), platform success fee estimates (FR-505), monetization tier breakdown | Connect payment gateway webhooks for non-refundable fee reconciliation; live USDC ledger |
@@ -98,6 +99,60 @@ The client mutation in `AdminCampaignReviewDetail` is strictly asynchronous and
 never infers a confirmed state optimistically: the UI disables submission, awaits
 the BFF response, surfaces any upstream error verbatim (e.g. 403 Forbidden or
 422 Unprocessable), and only commits local state upon a confirmed 200 OK.
+
+### Users & roles integration (2026-11-03)
+
+`src/app/admin/users/page.tsx`, `src/features/admin/server/users.ts` and
+`src/app/api/admin/users/[id]/role/route.ts` add the account directory the admin
+nav previously lacked. Contracts follow `docs/api/openapi.json`; the
+specification declares no response schema for either route, so runtime
+validation follows the backend admin controller and its `USER_SELECT`
+projection at revision `01e324ae`.
+
+| Endpoint | Method | Operation & Contract |
+| --- | --- | --- |
+| `/api/v1/admin/users` | `GET` | Returns a bare array with no envelope and no total: `id`, `email`, `providerUserId`, `role`, `kycStatus`, `bannedAt`, `createdAt`. Forwards `query`, `role`, `limit` and `offset`; the page size is 25 and is clamped to the documented maximum of 200. |
+| `/api/v1/admin/users/{id}/role` | `PATCH` | Body `{ role }` validated by `UpdateUserRoleDto`, which accepts only `USER` and `ADMIN`. Same-origin, live admin access and the HttpOnly session are rechecked. Returns the updated account projection. |
+
+`GET /admin/users` is confirmed to take `offset`, not `skip`, and to return no
+`total`. Paging therefore shows Older only while a full page arrives, and never
+invents a count. A malformed page, an expired session, a missing API origin and
+an upstream failure each render the directory as unavailable with a way back;
+none of them borrow sample rows.
+
+`ASSIGNABLE_ROLES` in `src/features/admin/lib/users.ts` is the single switch for
+the writable role set. `COMPLIANCE_REVIEWER` exists in the database and is
+displayed and filterable, but it is not offered as a choice because
+`UpdateUserRoleDto` rejects it. Widening that constant widens the client editor
+and the BFF together; the shared `updateUserRoleSchema` (FR-901) is enforced in
+both places.
+
+The BFF refuses cross-site requests, non-admin or preview identities, invalid
+JSON, roles outside the DTO, and self-demotion before the API is called. The
+server write helper additionally requires the confirmed account to be the one
+that changed, so a stale or unrelated response is reported rather than rendered
+as a new role. A 404 is distinct from an unreachable service.
+
+In the UI, one bordered surface holds the search field, role filters and paged
+list; each account row expands into an inline editor rather than stacking a card
+inside a card. Changes report through `role="status"` and failures through
+`role="alert"`, and focus returns to the row trigger when the editor closes.
+Preview accounts (`src/features/admin/content/preview-users.ts`) are fabricated
+`@example.com` addresses; a preview role change updates the row and says so,
+and is never sent to the API. Preview never implies a saved backend change.
+
+Validation: `pnpm typecheck` passes, the focused role-model, DTO, server and BFF
+suites pass 45 tests across six files, and `pnpm test src/features/admin` passes
+60 tests across eight files. Scoped ESLint and Prettier checks are clean. A
+running dev server served `/admin/users` at 200 for a preview session: the nine
+sample accounts render, `?role=ADMIN` returns two, `?q=amara` returns one, an
+unmatched search shows the empty state, and an unknown `role` value is ignored.
+The write route answered 503 (`API_REQUIRED`) for a preview session, 403
+(`ORIGIN_NOT_ALLOWED`) for a cross-origin request and 403 (`FORBIDDEN`) without a
+session, so neither preview nor a cross-site caller reaches the API. Playwright
+is not available in this environment, so the guide's browser pass — console and
+network inspection plus a 390×844 interaction check — is still outstanding; the
+HTTP renders and component tests above are not a substitute.
 
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
