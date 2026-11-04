@@ -611,25 +611,46 @@ export function ProgrammeDetail({
                       </p>
                     ) : null}
                   </div>
-                  <div className="border border-border bg-surface p-4">
-                    <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted">
-                      Missing evaluations
-                    </p>
-                    <p className="mt-1 text-sm font-semibold text-ink">
-                      {programme.judging.missingEvaluationPolicy === "EXCLUDE"
-                        ? "Excluded, with a published reason"
-                        : "Counted as zero"}
-                    </p>
-                    {programme.judging.minimumEvaluations > 0 ? (
-                      <p className="mt-1 text-xs leading-5 text-muted">
-                        At least {programme.judging.minimumEvaluations} complete{" "}
-                        {programme.judging.minimumEvaluations === 1
-                          ? "evaluation"
-                          : "evaluations"}{" "}
-                        required.
+                  {programme.judging.method === "JUDGES" ||
+                  programme.judging.method === "HYBRID" ? (
+                    <div className="border border-border bg-surface p-4">
+                      <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted">
+                        Missing evaluations
                       </p>
-                    ) : null}
-                  </div>
+                      <p className="mt-1 text-sm font-semibold text-ink">
+                        {programme.judging.missingEvaluationPolicy === "EXCLUDE"
+                          ? "Excluded, with a published reason"
+                          : "Counted as zero"}
+                      </p>
+                      {programme.judging.minimumEvaluations > 0 ? (
+                        <p className="mt-1 text-xs leading-5 text-muted">
+                          At least {programme.judging.minimumEvaluations} complete{" "}
+                          {programme.judging.minimumEvaluations === 1
+                            ? "evaluation"
+                            : "evaluations"}{" "}
+                          required.
+                        </p>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="border border-border bg-surface p-4">
+                      <p className="text-[0.625rem] font-bold uppercase tracking-[0.14em] text-muted">
+                        {programme.judging.method === "COMMUNITY"
+                          ? "Community score"
+                          : "Official order"}
+                      </p>
+                      <p className="mt-1 text-sm font-semibold text-ink">
+                        {programme.judging.method === "COMMUNITY"
+                          ? "Support from verified accounts, normalised to the highest entry"
+                          : "Set by the organiser's authorised curation"}
+                      </p>
+                      <p className="mt-1 text-xs leading-5 text-muted">
+                        {programme.judging.method === "COMMUNITY"
+                          ? "No judge evaluation is used in this method."
+                          : "No numeric judge score is used in this method."}
+                      </p>
+                    </div>
+                  )}
                 </div>
 
                 {programme.judging.rubric.length > 0 ? (
