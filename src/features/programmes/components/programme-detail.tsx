@@ -624,7 +624,8 @@ export function ProgrammeDetail({
                       </p>
                       {programme.judging.minimumEvaluations > 0 ? (
                         <p className="mt-1 text-xs leading-5 text-muted">
-                          At least {programme.judging.minimumEvaluations} complete{" "}
+                          At least {programme.judging.minimumEvaluations}{" "}
+                          complete{" "}
                           {programme.judging.minimumEvaluations === 1
                             ? "evaluation"
                             : "evaluations"}{" "}
