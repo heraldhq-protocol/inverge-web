@@ -4,97 +4,101 @@ import Link from "next/link";
 import { HugeiconsIcon } from "@hugeicons/react";
 import { ArrowRight02Icon, Calendar03Icon } from "@hugeicons/core-free-icons";
 
+import { Container } from "@/components/ui/container";
 import { CompetitionInfoPage } from "@/features/ideathon/components/competition-info-page";
-import { competitionFromProgramme } from "@/features/ideathon/content/from-programme";
-import { getPreviewActiveIdeathon } from "@/features/programmes/content/preview-programmes";
-import { formatProgrammeDate } from "@/features/programmes/lib/programme";
+import { CompetitionNav } from "@/features/ideathon/components/competition-nav";
 import { buildPageMetadata } from "@/lib/seo/metadata";
 
 export const metadata: Metadata = buildPageMetadata({
   description:
-    "How the Inverge monthly ideathon works: the theme, who can take part, and what participants get from entering.",
+    "How an Inverge ideathon works: the brief, eligibility, submission, community support and the published judging method.",
   og: { eyebrow: "Ideathon", template: "ideathon" },
   path: "/ideathon/about",
-  title: "About the ideathon",
+  title: "How the ideathon works",
 });
 
-const formatRange = (startsAt: string, endsAt: string) =>
-  `${new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-  }).format(new Date(startsAt))} to ${new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "long",
-    timeZone: "UTC",
-    year: "numeric",
-  }).format(new Date(endsAt))}`;
-
 export default function IdeathonAboutPage() {
-  const programme = getPreviewActiveIdeathon();
-  const competition = competitionFromProgramme(programme);
-
   return (
-    <CompetitionInfoPage
-      eyebrow="About the ideathon"
-      title="A monthly round for ideas worth building"
-      intro={`The Inverge ideathon gives early-stage African builders a monthly reason to publish what they are working on and a real audience to learn from. This month's theme is ${competition.theme.toLowerCase()}: ${competition.themeSummary.toLowerCase()}`}
-      sections={[
-        {
-          title: "Who can take part",
-          body: "Anyone with a published idea can enter while entries are open. Ideas stay free to publish, and a private idea can be entered without being listed in public discovery. The creator must own the idea they enter.",
-        },
-        {
-          title: "What participants get",
-          body: "Every entrant keeps the validation signal they gather: supporters, structured feedback, and non-binding funding interest. The strongest ideas are featured, and the round gives creators a reason to ask their audience for an honest response instead of waiting for a launch.",
-          bullets: [
-            "A public page that shows progress, not just a pitch",
-            "Structured feedback from people outside your own network",
-            "Recognition for the ideas the community responds to most",
-          ],
-        },
-        {
-          title: "How the round runs",
-          body: `Entries are open from ${formatRange(competition.startsAt, competition.endsAt)}. Standings refresh while the round is open. After entries close, the final order is published and the next month's theme is announced.`,
-          bullets: [
-            `Entries open: ${formatProgrammeDate(programme.schedule.submissionOpensAt)}`,
-            `Entries close: ${formatProgrammeDate(programme.schedule.submissionClosesAt)}`,
-            "Next theme announced with the results",
-          ],
-        },
-        {
-          title: "What a prize is",
-          body: `${competition.prizeDescription} A prize is recognition. It is not an investment, a return, or a payment from escrowed funds, and it never changes how an idea is ranked.`,
-        },
-        {
-          title: "Why the theme exists",
-          body: "A shared theme makes the month comparable: readers can explore one problem space, and creators can see how similar ideas are being received. The theme guides which ideas are invited into the round. It does not weight the scoring.",
-        },
-      ]}
-      aside={{
-        icon: Calendar03Icon,
-        title: "This month's schedule",
-        body: (
-          <>
-            <p>{formatRange(competition.startsAt, competition.endsAt)}</p>
-            <p className="mt-2">
-              Standings are preview data until the community loop ships.
-            </p>
-            <Link
-              href="/ideathon"
-              className="mt-3 inline-flex min-h-9 items-center gap-1.5 rounded text-xs font-semibold text-brand-strong hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            >
-              View standings
-              <HugeiconsIcon
-                icon={ArrowRight02Icon}
-                size={14}
-                strokeWidth={1.9}
-                aria-hidden="true"
-              />
-            </Link>
-          </>
-        ),
-      }}
-    />
+    <Container>
+      <CompetitionNav />
+      <div className="py-10 sm:py-12">
+        <CompetitionInfoPage
+          eyebrow="How it works"
+          title="A brief, a build, a published result"
+          intro="Each Inverge programme is a time-boxed challenge with its own brief, eligibility, submission requirements and judging method. The programme page is the source of truth; this page explains the shape every edition follows."
+          sections={[
+            {
+              title: "1. The organiser publishes the brief",
+              body: "Before entries open, the organiser publishes the challenge, who may enter, the submission requirements, the timeline and the scoring method. Dates are shown in UTC. If a requirement changes, it is an announcement, not a silent edit.",
+            },
+            {
+              title: "2. A builder enters an idea",
+              body: "You can enter a new idea or an existing one, depending on the programme's entry mode. Registration may be required first. A submitted entry freezes a snapshot: editing your idea afterwards does not change what judges scored.",
+              bullets: [
+                "Drafts can be saved and resumed while submissions are open.",
+                "A submitted entry is immutable until the organiser allows a new version.",
+                "Withdrawal is only available when the programme permits it and before judging starts.",
+              ],
+            },
+            {
+              title: "3. The community responds",
+              body: "Support is recorded against the idea behind the entry. Community-only programmes rank on that support. Hybrid programmes combine it with the judge score using the weights published on the programme page.",
+              bullets: [
+                "A supporter is counted once per idea.",
+                "A paid boost, sponsorship or advertisement is labelled and never counted in the official score.",
+                "The leaderboard is published after judging, not as a live popularity chart.",
+              ],
+            },
+            {
+              title: "4. Judges score against the rubric",
+              body: "Judges score each criterion on the published range. The organiser publishes the weights, how many evaluations are required, what happens when one is missing, and the tie-break order. A missing evaluation is excluded with a reason, or explicitly counted as zero; it is never silently averaged in.",
+            },
+            {
+              title: "5. Results are published and kept",
+              body: "A published result records the order, the scoring method, the rubric and a checksum over the inputs. Participants may see provisional results first. Public standings appear only after the organiser publishes them. A correction is a new revision beside the frozen order.",
+            },
+          ]}
+          aside={{
+            icon: Calendar03Icon,
+            title: "Find the current brief",
+            body: (
+              <>
+                <p>
+                  The catalogue shows every published programme and its phase.
+                  Open an edition for its dates, eligibility and judging rules.
+                </p>
+                <Link
+                  href="/ideathon"
+                  className="mt-3 inline-flex items-center gap-1 font-semibold text-brand-strong underline decoration-brand/25 underline-offset-4 hover:decoration-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                >
+                  Browse programmes
+                  <HugeiconsIcon
+                    icon={ArrowRight02Icon}
+                    size={13}
+                    strokeWidth={2}
+                    aria-hidden="true"
+                  />
+                </Link>
+              </>
+            ),
+          }}
+        />
+
+        <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 border-t border-border pt-5 text-sm">
+          <Link
+            href="/ideathon/rules"
+            className="font-semibold text-brand-strong underline decoration-brand/25 underline-offset-4 hover:decoration-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            Read the ranking rules
+          </Link>
+          <Link
+            href="/ideathon/past"
+            className="font-semibold text-ink-soft underline decoration-border underline-offset-4 hover:decoration-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          >
+            See past results
+          </Link>
+        </div>
+      </div>
+    </Container>
   );
 }
