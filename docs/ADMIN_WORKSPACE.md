@@ -25,6 +25,7 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | **Users & Roles** | `/admin/users` | **API wired; live verification pending** | Session-gated directory with email/provider search, role filter, paging and a per-account role editor; preview accounts are isolated and a preview change is never described as saved; the mobile admin nav wraps below the sticky header instead of scrolling sideways | Widen `UpdateUserRoleDto` before offering `COMPLIANCE_REVIEWER`; the list endpoint returns no total, so paging is inferred from a full page; confirm against a deployed API and a real admin session |
 | **AI Access** | `/admin/ai-access` | **API wired; live verification pending** | Status-filtered request list, optional approval expiry, confirmed pending-only decisions, and explicit unavailable/recovery states | Real admin-session verification; the API caps the oldest-first list at 200 and supplies no cursor or total |
 | **Analytics Access** | `/admin/analytics-access` | **API wired; live verification pending** | Cursor-paged request list, status filters, approval/expiry changes and revocation with validated confirmations | Real admin-session verification; the backend omits totals and exposes no revision precondition for concurrent decisions |
+| **Moderation Screening** | `/admin/moderation` | **API wired; live verification pending** | Idea/campaign text screening, validated advisory results, separate internal/creator-facing explanations, classifier provenance and explicit new-case retries | Real admin-session verification; no case-list/read API or listing-freeze transition is supplied by this endpoint |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
 | **Payments & Treasury** | `/admin/payments` | **Interactive UI (Mock Data)** | Reconciliations ledger, application fee records (FR-311), platform success fee estimates (FR-505), monetization tier breakdown | Connect payment gateway webhooks for non-refundable fee reconciliation; live USDC ledger |
@@ -331,6 +332,51 @@ authenticated verification remains pending. The existing 39 formatting failures,
 two source lint errors and Node 24.18.0 baseline limitation remain as recorded
 above; temporary preview adapters also produce four lint warnings.
 
+### Moderation screening integration (2026-11-05)
+
+`/admin/moderation` submits `POST /api/admin/moderation/screen` to
+`POST /api/v1/admin/moderation/screen`. The request follows `ScreenContentDto`:
+`idea` or `campaign`, optional title (200 characters), and non-empty text
+(20,000 characters). OpenAPI omits the response shape, so runtime validation
+follows [ModerationService at c3e23b0](https://github.com/heraldhq-protocol/inverge-api/blob/c3e23b085989581125371fab0ef41a63476cd28b/src/modules/moderation/moderation.service.ts),
+its classifier port, routing vocabulary and Prisma `ModerationCase` projection.
+
+Every run saves an advisory case under the authenticated administrator. The API
+uses that administrator for account checks and supplies no listing ID; this tool
+cannot assess a creator's identity or sanctions status. Campaign review,
+verification and listing publication/removal are separate operations. Only
+`AUTO_CLEAR` and `HELD_FOR_REVIEW` are accepted, and a result must match the
+submitted kind, current actor and absence of a listing link (FR-901, NFR-14).
+
+The result shows risk scores, category findings, reason codes, the review brief,
+classifier and policy version. Internal findings remain separate from the
+unaltered creator-facing explanation. No message is sent to a creator. The
+`stub` classifier is explicitly identified as a test classifier; an advisory
+clear result is not presented as campaign approval. Editing content marks its
+previous result as outdated. Text and results stay in component memory and are
+not persisted in browser storage.
+
+The BFF requires a live admin and same-origin request, strips unknown response
+fields and never exposes the session token. It allows 45 seconds for screening,
+with a 50-second browser timeout. The operation has no idempotency key or case
+lookup API: a timeout or malformed confirmation may follow a saved case. The
+form therefore suppresses automatic retries and requires a deliberate "Start
+another screening" action before another case can be created. Session failures
+require a reload. Missing configuration and preview access render unavailable
+states without a simulated classifier.
+
+Verification: all 192 admin/BFF tests across 22 files pass, including 37 new
+screening tests. Scoped ESLint/Prettier, `pnpm typecheck`, `git diff --check` and
+`pnpm build` pass (270 generated pages). Playwright MCP
+exercised native submission, validation, delayed results, held/clear findings,
+reason separation, stale-content notices, deliberate retry after an unconfirmed
+attempt, access failures, empty/loading/unavailable states and widths from 320
+to 1440px including 390x844. The mobile form was visually inspected. Normal
+rendering has no console errors or warnings; failed requests were the deliberate
+503 and 403 fixtures. The real route redirects to the unconfigured sign-in page,
+so live authenticated screening remains unverified. The repository-wide
+format/lint and Node baseline limitations recorded above still apply.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
@@ -382,10 +428,11 @@ The backend specification defines these additional admin capabilities. User mana
 - [x] **Task 6.2**: **AI Assistant Access Requests**: `/admin/ai-access` connects `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` with confirmed decisions. Authenticated live verification remains pending.
 - [x] **Task 6.3**: **Analytics Access Requests**: `/admin/analytics-access` connects the paginated list and confirmed grant decisions, including expiry changes and revocation. Authenticated live verification remains pending.
 - [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.
+- [x] **Task 6.5**: **Moderation Screening**: `/admin/moderation` connects advisory screening and case confirmations. Live verification, moderation queues and listing freeze remain separate work.
 
 ### Remaining endpoint inventory (2026-11-05)
 
-Comparing `docs/api/openapi.json` with the frontend call sites leaves **13
+Comparing `docs/api/openapi.json` with the frontend call sites leaves **12
 documented admin operations without frontend integration**, counting each method
 and path separately and including the standalone KYC/KYB administrator APIs.
 Every path below has the prefix `/api/v1`.
@@ -395,11 +442,10 @@ Every path below has the prefix `/api/v1`.
 | Boost prices and durations | `GET /admin/boost-prices`; `PATCH /admin/boost-prices` |
 | Runtime parameters and their history | `GET /admin/params`; `PATCH /admin/params`; `GET /admin/params/audit` |
 | Editorial email tools | `GET /admin/email/templates`; `POST /admin/email/editorial/preview`; `POST /admin/email/editorial/send` |
-| Moderation screening | `POST /admin/moderation/screen` |
 | Individual AML screening and history | `POST /kyc/admin/aml-screen`; `GET /kyc/admin/aml/{userId}` |
 | Business AML screening and history | `POST /kyb/admin/aml-screen`; `GET /kyb/admin/aml/{userId}` |
 
-Overview reporting, campaign review, users/roles, AI and analytics access, and the unified verification
+Overview reporting, campaign review, users/roles, AI and analytics access, moderation screening, and the unified verification
 queue/case-resolution endpoints already have frontend integrations. Their live
 verification limits are recorded above.
 

@@ -12,6 +12,7 @@ import {
   Invoice01Icon,
   Megaphone01Icon,
   Note01Icon,
+  Shield01Icon,
   TrophyIcon,
   UserGroupIcon,
 } from "@hugeicons/core-free-icons";
@@ -22,6 +23,7 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
   [
     { href: "/admin", icon: Home01Icon, label: "Overview" },
     { href: "/admin/campaigns", icon: CheckListIcon, label: "Campaign review" },
+    { href: "/admin/moderation", icon: Shield01Icon, label: "Moderation" },
     {
       href: "/admin/verification",
       icon: IdentityCardIcon,

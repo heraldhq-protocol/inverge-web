@@ -13,7 +13,7 @@ export type AdminRead<T> =
 
 /** FR-901: reads and writes each require a live, server-verified admin. */
 export async function requireAdminApiSession(): Promise<
-  { ok: true; token: string } | ApiWriteFailure
+  { ok: true; token: string; actorId: string } | ApiWriteFailure
 > {
   const access = await getProgrammeAdminAccess();
   if (!access.allowed) {
@@ -30,7 +30,7 @@ export async function requireAdminApiSession(): Promise<
       status: 503,
       code: "API_REQUIRED",
       message:
-        "Sign in with a live administrator account to use this service. Preview accounts cannot read or change access.",
+        "Sign in with a live administrator account to use this service. Preview accounts cannot use live admin services.",
     };
   }
   const token = await readSessionToken();
@@ -50,7 +50,7 @@ export async function requireAdminApiSession(): Promise<
       message: "The admin service is not configured for this deployment.",
     };
   }
-  return { ok: true, token };
+  return { ok: true, token, actorId: access.actor.id };
 }
 
 export function adminReadUnavailable(error: unknown): {
