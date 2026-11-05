@@ -64,7 +64,7 @@ function PreviewNotice() {
 }
 
 const pagerLink =
-  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-border-strong hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-border-strong hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong";
 
 const pagerDisabled =
   "inline-flex min-h-11 items-center gap-2 rounded-lg border border-border/60 px-3 text-xs font-semibold text-muted/50";
@@ -114,7 +114,7 @@ export function AdminUsersDirectory({
               {role ? <input type="hidden" name="role" value={role} /> : null}
               {/* A fixed-height wrapper owns the sizing; the submit adds no
                   nested padding or minimum height to stretch the field. */}
-              <div className="flex h-11 items-center gap-2.5 rounded-lg border border-border-strong bg-surface pl-3 transition-colors focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/12">
+              <div className="flex h-12 items-center gap-2.5 rounded-lg border border-border-strong bg-surface pl-3 transition-colors focus-within:border-brand-strong focus-within:ring-2 focus-within:ring-brand-strong/12">
                 <HugeiconsIcon
                   icon={Search01Icon}
                   size={16}
@@ -133,11 +133,11 @@ export function AdminUsersDirectory({
                   placeholder="Email or provider ID"
                   autoComplete="off"
                   spellCheck={false}
-                  className="h-full w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
+                  className="h-full w-full min-w-0 bg-transparent text-base text-ink outline-none placeholder:text-muted sm:text-sm"
                 />
                 <button
                   type="submit"
-                  className="inline-flex shrink-0 cursor-pointer items-center self-stretch rounded-r-lg border-l border-border px-3 text-xs font-semibold text-brand-strong transition-colors hover:bg-brand-tint focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brand"
+                  className="inline-flex shrink-0 cursor-pointer items-center self-stretch rounded-r-lg border-l border-border px-3 text-sm font-semibold text-brand-strong transition-colors hover:bg-brand-tint focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brand-strong"
                 >
                   Search
                 </button>
@@ -147,7 +147,7 @@ export function AdminUsersDirectory({
 
           <nav
             aria-label="Filter by role"
-            className="flex flex-wrap gap-1 xl:order-1"
+            className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap xl:order-1"
           >
             {ROLE_FILTERS.map((option) => {
               const active = role === option.value;
@@ -156,7 +156,7 @@ export function AdminUsersDirectory({
                   key={option.label}
                   href={adminUsersHref({ query, role: option.value })}
                   aria-current={active ? "true" : undefined}
-                  className={`inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  className={`inline-flex min-h-11 items-center justify-center rounded-lg px-3 text-sm font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong sm:justify-start sm:text-xs ${
                     active
                       ? "bg-brand-soft text-brand-strong"
                       : "text-muted hover:bg-canvas hover:text-ink"
@@ -192,16 +192,27 @@ export function AdminUsersDirectory({
               className="mx-auto mb-3 text-muted"
             />
             <p className="text-sm font-semibold text-ink">
-              {filtered ? "No matching accounts" : "No accounts to display"}
+              {offset > 0
+                ? "No accounts on this page"
+                : filtered
+                  ? "No matching accounts"
+                  : "No accounts to display"}
             </p>
             <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-muted">
-              {filtered
-                ? "Try a different email or provider ID, or clear your filters."
-                : "Accounts will appear here when they are available."}
+              {offset > 0
+                ? "Return to the first page to see the latest results."
+                : filtered
+                  ? "Try a different email or provider ID, or clear your filters."
+                  : "Accounts will appear here when they are available."}
             </p>
             {filtered || offset > 0 ? (
-              <Link href="/admin/users" className={`mt-4 ${pagerLink}`}>
-                {filtered ? "Clear filters" : "Back to first page"}
+              <Link
+                href={
+                  offset > 0 ? adminUsersHref({ query, role }) : "/admin/users"
+                }
+                className={`mt-4 ${pagerLink}`}
+              >
+                {offset > 0 ? "Back to first page" : "Clear filters"}
               </Link>
             ) : null}
           </div>
@@ -230,7 +241,7 @@ export function AdminUsersDirectory({
             {filtered && users.length > 0 ? (
               <Link
                 href="/admin/users"
-                className="inline-flex min-h-11 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+                className="inline-flex min-h-11 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
               >
                 Clear filters
               </Link>
@@ -302,7 +313,7 @@ export function AdminUsersDirectory({
         out. Identity checks are managed in{" "}
         <Link
           href="/admin/verification"
-          className="font-medium text-brand-strong underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+          className="font-medium text-brand-strong underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-strong"
         >
           Verification
         </Link>

@@ -130,12 +130,12 @@ export function AdminUserRow({
               </p>
               {isSelf ? (
                 <Pill size="xs" tone="neutral">
-                  You
+                  <span className="text-ink-soft">You</span>
                 </Pill>
               ) : null}
               {user.bannedAt ? (
                 <Pill size="xs" tone="danger">
-                  Banned
+                  <span className="text-ink-soft">Banned</span>
                 </Pill>
               ) : null}
             </div>
@@ -160,7 +160,11 @@ export function AdminUserRow({
         <div className="flex flex-wrap items-center justify-between gap-3 md:contents">
           <div className="flex items-center">
             <Pill tone={ADMIN_USER_ROLE_TONES[currentRole]} size="sm">
-              {ADMIN_USER_ROLE_LABELS[currentRole]}
+              <span
+                className={currentRole === "USER" ? "text-ink-soft" : undefined}
+              >
+                {ADMIN_USER_ROLE_LABELS[currentRole]}
+              </span>
             </Pill>
           </div>
           {canManage ? (
@@ -169,7 +173,7 @@ export function AdminUserRow({
               type="button"
               variant="outline"
               size="sm"
-              className="cursor-pointer gap-1.5 rounded-lg aria-expanded:border-brand/35 aria-expanded:bg-brand-soft aria-expanded:text-brand-strong md:justify-self-end"
+              className="cursor-pointer gap-1.5 rounded-lg focus-visible:outline-brand-strong aria-expanded:border-brand/35 aria-expanded:bg-brand-soft aria-expanded:text-brand-strong md:justify-self-end"
               aria-expanded={open}
               aria-controls={panelId}
               onClick={open ? closeEditor : openEditor}
@@ -188,12 +192,27 @@ export function AdminUserRow({
       </div>
 
       {open ? (
-        <div
+        <form
           id={panelId}
+          aria-labelledby={`${panelId}-label`}
           className={`mt-4 rounded-xl border border-border bg-canvas p-4 ${INDENT}`}
+          onSubmit={(event) => {
+            event.preventDefault();
+            void saveRole();
+          }}
+          onKeyDown={(event) => {
+            if (event.key === "Escape" && !busy) {
+              event.preventDefault();
+              event.stopPropagation();
+              closeEditor();
+            }
+          }}
         >
-          <fieldset disabled={busy} aria-busy={busy}>
-            <legend className="max-w-full text-sm font-semibold text-ink [overflow-wrap:anywhere]">
+          <fieldset disabled={busy} aria-busy={busy} className="min-w-0">
+            <legend
+              id={`${panelId}-label`}
+              className="max-w-full text-sm font-semibold text-ink [overflow-wrap:anywhere]"
+            >
               Role for {user.email ?? "this account"}
             </legend>
             <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -216,7 +235,7 @@ export function AdminUserRow({
                       checked={selected}
                       disabled={blocked}
                       onChange={() => setDraft(option)}
-                      className="mt-0.5 size-4 shrink-0 accent-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand"
+                      className="mt-0.5 size-4 shrink-0 accent-brand-strong focus-visible:outline-2 focus-visible:outline-offset-3 focus-visible:outline-brand-strong"
                     />
                     <span className="min-w-0">
                       <span className="block text-sm font-semibold text-ink">
@@ -247,10 +266,9 @@ export function AdminUserRow({
             </p>
             <div className="flex items-center gap-2">
               <Button
-                type="button"
+                type="submit"
                 size="sm"
-                className="cursor-pointer rounded-lg bg-brand-strong hover:bg-contrast"
-                onClick={() => void saveRole()}
+                className="cursor-pointer rounded-lg bg-brand-strong hover:bg-contrast focus-visible:outline-brand-strong"
                 disabled={busy || draft === currentRole}
               >
                 {busy ? "Saving..." : "Save role"}
@@ -259,7 +277,7 @@ export function AdminUserRow({
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="cursor-pointer rounded-lg"
+                className="cursor-pointer rounded-lg focus-visible:outline-brand-strong"
                 onClick={closeEditor}
                 disabled={busy}
               >
@@ -267,13 +285,13 @@ export function AdminUserRow({
               </Button>
             </div>
           </div>
-        </div>
+        </form>
       ) : null}
 
       {notice ? (
         <p
           role="status"
-          className={`mt-2 text-xs font-semibold text-brand-strong ${INDENT}`}
+          className={`mt-2 text-xs font-semibold leading-5 text-brand-strong [overflow-wrap:anywhere] ${INDENT}`}
         >
           {notice}
         </p>
@@ -282,7 +300,7 @@ export function AdminUserRow({
       {error ? (
         <p
           role="alert"
-          className={`mt-2 text-xs font-semibold text-danger ${INDENT}`}
+          className={`mt-3 rounded-lg border border-danger/25 bg-danger/[0.06] px-3 py-2.5 text-sm leading-6 text-ink [overflow-wrap:anywhere] ${INDENT}`}
         >
           {error}
         </p>

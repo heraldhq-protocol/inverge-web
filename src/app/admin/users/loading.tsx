@@ -5,12 +5,16 @@ export default function AdminUsersLoading() {
     <LoadingRegion label="Loading users and roles">
       <div className="mx-auto w-full max-w-7xl">
         <Skeleton className="h-3 w-24" />
-        <Skeleton className="mt-2 h-9 w-52" />
+        <Skeleton className="mt-2 h-8 w-52 sm:h-9" />
         <Skeleton className="mt-2 h-5 w-96 max-w-full" />
         <div className="mt-6 rounded-2xl border border-border bg-surface">
           <div className="flex flex-col gap-3 p-4 sm:px-5 xl:flex-row xl:justify-between">
-            <Skeleton className="h-11 w-full xl:order-2 xl:w-80" />
-            <Skeleton className="h-11 w-80 max-w-full xl:order-1" />
+            <Skeleton className="h-12 w-full xl:order-2 xl:w-80" />
+            <div className="grid grid-cols-2 gap-1 sm:flex sm:flex-wrap xl:order-1">
+              {Array.from({ length: 4 }, (_, index) => (
+                <Skeleton key={index} className="h-11 sm:w-24" />
+              ))}
+            </div>
           </div>
           <div className="hidden h-9 border-t border-border bg-canvas/60 md:block" />
           <div className="divide-y divide-border border-t border-border">

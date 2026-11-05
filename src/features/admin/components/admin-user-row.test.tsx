@@ -152,4 +152,67 @@ describe("AdminUserRow", () => {
 
     expect(screen.getByRole("button", { name: "Save role" })).toBeEnabled();
   });
+
+  it("discards an unsaved role with Escape and returns focus to its trigger", () => {
+    renderRow(member);
+    const trigger = screen.getByRole("button", { name: "Change role" });
+    fireEvent.click(trigger);
+    const administrator = screen.getByRole("radio", { name: /Administrator/ });
+    fireEvent.click(administrator);
+    administrator.focus();
+
+    fireEvent.keyDown(administrator, { key: "Escape" });
+
+    expect(screen.queryByRole("form")).toBeNull();
+    expect(trigger).toHaveAttribute("aria-expanded", "false");
+    expect(trigger).toHaveFocus();
+    expect(sendJsonMock).not.toHaveBeenCalled();
+    fireEvent.click(trigger);
+    expect(screen.getByRole("radio", { name: /Member/ })).toBeChecked();
+  });
+
+  it("accepts native form submission without a pointer click", async () => {
+    renderRow(member, { preview: true });
+    fireEvent.click(screen.getByRole("button", { name: "Change role" }));
+    fireEvent.click(screen.getByRole("radio", { name: /Administrator/ }));
+
+    fireEvent.submit(screen.getByRole("form", { name: /Role for/ }));
+
+    expect((await screen.findByRole("status")).textContent).toMatch(
+      /Preview only/,
+    );
+    expect(screen.getByText("Administrator")).toBeDefined();
+    expect(sendJsonMock).not.toHaveBeenCalled();
+  });
+
+  it("keeps a pending role change open until the API confirms it (FR-901)", async () => {
+    const pending = Promise.withResolvers<{
+      ok: true;
+      status: number;
+      data: AdminUser;
+    }>();
+    sendJsonMock.mockReturnValue(pending.promise);
+    renderRow(member);
+    chooseAdministrator();
+
+    const form = screen.getByRole("form", { name: /Role for/ });
+    expect(screen.getByRole("button", { name: "Saving..." })).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Cancel" })).toBeDisabled();
+    fireEvent.keyDown(form, { key: "Escape" });
+    fireEvent.click(screen.getByRole("button", { name: "Change role" }));
+    expect(form).toBeInTheDocument();
+    expect(screen.queryByRole("status")).toBeNull();
+
+    pending.resolve({
+      ok: true,
+      status: 200,
+      data: { ...member, role: "ADMIN" },
+    });
+
+    expect((await screen.findByRole("status")).textContent).toBe(
+      "Zainab Bello is now administrator.",
+    );
+    expect(screen.queryByRole("form")).toBeNull();
+    expect(screen.getByRole("button", { name: "Change role" })).toHaveFocus();
+  });
 });

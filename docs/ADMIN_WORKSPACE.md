@@ -196,6 +196,56 @@ is not available in this environment, so the guide's browser pass — console an
 network inspection plus a 390×844 interaction check — is still outstanding; the
 HTTP renders and component tests above are not a substitute.
 
+### Users & roles polish (2026-11-05)
+
+The directory now uses balanced two-column role filters on small screens, a
+48-pixel search control and 16-pixel mobile input text. Its loading skeleton
+matches the responsive controls and heading. Member, current-account and banned
+labels have stronger text contrast, and keyboard focus uses the existing
+`brand-strong` token.
+
+The inline role editor is a named native form. Save supports keyboard submission;
+Escape discards an unsaved draft and returns focus to the row trigger. Pending
+requests keep the editor open and its controls disabled until a confirmed
+response arrives. Errors remain visible without changing the displayed role.
+Long account identifiers, notices and errors wrap within the row. Existing role
+contracts and authorization restrictions (FR-901) remain in place.
+
+An empty later page offers "Back to first page" while preserving the current
+search and role filter. An unmatched first-page search still offers "Clear
+filters". `PRODUCT.md` records design context derived from the approved documents
+and explicitly preserves their authority.
+
+Validation: `pnpm test src/features/admin src/app/api/admin/users --maxWorkers=1
+--pool=threads` passes all 76 tests across 10 files. The regressions cover native
+submission, Escape and focus restoration, pending confirmation, and directory
+recovery links. `pnpm typecheck`, `pnpm build`, scoped ESLint and scoped Prettier
+checks pass. The production build generates 266 pages and includes `/admin/users`
+and its role mutation route. Checks ran with Node 24.18.0 and pnpm 12.3.4; the
+declared Node range is `>=24.21.0 <25`, so validation on that baseline remains
+outstanding.
+
+Playwright MCP exercised an isolated browser preview of the actual admin shell,
+directory, row and loading components with fabricated fixtures and mocked role
+responses. Search, filters, pagination, empty and unavailable states, retry,
+read-only access, keyboard editing, a delayed successful save and a rejected save
+passed. Responsive checks covered widths from 320 to 1440 pixels, including
+390x844, long identifiers and the open editor. Reduced-motion loading stayed
+static. The final preview reported no console errors or warnings; the only failed
+network request was the deliberately mocked 403 response. Mobile, desktop and
+error-state screenshots were visually inspected.
+
+The real `/admin/users` route redirects to `/auth?next=%2Fadmin%2Fusers`, where
+sign-in is reported as unconfigured. Authenticated live directory and role-change
+verification therefore remains outstanding, and Task 6.1 stays pending. Temporary
+browser-preview tooling was removed after verification.
+
+Repository-wide checks remain blocked by existing issues outside this change:
+`pnpm format:check` reports 39 untouched files, and `pnpm lint` reports two errors
+and three warnings. The errors are `react-hooks/set-state-in-effect` in
+`src/features/feedback/components/feedback-builder.tsx:519` and `react-hooks/refs`
+in `src/features/media/components/use-media-upload.ts:65`.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
@@ -247,3 +297,34 @@ The backend specification defines these additional admin capabilities. User mana
 - [ ] **Task 6.2**: **AI Assistant Access Requests**: Wire `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` to adjudicate Creator Studio AI access.
 - [ ] **Task 6.3**: **Analytics Access Requests**: Wire `GET /api/v1/admin/analytics/access-requests` and `PATCH /api/v1/admin/analytics/access-requests/{id}` to grant premium platform analytics access.
 - [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.
+
+### Remaining endpoint inventory (2026-11-05)
+
+Comparing `docs/api/openapi.json` with the frontend call sites leaves **17
+documented admin operations without frontend integration**, counting each method
+and path separately and including the standalone KYC/KYB administrator APIs.
+Every path below has the prefix `/api/v1`.
+
+| Area | Remaining operations |
+| --- | --- |
+| AI access requests | `GET /admin/ai/access-requests`; `PATCH /admin/ai/access-requests/{id}` |
+| Analytics access requests | `GET /admin/analytics/access-requests`; `PATCH /admin/analytics/access-requests/{id}` |
+| Boost prices and durations | `GET /admin/boost-prices`; `PATCH /admin/boost-prices` |
+| Runtime parameters and their history | `GET /admin/params`; `PATCH /admin/params`; `GET /admin/params/audit` |
+| Editorial email tools | `GET /admin/email/templates`; `POST /admin/email/editorial/preview`; `POST /admin/email/editorial/send` |
+| Moderation screening | `POST /admin/moderation/screen` |
+| Individual AML screening and history | `POST /kyc/admin/aml-screen`; `GET /kyc/admin/aml/{userId}` |
+| Business AML screening and history | `POST /kyb/admin/aml-screen`; `GET /kyb/admin/aml/{userId}` |
+
+Overview reporting, campaign review, users/roles and the unified verification
+queue/case-resolution endpoints already have frontend integrations. Their live
+verification limits are recorded above.
+
+`/admin/params/audit` covers parameter changes only. The moderation operation runs
+a screening harness; it supplies neither a review queue nor a listing-freeze
+transition. The checked-in specification has no dedicated admin contracts for
+the broader advertising inventory, programme persistence and judging, payment
+and settlement ledgers, a cross-feature audit feed, campaign listing freezes, or
+the creator strike ledger. Those remaining workspace features need backend
+contracts supplied or confirmed before frontend integration. Provider webhooks
+are backend/provider integrations and do not replace those admin read APIs.
