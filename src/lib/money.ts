@@ -24,6 +24,16 @@ export function formatMoney(amount: MoneyAmount): string {
   }).format(wholeUnits(amount));
 }
 
+/** Display exact cents for prices and confirmations; never round through Number. */
+export function formatMoneyWithCents(amount: MoneyAmount): string {
+  const atomic = BigInt(amount.atomic);
+  const absolute = atomic < 0n ? -atomic : atomic;
+  const scale = 10n ** BigInt(amount.decimals);
+  const fraction = (absolute % scale).toString().padStart(amount.decimals, "0");
+  const whole = formatMoney({ ...amount, atomic: absolute.toString() });
+  return `${atomic < 0n ? "-" : ""}${whole}.${fraction}`;
+}
+
 export function formatCompactMoney(amount: MoneyAmount): string {
   const value = wholeUnits(amount);
   const million = 1_000_000n;

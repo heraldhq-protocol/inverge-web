@@ -37,6 +37,11 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
       label: "Analytics access",
     },
     { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
+    {
+      href: "/admin/boost-prices",
+      icon: Invoice01Icon,
+      label: "Boost pricing",
+    },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
     { href: "/admin/audit", icon: Note01Icon, label: "Audit log" },

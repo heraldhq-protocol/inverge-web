@@ -68,6 +68,7 @@ choices.
 | D-059 | 2026-10-30 | Accepted | Creator campaigns read `GET /campaigns?mine=true` and the creator-readable detail route for live sessions; the workspace shows funding and milestones but omits escrow and claim writes until those surfaces exist. |
 | D-060 | 2026-10-30 | Accepted | The wallet is a three-destination account surface; the SDK owns provider connection, the server projection owns account linkage, live SOL balance plus a CoinGecko USD estimate are the only live figures, and preview activity/refunds stay labelled. |
 | D-061 | 2026-11-02 | Accepted | Settings reads `GET /me/settings` and writes through same-origin BFF routes to the API; preview and unreachable-API sessions are read-only, and account deletion is an auditable request rather than an immediate delete. |
+| D-063 | 2026-11-05 | Accepted | Boost pricing uses exact USD cents in the web/BFF, checked conversion to the API's numeric DTO, changed-field patches and confirmed server results. |
 
 ### D-006: Pin a mutually compatible scaffold toolchain
 
@@ -2486,6 +2487,46 @@ explicit confirmation after the return.
 
 Revisit when: the provider changes its callback shape, or a native app needs a
 deep-link equivalent.
+
+### D-063: Preserve exact cents across the numeric boost-pricing contract
+
+- Date: 2026-11-05
+- Status: Accepted
+- Owner: Web engineering
+
+Context: FR-206 and FR-904 require configurable Basic/Featured prices. The
+dedicated API returns numeric `priceUSD` fields and accepts numeric USD updates;
+the existing shared money formatter intentionally shows whole dollars. Silently
+rounding input, dropping cents or showing optimistic saves would misrepresent
+the configured price.
+
+Decision: Keep the browser/BFF representation as `MoneyAmount` with explicit USD,
+two decimal places and integer atomic strings. Parse and compare with strings
+and BigInt, and use the added `formatMoneyWithCents` for exact display. Existing
+whole-dollar formatting retains its behavior. Accept only positive cent amounts
+below USD `2^45`, and require that conversion to the API's numeric JSON format
+round-trips to the same cents. This is a conservative representation bound,
+not a business price recommendation. Numeric values are sent only by the
+upstream adapter; no financial arithmetic uses floating point.
+
+Only edited price/duration fields are patched, and every requested value must
+match a runtime-validated receipt before the UI reports success. A partial or
+uncertain result preserves the last confirmed settings and requires a reload.
+The price form cannot write application fees or general/on-chain parameters.
+
+Alternatives: Round prices with `toFixed` (loses unsupported precision); send
+all fields on every save (overwrites untouched concurrent changes); add a decimal
+library (unnecessary for integer cents); change the separate backend contract
+as part of this web change (outside this repository's scope).
+
+Consequences: The existing numeric DTO remains usable without silently losing
+entered cents. The backend's sequential parameter writes and separate audit
+inserts can still partially succeed, and same-field concurrent edits have no
+revision guard. The UI reports those limits; it cannot make backend writes
+transactional or recover precision already lost upstream.
+
+Revisit when: the API exposes decimal strings or atomic units, transactional
+price/audit updates, or a revision precondition.
 
 ## Decision template
 

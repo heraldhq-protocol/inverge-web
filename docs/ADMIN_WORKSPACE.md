@@ -26,7 +26,8 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | **AI Access** | `/admin/ai-access` | **API wired; live verification pending** | Status-filtered request list, optional approval expiry, confirmed pending-only decisions, and explicit unavailable/recovery states | Real admin-session verification; the API caps the oldest-first list at 200 and supplies no cursor or total |
 | **Analytics Access** | `/admin/analytics-access` | **API wired; live verification pending** | Cursor-paged request list, status filters, approval/expiry changes and revocation with validated confirmations | Real admin-session verification; the backend omits totals and exposes no revision precondition for concurrent decisions |
 | **Moderation Screening** | `/admin/moderation` | **API wired; live verification pending** | Idea/campaign text screening, validated advisory results, separate internal/creator-facing explanations, classifier provenance and explicit new-case retries | Real admin-session verification; no case-list/read API or listing-freeze transition is supplied by this endpoint |
-| **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
+| **Boost Pricing** | `/admin/boost-prices` | **API wired; live verification pending** | Exact-cent Basic/Featured price and duration editing, changed-field updates, validated confirmations and partial-failure recovery | Real admin-session verification; backend updates/audit writes are not transactional and have no revision precondition |
+| **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; boost pricing is now a separate API-backed admin view |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
 | **Payments & Treasury** | `/admin/payments` | **Interactive UI (Mock Data)** | Reconciliations ledger, application fee records (FR-311), platform success fee estimates (FR-505), monetization tier breakdown | Connect payment gateway webhooks for non-refundable fee reconciliation; live USDC ledger |
 | **Audit Log** | `/admin/audit` | **Interactive UI (Mock Data)** | Filterable audit log UI (`AdminAuditLog`), actor filtering, action category breakdowns, RBAC permission matrix view | Replace `previewAuditEntries` with persistent audit database stream |
@@ -377,6 +378,60 @@ rendering has no console errors or warnings; failed requests were the deliberate
 so live authenticated screening remains unverified. The repository-wide
 format/lint and Node baseline limitations recorded above still apply.
 
+### Boost pricing integration (2026-11-05)
+
+`/admin/boost-prices` reads `GET /api/v1/admin/boost-prices` and sends changes
+through `PATCH /api/admin/boost-prices` to the matching API endpoint (FR-206,
+FR-904). Request fields follow `BoostPricesDto`; duration limits (1–365 whole
+days) and the otherwise unspecified response follow
+[AdminController at c3e23b0](https://github.com/heraldhq-protocol/inverge-api/blob/c3e23b085989581125371fab0ef41a63476cd28b/src/modules/admin/admin.controller.ts)
+and its DTO. The response is `{ basic: { priceUSD, durationDays }, featured: {
+priceUSD, durationDays } }` with numeric USD prices. Empty, malformed, zero,
+fractional-cent and unsupported-range prices make the view unavailable rather
+than selecting a frontend default.
+
+The browser/BFF uses the shared `MoneyAmount` (`currency: "USD"`, `decimals: 2`,
+integer atomic strings). Parsing, comparison and formatting preserve cents;
+`formatMoneyWithCents` leaves existing whole-dollar formatting unchanged. Only
+the API adapter converts to the numeric DTO, after a checked decimal round trip
+and a conservative magnitude bound. D-063 records this wire compatibility rule.
+
+The editor sends only changed fields. For example, a Basic price edit sends
+`{ basic: { price: { atomic: "537", currency: "USD", decimals: 2 } } }` to the
+BFF, which sends `{ basicPriceUSD: 5.37 }` upstream. Unrelated platform parameters,
+currencies and fractional durations are rejected. No application-fee or on-chain
+parameter is included. Paid placement remains separate from organic validation
+metrics and campaign review (FR-206a, NFR-15).
+
+Reads and writes recheck a live administrator; preview sessions cannot change
+configuration. Same-origin validation and a non-cacheable receipt protect the
+BFF. A save remains pending until every requested field matches the response.
+Validation failures permit correction; a timeout, partial/malformed confirmation
+or permission failure requires a full reload before another write. The last
+confirmed settings remain visible, and no success or audit timestamp is invented.
+
+The API's `PlatformParamsService.set` records the acting administrator and
+appends audit rows, but the four-field update loop and each parameter/audit pair
+are not transactional. Some values may be durable when a later write or audit
+insert fails. The frontend makes that uncertainty explicit and never retries
+automatically. The backend also supplies no revision token, so same-field edits
+by concurrent administrators can overwrite each other. Atomic updates with
+their audit records and a concurrency precondition remain backend work.
+
+Verification: all 267 admin/BFF/money tests across 27 files pass, along with
+scoped ESLint/Prettier, `pnpm typecheck`, `git diff --check` and `pnpm build`
+(272 generated pages). Playwright MCP
+exercised the actual components with isolated, mocked responses: exact-cent
+display and saves, delayed confirmation, changed-field-only payloads, invalid
+prices, duration limits, discard, partial receipts, permission/service failures,
+reload recovery and loading/empty/unavailable states. Widths from 320 to 1440px,
+including 390x844, have no horizontal overflow; mobile and desktop screenshots
+were visually inspected. Normal rendering has no console errors or warnings
+and no failed requests; the 503 and 403 responses were deliberate fixtures.
+The real route redirects to `/auth?next=%2Fadmin%2Fboost-prices`, where sign-in
+is not configured, so authenticated live pricing remains unverified. The
+repository-wide format/lint and Node baseline limitations above still apply.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
@@ -400,7 +455,7 @@ format/lint and Node baseline limitations recorded above still apply.
 - [x] Inventory table showing slot type, campaign name, dates, status, impressions, and clicks (`/admin/advertising`).
 - [x] Pause, resume, and preview controls in `AdminAdvertising`.
 - [ ] **Task 3.1**: Connect advertising mutations to backend storage rather than local state.
-- [ ] **Task 3.2**: Add the admin form for configuring `Basic` and `Featured` boost prices (FR-904) and emit audit events on price updates.
+- [x] **Task 3.2**: `/admin/boost-prices` configures Basic/Featured prices and durations through the audited API (FR-904). Live verification and transactional backend audit/update guarantees remain outstanding.
 
 ---
 
@@ -432,20 +487,19 @@ The backend specification defines these additional admin capabilities. User mana
 
 ### Remaining endpoint inventory (2026-11-05)
 
-Comparing `docs/api/openapi.json` with the frontend call sites leaves **12
+Comparing `docs/api/openapi.json` with the frontend call sites leaves **10
 documented admin operations without frontend integration**, counting each method
 and path separately and including the standalone KYC/KYB administrator APIs.
 Every path below has the prefix `/api/v1`.
 
 | Area | Remaining operations |
 | --- | --- |
-| Boost prices and durations | `GET /admin/boost-prices`; `PATCH /admin/boost-prices` |
 | Runtime parameters and their history | `GET /admin/params`; `PATCH /admin/params`; `GET /admin/params/audit` |
 | Editorial email tools | `GET /admin/email/templates`; `POST /admin/email/editorial/preview`; `POST /admin/email/editorial/send` |
 | Individual AML screening and history | `POST /kyc/admin/aml-screen`; `GET /kyc/admin/aml/{userId}` |
 | Business AML screening and history | `POST /kyb/admin/aml-screen`; `GET /kyb/admin/aml/{userId}` |
 
-Overview reporting, campaign review, users/roles, AI and analytics access, moderation screening, and the unified verification
+Overview reporting, campaign review, users/roles, AI and analytics access, moderation screening, boost pricing, and the unified verification
 queue/case-resolution endpoints already have frontend integrations. Their live
 verification limits are recorded above.
 
