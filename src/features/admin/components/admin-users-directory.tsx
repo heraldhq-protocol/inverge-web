@@ -1,8 +1,12 @@
 import { HugeiconsIcon } from "@hugeicons/react";
-import { Alert02Icon, Search01Icon } from "@hugeicons/core-free-icons";
+import {
+  Alert02Icon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Search01Icon,
+} from "@hugeicons/core-free-icons";
 import Link from "next/link";
 
-import { Button } from "@/components/ui/button";
 import { Eyebrow } from "@/components/ui/eyebrow";
 import { Pill } from "@/components/ui/pill";
 import { AdminUserRow } from "@/features/admin/components/admin-user-row";
@@ -14,7 +18,7 @@ import {
 } from "@/features/admin/lib/users";
 
 const ROLE_FILTERS: readonly { value?: AdminUserRole; label: string }[] = [
-  { label: "All" },
+  { label: "All users" },
   { value: "ADMIN", label: "Administrators" },
   { value: "COMPLIANCE_REVIEWER", label: "Compliance" },
   { value: "USER", label: "Members" },
@@ -29,9 +33,7 @@ function AdminUsersHeader({ preview }: { preview: boolean }) {
           Users &amp; roles
         </h1>
         <p className="mt-1.5 max-w-2xl text-sm leading-6 text-muted">
-          Grant or revoke administrator access. The API remains the authority: a
-          role change is attributed to you and written to the platform audit
-          trail.
+          Review platform accounts and manage administrator access.
         </p>
       </div>
       {preview ? (
@@ -45,28 +47,27 @@ function AdminUsersHeader({ preview }: { preview: boolean }) {
 
 function PreviewNotice() {
   return (
-    <div className="mt-4 flex items-start gap-2 rounded-xl border border-warning/30 bg-warning/[0.07] p-3 text-xs leading-5 text-muted">
+    <div className="mt-5 flex items-start gap-2.5 rounded-lg bg-warning/[0.07] px-3 py-2.5 text-xs leading-5 text-ink-soft">
       <HugeiconsIcon
         icon={Alert02Icon}
-        size={15}
-        strokeWidth={1.8}
+        size={16}
+        strokeWidth={1.5}
         aria-hidden="true"
         className="mt-0.5 shrink-0 text-warning-strong"
       />
       <p>
-        <span className="font-semibold text-ink">Preview mode.</span> These are
-        sample accounts. Search and filters work, but a role change is shown on
-        this screen only and is never sent to the API.
+        <span className="font-semibold text-ink">Sample accounts.</span> Search
+        and filters work. Role changes apply to this preview only.
       </p>
     </div>
   );
 }
 
 const pagerLink =
-  "inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-brand/45 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
+  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink transition-colors hover:border-border-strong hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand";
 
 const pagerDisabled =
-  "inline-flex min-h-9 items-center rounded-lg border border-border/60 px-3 text-xs font-semibold text-muted/50";
+  "inline-flex min-h-11 items-center gap-2 rounded-lg border border-border/60 px-3 text-xs font-semibold text-muted/50";
 
 export function AdminUsersDirectory({
   users,
@@ -96,30 +97,30 @@ export function AdminUsersDirectory({
 
       <section
         aria-labelledby="admin-users-heading"
-        className="mt-5 rounded-2xl border border-border bg-surface"
+        className="mt-6 rounded-2xl border border-border bg-surface"
       >
         <h2 id="admin-users-heading" className="sr-only">
           Accounts
         </h2>
 
-        <div className="flex flex-col gap-3 border-b border-border p-4 sm:px-5 xl:flex-row xl:items-center xl:justify-between">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+        <div className="flex flex-col gap-3 p-4 sm:px-5 xl:flex-row xl:items-center xl:justify-between xl:gap-6">
+          <div className="min-w-0 xl:order-2">
             <form
               action="/admin/users"
               method="get"
               role="search"
-              className="min-w-0 sm:w-80"
+              className="min-w-0 xl:w-80"
             >
               {role ? <input type="hidden" name="role" value={role} /> : null}
-              {/* One field: the input and its submit share a single border, so
-                  they cannot drift out of height against each other. */}
-              <div className="flex min-h-11 items-center gap-2 rounded-xl border border-border bg-surface pl-3 pr-1 transition-colors focus-within:border-brand focus-within:ring-3 focus-within:ring-brand/12">
+              {/* A fixed-height wrapper owns the sizing; the submit adds no
+                  nested padding or minimum height to stretch the field. */}
+              <div className="flex h-11 items-center gap-2.5 rounded-lg border border-border-strong bg-surface pl-3 transition-colors focus-within:border-brand focus-within:ring-2 focus-within:ring-brand/12">
                 <HugeiconsIcon
                   icon={Search01Icon}
                   size={16}
-                  strokeWidth={1.8}
+                  strokeWidth={1.5}
                   aria-hidden="true"
-                  className="shrink-0 text-muted/70"
+                  className="shrink-0 text-muted"
                 />
                 <label htmlFor="admin-user-search" className="sr-only">
                   Search accounts by email or provider ID
@@ -132,28 +133,22 @@ export function AdminUsersDirectory({
                   placeholder="Email or provider ID"
                   autoComplete="off"
                   spellCheck={false}
-                  className="min-h-9 w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-muted/60"
+                  className="h-full w-full min-w-0 bg-transparent text-sm text-ink outline-none placeholder:text-muted"
                 />
-                <Button
+                <button
                   type="submit"
-                  size="sm"
-                  className="my-1 min-h-9 shrink-0 rounded-lg px-3 text-xs"
+                  className="inline-flex shrink-0 cursor-pointer items-center self-stretch rounded-r-lg border-l border-border px-3 text-xs font-semibold text-brand-strong transition-colors hover:bg-brand-tint focus-visible:outline-2 focus-visible:-outline-offset-4 focus-visible:outline-brand"
                 >
                   Search
-                </Button>
+                </button>
               </div>
             </form>
-            {filtered ? (
-              <Link
-                href="/admin/users"
-                className="inline-flex min-h-9 items-center px-1 text-xs font-semibold text-muted underline-offset-4 hover:text-ink hover:underline"
-              >
-                Clear
-              </Link>
-            ) : null}
           </div>
 
-          <nav aria-label="Filter by role" className="flex flex-wrap gap-1.5">
+          <nav
+            aria-label="Filter by role"
+            className="flex flex-wrap gap-1 xl:order-1"
+          >
             {ROLE_FILTERS.map((option) => {
               const active = role === option.value;
               return (
@@ -161,10 +156,10 @@ export function AdminUsersDirectory({
                   key={option.label}
                   href={adminUsersHref({ query, role: option.value })}
                   aria-current={active ? "true" : undefined}
-                  className={`inline-flex min-h-9 items-center rounded-full border px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  className={`inline-flex min-h-11 items-center rounded-lg px-3 text-xs font-semibold transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
                     active
-                      ? "border-brand/35 bg-brand-soft text-brand-strong"
-                      : "border-border bg-surface text-muted hover:border-muted/40 hover:text-ink"
+                      ? "bg-brand-soft text-brand-strong"
+                      : "text-muted hover:bg-canvas hover:text-ink"
                   }`}
                 >
                   {option.label}
@@ -174,23 +169,44 @@ export function AdminUsersDirectory({
           </nav>
         </div>
 
+        <div
+          aria-hidden="true"
+          className={`hidden gap-4 border-y border-border bg-canvas/60 px-5 py-2.5 text-xs font-medium text-muted md:grid ${
+            canManage
+              ? "grid-cols-[minmax(0,1fr)_11rem_8.5rem]"
+              : "grid-cols-[minmax(0,1fr)_11rem]"
+          }`}
+        >
+          <span>Account</span>
+          <span>Platform role</span>
+          {canManage ? <span className="sr-only">Actions</span> : null}
+        </div>
+
         {users.length === 0 ? (
-          <div className="p-8 text-center">
+          <div className="border-t border-border px-6 py-14 text-center md:border-t-0">
+            <HugeiconsIcon
+              icon={Search01Icon}
+              size={24}
+              strokeWidth={1.5}
+              aria-hidden="true"
+              className="mx-auto mb-3 text-muted"
+            />
             <p className="text-sm font-semibold text-ink">
-              No accounts match this search.
+              {filtered ? "No matching accounts" : "No accounts to display"}
             </p>
-            <p className="mt-1 text-xs leading-5 text-muted">
-              Try a different address or provider ID, or clear the filters.
+            <p className="mx-auto mt-1 max-w-sm text-sm leading-6 text-muted">
+              {filtered
+                ? "Try a different email or provider ID, or clear your filters."
+                : "Accounts will appear here when they are available."}
             </p>
-            <Link
-              href="/admin/users"
-              className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-border px-3 text-xs font-semibold text-ink hover:border-brand/45"
-            >
-              Clear filters
-            </Link>
+            {filtered || offset > 0 ? (
+              <Link href="/admin/users" className={`mt-4 ${pagerLink}`}>
+                {filtered ? "Clear filters" : "Back to first page"}
+              </Link>
+            ) : null}
           </div>
         ) : (
-          <ul className="divide-y divide-border">
+          <ul className="divide-y divide-border border-t border-border md:border-t-0">
             {users.map((user) => (
               <AdminUserRow
                 key={user.id}
@@ -203,14 +219,23 @@ export function AdminUsersDirectory({
           </ul>
         )}
 
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border px-4 py-3 sm:px-5">
-          <p className="text-xs text-muted">
-            {users.length === 0
-              ? "No accounts on this page."
-              : `${users.length} ${users.length === 1 ? "account" : "accounts"}${
-                  hasMore ? " on this page" : ""
-                }`}
-          </p>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-t border-border px-4 py-3 sm:px-5">
+          <div className="flex flex-wrap items-center gap-x-4">
+            <p className="text-xs text-muted">
+              <span className="font-medium tabular-nums text-ink">
+                {users.length}
+              </span>{" "}
+              {users.length === 1 ? "account" : "accounts"} on this page
+            </p>
+            {filtered && users.length > 0 ? (
+              <Link
+                href="/admin/users"
+                className="inline-flex min-h-11 items-center text-xs font-semibold text-brand-strong underline-offset-4 hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                Clear filters
+              </Link>
+            ) : null}
+          </div>
           <nav aria-label="Account pages" className="flex gap-2">
             {offset > 0 ? (
               <Link
@@ -221,10 +246,22 @@ export function AdminUsersDirectory({
                 })}
                 className={pagerLink}
               >
+                <HugeiconsIcon
+                  icon={ArrowLeft01Icon}
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 Newer
               </Link>
             ) : (
               <span aria-disabled="true" className={pagerDisabled}>
+                <HugeiconsIcon
+                  icon={ArrowLeft01Icon}
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
                 Newer
               </span>
             )}
@@ -238,20 +275,38 @@ export function AdminUsersDirectory({
                 className={pagerLink}
               >
                 Older
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
               </Link>
             ) : (
               <span aria-disabled="true" className={pagerDisabled}>
                 Older
+                <HugeiconsIcon
+                  icon={ArrowRight01Icon}
+                  size={14}
+                  strokeWidth={2}
+                  aria-hidden="true"
+                />
               </span>
             )}
           </nav>
         </div>
       </section>
 
-      <p className="mt-3 text-[11px] leading-5 text-muted">
-        Role changes take effect on the next request. A demotion does not sign
-        the account out. KYC status is shown for context; it is decided by the
-        verification workflow, not here.
+      <p className="mt-4 max-w-3xl text-xs leading-5 text-muted">
+        Role changes take effect on the next request without signing the account
+        out. Identity checks are managed in{" "}
+        <Link
+          href="/admin/verification"
+          className="font-medium text-brand-strong underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+        >
+          Verification
+        </Link>
+        .
       </p>
     </div>
   );
@@ -273,15 +328,22 @@ export function AdminUsersUnavailable({
       <AdminUsersHeader preview={false} />
       <div
         role="alert"
-        className="mt-5 rounded-2xl border border-danger/25 bg-danger/[0.06] p-4"
+        className="mt-6 rounded-2xl border border-border bg-surface px-6 py-10"
       >
+        <HugeiconsIcon
+          icon={Alert02Icon}
+          size={24}
+          strokeWidth={1.5}
+          aria-hidden="true"
+          className="mb-3 text-warning-strong"
+        />
         <p className="text-sm font-semibold text-ink">
           The directory is unavailable.
         </p>
         <p className="mt-1 text-sm leading-6 text-muted">{reason}</p>
         <Link
           href={adminUsersHref({ query, role, offset })}
-          className="mt-3 inline-flex min-h-9 items-center rounded-lg border border-border bg-surface px-3 text-xs font-semibold text-ink hover:border-brand/45"
+          className={`mt-4 ${pagerLink}`}
         >
           Try again
         </Link>
