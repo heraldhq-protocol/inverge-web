@@ -4,6 +4,7 @@ import { HugeiconsIcon } from "@hugeicons/react";
 import type { IconSvgElement } from "@hugeicons/react";
 import {
   Analytics01Icon,
+  AiChat02Icon,
   ArrowLeft02Icon,
   CheckListIcon,
   Home01Icon,
@@ -27,6 +28,7 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
       label: "Verification",
     },
     { href: "/admin/users", icon: UserGroupIcon, label: "Users" },
+    { href: "/admin/ai-access", icon: AiChat02Icon, label: "AI access" },
     { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },
