@@ -24,6 +24,7 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | **Verification & KYC** | `/admin/verification`<br>`/admin/verification/[id]` | **Live API Wired** | Queue table, risk categorization (`Low`, `Medium`, `High`), case detail view, `ResolveRiskForm` with decision submission | Verification webhooks integration; strike tracking & strike decay ledger (FR-310) |
 | **Users & Roles** | `/admin/users` | **API wired; live verification pending** | Session-gated directory with email/provider search, role filter, paging and a per-account role editor; preview accounts are isolated and a preview change is never described as saved; the mobile admin nav wraps below the sticky header instead of scrolling sideways | Widen `UpdateUserRoleDto` before offering `COMPLIANCE_REVIEWER`; the list endpoint returns no total, so paging is inferred from a full page; confirm against a deployed API and a real admin session |
 | **AI Access** | `/admin/ai-access` | **API wired; live verification pending** | Status-filtered request list, optional approval expiry, confirmed pending-only decisions, and explicit unavailable/recovery states | Real admin-session verification; the API caps the oldest-first list at 200 and supplies no cursor or total |
+| **Analytics Access** | `/admin/analytics-access` | **API wired; live verification pending** | Cursor-paged request list, status filters, approval/expiry changes and revocation with validated confirmations | Real admin-session verification; the backend omits totals and exposes no revision precondition for concurrent decisions |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; dynamic boost price configuration (FR-904) |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
 | **Payments & Treasury** | `/admin/payments` | **Interactive UI (Mock Data)** | Reconciliations ledger, application fee records (FR-311), platform success fee estimates (FR-505), monetization tier breakdown | Connect payment gateway webhooks for non-refundable fee reconciliation; live USDC ledger |
@@ -287,6 +288,49 @@ configured, so authenticated live verification remains outstanding. Checks used
 Node 24.18.0 and pnpm 12.3.4; the declared Node baseline and existing repository-wide
 lint/format failures recorded above still need separate resolution.
 
+### Analytics access request integration (2026-11-05)
+
+`/admin/analytics-access` reads `GET /api/v1/admin/analytics/access-requests`
+and forwards decisions through `PATCH /api/admin/analytics/access-requests/{id}`.
+Runtime schemas follow the checked-in OpenAPI response DTOs. Revision behavior
+is confirmed against
+[AnalyticsAccessService at c3e23b0](https://github.com/heraldhq-protocol/inverge-api/blob/c3e23b085989581125371fab0ef41a63476cd28b/src/modules/analytics/analytics-access.service.ts).
+
+The queue uses the API's opaque cursor, newest-first ordering and 24/50 page
+sizes. Changing a filter or page size resets the cursor; an empty later page
+offers a return to the first page with the filter preserved. Repeated cursors,
+duplicate records, mismatched filters and inconsistent page metadata fail
+closed. No total is invented when the API reports `totalKind: "omitted"`.
+
+Analytics grants can be revised after a decision, unlike pending-only AI
+requests. An admin can change or remove an expiry, approve a rejected request,
+or revoke an approval. The existing local-time expiry field preserves the exact
+stored instant, including seconds, until edited. Rejections send no expiry.
+The backend retains the grant's `REQUEST`, `ADMIN` or `PAID` source; a decision
+does not change billing, creator tier or the separate AI entitlement.
+
+Reads and writes require live server-verified admin access (FR-901), and the BFF
+rejects cross-site requests. A successful response must match the request,
+decision and expiry before the displayed state changes. Preview sessions never
+read or write grants. Ambiguous failures preserve the last confirmed state and
+require a reload before another decision. The backend has no revision token or
+conditional update for this operation, so concurrent administrators can still
+overwrite a decision; browser duplicate-submission protection cannot solve that.
+
+Verification: the 153-test admin/BFF regression suite and the expanded six-case
+analytics component suite pass. Scoped ESLint/Prettier, `pnpm typecheck`,
+`git diff --check` and `pnpm build` pass (268 generated pages). Playwright MCP
+exercised the actual components with fabricated fixtures and mocked responses:
+pagination, filter/page-size reset, native submission, Escape/focus restoration,
+delayed confirmation, exact expiry preservation/removal, revocation, a deliberate
+409, and loading/empty/unavailable/retry states. Open forms fit 320–1440px,
+including 390x844. Console and network inspection found only the deliberate 409
+failure. The real route on the development server redirects to
+`/auth?next=%2Fadmin%2Fanalytics-access`, where sign-in is unconfigured, so live
+authenticated verification remains pending. The existing 39 formatting failures,
+two source lint errors and Node 24.18.0 baseline limitation remain as recorded
+above; temporary preview adapters also produce four lint warnings.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
@@ -336,19 +380,18 @@ lint/format failures recorded above still need separate resolution.
 The backend specification defines these additional admin capabilities. User management now has a frontend; the remaining areas still need views:
 - [ ] **Task 6.1**: **User & Role Management**: `/admin/users` and its role-update BFF are present; the broader directory integration still needs verification. `UpdateUserRoleDto.role` accepts only `USER` or `ADMIN`. The frontend now shares this schema across the BFF and server write helper, checks that the confirmed role matches the request, and keeps session roles separate. The generated OpenAPI already declares the correct values. `platform_admin` is a frontend programme permission role, not a request value. `COMPLIANCE_REVIEWER` can occur in session reads but cannot be assigned by this DTO; `compliance_officer` is not a supported update value.
 - [x] **Task 6.2**: **AI Assistant Access Requests**: `/admin/ai-access` connects `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` with confirmed decisions. Authenticated live verification remains pending.
-- [ ] **Task 6.3**: **Analytics Access Requests**: Wire `GET /api/v1/admin/analytics/access-requests` and `PATCH /api/v1/admin/analytics/access-requests/{id}` to grant premium platform analytics access.
+- [x] **Task 6.3**: **Analytics Access Requests**: `/admin/analytics-access` connects the paginated list and confirmed grant decisions, including expiry changes and revocation. Authenticated live verification remains pending.
 - [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.
 
 ### Remaining endpoint inventory (2026-11-05)
 
-Comparing `docs/api/openapi.json` with the frontend call sites leaves **15
+Comparing `docs/api/openapi.json` with the frontend call sites leaves **13
 documented admin operations without frontend integration**, counting each method
 and path separately and including the standalone KYC/KYB administrator APIs.
 Every path below has the prefix `/api/v1`.
 
 | Area | Remaining operations |
 | --- | --- |
-| Analytics access requests | `GET /admin/analytics/access-requests`; `PATCH /admin/analytics/access-requests/{id}` |
 | Boost prices and durations | `GET /admin/boost-prices`; `PATCH /admin/boost-prices` |
 | Runtime parameters and their history | `GET /admin/params`; `PATCH /admin/params`; `GET /admin/params/audit` |
 | Editorial email tools | `GET /admin/email/templates`; `POST /admin/email/editorial/preview`; `POST /admin/email/editorial/send` |
@@ -356,7 +399,7 @@ Every path below has the prefix `/api/v1`.
 | Individual AML screening and history | `POST /kyc/admin/aml-screen`; `GET /kyc/admin/aml/{userId}` |
 | Business AML screening and history | `POST /kyb/admin/aml-screen`; `GET /kyb/admin/aml/{userId}` |
 
-Overview reporting, campaign review, users/roles, AI access and the unified verification
+Overview reporting, campaign review, users/roles, AI and analytics access, and the unified verification
 queue/case-resolution endpoints already have frontend integrations. Their live
 verification limits are recorded above.
 

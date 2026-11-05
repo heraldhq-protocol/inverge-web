@@ -25,7 +25,7 @@ export function AdminShell({
 }) {
   return (
     <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col bg-contrast px-4 py-6 text-white lg:flex">
+      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-contrast px-4 py-6 text-white lg:flex">
         <div className="px-1">
           <BrandMark href="/admin" inverted />
         </div>

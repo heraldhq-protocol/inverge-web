@@ -29,6 +29,11 @@ const items: readonly { href: string; icon: IconSvgElement; label: string }[] =
     },
     { href: "/admin/users", icon: UserGroupIcon, label: "Users" },
     { href: "/admin/ai-access", icon: AiChat02Icon, label: "AI access" },
+    {
+      href: "/admin/analytics-access",
+      icon: Analytics01Icon,
+      label: "Analytics access",
+    },
     { href: "/admin/advertising", icon: Megaphone01Icon, label: "Advertising" },
     { href: "/admin/programmes", icon: TrophyIcon, label: "Programmes" },
     { href: "/admin/payments", icon: Invoice01Icon, label: "Payments" },

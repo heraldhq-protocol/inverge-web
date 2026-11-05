@@ -18,6 +18,13 @@ import {
 } from "@/features/admin/lib/access-requests";
 import { sendJson } from "@/lib/api/client";
 
+function localExpiry(instant: string): string {
+  const date = new Date(instant);
+  return new Date(date.getTime() - date.getTimezoneOffset() * 60_000)
+    .toISOString()
+    .slice(0, 16);
+}
+
 export function AccessRequestRow({
   request: initialRequest,
   endpointBase,
@@ -74,7 +81,9 @@ export function AccessRequestRow({
   function beginReview() {
     if (busyRef.current || failure?.reload) return;
     setDecision("APPROVED");
-    setExpiry("");
+    setExpiry(
+      canRevise && request.expiresAt ? localExpiry(request.expiresAt) : "",
+    );
     setFailure(null);
     setNotice(null);
     setOpen(true);
@@ -92,7 +101,17 @@ export function AccessRequestRow({
     }
     const parsed = accessDecisionSchema.safeParse({
       status: decision,
-      ...(date ? { expiresAt: date.toISOString() } : {}),
+      ...(date
+        ? {
+            // Preserve a stored instant's seconds if its minute-based field was not edited.
+            expiresAt:
+              canRevise &&
+              request.expiresAt &&
+              expiry === localExpiry(request.expiresAt)
+                ? request.expiresAt
+                : date.toISOString(),
+          }
+        : {}),
     });
     if (!parsed.success) {
       setFailure({
@@ -141,7 +160,9 @@ export function AccessRequestRow({
       setNotice(
         decision === "APPROVED"
           ? `Access approved${receipt.data.request.expiresAt ? ` until ${formatAccessDate(receipt.data.request.expiresAt)}` : " without an expiry"}.`
-          : "Access request rejected.",
+          : request.status === "APPROVED"
+            ? "Access revoked."
+            : "Access request rejected.",
       );
     } catch {
       setFailure({
