@@ -271,9 +271,10 @@ export function toLiveCampaign(campaign: ApiCampaign): LiveCampaign | null {
 /**
  * Campaign discovery parameters the live API can actually honour.
  *
- * Search, money bands, country and percent filters belong to the preview
- * discovery grid and have no server-side equivalent yet. Rather than render
- * controls that silently do nothing, the live feed offers only these.
+ * A free-text `q` now searches campaign titles, source-idea text, and creator
+ * names server-side. Money bands, country and percent filters still belong to
+ * the preview discovery grid and have no server-side equivalent, so the live
+ * feed does not render them.
  */
 export type LiveCampaignFeedStatus =
   "all" | "active" | "completed" | "failed" | "funded";
@@ -282,6 +283,7 @@ export type LiveCampaignFeedSort = "closing-soon" | "most-backed" | "newest";
 
 export type LiveCampaignFeedParams = {
   cursor: string | null;
+  q: string | null;
   sort: LiveCampaignFeedSort;
   status: LiveCampaignFeedStatus;
 };
@@ -329,9 +331,11 @@ export function parseCampaignFeedParams(
   const requestedStatus = firstValue(params.status);
   const requestedSort = firstValue(params.sort);
   const cursor = firstValue(params.cursor).trim();
+  const search = firstValue(params.q).trim();
 
   return {
     cursor: cursor === "" ? null : cursor.slice(0, 512),
+    q: search === "" ? null : search.slice(0, 100),
     sort: FEED_SORTS.includes(requestedSort as LiveCampaignFeedSort)
       ? (requestedSort as LiveCampaignFeedSort)
       : "newest",
@@ -357,6 +361,7 @@ export type LiveCampaignPage = {
 export async function getLiveCampaignPage(options: {
   cursor?: string | null;
   limit?: number;
+  q?: string | null;
   sort?: LiveCampaignFeedSort;
   status?: LiveCampaignFeedStatus;
 }): Promise<LiveCampaignPage> {
@@ -367,6 +372,7 @@ export async function getLiveCampaignPage(options: {
   if (options.status && options.status !== "all") {
     params.set("status", STATUS_TO_API[options.status]);
   }
+  if (options.q) params.set("q", options.q);
   if (options.cursor) params.set("cursor", options.cursor);
 
   const page = await fetchApiJson<ApiListPage<ApiCampaign>>(

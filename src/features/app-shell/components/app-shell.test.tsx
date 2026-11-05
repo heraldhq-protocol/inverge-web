@@ -1,4 +1,10 @@
-import { cleanup, fireEvent, render, screen } from "@testing-library/react";
+import {
+  cleanup,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { AppShell } from "@/features/app-shell/components/app-shell";
@@ -6,6 +12,7 @@ import type { ShellData } from "@/features/app-shell/types";
 
 vi.mock("next/navigation", () => ({
   usePathname: () => "/d",
+  useRouter: () => ({ push: vi.fn() }),
 }));
 
 const shell: ShellData = {
@@ -70,23 +77,50 @@ describe("AppShell", () => {
     ).toBeInTheDocument();
   });
 
-  it("provides one desktop search entry point that posts to discovery", () => {
+  it("opens the one command palette from the desktop search entry point", async () => {
     render(
       <AppShell data={shell}>
         <p>Product content</p>
       </AppShell>,
     );
 
-    const searchForm = screen
-      .getByRole("search")
-      .closest("form") as HTMLFormElement;
-
-    expect(searchForm).toHaveAttribute("action", "/d/discover");
-    expect(
-      screen.getByRole("searchbox", {
-        name: "Search ideas, creators, and topics",
+    fireEvent.click(
+      screen.getByRole("button", {
+        name: "Search ideas, creators, or topics",
       }),
+    );
+
+    expect(
+      await screen.findByRole("dialog", { name: "Search Inverge" }),
     ).toBeInTheDocument();
+
+    const input = screen.getByRole("combobox", {
+      name: "Search ideas, campaigns, and pages",
+    });
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(
+      screen.getByRole("listbox", { name: "Search results" }),
+    ).toBeInTheDocument();
+  });
+
+  it("binds Ctrl+K once and closes on a second press", async () => {
+    render(
+      <AppShell data={shell}>
+        <p>Product content</p>
+      </AppShell>,
+    );
+
+    fireEvent.keyDown(window, { ctrlKey: true, key: "k" });
+    expect(
+      await screen.findByRole("dialog", { name: "Search Inverge" }),
+    ).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { ctrlKey: true, key: "k" });
+    await waitFor(() =>
+      expect(
+        screen.queryByRole("dialog", { name: "Search Inverge" }),
+      ).not.toBeInTheDocument(),
+    );
   });
 
   it("shows the signed-in identity without an internal id or wallet", () => {

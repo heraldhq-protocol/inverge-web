@@ -235,6 +235,7 @@ describe("live campaign feed parameters", () => {
   it("keeps only allowlisted status and sort values", () => {
     expect(parseCampaignFeedParams({})).toEqual({
       cursor: null,
+      q: null,
       sort: "newest",
       status: "all",
     });
@@ -242,22 +243,40 @@ describe("live campaign feed parameters", () => {
     expect(
       parseCampaignFeedParams({
         cursor: "abc123",
+        q: "solar dryer",
         sort: "most-backed",
         status: "funded",
       }),
-    ).toEqual({ cursor: "abc123", sort: "most-backed", status: "funded" });
+    ).toEqual({
+      cursor: "abc123",
+      q: "solar dryer",
+      sort: "most-backed",
+      status: "funded",
+    });
   });
 
   it("does not forward an unknown filter to the API", () => {
     expect(
       parseCampaignFeedParams({ sort: "most-funded", status: "paused" }),
-    ).toEqual({ cursor: null, sort: "newest", status: "all" });
+    ).toEqual({ cursor: null, q: null, sort: "newest", status: "all" });
+  });
+
+  it("trims and bounds the search term", () => {
+    expect(parseCampaignFeedParams({ q: "  solar  " })).toMatchObject({
+      q: "solar",
+    });
+    expect(parseCampaignFeedParams({ q: "a".repeat(150) }).q).toHaveLength(100);
   });
 
   it("accepts the first value of a repeated parameter and ignores empty cursors", () => {
     expect(
       parseCampaignFeedParams({ cursor: ["", "second"], status: ["failed"] }),
-    ).toEqual({ cursor: "second", sort: "newest", status: "failed" });
+    ).toEqual({
+      cursor: "second",
+      q: null,
+      sort: "newest",
+      status: "failed",
+    });
   });
 });
 
@@ -271,6 +290,7 @@ describe("live campaign feed page", () => {
     const page = await getLiveCampaignPage({
       cursor: "current-page",
       limit: 24,
+      q: "solar dryer",
       sort: "most-backed",
       status: "funded",
     });
@@ -280,6 +300,7 @@ describe("live campaign feed page", () => {
     expect(requested).toContain("sort=most-backed");
     expect(requested).toContain("status=FUNDED");
     expect(requested).toContain("cursor=current-page");
+    expect(requested).toContain("q=solar+dryer");
     expect(page).toMatchObject({
       hasMore: true,
       nextCursor: "next-page",
