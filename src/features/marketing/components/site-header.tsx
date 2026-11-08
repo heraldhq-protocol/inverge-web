@@ -1,7 +1,5 @@
 "use client";
 
-import { HugeiconsIcon } from "@hugeicons/react";
-import { Search01Icon } from "@hugeicons/core-free-icons";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { BrandMark } from "@/components/shared/brand-mark";
 import { Cancel01Icon, Menu01Icon } from "@/components/ui/hugeicons";
 import { authHref } from "@/features/auth/lib/auth-routes";
+import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 import { Container } from "@/features/marketing/components/container";
 import {
   SiteAccountMenu,
@@ -44,30 +43,6 @@ const navigation = [
 
 function isCurrentPath(pathname: string, href: string): boolean {
   return pathname === href || pathname.startsWith(`${href}/`);
-}
-
-function HeaderSearch({ id }: { id: string }) {
-  return (
-    <form action="/ideas" role="search" className="relative">
-      <label htmlFor={id} className="sr-only">
-        Search ideas, creators, or topics
-      </label>
-      <HugeiconsIcon
-        icon={Search01Icon}
-        size={16}
-        strokeWidth={1.8}
-        aria-hidden="true"
-        className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-      />
-      <input
-        id={id}
-        type="search"
-        name="q"
-        placeholder="Search ideas, creators, or topics"
-        className="h-10 w-full rounded-full border border-border bg-surface pl-10 pr-4 text-sm text-ink outline-none transition-colors placeholder:text-muted/80 hover:border-border-strong focus:border-brand focus:ring-3 focus:ring-brand/12"
-      />
-    </form>
-  );
 }
 
 export function SiteHeader({ viewer }: { viewer: SiteViewer | null }) {
@@ -149,7 +124,7 @@ export function SiteHeader({ viewer }: { viewer: SiteViewer | null }) {
 
         <div className="hidden items-center gap-4 lg:flex">
           <div className="w-52 xl:w-64">
-            <HeaderSearch id="header-idea-search" />
+            <CommandPaletteTrigger />
           </div>
           {viewer ? (
             <SiteAccountMenu viewer={viewer} />
@@ -172,18 +147,7 @@ export function SiteHeader({ viewer }: { viewer: SiteViewer | null }) {
         </div>
 
         <div className="flex items-center gap-1.5 lg:hidden">
-          <Link
-            href="/ideas"
-            aria-label="Search ideas"
-            className="grid size-11 place-items-center rounded-full text-ink transition-colors hover:bg-surface focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ink"
-          >
-            <HugeiconsIcon
-              icon={Search01Icon}
-              size={20}
-              strokeWidth={1.8}
-              aria-hidden="true"
-            />
-          </Link>
+          <CommandPaletteTrigger variant="icon" />
           <button
             ref={triggerRef}
             type="button"
@@ -217,7 +181,9 @@ export function SiteHeader({ viewer }: { viewer: SiteViewer | null }) {
               </div>
             ) : null}
             <div className="pb-3">
-              <HeaderSearch id="mobile-header-idea-search" />
+              <CommandPaletteTrigger
+                onBeforeOpen={() => setMobileMenuOpen(false)}
+              />
             </div>
             {navigation.map((item) => {
               const current = isCurrentPath(pathname, item.href);

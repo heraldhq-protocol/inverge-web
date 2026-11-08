@@ -6,7 +6,6 @@ import {
   HandCoinsIcon,
   HelpCircleIcon,
   Notification01Icon,
-  Search01Icon,
   Settings01Icon,
   UserCircleIcon,
   Wallet01Icon,
@@ -16,6 +15,7 @@ import Link from "next/link";
 import { Avatar } from "@/components/ui/avatar";
 import { Menu, MenuItem } from "@/components/ui/menu";
 import type { ShellData } from "@/features/app-shell/types";
+import { CommandPaletteTrigger } from "@/features/command-palette/components/command-palette-trigger";
 
 export function NotificationMenu({
   notifications,
@@ -250,37 +250,17 @@ export function AccountMenu({ viewer }: { viewer: ShellData["viewer"] }) {
 /**
  * The desktop topbar.
  *
- * Search is a real form posting to discovery, which is the only search the app
- * implements. There is deliberately no `⌘K` hint: no shortcut is bound, and a
- * keyboard affordance that does nothing is worse than none.
+ * The search field opens the one command palette rather than submitting a
+ * separate discovery query. The palette binds Ctrl/⌘K, searches content through
+ * the BFF, and keeps page-specific discovery controls on their own pages.
  */
 export function ProductTopbar({ data }: { data: ShellData }) {
   return (
     <header className="sticky top-0 z-30 hidden border-b border-border/70 bg-canvas/88 backdrop-blur lg:block">
       <div className="flex min-h-16 items-center gap-4 px-6 xl:px-8">
-        <form
-          action="/d/discover"
-          role="search"
-          className="relative min-w-0 max-w-xl flex-1"
-        >
-          <label htmlFor="shell-search" className="sr-only">
-            Search ideas, creators, and topics
-          </label>
-          <HugeiconsIcon
-            icon={Search01Icon}
-            size={18}
-            strokeWidth={1.8}
-            aria-hidden="true"
-            className="pointer-events-none absolute left-3.5 top-1/2 -translate-y-1/2 text-muted"
-          />
-          <input
-            id="shell-search"
-            name="q"
-            type="search"
-            placeholder="Search ideas, creators, or topics..."
-            className="min-h-11 w-full rounded-xl border border-border bg-surface py-2 pl-10 pr-3 text-sm text-ink outline-none transition placeholder:text-muted/70 hover:border-muted/45 focus:border-brand focus:ring-3 focus:ring-brand/12"
-          />
-        </form>
+        <div className="min-w-0 max-w-xl flex-1">
+          <CommandPaletteTrigger />
+        </div>
 
         <div className="ml-auto flex items-center gap-1.5">
           <NotificationMenu

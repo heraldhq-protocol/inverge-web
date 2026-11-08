@@ -4,10 +4,10 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const tabs = [
-  { href: "/ideathon", label: "Standings" },
-  { href: "/ideathon/about", label: "About" },
-  { href: "/ideathon/rules", label: "Rules" },
-  { href: "/ideathon/past", label: "Past ideathons" },
+  { href: "/ideathon", label: "Programmes" },
+  { href: "/ideathon/about", label: "How it works" },
+  { href: "/ideathon/rules", label: "Ranking rules" },
+  { href: "/ideathon/past", label: "Past editions" },
 ] as const;
 
 function isCurrent(pathname: string, href: string): boolean {
@@ -16,31 +16,37 @@ function isCurrent(pathname: string, href: string): boolean {
 }
 
 /**
- * Competition sections as real routes, so each is linkable and needs no
- * tablist keyboard model. The active underline is green to match the brand
- * rather than inheriting a generic chrome colour.
+ * Public ideathon navigation.
+ *
+ * The four destinations remain real routes rather than a client tablist, so
+ * every section is linkable, server-rendered and usable with browser history.
+ * The link row scrolls horizontally at 320px instead of forcing the page wider
+ * than the viewport.
  */
 export function CompetitionNav() {
   const pathname = usePathname();
 
   return (
     <nav aria-label="Ideathon sections" className="border-b border-border">
-      <ul className="flex min-w-max items-center gap-1 overflow-x-auto">
+      <ul className="-mx-5 flex items-center gap-1 overflow-x-auto px-5 sm:mx-0 sm:px-0">
         {tabs.map((tab) => {
           const current = isCurrent(pathname, tab.href);
-
           return (
-            <li key={tab.href}>
+            <li key={tab.href} className="shrink-0">
               <Link
                 href={tab.href}
                 aria-current={current ? "page" : undefined}
-                className={`relative inline-flex min-h-12 items-center px-3 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
-                  current
-                    ? "font-semibold text-ink after:absolute after:inset-x-2 after:bottom-0 after:h-0.5 after:bg-brand"
-                    : "font-medium text-muted hover:text-ink"
+                className={`relative inline-flex min-h-12 items-center px-3 text-sm font-semibold transition-colors first:pl-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand ${
+                  current ? "text-ink" : "text-muted hover:text-ink"
                 }`}
               >
                 {tab.label}
+                {current ? (
+                  <span
+                    aria-hidden="true"
+                    className="absolute inset-x-3 bottom-0 h-0.5 bg-brand first:left-0"
+                  />
+                ) : null}
               </Link>
             </li>
           );

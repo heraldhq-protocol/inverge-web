@@ -51,6 +51,7 @@ export const getCampaignFeedSurface = cache(
 
     const page = await getLiveCampaignPage({
       cursor: params.cursor,
+      q: params.q,
       sort: params.sort,
       status: params.status,
     });

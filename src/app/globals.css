@@ -170,6 +170,17 @@ input[type="search"]::-webkit-search-decoration {
   }
 }
 
+@keyframes inv-dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.995);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
 /*
  * Rich pitch prose, shared by the editor and the reader so a creator sees the
  * same thing they publish. Kept small on purpose: paragraphs, headings, lists,

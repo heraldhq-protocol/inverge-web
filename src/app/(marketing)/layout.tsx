@@ -1,4 +1,5 @@
 import { readSessionUser } from "@/features/auth/server/session-user";
+import { CommandPaletteProvider } from "@/features/command-palette/components/command-palette-provider";
 import { MotionProvider } from "@/features/marketing/components/motion/motion-provider";
 import { ScrollToTop } from "@/features/marketing/components/scroll-to-top";
 import type { SiteViewer } from "@/features/marketing/components/site-account";
@@ -22,10 +23,12 @@ export default async function MarketingLayout({
 
   return (
     <MotionProvider>
-      <ScrollToTop />
-      <SiteHeader viewer={viewer} />
-      {children}
-      <SiteFooter />
+      <CommandPaletteProvider context="public" signedIn={Boolean(viewer)}>
+        <ScrollToTop />
+        <SiteHeader viewer={viewer} />
+        {children}
+        <SiteFooter />
+      </CommandPaletteProvider>
     </MotionProvider>
   );
 }
