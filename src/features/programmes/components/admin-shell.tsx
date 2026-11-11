@@ -26,32 +26,15 @@ export function AdminShell({
   children: React.ReactNode;
 }) {
   return (
-    <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
-      <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-contrast px-4 py-6 text-white lg:flex">
-        <div className="px-1">
-          <BrandMark href="/admin" inverted />
-        </div>
-        <div className="mt-7 flex items-center gap-2 px-2">
-          <span className="text-[0.625rem] font-bold uppercase tracking-[0.16em] text-white/45">
-            Admin workspace
-          </span>
-        </div>
-        <div className="mt-3">
-          <AdminNavigation />
-        </div>
-
-        <div className="mt-6 rounded-xl border border-white/10 bg-white/[0.04] p-3">
-          <div className="flex items-center gap-2">
-            <HugeiconsIcon
-              icon={SecurityCheckIcon}
-              size={15}
-              strokeWidth={1.8}
-              aria-hidden="true"
-              className="text-brand"
-            />
-            <p className="text-[0.6875rem] font-semibold text-white">
-              {access.preview ? "Preview access" : "Authorised admin"}
-            </p>
+    <CommandPaletteProvider
+      context="admin"
+      includeOwnSearch={!access.preview}
+      signedIn
+    >
+      <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+        <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-contrast px-4 py-6 text-white lg:flex">
+          <div className="px-1">
+            <BrandMark href="/admin" inverted />
           </div>
           <div className="mt-7 flex items-center gap-2 px-2">
             <span className="text-[0.625rem] font-bold uppercase tracking-[0.16em] text-white/45">
@@ -102,16 +85,47 @@ export function AdminShell({
               </div>
             </div>
           </div>
-        </header>
-        {/* Outside the sticky header: wrapping to three rows on a small screen
-            must not pin that height over every page's content. */}
-        <AdminMobileNavigation />
-        <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
-          {children}
-        </main>
-        <footer className="border-t border-border px-4 py-4 text-[0.6875rem] text-muted sm:px-6 lg:px-8">
-          Inverge admin workspace. No money moves from this workspace.
-        </footer>
+        </aside>
+
+        <div className="flex min-h-dvh min-w-0 flex-col overflow-x-hidden">
+          <header className="sticky top-0 z-30 border-b border-border/75 bg-canvas/92 backdrop-blur">
+            <div className="flex min-h-16 items-center justify-between gap-3 px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-3 lg:hidden">
+                <BrandMark href="/admin" />
+              </div>
+              <div className="hidden items-center gap-2 lg:flex">
+                <IconTile icon={SecurityCheckIcon} size="sm" tone="soft" />
+                <p className="text-xs text-muted">
+                  Campaign curation, programmes, and platform operations
+                </p>
+              </div>
+              <div className="hidden w-64 lg:block">
+                <CommandPaletteTrigger />
+              </div>
+              <div className="flex items-center gap-1.5">
+                <CommandPaletteTrigger variant="icon" className="lg:hidden" />
+                <span className="rounded-full bg-warning/10 px-2.5 py-1 text-[0.625rem] font-semibold text-warning-strong">
+                  <span className="hidden sm:inline">
+                    {access.preview ? "Preview · not persisted" : "Authorised"}
+                  </span>
+                  <span className="sm:hidden">
+                    {access.preview ? "Preview" : "Admin"}
+                  </span>
+                </span>
+              </div>
+            </div>
+          </header>
+          {/* Outside the sticky header: the nav wraps onto several rows on a
+            small screen, and that height must not stay pinned over every page's
+            content. */}
+          <AdminMobileNavigation />
+          <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
+            {children}
+          </main>
+          <footer className="border-t border-border px-4 py-4 text-[0.6875rem] text-muted sm:px-6 lg:px-8">
+            Inverge admin workspace. No money moves from this workspace.
+          </footer>
+        </div>
       </div>
     </CommandPaletteProvider>
   );
