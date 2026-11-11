@@ -32,7 +32,7 @@ export function AdminShell({
       signedIn
     >
       <div className="min-h-dvh bg-canvas lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
-        <aside className="sticky top-0 hidden h-dvh flex-col bg-contrast px-4 py-6 text-white lg:flex">
+        <aside className="sticky top-0 hidden h-dvh flex-col overflow-y-auto bg-contrast px-4 py-6 text-white lg:flex">
           <div className="px-1">
             <BrandMark href="/admin" inverted />
           </div>
@@ -114,8 +114,11 @@ export function AdminShell({
                 </span>
               </div>
             </div>
-            <AdminMobileNavigation />
           </header>
+          {/* Outside the sticky header: the nav wraps onto several rows on a
+            small screen, and that height must not stay pinned over every page's
+            content. */}
+          <AdminMobileNavigation />
           <main className="flex-1 px-4 py-5 sm:px-6 sm:py-6 lg:px-8 xl:px-10">
             {children}
           </main>

@@ -1,148 +1,218 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-vi.mock("@/lib/api/server", async (importOriginal) => {
-  const actual = await importOriginal<typeof import("@/lib/api/server")>();
-  return {
-    ...actual,
-    fetchApiJson: vi.fn(),
-    isApiConfigured: vi.fn(),
-    sendApiJson: vi.fn(),
-  };
-});
-
+vi.mock("@/lib/api/server", async (importOriginal) => ({
+  ...(await importOriginal<typeof import("@/lib/api/server")>()),
+  fetchApiJson: vi.fn(),
+  isApiConfigured: vi.fn(),
+  sendApiJson: vi.fn(),
+}));
 vi.mock("@/features/auth/server/session", () => ({
   readSessionToken: vi.fn(),
 }));
 
-import { fetchApiJson, isApiConfigured, sendApiJson } from "@/lib/api/server";
+import {
+  ApiRequestError,
+  fetchApiJson,
+  isApiConfigured,
+  sendApiJson,
+} from "@/lib/api/server";
 import { readSessionToken } from "@/features/auth/server/session";
-import { previewCampaigns } from "@/features/campaigns/content/preview-campaigns";
+import {
+  reviewDecisionFixture,
+  reviewDetailFixture,
+  reviewQueueFixture,
+} from "@/test/admin-campaign-review";
 import {
   getAdminCampaigns,
   getAdminCampaignDetail,
   submitAdminCampaignReview,
 } from "./admin-campaigns";
 
-const fetchMock = vi.mocked(fetchApiJson);
-const isApiConfiguredMock = vi.mocked(isApiConfigured);
-const sendApiJsonMock = vi.mocked(sendApiJson);
-const readSessionTokenMock = vi.mocked(readSessionToken);
-
+const query = { reviewStatus: "IN_REVIEW", skip: 0, take: 50 } as const;
 beforeEach(() => {
-  fetchMock.mockReset();
-  isApiConfiguredMock.mockReset();
-  sendApiJsonMock.mockReset();
-  readSessionTokenMock.mockReset();
+  vi.resetAllMocks();
+  vi.mocked(isApiConfigured).mockReturnValue(true);
+  vi.mocked(readSessionToken).mockResolvedValue("test-session");
 });
 
-describe("admin campaigns server helper", () => {
-  describe("getAdminCampaigns", () => {
-    it("returns preview campaigns when API is unconfigured", async () => {
-      isApiConfiguredMock.mockReturnValue(false);
-      const result = await getAdminCampaigns();
-      expect(result).toEqual(previewCampaigns);
-      expect(fetchMock).not.toHaveBeenCalled();
+describe("FR-304 admin campaign API reads", () => {
+  it("reads the paginated items contract with a private session", async () => {
+    vi.mocked(fetchApiJson).mockResolvedValue(reviewQueueFixture());
+    const result = await getAdminCampaigns(query);
+    expect(fetchApiJson).toHaveBeenCalledWith(
+      "/admin/campaigns?reviewStatus=IN_REVIEW&skip=0&take=50",
+      { token: "test-session" },
+    );
+    expect(result.status).toBe("ready");
+    if (result.status === "ready")
+      expect(result.data.items[0]?.targetAmount).toBe("25000.25");
+  });
+  it("forwards status and pagination without silently limiting the queue to pending", async () => {
+    vi.mocked(fetchApiJson).mockResolvedValue({
+      items: [],
+      total: 0,
+      reviewStatus: "APPROVED",
+      skip: 50,
+      take: 50,
     });
-
-    it("returns preview campaigns when user has no session token", async () => {
-      isApiConfiguredMock.mockReturnValue(true);
-      readSessionTokenMock.mockResolvedValue(null);
-      const result = await getAdminCampaigns();
-      expect(result).toEqual(previewCampaigns);
-      expect(fetchMock).not.toHaveBeenCalled();
-    });
-
-    it("fetches live admin campaigns when configured and authorized", async () => {
-      isApiConfiguredMock.mockReturnValue(true);
-      readSessionTokenMock.mockResolvedValue("test-token");
-      fetchMock.mockResolvedValue([
-        {
-          id: "camp-1",
-          status: "IN_REVIEW",
-          reviewStatus: "IN_REVIEW",
-          targetAmount: "10000",
-          totalRaised: "0",
-          idea: {
-            title: "Clean Water Tech",
-            problem: "No clean water",
-            region: "Nairobi",
-          },
-        },
-      ]);
-
-      const result = await getAdminCampaigns({ reviewStatus: "ALL" });
-      expect(fetchMock).toHaveBeenCalledWith("/admin/campaigns?reviewStatus=ALL", {
-        token: "test-token",
-      });
-      expect(result).toHaveLength(1);
-      expect(result[0]?.id).toBe("camp-1");
-      expect(result[0]?.title).toBe("Clean Water Tech");
-      expect(result[0]?.phase).toBe("in-review");
+    expect(
+      (
+        await getAdminCampaigns({
+          ...query,
+          reviewStatus: "APPROVED",
+          skip: 50,
+        })
+      ).status,
+    ).toBe("ready");
+    expect(fetchApiJson).toHaveBeenCalledWith(
+      "/admin/campaigns?reviewStatus=APPROVED&skip=50&take=50",
+      { token: "test-session" },
+    );
+  });
+  it.each(["configuration", "session", "network", "malformed"])(
+    "never substitutes fixtures after a %s failure",
+    async (failure) => {
+      if (failure === "configuration")
+        vi.mocked(isApiConfigured).mockReturnValue(false);
+      if (failure === "session")
+        vi.mocked(readSessionToken).mockResolvedValue(null);
+      if (failure === "network")
+        vi.mocked(fetchApiJson).mockRejectedValue(
+          new ApiRequestError("Unavailable", 503, "API_UNAVAILABLE"),
+        );
+      if (failure === "malformed")
+        vi.mocked(fetchApiJson).mockResolvedValue({ data: [] });
+      expect((await getAdminCampaigns(query)).status).toBe("unavailable");
+      expect(
+        (await getAdminCampaignDetail("campaign-naija-craft")).status,
+      ).toBe("unavailable");
+      if (failure === "configuration" || failure === "session")
+        expect(fetchApiJson).not.toHaveBeenCalled();
+    },
+  );
+  it("distinguishes a real 404 from an unavailable detail", async () => {
+    vi.mocked(fetchApiJson).mockRejectedValue(
+      new ApiRequestError("Not found", 404, "NOT_FOUND"),
+    );
+    expect(await getAdminCampaignDetail("missing")).toEqual({
+      status: "not-found",
     });
   });
-
-  describe("getAdminCampaignDetail", () => {
-    it("returns preview campaign if API is unconfigured", async () => {
-      isApiConfiguredMock.mockReturnValue(false);
-      const result = await getAdminCampaignDetail("campaign-sungrid");
-      expect(result).not.toBeNull();
-      expect(result?.id).toBe("campaign-sungrid");
+  it("keeps preconditions and actual history separate from the campaign lifecycle", async () => {
+    const detail = reviewDetailFixture();
+    detail.campaign.reviewStatus = "APPROVED";
+    detail.campaign.reviewedAt = reviewDecisionFixture().reviewedAt;
+    detail.reviewEvents = [reviewDecisionFixture().event];
+    vi.mocked(fetchApiJson).mockResolvedValue(detail);
+    const result = await getAdminCampaignDetail("campaign-test");
+    expect(result).toEqual({ status: "ready", data: detail });
+    expect(detail.campaign.status).toBe("IN_REVIEW");
+  });
+  it("rejects a response for another campaign or page", async () => {
+    vi.mocked(fetchApiJson).mockResolvedValue(reviewDetailFixture());
+    expect((await getAdminCampaignDetail("different-id")).status).toBe(
+      "unavailable",
+    );
+    vi.mocked(fetchApiJson).mockResolvedValue({
+      ...reviewQueueFixture(),
+      skip: 50,
     });
+    expect((await getAdminCampaigns(query)).status).toBe("unavailable");
+  });
+});
 
-    it("fetches campaign detail from live API when configured", async () => {
-      isApiConfiguredMock.mockReturnValue(true);
-      readSessionTokenMock.mockResolvedValue("test-token");
-      fetchMock.mockResolvedValue({
-        id: "camp-2",
-        status: "APPROVED",
-        reviewStatus: "APPROVED",
-        targetAmount: "5000",
-        idea: {
-          title: "Solar Pump",
-          solution: "Solar irrigation",
-        },
-      });
-
-      const result = await getAdminCampaignDetail("camp-2");
-      expect(fetchMock).toHaveBeenCalledWith("/admin/campaigns/camp-2", {
-        token: "test-token",
-      });
-      expect(result?.id).toBe("camp-2");
-      expect(result?.title).toBe("Solar Pump");
-      expect(result?.review.status).toBe("approved");
+describe("FR-304 / FR-901 review writes", () => {
+  it("requires a real configured session", async () => {
+    vi.mocked(readSessionToken).mockResolvedValue(null);
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toMatchObject({ ok: false, status: 401 });
+    vi.mocked(isApiConfigured).mockReturnValue(false);
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toMatchObject({ ok: false, status: 503 });
+    expect(sendApiJson).not.toHaveBeenCalled();
+  });
+  it("returns a validated authoritative receipt", async () => {
+    vi.mocked(sendApiJson).mockResolvedValue({
+      ok: true,
+      status: 201,
+      data: reviewDecisionFixture(),
+    });
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toMatchObject({ ok: true, data: reviewDecisionFixture() });
+    expect(sendApiJson).toHaveBeenCalledWith(
+      "/admin/campaigns/campaign-test/review",
+      { method: "POST", token: "test-session", body: { action: "APPROVE" } },
+    );
+  });
+  it.each([
+    null,
+    { success: true },
+    { ...reviewDecisionFixture(), id: "other" },
+    { ...reviewDecisionFixture(), reviewStatus: "REJECTED" },
+  ])("rejects an unconfirmed success payload", async (data) => {
+    vi.mocked(sendApiJson).mockResolvedValue({ ok: true, status: 200, data });
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toMatchObject({
+      ok: false,
+      status: 502,
+      code: "INVALID_REVIEW_RESPONSE",
     });
   });
-
-  describe("submitAdminCampaignReview", () => {
-    it("rejects immediately if not signed in", async () => {
-      readSessionTokenMock.mockResolvedValue(null);
-      const result = await submitAdminCampaignReview("camp-1", {
-        action: "APPROVE",
-      });
-      expect(result.ok).toBe(false);
-      if (!result.ok) {
-        expect(result.code).toBe("NOT_SIGNED_IN");
-      }
-      expect(sendApiJsonMock).not.toHaveBeenCalled();
+  it("does not accept a different action's receipt", async () => {
+    vi.mocked(sendApiJson).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: reviewDecisionFixture(),
     });
-
-    it("posts review decision with token when signed in", async () => {
-      readSessionTokenMock.mockResolvedValue("test-token");
-      sendApiJsonMock.mockResolvedValue({
-        ok: true,
-        status: 200,
-        data: { success: true },
-      });
-
-      const result = await submitAdminCampaignReview("camp-1", {
+    expect(
+      await submitAdminCampaignReview("campaign-test", {
+        action: "REJECT",
+        reason: "Please clarify the milestone evidence.",
+      }),
+    ).toMatchObject({ ok: false, status: 502 });
+  });
+  it("does not confirm a receipt with a different reason", async () => {
+    vi.mocked(sendApiJson).mockResolvedValue({
+      ok: true,
+      status: 200,
+      data: reviewDecisionFixture(),
+    });
+    expect(
+      await submitAdminCampaignReview("campaign-test", {
         action: "APPROVE",
-      });
-      expect(sendApiJsonMock).toHaveBeenCalledWith("/admin/campaigns/camp-1/review", {
-        method: "POST",
-        token: "test-token",
-        body: { action: "APPROVE" },
-      });
-      expect(result.ok).toBe(true);
+        reason: "Reviewed with conditions",
+      }),
+    ).toMatchObject({ ok: false, status: 502 });
+  });
+  it("preserves stale-state and approval blocker failures", async () => {
+    const failure = {
+      ok: false,
+      status: 422,
+      code: "VERIFICATION_REQUIRED",
+      message: "Verification is required",
+      details: { blockers: ["Compliance hold"] },
+    } as const;
+    vi.mocked(sendApiJson).mockResolvedValue(failure);
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toEqual(failure);
+  });
+  it("does not claim a network failure means no write occurred", async () => {
+    vi.mocked(sendApiJson).mockResolvedValue({
+      ok: false,
+      status: 503,
+      code: "API_UNREACHABLE",
+      message: "Nothing was changed.",
+    });
+    expect(
+      await submitAdminCampaignReview("campaign-test", { action: "APPROVE" }),
+    ).toMatchObject({
+      ok: false,
+      message: expect.stringContaining("Refresh the review"),
     });
   });
 });

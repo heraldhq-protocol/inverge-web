@@ -10,7 +10,11 @@ vi.mock("@/lib/api/client", () => ({
 import type { AdminActor } from "@/features/admin/permissions";
 import { findPreviewCampaignById } from "@/features/campaigns/content/preview-campaigns";
 import { CAMPAIGN_REVIEW_MIN_REASON } from "@/features/campaigns/lib/admin-review";
-import { getCampaignReviewStoreKey } from "@/features/campaigns/lib/admin-review-store";
+import {
+  getCampaignReviewStoreKey,
+  subscribeCampaignReviewStore,
+} from "@/features/campaigns/lib/admin-review-store";
+import { PreviewAdminCampaignReviewDetail } from "@/features/campaigns/components/admin-campaign-review-detail";
 import type { Campaign } from "@/features/campaigns/types";
 
 const REVIEWER: AdminActor = {
@@ -32,21 +36,26 @@ function fixture(id: string): Campaign {
 }
 
 /**
- * The review store keeps a module-level snapshot, so each test imports the
- * component into a fresh module registry rather than inheriting the last test's
- * decisions. That keeps the assertions order-independent.
+ * Reset the real preview snapshot through its storage-event subscription.
+ * Keep component imports at collection time: resetting the entire icon module
+ * graph per test can exceed the Windows cold-import timeout.
  */
 async function renderDetail(actor: AdminActor, campaign: Campaign) {
-  const { AdminCampaignReviewDetail } =
-    await import("@/features/campaigns/components/admin-campaign-review-detail");
   return render(
-    <AdminCampaignReviewDetail actor={actor} initialCampaign={campaign} />,
+    <PreviewAdminCampaignReviewDetail
+      actor={actor}
+      initialCampaign={campaign}
+    />,
   );
 }
 
 beforeEach(() => {
-  vi.resetModules();
   window.localStorage.clear();
+  const unsubscribe = subscribeCampaignReviewStore(() => {});
+  window.dispatchEvent(
+    new StorageEvent("storage", { key: getCampaignReviewStoreKey() }),
+  );
+  unsubscribe();
   sendJsonMock.mockReset();
 });
 
@@ -115,13 +124,7 @@ describe("AdminCampaignReviewDetail", () => {
     expect(sendJsonMock).not.toHaveBeenCalled();
   });
 
-  it("records an approval when API responds with preview mode", async () => {
-    sendJsonMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      data: { preview: true, action: "APPROVE" },
-    });
-
+  it("records an explicit preview decision locally without an API request", async () => {
     await renderDetail(REVIEWER, fixture("campaign-naija-craft"));
 
     fireEvent.click(screen.getByRole("radio", { name: /Approve for funding/ }));
@@ -139,27 +142,6 @@ describe("AdminCampaignReviewDetail", () => {
     expect(
       screen.queryByRole("button", { name: "Approve for funding" }),
     ).toBeNull();
-  });
-
-  it("refuses to record a confirmed state when the API returns an error", async () => {
-    sendJsonMock.mockResolvedValue({
-      ok: false,
-      status: 403,
-      code: "FORBIDDEN",
-      message: "Only platform administrators can review campaigns.",
-    });
-
-    await renderDetail(REVIEWER, fixture("campaign-naija-craft"));
-
-    fireEvent.click(screen.getByRole("radio", { name: /Approve for funding/ }));
-    fireEvent.click(
-      screen.getByRole("button", { name: "Approve for funding" }),
-    );
-
-    const errorAlert = await screen.findByText("Only platform administrators can review campaigns.");
-    expect(errorAlert).toBeDefined();
-    // Must NOT record in local store or show success status
-    expect(window.localStorage.getItem(getCampaignReviewStoreKey())).toBeNull();
-    expect(screen.queryByRole("status")).toBeNull();
+    expect(sendJsonMock).not.toHaveBeenCalled();
   });
 });

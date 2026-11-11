@@ -5,6 +5,7 @@ import {
   decimalToUsdAmount,
   formatCompactMoney,
   formatMoney,
+  formatMoneyWithCents,
   parseUsdAmount,
   sumMoneyAmounts,
   type MoneyAmount,
@@ -23,6 +24,19 @@ describe("formatMoney", () => {
 
   it("drops sub-unit cents and formats whole dollars", () => {
     expect(formatMoney(usd("482099"))).toBe("$4,820");
+  });
+});
+
+describe("formatMoneyWithCents (FR-206, FR-904)", () => {
+  it.each([
+    ["0", "$0.00"],
+    ["1", "$0.01"],
+    ["29", "$0.29"],
+    ["482099", "$4,820.99"],
+    ["-29", "-$0.29"],
+    ["900719925474099101", "$9,007,199,254,740,991.01"],
+  ])("preserves every cent of %s", (atomic, expected) => {
+    expect(formatMoneyWithCents(usd(atomic))).toBe(expected);
   });
 });
 

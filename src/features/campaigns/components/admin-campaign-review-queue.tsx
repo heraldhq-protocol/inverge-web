@@ -41,7 +41,7 @@ import type { Campaign } from "@/features/campaigns/types";
  * two sources are labelled separately so a locally decided row is never mistaken
  * for a server state.
  */
-export function AdminCampaignReviewQueue({
+export function PreviewAdminCampaignReviewQueue({
   initialCampaigns,
 }: {
   initialCampaigns: readonly Campaign[];

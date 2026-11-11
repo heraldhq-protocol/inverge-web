@@ -16,10 +16,9 @@ import type {
 /**
  * Browser-only campaign review store.
  *
- * This is deliberately not an API client. There is no authenticated web session
- * and no campaign review endpoint, so a decision can only be a preview record.
- * Keeping the boundary here lets every surface state that fact and gives the
- * eventual server implementation one place to replace.
+ * Only the explicit development preview uses this store. Live admin reviews
+ * use the server API and its confirmed decision receipts, without reading or
+ * writing these browser records.
  */
 
 const STORE_KEY = "inverge:admin:campaign-reviews:v1";

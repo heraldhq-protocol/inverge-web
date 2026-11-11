@@ -1,135 +1,135 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const isSameOriginRequestMock = vi.fn();
-const getProgrammeAdminAccessMock = vi.fn();
-const submitAdminCampaignReviewMock = vi.fn();
-const isApiConfiguredMock = vi.fn();
-
-vi.mock("next/cache", () => ({
-  revalidatePath: vi.fn(),
-}));
-
+vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 vi.mock("@/features/auth/server/origin", () => ({
-  isSameOriginRequest: () => isSameOriginRequestMock(),
+  isSameOriginRequest: vi.fn(),
 }));
-
 vi.mock("@/features/programmes/server/access", () => ({
-  getProgrammeAdminAccess: () => getProgrammeAdminAccessMock(),
+  getProgrammeAdminAccess: vi.fn(),
 }));
-
 vi.mock("@/features/campaigns/server/admin-campaigns", () => ({
-  submitAdminCampaignReview: (...args: unknown[]) => submitAdminCampaignReviewMock(...args),
+  submitAdminCampaignReview: vi.fn(),
 }));
 
-vi.mock("@/lib/api/server", () => ({
-  isApiConfigured: () => isApiConfiguredMock(),
-}));
-
+import { revalidatePath } from "next/cache";
+import { isSameOriginRequest } from "@/features/auth/server/origin";
+import { getProgrammeAdminAccess } from "@/features/programmes/server/access";
+import { submitAdminCampaignReview } from "@/features/campaigns/server/admin-campaigns";
+import { reviewDecisionFixture } from "@/test/admin-campaign-review";
 import { POST } from "./route";
 
-function makeRequest(body: unknown, sameOrigin = true): Request {
-  isSameOriginRequestMock.mockReturnValue(sameOrigin);
-  return new Request("http://localhost:3000/api/admin/campaigns/cmp-1/review", {
-    method: "POST",
-    headers: { "content-type": "application/json" },
-    body: JSON.stringify(body),
-  });
-}
-
-function makeContext(id = "cmp-1") {
-  return { params: Promise.resolve({ id }) };
-}
-
+const access = {
+  allowed: true,
+  preview: false,
+  actor: { id: "admin-test", name: "Reviewer", role: "platform_admin" },
+  reason: "Admin",
+} as const;
+const context = () => ({ params: Promise.resolve({ id: "campaign-test" }) });
+const request = (body: unknown) =>
+  new Request(
+    "http://localhost:3000/api/admin/campaigns/campaign-test/review",
+    {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify(body),
+    },
+  );
 beforeEach(() => {
-  isSameOriginRequestMock.mockReset();
-  getProgrammeAdminAccessMock.mockReset();
-  submitAdminCampaignReviewMock.mockReset();
-  isApiConfiguredMock.mockReset();
+  vi.resetAllMocks();
+  vi.mocked(isSameOriginRequest).mockReturnValue(true);
+  vi.mocked(getProgrammeAdminAccess).mockResolvedValue(access);
+  vi.mocked(submitAdminCampaignReview).mockResolvedValue({
+    ok: true,
+    status: 201,
+    data: reviewDecisionFixture(),
+  });
 });
 
-describe("POST /api/admin/campaigns/[id]/review", () => {
-  it("rejects cross-origin requests", async () => {
-    const res = await POST(makeRequest({ action: "approve" }, false), makeContext());
-    expect(res.status).toBe(403);
-    const data = await res.json();
-    expect(data.error.code).toBe("ORIGIN_NOT_ALLOWED");
-  });
-
-  it("rejects unauthorized users", async () => {
-    getProgrammeAdminAccessMock.mockResolvedValue({
-      allowed: false,
-      reason: "Not an admin",
-    });
-
-    const res = await POST(makeRequest({ action: "approve" }), makeContext());
-    expect(res.status).toBe(403);
-    const data = await res.json();
-    expect(data.error.code).toBe("FORBIDDEN");
-  });
-
-  it("validates request schema", async () => {
-    getProgrammeAdminAccessMock.mockResolvedValue({
-      allowed: true,
-      preview: false,
-      actor: { id: "a1", name: "Admin", role: "platform_lead" },
-    });
-
-    const res = await POST(makeRequest({ action: "invalid-action" }), makeContext());
-    expect(res.status).toBe(422);
-    const data = await res.json();
-    expect(data.error.code).toBe("VALIDATION_FAILED");
-  });
-
-  it("requires reason of at least 20 chars for reject or request-changes", async () => {
-    getProgrammeAdminAccessMock.mockResolvedValue({
-      allowed: true,
-      preview: false,
-      actor: { id: "a1", name: "Admin", role: "platform_lead" },
-    });
-
-    const res = await POST(
-      makeRequest({ action: "reject", reason: "Too short" }),
-      makeContext(),
+describe("FR-901 same-origin admin review BFF", () => {
+  it("refuses cross-site requests before reading the session", async () => {
+    vi.mocked(isSameOriginRequest).mockReturnValue(false);
+    expect((await POST(request({ action: "APPROVE" }), context())).status).toBe(
+      403,
     );
-    expect(res.status).toBe(422);
-    const data = await res.json();
-    expect(data.error.code).toBe("REASON_REQUIRED");
+    expect(getProgrammeAdminAccess).not.toHaveBeenCalled();
+    expect(submitAdminCampaignReview).not.toHaveBeenCalled();
   });
-
-  it("approves in preview mode without calling upstream API", async () => {
-    getProgrammeAdminAccessMock.mockResolvedValue({
-      allowed: true,
-      preview: true,
-      actor: { id: "a1", name: "Admin", role: "platform_lead" },
-    });
-    isApiConfiguredMock.mockReturnValue(false);
-
-    const res = await POST(makeRequest({ action: "approve" }), makeContext());
-    expect(res.status).toBe(200);
-    const data = await res.json();
-    expect(data.ok).toBe(true);
-    expect(data.data.preview).toBe(true);
-    expect(submitAdminCampaignReviewMock).not.toHaveBeenCalled();
-  });
-
-  it("forwards to live API when configured and authorized", async () => {
-    getProgrammeAdminAccessMock.mockResolvedValue({
-      allowed: true,
+  it("refuses a non-admin and a preview identity", async () => {
+    vi.mocked(getProgrammeAdminAccess).mockResolvedValue({
+      allowed: false,
       preview: false,
-      actor: { id: "a1", name: "Admin", role: "platform_lead" },
+      reason: "Admin required",
     });
-    isApiConfiguredMock.mockReturnValue(true);
-    submitAdminCampaignReviewMock.mockResolvedValue({
-      ok: true,
-      status: 200,
-      data: { success: true },
+    expect((await POST(request({ action: "APPROVE" }), context())).status).toBe(
+      403,
+    );
+    vi.mocked(getProgrammeAdminAccess).mockResolvedValue({
+      ...access,
+      preview: true,
     });
-
-    const res = await POST(makeRequest({ action: "approve" }), makeContext());
-    expect(res.status).toBe(200);
-    expect(submitAdminCampaignReviewMock).toHaveBeenCalledWith("cmp-1", {
-      action: "APPROVE",
-      reason: undefined,
-    });
+    expect((await POST(request({ action: "APPROVE" }), context())).status).toBe(
+      503,
+    );
+    expect(submitAdminCampaignReview).not.toHaveBeenCalled();
   });
+  it("rejects malformed JSON", async () => {
+    const response = await POST(
+      new Request("http://localhost:3000", { method: "POST", body: "{" }),
+      context(),
+    );
+    expect(response.status).toBe(400);
+  });
+  it.each([
+    { action: "invalid" },
+    {},
+    { action: "REJECT" },
+    { action: "REQUEST_CHANGES", reason: "Too short" },
+    { action: "APPROVE", reason: "x".repeat(2001) },
+  ])(
+    "validates decisions and reason limits before the API call",
+    async (body) => {
+      expect((await POST(request(body), context())).status).toBe(422);
+      expect(submitAdminCampaignReview).not.toHaveBeenCalled();
+      expect(revalidatePath).not.toHaveBeenCalled();
+    },
+  );
+  it("sends the documented action and returns one consistent live envelope", async () => {
+    const response = await POST(
+      request({ action: "approve", reason: "  Reviewed plan  " }),
+      context(),
+    );
+    expect(submitAdminCampaignReview).toHaveBeenCalledWith("campaign-test", {
+      action: "APPROVE",
+      reason: "Reviewed plan",
+    });
+    expect(await response.json()).toEqual({
+      mode: "live",
+      decision: reviewDecisionFixture(),
+    });
+    expect(revalidatePath).toHaveBeenCalledWith("/admin/campaigns");
+    expect(revalidatePath).toHaveBeenCalledWith(
+      "/admin/campaigns/campaign-test",
+    );
+  });
+  it.each([401, 403, 409, 422, 503, 0])(
+    "forwards API failure %s without fake preview success",
+    async (status) => {
+      vi.mocked(submitAdminCampaignReview).mockResolvedValue({
+        ok: false,
+        status,
+        code: "REVIEW_FAILED",
+        message: "Review refused",
+        details: { blockers: ["A verification check changed"] },
+      });
+      const response = await POST(request({ action: "APPROVE" }), context());
+      expect(response.status).toBe(status || 502);
+      expect(await response.json()).toMatchObject({
+        error: {
+          code: "REVIEW_FAILED",
+          details: { blockers: ["A verification check changed"] },
+        },
+      });
+      expect(revalidatePath).not.toHaveBeenCalled();
+    },
+  );
 });
