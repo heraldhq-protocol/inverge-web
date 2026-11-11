@@ -44,14 +44,24 @@ export function AdminUserRow({
   const panelId = useId();
   const groupName = useId();
   const triggerRef = useRef<HTMLButtonElement>(null);
-  const [savedRole, setSavedRole] = useState<AdminUserRole | null>(null);
+  const [optimisticRole, setOptimisticRole] = useState<{
+    from: AdminUserRole;
+    to: AdminUserRole;
+  } | null>(null);
   const [draft, setDraft] = useState<AssignableAdminUserRole>("USER");
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
 
-  const currentRole = savedRole ?? user.role;
+  // Preview rows never refresh, so a local change stands until unmount. A live
+  // row shows its optimistic role only while the server prop still holds the
+  // old one, then follows the prop again — otherwise an edit made elsewhere
+  // would stay masked by this row's stale value.
+  const currentRole =
+    optimisticRole && (preview || optimisticRole.from === user.role)
+      ? optimisticRole.to
+      : user.role;
   const displayName = adminUserDisplayName(user);
   const cannotDemoteSelf = isSelf && currentRole === "ADMIN";
 
@@ -77,7 +87,7 @@ export function AdminUserRow({
     setNotice(null);
 
     if (preview) {
-      setSavedRole(draft);
+      setOptimisticRole({ from: currentRole, to: draft });
       setOpen(false);
       setBusy(false);
       setNotice(
@@ -98,7 +108,7 @@ export function AdminUserRow({
         return;
       }
 
-      setSavedRole(response.data.role);
+      setOptimisticRole({ from: user.role, to: response.data.role });
       setOpen(false);
       setNotice(
         `${displayName} is now ${ADMIN_USER_ROLE_LABELS[response.data.role].toLowerCase()}.`,

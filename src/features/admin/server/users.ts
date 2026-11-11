@@ -4,6 +4,7 @@ import { z } from "zod";
 
 import { previewAdminUsers } from "@/features/admin/content/preview-users";
 import {
+  ADMIN_USERS_MAX_OFFSET,
   ADMIN_USERS_PAGE_SIZE,
   adminUserSchema,
   updateUserRoleSchema,
@@ -72,7 +73,11 @@ export async function listAdminUsers(
   if (!access.allowed) return { status: "denied" };
 
   const query = input.query?.trim().slice(0, 120) ?? "";
-  const offset = clamp(Math.trunc(input.offset ?? 0) || 0, 0, 10_000);
+  const offset = clamp(
+    Math.trunc(input.offset ?? 0) || 0,
+    0,
+    ADMIN_USERS_MAX_OFFSET,
+  );
   const limit = clamp(
     Math.trunc(input.limit ?? ADMIN_USERS_PAGE_SIZE) || ADMIN_USERS_PAGE_SIZE,
     1,
@@ -112,7 +117,9 @@ export async function listAdminUsers(
   if (input.role) params.set("role", input.role);
 
   try {
-    const payload = await fetchApiJson<unknown>(`/admin/users?${params}`);
+    const payload = await fetchApiJson<unknown>(`/admin/users?${params}`, {
+      token,
+    });
     const parsed = z.array(adminUserSchema).safeParse(payload);
     if (!parsed.success) {
       return {
@@ -126,7 +133,10 @@ export async function listAdminUsers(
       status: "live",
       actor: access.actor,
       users: parsed.data,
-      hasMore: parsed.data.length === limit,
+      // The page clamps `offset` to the same bound, so a "next" past it would
+      // resolve back to this page instead of advancing.
+      hasMore:
+        parsed.data.length === limit && offset + limit < ADMIN_USERS_MAX_OFFSET,
     };
   } catch (error) {
     const status = error instanceof ApiRequestError ? error.status : 0;

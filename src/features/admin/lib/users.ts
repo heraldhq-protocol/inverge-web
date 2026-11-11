@@ -52,6 +52,12 @@ export type AdminUser = z.infer<typeof adminUserSchema>;
 export const ADMIN_USERS_PAGE_SIZE = 25;
 
 /**
+ * Upper offset bound. The page and the server read share it so pagination links
+ * never step from an offset the API call silently clamped.
+ */
+export const ADMIN_USERS_MAX_OFFSET = 10_000;
+
+/**
  * Roles this UI can assign today. The API also stores `COMPLIANCE_REVIEWER`, but
  * `UpdateUserRoleDto` rejects it, so it is displayed and filtered rather than
  * offered. Add it here once that DTO is widened; nothing else needs to change.

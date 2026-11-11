@@ -114,6 +114,7 @@ describe("listAdminUsers (FR-901)", () => {
     expect(result.status).toBe("live");
     expect(fetchApiJson).toHaveBeenCalledWith(
       "/admin/users?limit=10&offset=20&query=amara&role=ADMIN",
+      { token: "test-session" },
     );
     if (result.status !== "live") return;
     expect(result.users).toEqual([user]);

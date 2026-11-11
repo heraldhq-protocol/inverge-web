@@ -5,6 +5,7 @@ import {
   AdminUsersUnavailable,
 } from "@/features/admin/components/admin-users-directory";
 import {
+  ADMIN_USERS_MAX_OFFSET,
   ADMIN_USERS_PAGE_SIZE,
   isAdminUserRole,
 } from "@/features/admin/lib/users";
@@ -31,7 +32,7 @@ export default async function AdminUsersPage({
     typeof params.offset === "string" ? Number.parseInt(params.offset, 10) : 0;
   const offset =
     Number.isFinite(requestedOffset) && requestedOffset > 0
-      ? requestedOffset
+      ? Math.min(requestedOffset, ADMIN_USERS_MAX_OFFSET)
       : 0;
 
   const result = await listAdminUsers({
