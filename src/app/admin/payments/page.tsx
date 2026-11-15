@@ -91,22 +91,35 @@ export default function AdminPaymentsPage() {
         </p>
       </header>
 
-      <div className="mt-4 rounded-2xl border border-warning/30 bg-warning/5 px-4 py-3">
+      <div
+        role="note"
+        aria-label="Preview data notice"
+        className="mt-4 rounded-2xl border border-warning/30 bg-warning/5 px-4 py-3"
+      >
         <p className="text-xs font-semibold text-warning-strong">
-          No payment provider is connected to this workspace
+          Preview data — not a ledger
         </p>
         <p className="mt-1 text-[0.6875rem] leading-5 text-warning-strong/85">
-          A payment cannot be marked successful from this page. Provider
-          selection, recurring billing, webhooks, refunds, and settlement must
-          be recorded as a technical decision first. Crowdfunding contributions
-          remain in the existing escrow architecture and are not operating
-          revenue.
+          Every amount and status below is illustrative preview data. Sponsor,
+          prize, ticket and fulfilment records come from typed programme
+          fixtures; plan pricing is illustrative. None of it is read from a
+          payment provider, bank, escrow or API, and it must not be used for
+          reconciliation, fulfilment or reporting. No payment can be marked
+          successful from this page; provider selection, recurring billing,
+          webhooks, refunds and settlement still need a recorded technical
+          decision. Crowdfunding contributions remain in the existing escrow
+          architecture and are not operating revenue.
         </p>
       </div>
 
       <dl className="mt-4 grid gap-3 sm:grid-cols-3">
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <dt className="text-xs text-muted">Sponsor funding secured</dt>
+          <dt className="flex items-center gap-2 text-xs text-muted">
+            Sponsor funding secured
+            <Pill size="xs" tone="warning">
+              Preview
+            </Pill>
+          </dt>
           <dd className="mt-1 text-xl font-bold tabular-nums text-ink">
             <Amount
               value={{
@@ -118,11 +131,16 @@ export default function AdminPaymentsPage() {
             />
           </dd>
           <p className="mt-0.5 text-[0.625rem] text-muted">
-            Provider-confirmed invoices only
+            Fixture invoice states; no provider connected
           </p>
         </div>
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <dt className="text-xs text-muted">Promised prize pool</dt>
+          <dt className="flex items-center gap-2 text-xs text-muted">
+            Promised prize pool
+            <Pill size="xs" tone="warning">
+              Preview
+            </Pill>
+          </dt>
           <dd className="mt-1 text-xl font-bold tabular-nums text-ink">
             <Amount
               value={{
@@ -134,7 +152,7 @@ export default function AdminPaymentsPage() {
             />
           </dd>
           <p className="mt-0.5 text-[0.625rem] text-muted">
-            Commitment, not money received
+            Fixture commitment, not money received
           </p>
           <NgnEstimate
             amount={{
@@ -148,7 +166,12 @@ export default function AdminPaymentsPage() {
           />
         </div>
         <div className="rounded-2xl border border-border bg-surface p-4">
-          <dt className="text-xs text-muted">Pro plan</dt>
+          <dt className="flex items-center gap-2 text-xs text-muted">
+            Pro plan
+            <Pill size="xs" tone="warning">
+              Preview
+            </Pill>
+          </dt>
           <dd className="mt-1 text-xl font-bold text-ink">
             {PLANS.pro.price ? <Amount value={PLANS.pro.price} /> : "—"}
             <span className="text-xs font-normal text-muted"> / month</span>
@@ -162,7 +185,7 @@ export default function AdminPaymentsPage() {
       <div className="mt-4 grid gap-4 lg:grid-cols-2">
         <Ledger
           title="Sponsor invoices"
-          description="Committed sponsorship and its invoice state."
+          description="Fixture sponsorship commitments and invoice states."
           icon={Invoice01Icon}
           note="An offline transfer can be recorded during the pilot only with a reference and an explicit verification. A client redirect is never proof of payment."
         >
@@ -215,7 +238,7 @@ export default function AdminPaymentsPage() {
 
         <Ledger
           title="Prize fulfilment"
-          description="What winners are owed and where it is in the process."
+          description="Fixture prize commitments and fulfilment states."
           icon={TrophyIcon}
           note="Prize money is fulfilled outside campaign escrow. It must never be paid from backer contributions."
         >
@@ -259,7 +282,7 @@ export default function AdminPaymentsPage() {
 
         <Ledger
           title="Workshop tickets"
-          description="Paid sessions, capacity, and booking state."
+          description="Fixture sessions, capacity and booking states."
           icon={Ticket01Icon}
           note="A paid ticket needs authoritative provider confirmation. Free sessions are registrations, not payments."
         >
@@ -300,7 +323,7 @@ export default function AdminPaymentsPage() {
 
         <Ledger
           title="Creator subscriptions"
-          description="Plan entitlement and AI allowance."
+          description="Illustrative plan entitlement and AI allowance."
           icon={UserGroupIcon}
           note="A subscription only becomes active from a verified provider event. A local upgrade click produces an incomplete state."
         >
@@ -326,7 +349,7 @@ export default function AdminPaymentsPage() {
 
         <Ledger
           title="Idea promotion"
-          description="Paid visibility is separate from validation and judging."
+          description="Illustrative paid visibility, separate from validation and judging."
           icon={StarAward01Icon}
           note="A promotion changes discovery placement only. It cannot alter supporters, estimated interest, feedback, or a leaderboard position."
         >
@@ -356,8 +379,8 @@ export default function AdminPaymentsPage() {
         >
           <p className="text-xs leading-5 text-muted">
             Campaign contributions stay in the campaign and milestone flows.
-            They are not imported into this ledger, and no programme action can
-            point a contribution at a prize, ticket, subscription, or
+            They are not imported into this payment view, and no programme
+            action can point a contribution at a prize, ticket, subscription, or
             sponsorship.
           </p>
           <Link
