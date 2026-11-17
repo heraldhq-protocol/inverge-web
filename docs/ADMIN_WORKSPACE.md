@@ -477,6 +477,76 @@ The BFF requires a live administrator and a same-origin request, forwards the
 service's error envelope, and returns only a confirmed, non-cacheable result.
 Screening allows 30 seconds with a 35-second browser timeout.
 
+### Runtime parameters integration (2026-11-17)
+
+`/admin/params` reads `GET /api/v1/admin/params` (a flat record of parameter
+keys to values; the API serves a briefly cached snapshot), writes one key at a
+time through `PATCH /api/v1/admin/params` (`UpdateParamsDto: { params: { [key]:
+value } }`), and reads `GET /api/v1/admin/params/audit?key=&limit=&offset=`
+(a bare array, newest first, 100 by default and 500 at most). Audit rows carry
+`key`, `oldValue`, `newValue`, `changedBy` (the acting account id) and
+`changedAt`. The API has no actor-name or reason field, so the table shows the
+account id and omits a Reason column rather than inventing one. Stored values
+are JSON: primitives are edited with an explicit type selector, and the audit
+reader renders structured values as JSON instead of `[object Object]`.
+
+The API applies patched keys sequentially, each write is independently durable,
+and an audit row is appended only when the value actually changes. A timeout or
+malformed response may therefore follow a partial update: the editor reports
+that uncertainty, refreshes the server-rendered audit trail after a confirmed
+save, and never retries automatically. The audit read is separate from the
+parameter read; when it fails the table says so instead of claiming there are
+no records. Reads and writes require a live administrator, and the BFF validates
+same-origin PATCH requests and returns non-cacheable responses. Preview and
+unconfigured deployments render unavailable states; no preview value is ever
+shown as live.
+
+Validation (2026-11-17): the four parameter suites pass (30 tests), covering the
+flat parameter record, sequential-write uncertainty, audit actor/value rendering,
+the unavailable-audit state and refresh after a confirmed save. Scoped ESLint and
+Prettier checks pass, and `tsc --noEmit` is clean. A headless-Chrome preview pass
+on `/admin/params` at 1440x900 and 390x844 rendered the labelled unavailable
+state, with no horizontal overflow and no page errors; the only console noise was
+the existing dev server's failed HMR socket. The production build succeeds and
+includes `/admin/params` and both parameters BFF routes. Authenticated live
+verification remains pending because this checkout has no `INVERGE_API_URL` or
+`NEXT_PUBLIC_WEB3AUTH_CLIENT_ID`.
+
+### Editorial email tools integration (2026-11-17)
+
+`/admin/email` reads `GET /api/v1/admin/email/templates`, renders
+`POST /api/v1/admin/email/editorial/preview`, and dispatches
+`POST /api/v1/admin/email/editorial/send`. The templates response is
+`{ data: [{ id, category, label, requiredVariables, optionalVariables }] }`;
+the server loader normalises `id`/`label` into the browser's `templateId`/`name`
+shape and accepts a bare array as well. Only `marketing` templates are offered:
+the API rejects transactional templates on preview and send, so the selector
+filters them out instead of inviting a guaranteed rejection.
+
+The preview returns `{ category, subject, html, text }` and creates no delivery
+row. Send requires an `issueId`, a `templateId`, at most 50 explicit `userIds`
+and `variables`. It is refused unless `EDITORIAL_EMAILS_ENABLED=true` on the API
+(403 `EDITORIAL_EMAILS_DISABLED`, surfaced as a deployment message), and
+recipients without an active editorial subscription or a verified address are
+suppressed, never silently subscribed. The result is
+`{ sent, suppressed, duplicate, exhausted, failed }` and every count is shown.
+Repeating a dispatch with the same issue id and recipient is idempotent, so an
+unconfirmed attempt can be retried with the same issue id; the UI claims nothing
+beyond the counts the service confirmed. The BFF requires a live administrator
+and a same-origin request and never caches a render or dispatch result. Preview
+HTML is rendered in the preview panel after the API has rendered and escaped the
+template.
+
+Validation (2026-11-17): the four email suites pass (25 tests), covering catalogue
+envelope normalisation, marketing-only selection, the disabled-deployment message,
+dispatch counts, idempotent retry guidance and the empty-template state. Scoped
+ESLint and Prettier checks pass, and `tsc --noEmit` is clean. A headless-Chrome
+preview pass on `/admin/email` at 1440x900 and 390x844 rendered the labelled
+unavailable state with no horizontal overflow and no page errors; the only console
+noise was the existing dev server's failed HMR socket. The production build
+succeeds and includes `/admin/email` and its three BFF routes. Authenticated live
+verification remains pending for the same missing API origin and client ID.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).

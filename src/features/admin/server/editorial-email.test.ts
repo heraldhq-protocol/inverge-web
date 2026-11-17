@@ -39,7 +39,44 @@ describe("editorial-email server", () => {
   });
 
   describe("getEmailTemplates", () => {
-    it("returns parsed templates from service", async () => {
+    it("normalises the API's catalogue envelope from service", async () => {
+      requireAdminApiSession.mockResolvedValue({
+        ok: true,
+        token: "admin-jwt-token",
+      });
+      fetchApiJson.mockResolvedValue({
+        data: [
+          {
+            id: "EDIT_INVERGE",
+            category: "marketing",
+            label: "Weekly Digest",
+            requiredVariables: ["headline"],
+            optionalVariables: [],
+          },
+          {
+            id: "KYC_APPROVED",
+            category: "transactional",
+            label: "KYC approved",
+            requiredVariables: ["name"],
+            optionalVariables: [],
+          },
+        ],
+      });
+
+      const res = await getEmailTemplates();
+      expect(res.status).toBe("ready");
+      if (res.status === "ready") {
+        expect(res.data).toHaveLength(2);
+        expect(res.data[0]?.templateId).toBe("EDIT_INVERGE");
+        expect(res.data[0]?.name).toBe("Weekly Digest");
+        expect(res.data[1]?.category).toBe("transactional");
+      }
+      expect(fetchApiJson).toHaveBeenCalledWith("/admin/email/templates", {
+        token: "admin-jwt-token",
+      });
+    });
+
+    it("also accepts a bare template array", async () => {
       requireAdminApiSession.mockResolvedValue({
         ok: true,
         token: "admin-jwt-token",
@@ -47,7 +84,7 @@ describe("editorial-email server", () => {
       fetchApiJson.mockResolvedValue([
         {
           templateId: "EDIT_INVERGE",
-          category: "editorial",
+          category: "marketing",
           name: "Weekly Digest",
           requiredVariables: ["headline"],
         },
@@ -56,12 +93,8 @@ describe("editorial-email server", () => {
       const res = await getEmailTemplates();
       expect(res.status).toBe("ready");
       if (res.status === "ready") {
-        expect(res.data).toHaveLength(1);
         expect(res.data[0]?.templateId).toBe("EDIT_INVERGE");
       }
-      expect(fetchApiJson).toHaveBeenCalledWith("/admin/email/templates", {
-        token: "admin-jwt-token",
-      });
     });
 
     it("returns preview fixtures in preview mode", async () => {
@@ -218,6 +251,32 @@ describe("editorial-email server", () => {
       expect(res.ok).toBe(false);
       if (!res.ok) {
         expect(res.message).toContain("did not confirm");
+      }
+    });
+
+    it("explains a deployment with editorial sending disabled", async () => {
+      requireAdminApiSession.mockResolvedValue({
+        ok: true,
+        token: "admin-jwt-token",
+      });
+      sendApiJson.mockResolvedValue({
+        ok: false,
+        status: 403,
+        code: "EDITORIAL_EMAILS_DISABLED",
+        message: "Editorial sending is disabled.",
+      });
+
+      const res = await sendEditorialEmail({
+        issueId: "issue-1",
+        templateId: "EDIT_INVERGE",
+        userIds: ["usr_1"],
+        variables: {},
+      });
+
+      expect(res.ok).toBe(false);
+      if (!res.ok) {
+        expect(res.code).toBe("EDITORIAL_EMAILS_DISABLED");
+        expect(res.message).toContain("disabled on the connected service");
       }
     });
   });

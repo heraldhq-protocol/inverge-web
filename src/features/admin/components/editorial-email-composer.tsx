@@ -5,10 +5,11 @@ import { useId, useMemo, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/ui/pill";
 import { adminFieldClass } from "@/features/admin/components/admin-workspace-ui";
-import type {
-  EmailTemplateItem,
-  PreviewEditorialResult,
-  SendEditorialResult,
+import {
+  isEditorialTemplate,
+  type EmailTemplateItem,
+  type PreviewEditorialResult,
+  type SendEditorialResult,
 } from "@/features/admin/lib/editorial-email";
 import { sendJson } from "@/lib/api/client";
 
@@ -19,8 +20,14 @@ interface EditorialEmailComposerProps {
 export function EditorialEmailComposer({
   templates,
 }: EditorialEmailComposerProps) {
+  // Only marketing templates can be previewed or sent through this route; the
+  // API rejects transactional templates, so they are not offered here.
+  const editorialTemplates = useMemo(
+    () => templates.filter(isEditorialTemplate),
+    [templates],
+  );
   const [selectedTemplateId, setSelectedTemplateId] = useState<string>(
-    templates[0]?.templateId || "EDIT_INVERGE",
+    editorialTemplates[0]?.templateId || "",
   );
   const [issueId, setIssueId] = useState("");
   const [userIdsText, setUserIdsText] = useState("");
@@ -30,7 +37,9 @@ export function EditorialEmailComposer({
   const [preview, setPreview] = useState<PreviewEditorialResult | null>(null);
 
   const [isSending, setIsSending] = useState(false);
-  const [sendResult, setSendResult] = useState<SendEditorialResult | null>(null);
+  const [sendResult, setSendResult] = useState<SendEditorialResult | null>(
+    null,
+  );
 
   const [feedback, setFeedback] = useState<{
     tone: "success" | "error";
@@ -42,20 +51,25 @@ export function EditorialEmailComposer({
 
   const activeTemplate = useMemo(() => {
     return (
-      templates.find((t) => t.templateId === selectedTemplateId) ||
-      templates[0] || {
+      editorialTemplates.find((t) => t.templateId === selectedTemplateId) ||
+      editorialTemplates[0] || {
         templateId: selectedTemplateId,
-        category: "editorial",
+        category: "marketing",
         name: selectedTemplateId,
         requiredVariables: [],
+        optionalVariables: [],
       }
     );
-  }, [templates, selectedTemplateId]);
+  }, [editorialTemplates, selectedTemplateId]);
 
   const parseVariables = (): Record<string, unknown> | null => {
     try {
       const parsed = JSON.parse(variablesJson);
-      if (typeof parsed !== "object" || parsed === null || Array.isArray(parsed)) {
+      if (
+        typeof parsed !== "object" ||
+        parsed === null ||
+        Array.isArray(parsed)
+      ) {
         setFeedback({
           tone: "error",
           message: "Variables must be a valid JSON object.",
@@ -117,7 +131,9 @@ export function EditorialEmailComposer({
       setFeedback({
         tone: "error",
         message:
-          err instanceof Error ? err.message : "Network error rendering preview.",
+          err instanceof Error
+            ? err.message
+            : "Network error rendering preview.",
       });
       setPreview(null);
     } finally {
@@ -129,7 +145,10 @@ export function EditorialEmailComposer({
     e.preventDefault();
     const cleanIssueId = issueId.trim();
     if (!cleanIssueId) {
-      setFeedback({ tone: "error", message: "Issue ID is required to dispatch." });
+      setFeedback({
+        tone: "error",
+        message: "Issue ID is required to dispatch.",
+      });
       return;
     }
 
@@ -181,13 +200,17 @@ export function EditorialEmailComposer({
           response.data.result.suppressedCount ??
           response.data.result.suppressed ??
           0
+        }, Duplicate: ${response.data.result.duplicate ?? 0}, Failed: ${
+          response.data.result.failed ?? 0
         }`,
       });
     } catch (err) {
       setFeedback({
         tone: "error",
         message:
-          err instanceof Error ? err.message : "Network error during email dispatch.",
+          err instanceof Error
+            ? err.message
+            : "Network error during email dispatch.",
       });
     } finally {
       setIsSending(false);
@@ -198,10 +221,12 @@ export function EditorialEmailComposer({
     <div className="mt-6 space-y-8">
       {/* Regulatory & Safety notice */}
       <div className="rounded-xl border border-border bg-surface p-4 text-xs leading-5 text-ink-soft sm:text-sm">
-        <span className="font-semibold text-ink">Editorial Policy:</span> Dispatch
-        is refused unless <code className="font-mono text-xs">EDITORIAL_EMAILS_ENABLED=true</code> on the platform.
-        Recipients without an active subscription or verified email address are
-        automatically suppressed and never silently subscribed.
+        <span className="font-semibold text-ink">Editorial Policy:</span>{" "}
+        Dispatch is refused unless{" "}
+        <code className="font-mono text-xs">EDITORIAL_EMAILS_ENABLED=true</code>{" "}
+        on the platform. Recipients without an active subscription or verified
+        email address are automatically suppressed and never silently
+        subscribed.
       </div>
 
       <div className="grid items-start gap-8 lg:grid-cols-12">
@@ -252,12 +277,20 @@ export function EditorialEmailComposer({
                   }}
                   className={`mt-1 ${adminFieldClass}`}
                 >
-                  {templates.map((tmpl) => (
+                  {editorialTemplates.map((tmpl) => (
                     <option key={tmpl.templateId} value={tmpl.templateId}>
-                      {tmpl.name ? `${tmpl.name} (${tmpl.templateId})` : tmpl.templateId}
+                      {tmpl.name
+                        ? `${tmpl.name} (${tmpl.templateId})`
+                        : tmpl.templateId}
                     </option>
                   ))}
                 </select>
+                {editorialTemplates.length === 0 ? (
+                  <p className="mt-2 text-xs leading-5 text-ink-soft">
+                    No editorial templates are available on the connected
+                    service.
+                  </p>
+                ) : null}
                 {activeTemplate.requiredVariables &&
                   activeTemplate.requiredVariables.length > 0 && (
                     <div className="mt-2 flex flex-wrap items-center gap-1.5 text-xs text-ink-soft">
@@ -287,7 +320,8 @@ export function EditorialEmailComposer({
                   className={`mt-1 font-mono text-xs sm:text-sm ${adminFieldClass}`}
                 />
                 <p className="mt-1 text-xs text-ink-soft">
-                  Stable issue id. Repeating a send with the same issue id is idempotent.
+                  Stable issue id. Repeating a send with the same issue id is
+                  idempotent.
                 </p>
               </div>
 
@@ -329,14 +363,18 @@ export function EditorialEmailComposer({
                   type="button"
                   variant="outline"
                   onClick={handlePreview}
-                  disabled={isPreviewing || isSending}
+                  disabled={
+                    isPreviewing || isSending || editorialTemplates.length === 0
+                  }
                   className="cursor-pointer"
                 >
                   {isPreviewing ? "Rendering..." : "Generate Preview"}
                 </Button>
                 <Button
                   type="submit"
-                  disabled={isSending || isPreviewing}
+                  disabled={
+                    isSending || isPreviewing || editorialTemplates.length === 0
+                  }
                   className="cursor-pointer"
                 >
                   {isSending ? "Dispatching..." : "Send Editorial Dispatch"}
@@ -353,7 +391,7 @@ export function EditorialEmailComposer({
               <p className="mt-1 font-mono text-xs">
                 Issue ID: {sendResult.issueId || issueId}
               </p>
-              <div className="mt-2 flex gap-4 text-xs font-medium">
+              <div className="mt-2 flex flex-wrap gap-4 text-xs font-medium">
                 <div>
                   Sent:{" "}
                   <span className="font-bold text-success-strong">
@@ -366,7 +404,24 @@ export function EditorialEmailComposer({
                     {sendResult.suppressedCount ?? sendResult.suppressed ?? 0}
                   </span>
                 </div>
+                <div>
+                  Duplicate:{" "}
+                  <span className="font-bold text-ink-soft">
+                    {sendResult.duplicate ?? 0}
+                  </span>
+                </div>
+                <div>
+                  Failed:{" "}
+                  <span className="font-bold text-ink">
+                    {sendResult.failed ?? 0}
+                  </span>
+                </div>
               </div>
+              <p className="mt-2 text-xs leading-5 text-ink-soft">
+                Repeating a dispatch with the same issue id and recipient is a
+                no-op. Suppressed recipients did not have an active editorial
+                subscription or a verified address.
+              </p>
             </div>
           )}
         </div>
@@ -376,7 +431,8 @@ export function EditorialEmailComposer({
           <div className="rounded-xl border border-border bg-surface p-5 sm:p-6">
             <h2 className="text-lg font-semibold text-ink">Template Preview</h2>
             <p className="mt-1 text-xs leading-5 text-ink-soft">
-              Live rendering of the subject and content without creating delivery rows.
+              Live rendering of the subject and content without creating
+              delivery rows.
             </p>
 
             {preview ? (
@@ -395,9 +451,7 @@ export function EditorialEmailComposer({
                     HTML Preview:
                   </span>
                   <div className="mt-1 min-h-64 overflow-auto rounded-lg border border-border bg-white p-4 text-ink">
-                    <div
-                      dangerouslySetInnerHTML={{ __html: preview.html }}
-                    />
+                    <div dangerouslySetInnerHTML={{ __html: preview.html }} />
                   </div>
                 </div>
 
@@ -412,8 +466,8 @@ export function EditorialEmailComposer({
               </div>
             ) : (
               <div className="mt-4 flex min-h-64 items-center justify-center rounded-lg border border-dashed border-border p-8 text-center text-sm text-ink-soft">
-                Click &quot;Generate Preview&quot; to inspect rendered subject and
-                email layout.
+                Click &quot;Generate Preview&quot; to inspect rendered subject
+                and email layout.
               </div>
             )}
           </div>

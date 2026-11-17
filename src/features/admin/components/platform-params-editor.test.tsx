@@ -18,6 +18,10 @@ import { PlatformParamsEditor } from "./platform-params-editor";
 vi.mock("@/lib/api/client", () => ({
   sendJson: vi.fn(),
 }));
+const refresh = vi.fn();
+vi.mock("next/navigation", () => ({
+  useRouter: () => ({ refresh }),
+}));
 
 describe("PlatformParamsEditor", () => {
   beforeEach(() => {
@@ -41,7 +45,25 @@ describe("PlatformParamsEditor", () => {
       screen.getAllByText("boost.featured.priceUSD").length,
     ).toBeGreaterThanOrEqual(1);
     expect(screen.getByText("Change Audit History")).toBeInTheDocument();
-    expect(screen.getByText("Updated Q4 boost pricing")).toBeInTheDocument();
+    expect(screen.getAllByText("usr_admin_1").length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByText("System")).not.toBeInTheDocument();
+  });
+
+  it("reports an unavailable audit read instead of claiming there are no records", () => {
+    render(
+      <PlatformParamsEditor
+        initialParams={previewPlatformParams}
+        initialAudit={[]}
+        auditMessage="The audit trail could not be loaded."
+      />,
+    );
+
+    expect(
+      screen.getByText("The audit trail could not be loaded."),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByText("No audit records available."),
+    ).not.toBeInTheDocument();
   });
 
   it("filters parameters based on search query", () => {
@@ -112,9 +134,7 @@ describe("PlatformParamsEditor", () => {
       });
     });
 
-    expect(
-      await screen.findByText(/successfully updated/),
-    ).toBeInTheDocument();
+    expect(await screen.findByText(/successfully updated/)).toBeInTheDocument();
   });
 
   it("displays error message if update fails", async () => {

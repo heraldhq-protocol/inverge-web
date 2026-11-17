@@ -27,8 +27,13 @@ export type UpdateParamsPayload = z.infer<typeof updateParamsSchema>;
 export const paramAuditEntrySchema = z.object({
   id: z.string().optional(),
   key: z.string(),
-  oldValue: platformParamValueSchema.optional().nullable(),
-  newValue: platformParamValueSchema.optional().nullable(),
+  // Stored values are Prisma JSON: primitives today, but the audit reader must
+  // not fail closed on a structured value the API already accepted.
+  oldValue: z.unknown().optional(),
+  newValue: z.unknown().optional(),
+  // The API records the acting account id as `changedBy`.
+  changedBy: z.string().optional().nullable(),
+  // Legacy/knowledge fixtures may carry a display actor instead.
   actorId: z.string().optional().nullable(),
   actorName: z.string().optional().nullable(),
   changedAt: z.string().optional().nullable(),
@@ -36,6 +41,20 @@ export const paramAuditEntrySchema = z.object({
   reason: z.string().optional().nullable(),
 });
 export type ParamAuditEntry = z.infer<typeof paramAuditEntrySchema>;
+
+/** Render a stored parameter value without losing structure. */
+export function formatParamValue(value: unknown): string {
+  if (value === undefined) return "—";
+  if (value === null) return "null";
+  if (typeof value === "string") return value;
+  if (typeof value === "number" || typeof value === "boolean")
+    return String(value);
+  try {
+    return JSON.stringify(value);
+  } catch {
+    return String(value);
+  }
+}
 
 export const paramAuditListSchema = z.union([
   z.array(paramAuditEntrySchema),
@@ -71,32 +90,23 @@ export const previewParamAuditEntries: ParamAuditEntry[] = [
     key: "boost.featured.priceUSD",
     oldValue: 120,
     newValue: 150,
-    actorId: "usr_admin_1",
-    actorName: "Ada Admin",
+    changedBy: "usr_admin_1",
     changedAt: "2026-11-01T12:00:00.000Z",
-    createdAt: "2026-11-01T12:00:00.000Z",
-    reason: "Updated Q4 boost pricing",
   },
   {
     id: "audit-2",
     key: "editorial.emails.enabled",
     oldValue: false,
     newValue: true,
-    actorId: "usr_admin_1",
-    actorName: "Ada Admin",
+    changedBy: "usr_admin_1",
     changedAt: "2026-10-28T09:30:00.000Z",
-    createdAt: "2026-10-28T09:30:00.000Z",
-    reason: "Enabled editorial newsletter",
   },
   {
     id: "audit-3",
     key: "validation.minSupporters",
     oldValue: 20,
     newValue: 25,
-    actorId: "usr_admin_2",
-    actorName: "Tunde Admin",
+    changedBy: "usr_admin_2",
     changedAt: "2026-10-15T15:20:00.000Z",
-    createdAt: "2026-10-15T15:20:00.000Z",
-    reason: "Raised idea validation threshold for quality signal",
   },
 ];

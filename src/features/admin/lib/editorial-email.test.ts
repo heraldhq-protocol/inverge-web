@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   emailTemplateIdSchema,
+  emailTemplateItemSchema,
   emailTemplateListSchema,
+  isEditorialTemplate,
   previewEditorialResultSchema,
   previewEditorialSchema,
   sendEditorialResultSchema,
@@ -27,18 +29,58 @@ describe("editorial-email lib schemas", () => {
   });
 
   describe("emailTemplateListSchema", () => {
-    it("parses valid template item arrays", () => {
+    it("normalises the API catalogue envelope", () => {
+      const parsed = emailTemplateListSchema.parse({
+        data: [
+          {
+            id: "EDIT_INVERGE",
+            category: "marketing",
+            label: "Edit Inverge Weekly",
+            requiredVariables: ["headline", "featuredStoryHtml"],
+            optionalVariables: ["issueNumber"],
+          },
+          {
+            id: "VERIFICATION_CODE",
+            category: "transactional",
+            label: "Verification code",
+            requiredVariables: ["code"],
+            optionalVariables: [],
+          },
+        ],
+      });
+      expect(parsed).toHaveLength(2);
+      expect(parsed[0]).toMatchObject({
+        templateId: "EDIT_INVERGE",
+        category: "marketing",
+        name: "Edit Inverge Weekly",
+      });
+      expect(parsed[0]?.requiredVariables).toContain("headline");
+      expect(parsed[0]?.optionalVariables).toContain("issueNumber");
+    });
+
+    it("accepts a bare array and keeps only editorial templates sendable", () => {
       const parsed = emailTemplateListSchema.parse([
         {
-          templateId: "EDIT_INVERGE",
-          category: "editorial",
-          name: "Edit Inverge Weekly",
-          requiredVariables: ["headline", "featuredStoryHtml"],
+          templateId: "IDEA_OF_THE_WEEK",
+          category: "marketing",
+          name: "Idea of the Week",
+          requiredVariables: ["ideaTitle"],
         },
       ]);
-      expect(parsed).toHaveLength(1);
-      expect(parsed[0]?.templateId).toBe("EDIT_INVERGE");
-      expect(parsed[0]?.requiredVariables).toContain("headline");
+      expect(parsed[0]?.templateId).toBe("IDEA_OF_THE_WEEK");
+      expect(isEditorialTemplate(parsed[0]!)).toBe(true);
+      expect(
+        isEditorialTemplate({
+          ...parsed[0]!,
+          templateId: "KYC_APPROVED",
+          category: "transactional",
+        }),
+      ).toBe(false);
+      expect(
+        isEditorialTemplate(
+          emailTemplateItemSchema.parse({ id: "UNCATEGORISED" }),
+        ),
+      ).toBe(false);
     });
   });
 
@@ -114,7 +156,21 @@ describe("editorial-email lib schemas", () => {
   });
 
   describe("sendEditorialResultSchema", () => {
-    it("parses delivery confirmation", () => {
+    it("parses the API's dispatch counts", () => {
+      const parsed = sendEditorialResultSchema.parse({
+        sent: 2,
+        suppressed: 1,
+        duplicate: 0,
+        exhausted: 0,
+        failed: 0,
+      });
+      expect(parsed.sent).toBe(2);
+      expect(parsed.suppressed).toBe(1);
+      expect(parsed.duplicate).toBe(0);
+      expect(parsed.failed).toBe(0);
+    });
+
+    it("also accepts a legacy confirmation envelope", () => {
       const parsed = sendEditorialResultSchema.parse({
         issueId: "issue-1",
         sentCount: 150,

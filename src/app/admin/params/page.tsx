@@ -13,7 +13,8 @@ import {
 
 export const metadata: Metadata = {
   title: "Runtime Parameters",
-  description: "Inspect and update live operational parameters across platform services.",
+  description:
+    "Inspect and update live operational parameters across platform services.",
   robots: { index: false, follow: false },
 };
 
@@ -48,6 +49,9 @@ export default async function AdminParamsPage() {
       <PlatformParamsEditor
         initialParams={paramsResult.data}
         initialAudit={auditEntries}
+        auditMessage={
+          auditResult.status === "ready" ? null : auditResult.message
+        }
       />
     </div>
   );

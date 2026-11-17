@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatParamValue,
   paramAuditEntrySchema,
   paramAuditListSchema,
   paramAuditQuerySchema,
@@ -55,26 +56,39 @@ describe("updateParamsSchema", () => {
 
   it("rejects empty params object or empty keys", () => {
     expect(() => updateParamsSchema.parse({ params: {} })).toThrow();
-    expect(() => updateParamsSchema.parse({ params: { "": "value" } })).toThrow();
+    expect(() =>
+      updateParamsSchema.parse({ params: { "": "value" } }),
+    ).toThrow();
   });
 });
 
 describe("paramAuditEntrySchema and paramAuditListSchema", () => {
-  it("parses single audit entries", () => {
+  it("parses the API's audit rows, including the acting account id", () => {
     const entry = paramAuditEntrySchema.parse({
       id: "aud_1",
       key: "boost.featured.priceUSD",
       oldValue: 150,
       newValue: 200,
-      actorId: "usr_admin_1",
-      actorName: "Ada Admin",
+      changedBy: "usr_admin_1",
       changedAt: "2026-11-16T12:00:00Z",
-      reason: "Quarterly review",
     });
     expect(entry.id).toBe("aud_1");
     expect(entry.key).toBe("boost.featured.priceUSD");
     expect(entry.oldValue).toBe(150);
     expect(entry.newValue).toBe(200);
+    expect(entry.changedBy).toBe("usr_admin_1");
+  });
+
+  it("keeps a structured stored value instead of failing the read", () => {
+    const entry = paramAuditEntrySchema.parse({
+      id: "aud_2",
+      key: "platform.flags",
+      oldValue: null,
+      newValue: { beta: true, waves: [1, 2] },
+      changedBy: null,
+      changedAt: "2026-11-16T12:00:00Z",
+    });
+    expect(entry.newValue).toEqual({ beta: true, waves: [1, 2] });
   });
 
   it("parses audit list as bare array or wrapped object", () => {
@@ -87,7 +101,20 @@ describe("paramAuditEntrySchema and paramAuditListSchema", () => {
       },
     ];
     expect(paramAuditListSchema.parse(list)).toHaveLength(1);
-    expect(paramAuditListSchema.parse({ items: list, total: 1 })).toHaveLength(1);
+    expect(paramAuditListSchema.parse({ items: list, total: 1 })).toHaveLength(
+      1,
+    );
+  });
+});
+
+describe("formatParamValue", () => {
+  it("renders primitives, null and structured values", () => {
+    expect(formatParamValue(undefined)).toBe("—");
+    expect(formatParamValue(null)).toBe("null");
+    expect(formatParamValue("on")).toBe("on");
+    expect(formatParamValue(25)).toBe("25");
+    expect(formatParamValue(false)).toBe("false");
+    expect(formatParamValue({ beta: true })).toBe('{"beta":true}');
   });
 });
 

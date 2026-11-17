@@ -1,14 +1,16 @@
 "use client";
 
 import { useId, useMemo, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Button } from "@/components/ui/button";
 import { Pill } from "@/components/ui/pill";
 import { adminFieldClass } from "@/features/admin/components/admin-workspace-ui";
-import type {
-  ParamAuditEntry,
-  PlatformParams,
-  PlatformParamValue,
+import {
+  formatParamValue,
+  type ParamAuditEntry,
+  type PlatformParams,
+  type PlatformParamValue,
 } from "@/features/admin/lib/params";
 import { sendJson } from "@/lib/api/client";
 
@@ -41,12 +43,16 @@ function parseValueByType(raw: string, type: ParamType): PlatformParamValue {
 interface PlatformParamsEditorProps {
   initialParams: PlatformParams;
   initialAudit: ParamAuditEntry[];
+  /** Set when the audit read failed; never rendered as "no records". */
+  auditMessage?: string | null;
 }
 
 export function PlatformParamsEditor({
   initialParams,
   initialAudit,
+  auditMessage = null,
 }: PlatformParamsEditorProps) {
+  const router = useRouter();
   const [params, setParams] = useState<PlatformParams>(initialParams);
   const audit = initialAudit;
   const [filter, setFilter] = useState("");
@@ -104,8 +110,7 @@ export function PlatformParamsEditor({
     } catch (err) {
       setFeedback({
         tone: "error",
-        message:
-          err instanceof Error ? err.message : "Invalid parameter value",
+        message: err instanceof Error ? err.message : "Invalid parameter value",
       });
       return;
     }
@@ -129,8 +134,7 @@ export function PlatformParamsEditor({
       if (!response.ok) {
         setFeedback({
           tone: "error",
-          message:
-            response.message || "Failed to update platform parameter.",
+          message: response.message || "Failed to update platform parameter.",
         });
         setIsSubmitting(false);
         feedbackRef.current?.focus();
@@ -146,6 +150,8 @@ export function PlatformParamsEditor({
         tone: "success",
         message: `Parameter "${cleanKey}" successfully updated.`,
       });
+      // The audit trail is server-rendered; refresh it with the new params.
+      router.refresh();
     } catch (err) {
       setFeedback({
         tone: "error",
@@ -163,9 +169,9 @@ export function PlatformParamsEditor({
     <div className="mt-6 space-y-8">
       {/* Informational banner about non-transactional application */}
       <div className="rounded-xl border border-border bg-surface p-4 text-xs leading-5 text-ink-soft sm:text-sm">
-        <span className="font-semibold text-ink">Operational note:</span> Changes
-        applied to platform parameters take effect immediately across all
-        services. Updates apply sequentially; verify changes below or review
+        <span className="font-semibold text-ink">Operational note:</span>{" "}
+        Changes applied to platform parameters take effect immediately across
+        all services. Updates apply sequentially; verify changes below or review
         the audit trail.
       </div>
 
@@ -173,7 +179,9 @@ export function PlatformParamsEditor({
         {/* Left: Parameter Directory & Filter */}
         <div className="space-y-4 lg:col-span-7">
           <div className="flex flex-wrap items-center justify-between gap-4">
-            <h2 className="text-lg font-semibold text-ink">Active Parameters</h2>
+            <h2 className="text-lg font-semibold text-ink">
+              Active Parameters
+            </h2>
             <div className="w-full sm:w-64">
               <input
                 type="search"
@@ -429,19 +437,16 @@ export function PlatformParamsEditor({
                 <th scope="col" className="px-4 py-3">
                   Changed By
                 </th>
-                <th scope="col" className="px-4 py-3">
-                  Reason
-                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border font-mono text-xs">
               {audit.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={6}
+                    colSpan={5}
                     className="px-4 py-8 text-center font-sans text-sm text-ink-soft"
                   >
-                    No audit records available.
+                    {auditMessage ?? "No audit records available."}
                   </td>
                 </tr>
               ) : (
@@ -461,20 +466,16 @@ export function PlatformParamsEditor({
                       {entry.key}
                     </td>
                     <td className="px-4 py-3 text-ink-soft">
-                      {entry.oldValue !== undefined
-                        ? String(entry.oldValue)
-                        : "—"}
+                      {formatParamValue(entry.oldValue)}
                     </td>
                     <td className="px-4 py-3 font-bold text-ink">
-                      {entry.newValue !== undefined
-                        ? String(entry.newValue)
-                        : "—"}
+                      {formatParamValue(entry.newValue)}
                     </td>
                     <td className="px-4 py-3 font-sans text-ink">
-                      {entry.actorName || entry.actorId || "System"}
-                    </td>
-                    <td className="px-4 py-3 font-sans text-ink-soft">
-                      {entry.reason || "—"}
+                      {entry.changedBy ||
+                        entry.actorName ||
+                        entry.actorId ||
+                        "Not recorded"}
                     </td>
                   </tr>
                 ))

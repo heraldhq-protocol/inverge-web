@@ -37,6 +37,34 @@ describe("EditorialEmailComposer", () => {
     ).toBeInTheDocument();
   });
 
+  it("disables preview and dispatch when no editorial templates are available", () => {
+    render(
+      <EditorialEmailComposer
+        templates={[
+          {
+            templateId: "KYC_APPROVED",
+            category: "transactional",
+            name: "KYC approved",
+            requiredVariables: ["name"],
+            optionalVariables: [],
+          },
+        ]}
+      />,
+    );
+
+    expect(
+      screen.getByText(
+        "No editorial templates are available on the connected service.",
+      ),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole("button", { name: "Generate Preview" }),
+    ).toBeDisabled();
+    expect(
+      screen.getByRole("button", { name: "Send Editorial Dispatch" }),
+    ).toBeDisabled();
+  });
+
   it("renders preview when clicking Generate Preview", async () => {
     vi.mocked(sendJson).mockResolvedValue({
       ok: true,
@@ -99,21 +127,20 @@ describe("EditorialEmailComposer", () => {
     fireEvent.click(sendButton);
 
     await waitFor(() => {
-      expect(sendJson).toHaveBeenCalledWith(
-        "/api/admin/email/editorial/send",
-        {
-          method: "POST",
-          body: {
-            issueId: "editorial-issue-42",
-            templateId: "EDIT_INVERGE",
-            userIds: ["usr_1", "usr_2"],
-            variables: {},
-          },
+      expect(sendJson).toHaveBeenCalledWith("/api/admin/email/editorial/send", {
+        method: "POST",
+        body: {
+          issueId: "editorial-issue-42",
+          templateId: "EDIT_INVERGE",
+          userIds: ["usr_1", "usr_2"],
+          variables: {},
         },
-      );
+      });
     });
 
-    expect(await screen.findByText("Dispatch Confirmation")).toBeInTheDocument();
+    expect(
+      await screen.findByText("Dispatch Confirmation"),
+    ).toBeInTheDocument();
     expect(screen.getByText("120")).toBeInTheDocument();
     expect(screen.getByText("4")).toBeInTheDocument();
   });

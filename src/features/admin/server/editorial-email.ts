@@ -132,6 +132,15 @@ export async function sendEditorialEmail(
   });
 
   if (!response.ok) {
+    if (response.code === "EDITORIAL_EMAILS_DISABLED") {
+      return {
+        ok: false,
+        status: response.status,
+        code: response.code,
+        message:
+          "Editorial sending is disabled on the connected service. Enable it in the API deployment before dispatching.",
+      };
+    }
     if (response.status === 0 || response.status >= 500) {
       return unconfirmedEmailSend(response.status, response.code);
     }
