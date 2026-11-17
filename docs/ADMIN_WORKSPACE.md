@@ -22,11 +22,14 @@ However, the majority of these surfaces currently operate on **fixtures and clie
 | **Overview** | `/admin` | **API wired; live browser verification pending** | Public summary, reported escrow, and admin analytics with independent failure states, source timestamps, period selection and refresh; legacy preview is isolated to preview auth | Confirm against a running API and real admin session; backend escrow reconciliation remains unresolved |
 | **Campaign Review** | `/admin/campaigns`<br>`/admin/campaigns/[id]` | **API wired; live verification deferred** | Validated paginated queue, detail, approval checks, review history and confirmed decisions; preview auth is isolated | Backend review projection omits authored story/disclosures and milestone deadlines; validate against the deployed API; listing freeze endpoint (FR-903) |
 | **Verification & KYC** | `/admin/verification`<br>`/admin/verification/[id]` | **Live API Wired** | Queue table, risk categorization (`Low`, `Medium`, `High`), case detail view, `ResolveRiskForm` with decision submission | Verification webhooks integration; strike tracking & strike decay ledger (FR-310) |
+| **AML Screening** | `/admin/aml` | **API wired; live verification pending** | Individual and business screening form, validated results (status pill, match count, top score, datasets), subject lookup with a server-rendered history table, unavailable/recovery states | Real admin-session verification; the screening response echoes no subject, so each result is paired with the submitted request client-side |
 | **Users & Roles** | `/admin/users` | **API wired; live verification pending** | Session-gated directory with email/provider search, role filter, paging and a per-account role editor; preview accounts are isolated and a preview change is never described as saved; the mobile admin nav wraps below the sticky header instead of scrolling sideways | Widen `UpdateUserRoleDto` before offering `COMPLIANCE_REVIEWER`; the list endpoint returns no total, so paging is inferred from a full page; confirm against a deployed API and a real admin session |
 | **AI Access** | `/admin/ai-access` | **API wired; live verification pending** | Status-filtered request list, optional approval expiry, confirmed pending-only decisions, and explicit unavailable/recovery states | Real admin-session verification; the API caps the oldest-first list at 200 and supplies no cursor or total |
 | **Analytics Access** | `/admin/analytics-access` | **API wired; live verification pending** | Cursor-paged request list, status filters, approval/expiry changes and revocation with validated confirmations | Real admin-session verification; the backend omits totals and exposes no revision precondition for concurrent decisions |
 | **Moderation Screening** | `/admin/moderation` | **API wired; live verification pending** | Idea/campaign text screening, validated advisory results, separate internal/creator-facing explanations, classifier provenance and explicit new-case retries | Real admin-session verification; no case-list/read API or listing-freeze transition is supplied by this endpoint |
 | **Boost Pricing** | `/admin/boost-prices` | **API wired; live verification pending** | Exact-cent Basic/Featured price and duration editing, changed-field updates, validated confirmations and partial-failure recovery | Real admin-session verification; backend updates/audit writes are not transactional and have no revision precondition |
+| **Runtime Parameters** | `/admin/params` | **API wired; live verification pending** | Key-value inspector and editor, audit trail reader, primitive type handling, sequential update notifications | Real admin-session verification; backend updates are non-transactional |
+| **Editorial Email Tools** | `/admin/email` | **API wired; live verification pending** | Template picker with required variable indicators, live sandbox preview, recipient list validation, confirmed dispatch | Requires EDITORIAL_EMAILS_ENABLED=true on backend; unverified/unsubscribed accounts suppressed |
 | **Advertising** | `/admin/advertising` | **Interactive UI (Preview)** | Inventory table, placement scheduling (`Basic`, `Featured`), live preview switcher, slot pause/resume | Connect live ad booking endpoints; boost pricing is now a separate API-backed admin view |
 | **Programmes & Ideathons** | `/admin/programmes`<br>`/admin/programmes/new`<br>`/admin/programmes/[id]` | **Interactive UI (Preview)** | Programme creation wizard (`ProgrammeWizard`), track configuration, prize pool editor, sponsor logo management | Connect backend database persistence for created programmes; submission evaluation flow |
 | **Payments & Treasury** | `/admin/payments` | **Interactive UI (Mock Data)** | Reconciliations ledger, application fee records (FR-311), platform success fee estimates (FR-505), monetization tier breakdown | Connect payment gateway webhooks for non-refundable fee reconciliation; live USDC ledger |
@@ -432,6 +435,48 @@ The real route redirects to `/auth?next=%2Fadmin%2Fboost-prices`, where sign-in
 is not configured, so authenticated live pricing remains unverified. The
 repository-wide format/lint and Node baseline limitations above still apply.
 
+### AML screening integration (2026-11-16)
+
+`/admin/aml` runs a screening through `POST /api/admin/aml/screen` to
+`POST /api/v1/kyc/admin/aml-screen` (individual subjects) or
+`POST /api/v1/kyb/admin/aml-screen` (business subjects) and reads history from
+`GET /api/v1/{kyc,kyb}/admin/aml/{userId}` (FR-103, FR-104, NFR-19). The request
+follows `AmlScreenDto`: account id and full name are required; date of birth
+(`YYYY-MM-DD`), document number and an ISO alpha-2/alpha-3 nationality are
+optional. `entityType` is never sent — the individual endpoint defaults it to
+`person` and the business endpoint forces `company`, so the endpoint path is
+the authority. The OpenAPI response is unspecified, so runtime validation
+follows the screening return in
+[KycService at main](https://github.com/heraldhq-protocol/inverge-api/blob/main/src/modules/kyc/kyc.service.ts):
+`{ datasets, topRiskScore, totalHits, status }` with `CLEAR`, `IN_REVIEW` or
+`FLAGGED`. A decimal top score may arrive as a numeric string and is
+normalized for display; scores and match counts are presented as review
+signals, never as decisions.
+
+The screening response echoes no subject, so the BFF carries the validated
+kind and account id back with the result and the browser confirms that pairing
+before rendering. A business screening without a registered business profile
+is explained as such instead of surfacing a generic not-found error. The KYC
+screening updates the account's AML status and the KYB screening updates the
+business profile, so a timeout or malformed confirmation may follow a saved
+record: automatic retries are suppressed and a deliberate "Run another
+screening" action is required. AML screening is a compliance record, not an
+eligibility source — the UI states that a result never approves or declines
+the account.
+
+History is read on the server for one account at a time through a plain GET
+subject lookup (the users-directory pattern; a same-origin GET fetch sends no
+`Origin` header, so a history BFF would refuse the request). The endpoint
+returns a bare array of at most 100 records with no total, so an over-length
+page, a malformed record or a duplicated record id fails the read closed
+instead of rendering a partial history. Verification runs (`KYC_SESSION`) and
+standalone admin screenings (`STANDALONE`) are labelled. Preview sessions and
+missing configuration render unavailable states with no simulated data.
+
+The BFF requires a live administrator and a same-origin request, forwards the
+service's error envelope, and returns only a confirmed, non-cacheable result.
+Screening allows 30 seconds with a 35-second browser timeout.
+
 ### Phase 1: Campaign Review Live Integration (FR-304, FR-311)
 - [x] UI review queue and status filter tabs (`/admin/campaigns`).
 - [x] Detail screen for the supplied campaign record, approval checks, milestone evidence, media links and review history (`/admin/campaigns/[id]`).
@@ -482,25 +527,20 @@ The backend specification defines these additional admin capabilities. User mana
 - [ ] **Task 6.1**: **User & Role Management**: `/admin/users` and its role-update BFF are present; the broader directory integration still needs verification. `UpdateUserRoleDto.role` accepts only `USER` or `ADMIN`. The frontend now shares this schema across the BFF and server write helper, checks that the confirmed role matches the request, and keeps session roles separate. The generated OpenAPI already declares the correct values. `platform_admin` is a frontend programme permission role, not a request value. `COMPLIANCE_REVIEWER` can occur in session reads but cannot be assigned by this DTO; `compliance_officer` is not a supported update value.
 - [x] **Task 6.2**: **AI Assistant Access Requests**: `/admin/ai-access` connects `GET /api/v1/admin/ai/access-requests` and `PATCH /api/v1/admin/ai/access-requests/{id}` with confirmed decisions. Authenticated live verification remains pending.
 - [x] **Task 6.3**: **Analytics Access Requests**: `/admin/analytics-access` connects the paginated list and confirmed grant decisions, including expiry changes and revocation. Authenticated live verification remains pending.
-- [ ] **Task 6.4**: **Platform Runtime Parameters**: Wire `GET /api/v1/admin/params` and `PATCH /api/v1/admin/params` to inspect and update platform operational parameters.
+- [x] **Task 6.4**: **Platform Runtime Parameters**: `/admin/params` connects `GET /api/v1/admin/params`, `PATCH /api/v1/admin/params`, and `GET /api/v1/admin/params/audit` to inspect and update platform operational parameters and review change history.
 - [x] **Task 6.5**: **Moderation Screening**: `/admin/moderation` connects advisory screening and case confirmations. Live verification, moderation queues and listing freeze remain separate work.
+- [x] **Task 6.6**: **Individual & Business AML Screening**: `/admin/aml` connects both standalone screening endpoints and their history reads, with the business not-found case explained. Authenticated live verification remains pending.
+- [x] **Task 6.7**: **Editorial Email Tools**: `/admin/email` connects `GET /api/v1/admin/email/templates`, `POST /api/v1/admin/email/editorial/preview`, and `POST /api/v1/admin/email/editorial/send` to preview templates and dispatch editorial issues to subscribed accounts.
 
-### Remaining endpoint inventory (2026-11-05)
+### Remaining endpoint inventory (2026-11-16)
 
-Comparing `docs/api/openapi.json` with the frontend call sites leaves **10
-documented admin operations without frontend integration**, counting each method
-and path separately and including the standalone KYC/KYB administrator APIs.
-Every path below has the prefix `/api/v1`.
+Comparing `docs/api/openapi.json` with the frontend call sites leaves **0
+documented admin operations without frontend integration**. Every documented
+endpoint under `/api/v1/admin/*`, `/api/v1/kyc/admin/*`, and `/api/v1/kyb/admin/*`
+now has dedicated frontend and BFF integrations.
 
-| Area | Remaining operations |
-| --- | --- |
-| Runtime parameters and their history | `GET /admin/params`; `PATCH /admin/params`; `GET /admin/params/audit` |
-| Editorial email tools | `GET /admin/email/templates`; `POST /admin/email/editorial/preview`; `POST /admin/email/editorial/send` |
-| Individual AML screening and history | `POST /kyc/admin/aml-screen`; `GET /kyc/admin/aml/{userId}` |
-| Business AML screening and history | `POST /kyb/admin/aml-screen`; `GET /kyb/admin/aml/{userId}` |
-
-Overview reporting, campaign review, users/roles, AI and analytics access, moderation screening, boost pricing, and the unified verification
-queue/case-resolution endpoints already have frontend integrations. Their live
+Overview reporting, campaign review, users/roles, AI and analytics access, moderation screening, boost pricing, individual and business AML
+screening, platform runtime parameters, and editorial email tools all have frontend integrations. Their live
 verification limits are recorded above.
 
 `/admin/params/audit` covers parameter changes only. The moderation operation runs
